@@ -1,6 +1,8 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
+export const runtime = 'nodejs';
+
 export async function POST(request) {
   try {
     const auth = await readTelegramRequest(request);
