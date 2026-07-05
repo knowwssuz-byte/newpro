@@ -2149,3 +2149,331 @@ button:disabled {
     animation-iteration-count: 1 !important;
   }
 }
+
+
+/* =========================================================
+   V2 FIX: rocket/pvp are separate games, compact layout,
+   remove duplicate balance from header.
+========================================================= */
+
+.header-actions .balance-pill {
+  display: none !important;
+}
+
+.premium-home {
+  padding-top: 6px !important;
+}
+
+.home-hero {
+  min-height: 104px !important;
+  padding: 14px 14px !important;
+  border-radius: 24px !important;
+}
+
+.home-avatar {
+  width: 58px !important;
+  height: 58px !important;
+  font-size: 29px !important;
+  border-width: 2px !important;
+  box-shadow:
+    0 0 0 5px rgba(139, 92, 246, 0.12),
+    0 0 24px rgba(168, 85, 247, 0.44) !important;
+}
+
+.avatar-shield {
+  width: 25px !important;
+  height: 25px !important;
+  right: -6px !important;
+  bottom: 0 !important;
+  border-radius: 10px !important;
+}
+
+.avatar-shield svg {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+.home-balance-copy > span {
+  font-size: 13px !important;
+}
+
+.home-balance-copy strong {
+  font-size: clamp(28px, 8vw, 38px) !important;
+  letter-spacing: -0.055em !important;
+}
+
+.home-balance-copy .coin-icon {
+  width: 28px !important;
+  height: 28px !important;
+}
+
+.deposit-button {
+  min-height: 48px !important;
+  padding: 0 18px !important;
+  border-radius: 18px !important;
+  font-size: 16px !important;
+  gap: 9px !important;
+}
+
+.deposit-button svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.home-promo-stack {
+  gap: 10px !important;
+  margin: 12px 0 !important;
+}
+
+.promo-image-banner {
+  min-height: 126px !important;
+  max-height: 132px !important;
+  padding: 13px 14px !important;
+  border-radius: 23px !important;
+}
+
+.promo-banner-copy {
+  width: 52% !important;
+  gap: 7px !important;
+}
+
+.promo-badge {
+  min-height: 30px !important;
+  padding: 0 11px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+}
+
+.promo-badge svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+.promo-banner-text {
+  gap: 4px !important;
+}
+
+.promo-banner-text strong {
+  font-size: clamp(31px, 9vw, 43px) !important;
+  line-height: .88 !important;
+}
+
+.promo-banner-text em {
+  max-width: 170px !important;
+  font-size: 11.5px !important;
+  line-height: 1.15 !important;
+}
+
+.promo-action-chip {
+  min-height: 27px !important;
+  padding: 0 10px !important;
+  font-size: 11px !important;
+  gap: 6px !important;
+}
+
+.promo-action-chip b {
+  font-size: 18px !important;
+}
+
+.promo-webp-stage {
+  right: -8px !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 56% !important;
+}
+
+.promo-image-banner.rocket .promo-webp {
+  transform: translateX(7%) scale(1.02) rotate(1deg) !important;
+}
+
+.promo-image-banner.pvp .promo-webp {
+  transform: translateX(7%) scale(1.04) !important;
+}
+
+.home-actions-grid {
+  gap: 10px !important;
+  margin: 10px 0 14px !important;
+}
+
+.home-action-btn {
+  min-height: 68px !important;
+  border-radius: 20px !important;
+  padding: 0 13px !important;
+  gap: 9px !important;
+}
+
+.home-action-btn span {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 12px !important;
+}
+
+.home-action-btn svg {
+  width: 21px !important;
+  height: 21px !important;
+}
+
+.home-action-btn strong {
+  font-size: 15px !important;
+}
+
+.home-action-btn b {
+  font-size: 25px !important;
+}
+
+.section-title-row {
+  margin: 2px 2px 10px !important;
+}
+
+.section-title-row h2 {
+  font-size: 26px !important;
+}
+
+.section-title-row svg {
+  width: 27px !important;
+  height: 27px !important;
+}
+
+.pro-case-card {
+  min-height: 132px !important;
+  grid-template-columns: 96px 1fr !important;
+  padding: 11px !important;
+  gap: 11px !important;
+  border-radius: 22px !important;
+}
+
+.case-media {
+  min-height: 108px !important;
+  border-radius: 18px !important;
+}
+
+.case-media img {
+  max-height: 108px !important;
+}
+
+.case-card-body {
+  gap: 6px !important;
+}
+
+.case-card-body h3 {
+  font-size: 22px !important;
+}
+
+.case-card-body p {
+  min-height: 30px !important;
+  font-size: 11.5px !important;
+  line-height: 1.25 !important;
+}
+
+.case-badge {
+  min-height: 23px !important;
+  padding: 0 8px !important;
+  font-size: 9.5px !important;
+}
+
+.case-card-footer button {
+  min-height: 33px !important;
+  padding: 0 10px !important;
+  font-size: 12px !important;
+}
+
+.mobile-nav {
+  height: 66px !important;
+  min-height: 66px !important;
+  bottom: calc(7px + env(safe-area-inset-bottom, 0px)) !important;
+  border-radius: 23px !important;
+}
+
+.mobile-nav-btn {
+  height: 49px !important;
+  min-height: 49px !important;
+}
+
+.mobile-nav-btn strong {
+  font-size: 10.5px !important;
+}
+
+.mobile-nav-btn.center-home {
+  width: 58px !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  transform: translateY(-10px) !important;
+  border-radius: 21px !important;
+}
+
+.mobile-nav-btn.center-home span {
+  width: 27px !important;
+  height: 24px !important;
+}
+
+.app-shell {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+@media (max-width: 430px) {
+  .premium-home {
+    padding-left: 9px !important;
+    padding-right: 9px !important;
+  }
+
+  .home-hero {
+    min-height: 96px !important;
+    padding: 12px 12px !important;
+  }
+
+  .home-user-zone {
+    gap: 10px !important;
+  }
+
+  .home-avatar {
+    width: 54px !important;
+    height: 54px !important;
+    font-size: 27px !important;
+  }
+
+  .home-balance-copy strong {
+    font-size: 31px !important;
+  }
+
+  .deposit-button {
+    min-height: 45px !important;
+    padding: 0 14px !important;
+    font-size: 15px !important;
+  }
+
+  .promo-image-banner {
+    min-height: 118px !important;
+    max-height: 124px !important;
+    padding: 12px 12px !important;
+  }
+
+  .promo-banner-text strong {
+    font-size: clamp(29px, 9.2vw, 39px) !important;
+  }
+
+  .promo-banner-text em {
+    font-size: 10.5px !important;
+  }
+
+  .promo-action-chip {
+    min-height: 25px !important;
+    font-size: 10px !important;
+  }
+
+  .promo-image-banner.rocket .promo-webp {
+    transform: translateX(9%) scale(.98) rotate(1deg) !important;
+  }
+
+  .promo-image-banner.pvp .promo-webp {
+    transform: translateX(9%) scale(1.00) !important;
+  }
+
+  .home-action-btn {
+    min-height: 62px !important;
+    border-radius: 18px !important;
+  }
+
+  .home-action-btn strong {
+    font-size: 13px !important;
+  }
+}
