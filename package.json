@@ -6,15 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "telegram:session": "node scripts/get-telegram-session.js"
   },
   "dependencies": {
+    "@supabase/supabase-js": "latest",
+    "input": "^1.0.1",
+    "lottie-web": "latest",
     "next": "latest",
+    "pako": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "@supabase/supabase-js": "latest",
-    "lottie-web": "latest",
-    "pako": "latest"
+    "telegram": "^2.26.22"
   },
   "devDependencies": {
     "eslint": "latest",
