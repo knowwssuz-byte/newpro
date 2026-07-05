@@ -7087,3 +7087,235 @@ button:disabled {
     font-size: 12.2px !important;
   }
 }
+
+/* =========================================================
+   BALANCE PROFILE PHOTO + STARS + SETTINGS V1
+   Balance block polish:
+   - real Telegram profile photo fallback through /api/profile-photo
+   - bigger avatar
+   - balance text shifted right
+   - smaller balance amount
+   - Stars currency SVG
+   - quick settings placeholder menu
+========================================================= */
+
+.global-balance-bar .home-user-zone {
+  gap: 16px !important;
+}
+
+.global-balance-bar .home-avatar-wrap {
+  position: relative !important;
+  flex: 0 0 auto !important;
+}
+
+.global-balance-bar .home-avatar {
+  width: 56px !important;
+  height: 56px !important;
+  font-size: 24px !important;
+  border-width: 2px !important;
+  background:
+    radial-gradient(circle at 35% 22%, rgba(255,255,255,.22), transparent 32%),
+    linear-gradient(145deg, #5de05e, #22c55e) !important;
+  box-shadow:
+    0 0 0 3px rgba(139, 92, 246, .20),
+    0 0 26px rgba(139, 92, 246, .30),
+    0 12px 24px rgba(0,0,0,.32) !important;
+}
+
+.global-balance-bar .home-avatar.has-photo {
+  background: #111827 !important;
+}
+
+.global-balance-bar .home-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: inherit !important;
+  display: block !important;
+  -webkit-user-drag: none !important;
+  user-select: none !important;
+}
+
+.global-balance-bar .avatar-shield.settings-badge {
+  width: 21px !important;
+  height: 21px !important;
+  right: -4px !important;
+  bottom: -3px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.global-balance-bar .avatar-shield.settings-badge svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.global-balance-bar .home-balance-copy {
+  padding-left: 2px !important;
+  gap: 4px !important;
+}
+
+.global-balance-bar .home-balance-copy > span {
+  font-size: 12px !important;
+  opacity: .86 !important;
+}
+
+.global-balance-bar .home-balance-copy strong {
+  font-size: clamp(21px, 5.2vw, 26px) !important;
+  letter-spacing: -0.055em !important;
+  gap: 7px !important;
+}
+
+.coin-icon.stars-currency-icon,
+.global-balance-bar .coin-icon.stars-currency-icon {
+  width: 25px !important;
+  height: 25px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+  overflow: visible !important;
+  background: transparent !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+.coin-icon.stars-currency-icon img,
+.global-balance-bar .coin-icon.stars-currency-icon img {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: contain !important;
+  -webkit-user-drag: none !important;
+  user-select: none !important;
+  filter:
+    drop-shadow(0 0 8px rgba(56, 189, 248, .52))
+    drop-shadow(0 2px 5px rgba(0,0,0,.24)) !important;
+}
+
+.quick-settings-menu {
+  position: absolute !important;
+  left: 0 !important;
+  top: calc(100% + 10px) !important;
+  z-index: 99999 !important;
+  width: 214px !important;
+  padding: 8px !important;
+  border-radius: 18px !important;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(139,92,246,.28), transparent 44%),
+    linear-gradient(180deg, rgba(20, 24, 48, .98), rgba(8, 12, 30, .98)) !important;
+  border: 1px solid rgba(167,139,250,.22) !important;
+  box-shadow:
+    0 22px 44px rgba(0,0,0,.44),
+    0 0 30px rgba(139,92,246,.16),
+    inset 0 1px 0 rgba(255,255,255,.10) !important;
+  backdrop-filter: blur(18px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
+}
+
+.quick-settings-menu::before {
+  content: "" !important;
+  position: absolute !important;
+  top: -6px !important;
+  left: 22px !important;
+  width: 12px !important;
+  height: 12px !important;
+  transform: rotate(45deg) !important;
+  background: rgba(20, 24, 48, .98) !important;
+  border-left: 1px solid rgba(167,139,250,.22) !important;
+  border-top: 1px solid rgba(167,139,250,.22) !important;
+}
+
+.quick-settings-menu button {
+  width: 100% !important;
+  min-height: 44px !important;
+  padding: 9px 10px !important;
+  border: 0 !important;
+  border-radius: 13px !important;
+  display: grid !important;
+  grid-template-columns: 24px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 9px !important;
+  color: #fff !important;
+  background: transparent !important;
+  text-align: left !important;
+  cursor: pointer !important;
+}
+
+.quick-settings-menu button:hover,
+.quick-settings-menu button:active {
+  background: rgba(255,255,255,.075) !important;
+}
+
+.quick-settings-menu svg {
+  width: 20px !important;
+  height: 20px !important;
+  color: #a78bfa !important;
+}
+
+.quick-settings-menu span {
+  min-width: 0 !important;
+  color: rgba(255,255,255,.90) !important;
+  font-size: 12px !important;
+  font-weight: 850 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.quick-settings-menu em {
+  color: rgba(196,181,253,.78) !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  font-style: normal !important;
+  text-transform: uppercase !important;
+  letter-spacing: .06em !important;
+}
+
+@media (max-width: 430px) {
+  .global-balance-bar .home-user-zone {
+    gap: 14px !important;
+  }
+
+  .global-balance-bar .home-avatar {
+    width: 52px !important;
+    height: 52px !important;
+    font-size: 22px !important;
+  }
+
+  .global-balance-bar .home-balance-copy strong {
+    font-size: clamp(20px, 5.4vw, 24px) !important;
+  }
+
+  .coin-icon.stars-currency-icon,
+  .global-balance-bar .coin-icon.stars-currency-icon {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .quick-settings-menu {
+    width: 204px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .global-balance-bar .home-user-zone {
+    gap: 11px !important;
+  }
+
+  .global-balance-bar .home-avatar {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .global-balance-bar .home-balance-copy strong {
+    font-size: 20px !important;
+  }
+
+  .coin-icon.stars-currency-icon,
+  .global-balance-bar .coin-icon.stars-currency-icon {
+    width: 22px !important;
+    height: 22px !important;
+  }
+}
