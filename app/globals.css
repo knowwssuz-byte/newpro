@@ -3235,11 +3235,11 @@ button:disabled {
   }
 
   .promo-image-banner.rocket .promo-webp {
-    transform: translateX(1%) translateY(-10px) scale(.80) rotate(1deg) !important;
+    transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
   }
 
   .promo-image-banner.pvp .promo-webp {
-    transform: translateX(1%) translateY(-10px) scale(.78) !important;
+    transform: translateX(1%) translateY(-25px) scale(.78) !important;
   }
 
   .premium-cases-grid,
