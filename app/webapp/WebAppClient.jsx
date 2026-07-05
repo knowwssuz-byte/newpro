@@ -79,7 +79,7 @@ function money(value) {
 function formatPrice(value) {
   const number = Number(value || 0);
   if (!Number.isFinite(number)) return '0';
-  if (number === 0) return 'FREE';
+  if (number === 0) return '0';
   if (number < 100) return number.toString().replace(/\.0+$/, '');
   return money(number);
 }
@@ -845,14 +845,7 @@ export default function WebAppClient() {
   return (
     <div className="app-frame">
       <div className="app-shell">
-        <header className="app-header">
-          <Brand appName={appName} />
-          <div className="header-actions">
-            <button type="button" className="header-dot-btn" aria-label="Menu">
-              ⋮
-            </button>
-          </div>
-        </header>
+
 
         {toast ? <div className="toast">{toast}</div> : null}
         {error ? (
@@ -1162,15 +1155,11 @@ function HomeView({
       </div>
 
       <div className="cases-section">
-        <div className="section-title-row">
+        <div className="section-title-row cases-title-only">
           <div>
             <AppIcon name="cases" />
             <h2>Cases</h2>
           </div>
-
-          <button type="button" onClick={onGoCases}>
-            Games <b>›</b>
-          </button>
         </div>
 
         {featuredCases.length === 0 ? (
@@ -1198,33 +1187,42 @@ function HomeView({
   );
 }
 
-function CasesView({ cases, giftsByCase, busy, onOpenCase, onSelectCase, onGoHome }) {
+function CasesView({ onGoHome }) {
   return (
     <section className="screen-stack">
-      <div className="page-header premium-card">
+      <div className="page-header premium-card games-page-header">
         <button type="button" className="ghost-back" onClick={onGoHome}>
           ‹ Home
         </button>
         <h1>Games</h1>
-        <p>Barcha aktiv case’lar shu yerda. Rocket va PVP kartalari endi Home’da yuqorida, qolgan case’lar pastda chiqadi.</p>
+        <p>Rocket va PVP alohida o‘yinlar. Hozircha tayyorlanmoqda.</p>
       </div>
 
-      {cases.length === 0 ? (
-        <EmptyState icon="box" title="Case yo‘q" text="Admin paneldan case qo‘shing." />
-      ) : (
-        <div className="cases-grid premium-cases-grid full">
-          {cases.map((caseItem) => (
-            <CaseCard
-              key={caseItem.id}
-              caseItem={caseItem}
-              gifts={giftsByCase[caseItem.id] || []}
-              busy={busy}
-              onOpen={onOpenCase}
-              onDetails={onSelectCase}
-            />
-          ))}
-        </div>
-      )}
+      <div className="games-coming-grid">
+        <PromoImageCard
+          variant="rocket"
+          image="/feature/rocket.webp"
+          badge="HOT!"
+          badgeIcon="rocket"
+          title="ROCKET"
+          subtitle="Mini game · Tez orada"
+          actionText="Tez orada"
+          onClick={() => {}}
+        />
+
+        <PromoImageCard
+          variant="pvp"
+          image="/feature/pvp.webp"
+          badge="NEW!"
+          badgeIcon="spark"
+          title="PVP"
+          subtitle="Battle mode · Tez orada"
+          actionText="Tez orada"
+          onClick={() => {}}
+        />
+      </div>
+
+      <EmptyState icon="games" title="Games tez orada" text="Bu bo‘limda case’lar emas, alohida o‘yinlar chiqadi." />
     </section>
   );
 }
