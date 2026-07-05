@@ -4957,3 +4957,313 @@ button:disabled {
     100% { width: 78px; height: 33px; top: 45px; left: 0; }
   }
 }
+
+
+/* =========================================================
+   CASE CARD V1 — reference image style
+   Only case cards are redesigned here.
+   Shape: big image area + dark footer + FREE/price pill.
+========================================================= */
+
+.cases-section {
+  margin-top: 6px !important;
+}
+
+.premium-cases-grid,
+.cases-grid.premium-cases-grid,
+.cases-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+  align-items: stretch !important;
+}
+
+.case-card.case-showcase-card {
+  width: 100% !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  border: 1.4px solid color-mix(in srgb, var(--case-accent), #fbbf24 28%) !important;
+  border-radius: 24px !important;
+  overflow: hidden !important;
+  display: grid !important;
+  grid-template-rows: minmax(142px, 1fr) 78px !important;
+  text-align: left !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,.10), transparent 38%),
+    linear-gradient(180deg, rgba(36, 36, 36, .98), rgba(20, 20, 20, .98)) !important;
+  box-shadow:
+    0 18px 38px rgba(0, 0, 0, .33),
+    inset 0 1px 0 rgba(255, 255, 255, .10) !important;
+  cursor: pointer !important;
+  isolation: isolate !important;
+  transform: translateZ(0) !important;
+}
+
+.case-card.case-showcase-card.disabled {
+  opacity: .78 !important;
+}
+
+.case-showcase-media {
+  position: relative !important;
+  min-height: 142px !important;
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+  background:
+    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--case-accent), transparent 72%), transparent 38%),
+    radial-gradient(circle at 46% 48%, rgba(255,255,255,.10), transparent 24%),
+    repeating-radial-gradient(circle at center, rgba(255,255,255,.06) 0 1px, transparent 1px 24px),
+    linear-gradient(145deg, #1f1f1f 0%, #141414 100%) !important;
+}
+
+.case-showcase-media::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, .16), transparent 22%),
+    linear-gradient(90deg, transparent, rgba(255,255,255,.06), transparent);
+  opacity: .76;
+}
+
+.case-showcase-glow {
+  position: absolute;
+  width: 150%;
+  height: 150%;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 110deg, transparent, color-mix(in srgb, var(--case-accent), #fff 28%), transparent, rgba(255,255,255,.10), transparent);
+  opacity: .20;
+  filter: blur(14px);
+  animation: caseGlowRotate 8s linear infinite;
+}
+
+@keyframes caseGlowRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.case-showcase-media img {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 88% !important;
+  height: 88% !important;
+  max-width: 180px !important;
+  max-height: 132px !important;
+  object-fit: contain !important;
+  filter:
+    drop-shadow(0 18px 24px rgba(0,0,0,.42))
+    drop-shadow(0 0 24px color-mix(in srgb, var(--case-accent), transparent 58%)) !important;
+  transform: translateZ(0) scale(1.02) !important;
+}
+
+.case-showcase-fallback {
+  position: relative;
+  z-index: 2;
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  color: rgba(255,255,255,.88);
+  background: rgba(255,255,255,.10);
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+.case-showcase-fallback svg {
+  width: 46px;
+  height: 46px;
+}
+
+.case-showcase-badge {
+  position: absolute !important;
+  z-index: 3 !important;
+  right: 12px !important;
+  top: 10px !important;
+  min-height: 28px !important;
+  max-width: 62px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 10px !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 30% 15%, rgba(255,255,255,.28), transparent 34%),
+    linear-gradient(135deg, var(--case-badge), #fb7185) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  box-shadow: 0 10px 22px rgba(0,0,0,.22) !important;
+  font-size: 10px !important;
+  font-weight: 950 !important;
+  letter-spacing: .02em !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.case-showcase-footer {
+  min-height: 78px !important;
+  padding: 14px 18px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background:
+    linear-gradient(180deg, rgba(48,48,48,.98), rgba(39,39,39,.98)) !important;
+  border-top: 1px solid rgba(255,255,255,.055) !important;
+}
+
+.case-showcase-copy {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 5px !important;
+}
+
+.case-showcase-copy h3 {
+  margin: 0 !important;
+  color: #fff !important;
+  font-family: var(--font-ui) !important;
+  font-size: 16px !important;
+  line-height: 1.12 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.03em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.case-showcase-copy p {
+  margin: 0 !important;
+  min-height: 0 !important;
+  color: rgba(255,255,255,.62) !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .02em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.case-showcase-open {
+  min-width: 86px !important;
+  min-height: 44px !important;
+  padding: 0 15px !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 35% 18%, rgba(255,255,255,.32), transparent 32%),
+    linear-gradient(135deg, color-mix(in srgb, var(--case-accent), #fbbf24 18%), color-mix(in srgb, var(--case-accent), #7c3aed 38%)) !important;
+  box-shadow:
+    0 12px 24px color-mix(in srgb, var(--case-accent), transparent 68%),
+    inset 0 1px 0 rgba(255,255,255,.20) !important;
+  font-size: 14px !important;
+  font-weight: 950 !important;
+  cursor: pointer !important;
+}
+
+.case-showcase-open svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.case-showcase-open:disabled {
+  cursor: not-allowed !important;
+  opacity: .55 !important;
+}
+
+@media (max-width: 430px) {
+  .premium-cases-grid,
+  .cases-grid.premium-cases-grid,
+  .cases-grid {
+    gap: 12px !important;
+  }
+
+  .case-card.case-showcase-card {
+    grid-template-rows: minmax(124px, 1fr) 68px !important;
+    border-radius: 21px !important;
+  }
+
+  .case-showcase-media {
+    min-height: 124px !important;
+  }
+
+  .case-showcase-media img {
+    width: 90% !important;
+    height: 90% !important;
+    max-width: 148px !important;
+    max-height: 112px !important;
+  }
+
+  .case-showcase-footer {
+    min-height: 68px !important;
+    padding: 11px 12px !important;
+    gap: 8px !important;
+  }
+
+  .case-showcase-copy h3 {
+    font-size: 14px !important;
+  }
+
+  .case-showcase-copy p {
+    font-size: 9.5px !important;
+  }
+
+  .case-showcase-open {
+    min-width: 70px !important;
+    min-height: 38px !important;
+    padding: 0 11px !important;
+    gap: 6px !important;
+    font-size: 12px !important;
+  }
+
+  .case-showcase-open svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .case-showcase-badge {
+    right: 9px !important;
+    top: 8px !important;
+    min-height: 24px !important;
+    max-width: 52px !important;
+    padding: 0 8px !important;
+    font-size: 8.8px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .premium-cases-grid,
+  .cases-grid.premium-cases-grid,
+  .cases-grid {
+    gap: 10px !important;
+  }
+
+  .case-card.case-showcase-card {
+    grid-template-rows: minmax(112px, 1fr) 64px !important;
+  }
+
+  .case-showcase-media {
+    min-height: 112px !important;
+  }
+
+  .case-showcase-footer {
+    padding: 10px !important;
+  }
+
+  .case-showcase-open {
+    min-width: 62px !important;
+    min-height: 34px !important;
+    padding: 0 9px !important;
+    font-size: 11px !important;
+  }
+}
