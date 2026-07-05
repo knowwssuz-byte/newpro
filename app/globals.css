@@ -4619,3 +4619,341 @@ button:disabled {
     100% { width: 78px; height: 33px; top: 45px; left: 0; }
   }
 }
+
+
+/* =========================================================
+   BOX LOADER V3 — REAL MOVING VERSION
+   New unique classes, no static !important on animated values.
+   This fixes the loader being frozen.
+========================================================= */
+
+.loader.box-loader,
+.loader.box-loader .box1,
+.loader.box-loader .box2,
+.loader.box-loader .box3 {
+  display: none !important;
+}
+
+.morph-loader {
+  position: relative;
+  z-index: 2;
+  width: 84px;
+  height: 84px;
+  display: block;
+  transform: translateZ(0);
+  filter:
+    drop-shadow(0 18px 28px rgba(0, 0, 0, 0.24))
+    drop-shadow(0 0 18px rgba(255, 255, 255, 0.06));
+}
+
+.morph-loader::before {
+  content: "";
+  position: absolute;
+  inset: -26px;
+  z-index: -1;
+  border-radius: 34px;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.055), transparent 62%);
+  pointer-events: none;
+}
+
+.morph-box {
+  position: absolute;
+  display: block;
+  box-sizing: border-box;
+  border-radius: 9px;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.36), transparent 28%),
+    linear-gradient(145deg, #d8d8d8 0%, #bdbdbd 52%, #9e9e9e 100%);
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -8px 12px rgba(0, 0, 0, 0.08);
+  will-change: width, height, top, left;
+}
+
+.morph-box1 {
+  width: 84px;
+  height: 36px;
+  top: 48px;
+  left: 0;
+  animation: morphBox1 2.45s ease-in-out infinite;
+}
+
+.morph-box2 {
+  width: 36px;
+  height: 36px;
+  top: 0;
+  left: 0;
+  animation: morphBox2 2.45s ease-in-out infinite;
+}
+
+.morph-box3 {
+  width: 36px;
+  height: 36px;
+  top: 0;
+  left: 48px;
+  animation: morphBox3 2.45s ease-in-out infinite;
+}
+
+@keyframes morphBox1 {
+  0% {
+    width: 84px;
+    height: 36px;
+    top: 48px;
+    left: 0;
+  }
+
+  12.5% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 0;
+  }
+
+  25% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 0;
+  }
+
+  37.5% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 0;
+  }
+
+  50% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 0;
+  }
+
+  62.5% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 0;
+  }
+
+  75% {
+    width: 36px;
+    height: 84px;
+    top: 0;
+    left: 0;
+  }
+
+  87.5% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 0;
+  }
+
+  100% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 0;
+  }
+}
+
+@keyframes morphBox2 {
+  0% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 0;
+  }
+
+  12.5% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 0;
+  }
+
+  25% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 0;
+  }
+
+  37.5% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 0;
+  }
+
+  50% {
+    width: 84px;
+    height: 36px;
+    top: 0;
+    left: 0;
+  }
+
+  62.5% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 48px;
+  }
+
+  75% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 48px;
+  }
+
+  87.5% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 48px;
+  }
+
+  100% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 48px;
+  }
+}
+
+@keyframes morphBox3 {
+  0% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 48px;
+  }
+
+  12.5% {
+    width: 36px;
+    height: 36px;
+    top: 0;
+    left: 48px;
+  }
+
+  25% {
+    width: 36px;
+    height: 84px;
+    top: 0;
+    left: 48px;
+  }
+
+  37.5% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 48px;
+  }
+
+  50% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 48px;
+  }
+
+  62.5% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 48px;
+  }
+
+  75% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 48px;
+  }
+
+  87.5% {
+    width: 36px;
+    height: 36px;
+    top: 48px;
+    left: 48px;
+  }
+
+  100% {
+    width: 84px;
+    height: 36px;
+    top: 48px;
+    left: 0;
+  }
+}
+
+@media (max-width: 430px) {
+  .morph-loader {
+    width: 78px;
+    height: 78px;
+  }
+
+  .morph-box {
+    border-radius: 8px;
+  }
+
+  .morph-box1 {
+    width: 78px;
+    height: 33px;
+    top: 45px;
+    left: 0;
+  }
+
+  .morph-box2 {
+    width: 33px;
+    height: 33px;
+    top: 0;
+    left: 0;
+  }
+
+  .morph-box3 {
+    width: 33px;
+    height: 33px;
+    top: 0;
+    left: 45px;
+  }
+
+  @keyframes morphBox1 {
+    0% { width: 78px; height: 33px; top: 45px; left: 0; }
+    12.5% { width: 33px; height: 33px; top: 45px; left: 0; }
+    25% { width: 33px; height: 33px; top: 45px; left: 0; }
+    37.5% { width: 33px; height: 33px; top: 45px; left: 0; }
+    50% { width: 33px; height: 33px; top: 45px; left: 0; }
+    62.5% { width: 33px; height: 33px; top: 45px; left: 0; }
+    75% { width: 33px; height: 78px; top: 0; left: 0; }
+    87.5% { width: 33px; height: 33px; top: 0; left: 0; }
+    100% { width: 33px; height: 33px; top: 0; left: 0; }
+  }
+
+  @keyframes morphBox2 {
+    0% { width: 33px; height: 33px; top: 0; left: 0; }
+    12.5% { width: 33px; height: 33px; top: 0; left: 0; }
+    25% { width: 33px; height: 33px; top: 0; left: 0; }
+    37.5% { width: 33px; height: 33px; top: 0; left: 0; }
+    50% { width: 78px; height: 33px; top: 0; left: 0; }
+    62.5% { width: 33px; height: 33px; top: 0; left: 45px; }
+    75% { width: 33px; height: 33px; top: 0; left: 45px; }
+    87.5% { width: 33px; height: 33px; top: 0; left: 45px; }
+    100% { width: 33px; height: 33px; top: 0; left: 45px; }
+  }
+
+  @keyframes morphBox3 {
+    0% { width: 33px; height: 33px; top: 0; left: 45px; }
+    12.5% { width: 33px; height: 33px; top: 0; left: 45px; }
+    25% { width: 33px; height: 78px; top: 0; left: 45px; }
+    37.5% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    50% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    62.5% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    75% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    87.5% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    100% { width: 78px; height: 33px; top: 45px; left: 0; }
+  }
+}
