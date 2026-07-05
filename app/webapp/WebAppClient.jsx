@@ -349,11 +349,11 @@ export default function WebAppClient() {
 
   const navItems = useMemo(
     () => [
-      { id: 'games', icon: 'games', label: 'Games' },
-      { id: 'inventory', icon: 'inventory', label: 'Inventory' },
-      { id: 'home', icon: 'home', label: 'Home', center: true },
-      { id: 'history', icon: 'history', label: 'History' },
-      { id: 'referral', icon: 'referral', label: 'Referal' },
+      { id: 'games', icon: 'games', image: '/nav/games.svg', label: 'Games' },
+      { id: 'inventory', icon: 'inventory', image: '/nav/cases.svg', label: 'Inventory' },
+      { id: 'home', icon: 'home', image: '/nav/home.svg', label: 'Home', center: true },
+      { id: 'history', icon: 'history', image: '/nav/history.svg', label: 'History' },
+      { id: 'referral', icon: 'referral', image: '/nav/referral.svg', label: 'Referal' },
     ],
     []
   );
@@ -1005,17 +1005,16 @@ function BalancePill({ balance }) {
 
 function NavButton({ item, active, onClick, mobile = false }) {
   return (
-    <button
-      type="button"
-      className={`${mobile ? 'mobile-nav-btn' : 'rail-nav-btn'} ${item.center ? 'center-home' : ''} ${active ? 'active' : ''}`}
-      onClick={onClick}
-      aria-label={item.label}
-    >
+    <button type="button" className={`nav-button ${active ? 'active' : ''} ${item.center ? 'center-home' : ''} ${mobile ? 'mobile-nav-btn' : ''}`} onClick={onClick}>
       <span className="nav-icon-wrap">
-        <AppIcon name={item.icon} />
+        {item.image ? (
+          <img className="nav-icon-img" src={item.image} alt="" loading="eager" />
+        ) : (
+          <AppIcon name={item.icon} />
+        )}
       </span>
       <strong>{item.label}</strong>
-      {item.center ? <i className="home-glow-dot" aria-hidden="true" /> : null}
+      {item.center ? <em className="home-glow-dot" /> : null}
     </button>
   );
 }
