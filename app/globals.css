@@ -5267,3 +5267,238 @@ button:disabled {
     font-size: 11px !important;
   }
 }
+
+
+/* =========================================================
+   BALANCE CARD V1 — Epic Gift reference style
+   Compact horizontal balance strip: avatar + balance + deposit.
+========================================================= */
+
+.premium-home {
+  width: 100% !important;
+  max-width: 560px !important;
+  padding-top: 0 !important;
+}
+
+.home-hero.premium-card,
+.home-hero {
+  width: 100% !important;
+  min-height: 92px !important;
+  padding: 16px 14px !important;
+  margin: 0 0 12px !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.10) !important;
+  background:
+    linear-gradient(180deg, rgba(39, 39, 39, 0.98), rgba(31, 31, 31, 0.98)) !important;
+  box-shadow: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  overflow: visible !important;
+}
+
+.home-hero-bg {
+  display: none !important;
+}
+
+.home-user-zone {
+  min-width: 0 !important;
+  gap: 13px !important;
+  flex: 1 1 auto !important;
+}
+
+.home-avatar-wrap {
+  flex: 0 0 auto !important;
+}
+
+.home-avatar {
+  width: 52px !important;
+  height: 52px !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 36% 24%, rgba(255,255,255,.18), transparent 30%),
+    linear-gradient(145deg, #323232, #101010) !important;
+  border: 1.5px solid #8b5cf6 !important;
+  box-shadow:
+    0 0 0 2px rgba(139, 92, 246, 0.16),
+    0 8px 22px rgba(0,0,0,.30) !important;
+  font-size: 23px !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.04em !important;
+  overflow: hidden !important;
+}
+
+.home-avatar.has-photo {
+  background: #1f1f1f !important;
+}
+
+.home-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: inherit !important;
+  display: block !important;
+}
+
+.avatar-shield.settings-badge,
+.avatar-shield {
+  width: 18px !important;
+  height: 18px !important;
+  right: -2px !important;
+  bottom: -1px !important;
+  border-radius: 7px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #ffffff !important;
+  background: linear-gradient(145deg, #8b5cf6, #6d28d9) !important;
+  border: 1px solid rgba(255,255,255,.20) !important;
+  box-shadow:
+    0 6px 14px rgba(109, 40, 217, .34),
+    inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+
+.avatar-shield.settings-badge svg,
+.avatar-shield svg {
+  width: 11px !important;
+  height: 11px !important;
+}
+
+.home-balance-copy {
+  min-width: 0 !important;
+  gap: 5px !important;
+  align-content: center !important;
+}
+
+.home-balance-copy > span {
+  color: rgba(226, 232, 240, 0.68) !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  font-weight: 750 !important;
+  letter-spacing: -0.01em !important;
+}
+
+.home-balance-copy strong {
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  color: #fff !important;
+  font-size: clamp(20px, 6.5vw, 28px) !important;
+  line-height: .95 !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.055em !important;
+  text-shadow: none !important;
+  white-space: nowrap !important;
+}
+
+.home-balance-copy .coin-icon {
+  width: 26px !important;
+  height: 26px !important;
+  filter: drop-shadow(0 0 8px rgba(34, 211, 238, .25)) !important;
+}
+
+.deposit-button {
+  flex: 0 0 auto !important;
+  min-width: 132px !important;
+  min-height: 48px !important;
+  padding: 0 18px !important;
+  border-radius: 15px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 9px !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 32% 18%, rgba(255,255,255,.26), transparent 32%),
+    linear-gradient(135deg, #8b6be8, #7c3aed) !important;
+  border: 0 !important;
+  box-shadow:
+    0 12px 26px rgba(124, 58, 237, 0.26),
+    inset 0 1px 0 rgba(255,255,255,.20) !important;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.deposit-button svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+@media (max-width: 430px) {
+  .premium-home {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .home-hero.premium-card,
+  .home-hero {
+    min-height: 88px !important;
+    padding: 15px 12px !important;
+    gap: 10px !important;
+  }
+
+  .home-user-zone {
+    gap: 11px !important;
+  }
+
+  .home-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 22px !important;
+  }
+
+  .home-balance-copy > span {
+    font-size: 12px !important;
+  }
+
+  .home-balance-copy strong {
+    font-size: clamp(20px, 6.3vw, 25px) !important;
+  }
+
+  .home-balance-copy .coin-icon {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  .deposit-button {
+    min-width: 118px !important;
+    min-height: 45px !important;
+    padding: 0 14px !important;
+    border-radius: 14px !important;
+    font-size: 15px !important;
+    gap: 8px !important;
+  }
+
+  .deposit-button svg {
+    width: 17px !important;
+    height: 17px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-hero.premium-card,
+  .home-hero {
+    padding: 14px 10px !important;
+  }
+
+  .home-avatar {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .home-user-zone {
+    gap: 9px !important;
+  }
+
+  .deposit-button {
+    min-width: 104px !important;
+    min-height: 42px !important;
+    padding: 0 11px !important;
+    font-size: 14px !important;
+  }
+}
