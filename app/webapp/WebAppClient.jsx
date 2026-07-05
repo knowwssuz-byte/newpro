@@ -281,6 +281,13 @@ function AppIcon({ name, className = '' }) {
           <path d="m8.8 12 2 2 4.5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       );
+    case 'settings':
+      return (
+        <svg {...common}>
+          <path d="M12 15.3a3.3 3.3 0 1 0 0-6.6 3.3 3.3 0 0 0 0 6.6Z" stroke="currentColor" strokeWidth="2" />
+          <path d="M19.4 13.6a7.9 7.9 0 0 0 0-3.2l2-1.5-2-3.4-2.4 1a8.2 8.2 0 0 0-2.8-1.6L13.8 2h-3.6l-.4 2.9A8.2 8.2 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.5a7.9 7.9 0 0 0 0 3.2l-2 1.5 2 3.4 2.4-1a8.2 8.2 0 0 0 2.8 1.6l.4 2.9h3.6l.4-2.9a8.2 8.2 0 0 0 2.8-1.6l2.4 1 2-3.4-2-1.5Z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      );
     default:
       return (
         <svg {...common}>
@@ -1115,11 +1122,15 @@ function HomeView({
 
         <div className="home-user-zone">
           <div className="home-avatar-wrap">
-            <div className="home-avatar">
-              {telegramUser?.first_name?.[0] || 'U'}
+            <div className={`home-avatar ${telegramUser?.photo_url ? 'has-photo' : ''}`}>
+              {telegramUser?.photo_url ? (
+                <img src={telegramUser.photo_url} alt="" />
+              ) : (
+                telegramUser?.first_name?.[0] || 'U'
+              )}
             </div>
-            <span className="avatar-shield">
-              <AppIcon name="gem" />
+            <span className="avatar-shield settings-badge">
+              <AppIcon name="settings" />
             </span>
           </div>
 
