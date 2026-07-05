@@ -138,7 +138,16 @@ async function uploadManualGiftWebp(supabase, file, title = '') {
     .replace(/^-+|-+$/g, '')
     .slice(0, 40) || 'gift';
 
-  const pngBuffer = await sharp(originalBuffer, { animated: true })
+  const pngBuffer = await sharp(originalBuffer, {
+    animated: false,
+    limitInputPixels: false,
+  })
+    .resize({
+      width: 512,
+      height: 512,
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
     .png()
     .toBuffer();
 
@@ -332,8 +341,10 @@ export async function POST(request) {
         value: clean(libraryGift.id),
         chance: Math.max(0, toNumber(data.chance, 10)),
         stock: Math.max(0, Math.floor(toNumber(data.stock, 1))),
+        // Case aylanishida va cardlarda static PNG chiqadi.
         image_url: libraryGift.png_url || libraryGift.webp_url || '',
-        animation_url: '',
+        // Yutganda/result/inventory joylarida original WEBP animatsiya ishlaydi.
+        animation_url: libraryGift.webp_url || '',
         background_value: backgroundValue,
         rarity: clean(data.rarity || 'rare'),
         is_active: data.is_active !== false,
