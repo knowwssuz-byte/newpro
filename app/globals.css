@@ -6578,3 +6578,26 @@ button:disabled {
     height: 27px !important;
   }
 }
+
+.mobile-nav-btn .nav-icon-img {
+  filter: brightness(0) invert(1) !important;
+  opacity: 0.55 !important;
+}
+
+.mobile-nav-btn.active .nav-icon-img {
+  filter:
+    brightness(0)
+    invert(1)
+    drop-shadow(0 0 10px rgba(255, 255, 255, .65))
+    drop-shadow(0 0 16px rgba(139, 92, 246, .55)) !important;
+  opacity: 1 !important;
+}
+
+.mobile-nav-btn.center-home .nav-icon-img {
+  filter:
+    brightness(0)
+    invert(1)
+    drop-shadow(0 0 12px rgba(255, 255, 255, .85))
+    drop-shadow(0 0 22px rgba(139, 92, 246, .75)) !important;
+  opacity: 1 !important;
+}
