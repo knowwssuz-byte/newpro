@@ -39,6 +39,28 @@ function smallId(value = '') {
   return `${text.slice(0, 7)}...${text.slice(-5)}`;
 }
 
+
+const backgroundPresets = [
+  { title: 'Purple', color: '#7c3aed' },
+  { title: 'Blue', color: '#2563eb' },
+  { title: 'Gold', color: '#f59e0b' },
+  { title: 'Green', color: '#10b981' },
+  { title: 'Rose', color: '#e11d48' },
+  { title: 'Dark', color: '#111827' },
+];
+
+function gradientFromColor(color = '#7c3aed') {
+  const cleanColor = String(color || '#7c3aed').trim();
+
+  return `radial-gradient(circle at 24% 12%, rgba(255,255,255,.22), transparent 28%), linear-gradient(135deg, ${cleanColor} 0%, #111827 68%, #020617 100%)`;
+}
+
+function firstGradientColor(value = '') {
+  const match = String(value || '').match(/#[0-9a-fA-F]{6}/);
+
+  return match?.[0] || '#7c3aed';
+}
+
 function GiftImage({ gift, className = 'admin-gift-media' }) {
   const url = gift?.png_url || gift?.image_url || gift?.webp_url || '';
 
@@ -67,6 +89,7 @@ export default function AdminClient() {
   const [libraryForm, setLibraryForm] = useState(emptyLibraryForm);
   const [libraryFile, setLibraryFile] = useState(null);
   const [giftForm, setGiftForm] = useState(emptyGiftForm);
+  const [backgroundColor, setBackgroundColor] = useState('#7c3aed');
 
   const [balanceUserId, setBalanceUserId] = useState('');
   const [balanceAmount, setBalanceAmount] = useState('');
@@ -513,16 +536,51 @@ export default function AdminClient() {
                 </select>
               </label>
 
-              <label>
-                <span>Fon rangi / gradient</span>
-                <textarea
-                  value={giftForm.background_value}
-                  onChange={(event) => setGiftForm({ ...giftForm, background_value: event.target.value })}
-                  rows={3}
-                  placeholder="#7c3aed yoki linear-gradient(135deg,#7c3aed,#111827)"
-                  required
-                />
-              </label>
+              <div className="manual-bg-builder">
+                <label>
+                  <span>Fon rangi</span>
+                  <input
+                    type="color"
+                    value={backgroundColor}
+                    onChange={(event) => {
+                      const nextColor = event.target.value;
+                      setBackgroundColor(nextColor);
+                      setGiftForm({ ...giftForm, background_value: gradientFromColor(nextColor) });
+                    }}
+                  />
+                </label>
+
+                <div className="manual-bg-preset-row">
+                  {backgroundPresets.map((preset) => (
+                    <button
+                      key={preset.title}
+                      type="button"
+                      style={{ '--preset-color': preset.color }}
+                      onClick={() => {
+                        setBackgroundColor(preset.color);
+                        setGiftForm({ ...giftForm, background_value: gradientFromColor(preset.color) });
+                      }}
+                    >
+                      {preset.title}
+                    </button>
+                  ))}
+                </div>
+
+                <label>
+                  <span>Fon gradient/CSS</span>
+                  <textarea
+                    value={giftForm.background_value}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setBackgroundColor(firstGradientColor(nextValue));
+                      setGiftForm({ ...giftForm, background_value: nextValue });
+                    }}
+                    rows={3}
+                    placeholder="#7c3aed yoki linear-gradient(135deg,#7c3aed,#111827)"
+                    required
+                  />
+                </label>
+              </div>
 
               {selectedLibraryGift ? (
                 <div className="selected-catalog-preview manual-selected-preview" style={{ '--telegram-gift-bg': giftForm.background_value || 'linear-gradient(135deg,#7c3aed,#111827)' }}>
