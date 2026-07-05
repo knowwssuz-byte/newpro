@@ -687,7 +687,7 @@ export default function AdminClient() {
 
               {telegramSyncResult ? (
                 <div className="telegram-sync-summary">
-                  <strong>{telegramSyncResult.collectionsFound || telegramSyncResult.total || 0}</strong> collections · <strong>{telegramSyncResult.total || 0}</strong> saved · <strong>{telegramSyncResult.downloaded || 0}</strong> assets downloaded · <strong>{telegramSyncResult.skippedRegular || 0}</strong> regular skipped
+                  <strong>{telegramSyncResult.collectionsFound || telegramSyncResult.total || 0}</strong> collections · <strong>{telegramSyncResult.total || 0}</strong> saved · <strong>{telegramSyncResult.downloaded || 0}</strong> assets downloaded · <strong>{telegramSyncResult.skippedMissingAssets || 0}</strong> without assets · <strong>{telegramSyncResult.skippedRegular || 0}</strong> regular skipped
                 </div>
               ) : null}
             </div>
