@@ -1004,11 +1004,29 @@ function BalancePill({ balance }) {
 }
 
 function NavButton({ item, active, onClick, mobile = false }) {
+  const preventIconMenu = (event) => {
+    event.preventDefault();
+    return false;
+  };
+
   return (
-    <button type="button" className={`nav-button ${active ? 'active' : ''} ${item.center ? 'center-home' : ''} ${mobile ? 'mobile-nav-btn' : ''}`} onClick={onClick}>
-      <span className="nav-icon-wrap">
+    <button
+      type="button"
+      className={`nav-button ${active ? 'active' : ''} ${item.center ? 'center-home' : ''} ${mobile ? 'mobile-nav-btn' : ''}`}
+      onClick={onClick}
+      onContextMenu={preventIconMenu}
+    >
+      <span className="nav-icon-wrap" onContextMenu={preventIconMenu}>
         {item.image ? (
-          <img className="nav-icon-img" src={item.image} alt="" loading="eager" />
+          <img
+            className="nav-icon-img"
+            src={item.image}
+            alt=""
+            loading="eager"
+            draggable="false"
+            aria-hidden="true"
+            onContextMenu={preventIconMenu}
+          />
         ) : (
           <AppIcon name={item.icon} />
         )}
