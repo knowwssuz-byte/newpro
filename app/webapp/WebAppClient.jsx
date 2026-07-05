@@ -1412,6 +1412,86 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
   );
 }
 
+
+
+function isImageAnimationUrl(url = '') {
+  const cleanUrl = String(url || '').split('?')[0].toLowerCase();
+
+  return (
+    cleanUrl.endsWith('.webp') ||
+    cleanUrl.endsWith('.gif') ||
+    cleanUrl.endsWith('.png') ||
+    cleanUrl.endsWith('.jpg') ||
+    cleanUrl.endsWith('.jpeg') ||
+    cleanUrl.includes('/manual-gifts/webp/')
+  );
+}
+
+function isTgsAnimationUrl(url = '') {
+  const cleanUrl = String(url || '').split('?')[0].toLowerCase();
+  return cleanUrl.endsWith('.tgs') || cleanUrl.includes('/telegram/animations/');
+}
+
+function TelegramTgsAnimation({ src, className }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    let animation = null;
+    let cancelled = false;
+
+    async function loadAnimation() {
+      try {
+        const [{ default: lottie }, pakoModule] = await Promise.all([
+          import('lottie-web'),
+          import('pako'),
+        ]);
+        const pako = pakoModule.default || pakoModule;
+        const response = await fetch(src, { cache: 'force-cache' });
+
+        if (!response.ok) {
+          throw new Error(`TGS download failed: ${response.status}`);
+        }
+
+        const buffer = await response.arrayBuffer();
+        let jsonText = '';
+
+        try {
+          jsonText = pako.ungzip(new Uint8Array(buffer), { to: 'string' });
+        } catch {
+          jsonText = new TextDecoder().decode(buffer);
+        }
+
+        if (cancelled || !containerRef.current) return;
+
+        animation = lottie.loadAnimation({
+          container: containerRef.current,
+          renderer: 'svg',
+          loop: true,
+          autoplay: true,
+          animationData: JSON.parse(jsonText),
+        });
+      } catch (error) {
+        console.warn('TGS animation failed:', error?.message || error);
+      }
+    }
+
+    loadAnimation();
+
+    return () => {
+      cancelled = true;
+      if (animation) {
+        animation.destroy();
+      }
+    };
+  }, [src]);
+
+  return (
+    <span className={`${className} tgs-gift-media`}>
+      <span ref={containerRef} className="tgs-gift-canvas" />
+    </span>
+  );
+}
+
 function GiftMedia({ gift, compact = false, preferStatic = false }) {
   const mediaClass = compact ? 'gift-media compact' : 'gift-media';
 
@@ -1435,11 +1515,19 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
   const imageUrl = gift.image_url || '';
 
   if (animationUrl && !preferStatic) {
+    if (isTgsAnimationUrl(animationUrl)) {
+      return <TelegramTgsAnimation src={animationUrl} className={mediaClass} />;
+    }
+
+    if (isImageAnimationUrl(animationUrl)) {
+      return <img className={`${mediaClass} animated-webp-media`} src={animationUrl} alt="" loading="lazy" draggable="false" />;
+    }
+
     return <video className={mediaClass} src={animationUrl} autoPlay loop muted playsInline />;
   }
 
   if (imageUrl) {
-    return <img className={mediaClass} src={imageUrl} alt="" loading="lazy" />;
+    return <img className={mediaClass} src={imageUrl} alt="" loading="lazy" draggable="false" />;
   }
 
   return (
