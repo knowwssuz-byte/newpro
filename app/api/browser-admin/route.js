@@ -143,6 +143,8 @@ export async function POST(request) {
       const syncResult = await syncTelegramGiftCatalog(supabase, {
         limit: Number(body.limit || 160),
         downloadAssets: body.downloadAssets !== false,
+        replaceCatalog: body.replaceCatalog !== false,
+        cleanupPending: body.cleanupPending !== false,
       });
 
       const data = await bootstrap(supabase);
