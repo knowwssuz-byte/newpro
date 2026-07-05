@@ -1235,34 +1235,51 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
   const badgeColor = caseBadgeColor(caseItem);
   const readyCount = gifts.filter(eligibleGift).length;
   const disabled = busy || readyCount === 0;
+  const isFree = Number(caseItem.price || 0) === 0;
+  const buttonText = isFree ? 'FREE' : formatPrice(caseItem.price);
 
   return (
     <button
       type="button"
-      className={`case-card pro-case-card app-store-case ${disabled ? 'disabled' : ''}`}
+      className={`case-card case-showcase-card ${disabled ? 'disabled' : ''}`}
       style={{
         '--case-accent': accent,
         '--case-badge': badgeColor,
       }}
       onClick={() => onDetails(caseItem)}
     >
-      <div className="case-media">
+      <div className="case-showcase-media">
+        <span className="case-showcase-glow" aria-hidden="true" />
+
         {caseItem.image_url ? (
           <img src={caseItem.image_url} alt="" loading="lazy" />
         ) : (
-          <AppIcon name="box" />
+          <span className="case-showcase-fallback">
+            <AppIcon name="box" />
+          </span>
         )}
-        {badge ? <span className="case-badge floating">{badge}</span> : null}
+
+        {badge ? <span className="case-showcase-badge">{badge}</span> : null}
       </div>
 
-      <div className="case-card-body">
-        <h3>{caseItem.title}</h3>
-        <p>{caseItem.description || `${gifts.length || 0} gifts`}</p>
-
-        <div className="case-card-footer">
-          <span>{formatPrice(caseItem.price)} {coinIcon()}</span>
-          <em>★</em>
+      <div className="case-showcase-footer">
+        <div className="case-showcase-copy">
+          <h3>{caseItem.title}</h3>
+          <p>{caseItem.description || `${gifts.length || 0} rewards`}</p>
         </div>
+
+        <button
+          type="button"
+          className="case-showcase-open"
+          disabled={disabled}
+          onClick={(event) => {
+            event.stopPropagation();
+            onOpen(caseItem);
+          }}
+        >
+          <AppIcon name="gift" />
+          <span>{buttonText}</span>
+        </button>
       </div>
     </button>
   );
