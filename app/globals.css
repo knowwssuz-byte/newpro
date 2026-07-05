@@ -5856,32 +5856,391 @@ button:disabled {
 ========================================================= */
 
 .home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
-  top: -14px !important;
-  bottom: 14px !important;
+  top: -16px !important;
+  bottom: 16px !important;
 }
 
 .home-promo-stack .promo-image-banner.rocket .promo-webp {
-  transform: translateX(1%) translateY(-14px) scale(.80) rotate(1deg) !important;
+  transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
 }
 
 @media (max-width: 430px) {
   .home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
-    top: -14px !important;
-    bottom: 14px !important;
+    top: -16px !important;
+    bottom: 16px !important;
   }
 
   .home-promo-stack .promo-image-banner.rocket .promo-webp {
-    transform: translateX(1%) translateY(-14px) scale(.80) rotate(1deg) !important;
+    transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
   }
 }
 
 @media (max-width: 360px) {
   .home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
-    top: -14px !important;
-    bottom: 14px !important;
+    top: -16px !important;
+    bottom: 16px !important;
   }
 
   .home-promo-stack .promo-image-banner.rocket .promo-webp {
-    transform: translateX(1%) translateY(-14px) scale(.78) rotate(1deg) !important;
+    transform: translateX(1%) translateY(-16px) scale(.78) rotate(1deg) !important;
+  }
+}
+
+/* =========================================================
+   PREMIUM BOTTOM NAVBAR FINAL V1
+   Clean glass dock + glowing active states + floating Home.
+   This block must stay at the end of globals.css.
+========================================================= */
+
+.app-shell {
+  padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+.mobile-nav.premium-card,
+.mobile-nav {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: calc(11px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 9999 !important;
+  width: calc(100% - 22px) !important;
+  max-width: 440px !important;
+  height: 72px !important;
+  min-height: 72px !important;
+  padding: 8px 8px !important;
+  margin: 0 !important;
+  transform: translateX(-50%) !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: center !important;
+  gap: 5px !important;
+  border-radius: 28px !important;
+  overflow: visible !important;
+  isolation: isolate !important;
+  background:
+    radial-gradient(circle at 50% -58%, rgba(139, 92, 246, 0.42), transparent 44%),
+    radial-gradient(circle at 16% 115%, rgba(34, 211, 238, 0.12), transparent 36%),
+    radial-gradient(circle at 84% 115%, rgba(236, 72, 153, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(31, 32, 58, 0.92) 0%, rgba(16, 18, 36, 0.94) 54%, rgba(9, 12, 27, 0.98) 100%) !important;
+  border: 1px solid rgba(196, 181, 253, 0.18) !important;
+  box-shadow:
+    0 22px 52px rgba(0, 0, 0, 0.58),
+    0 8px 20px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24) !important;
+  backdrop-filter: blur(18px) saturate(160%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(160%) !important;
+}
+
+.mobile-nav::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 4px !important;
+  z-index: -1 !important;
+  border-radius: 24px !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.075), transparent 52%),
+    linear-gradient(90deg, transparent, rgba(255,255,255,0.045), transparent) !important;
+  opacity: 1 !important;
+}
+
+.mobile-nav::after {
+  content: "" !important;
+  position: absolute !important;
+  left: 22px !important;
+  right: 22px !important;
+  bottom: 5px !important;
+  height: 1px !important;
+  border-radius: 999px !important;
+  pointer-events: none !important;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.30), transparent) !important;
+  opacity: .58 !important;
+}
+
+.mobile-nav-btn {
+  position: relative !important;
+  z-index: 2 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  height: 54px !important;
+  min-height: 54px !important;
+  padding: 5px 2px 4px !important;
+  border: 1px solid transparent !important;
+  border-radius: 19px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 4px !important;
+  color: rgba(226, 232, 255, 0.62) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: translateY(0) !important;
+  cursor: pointer !important;
+  -webkit-tap-highlight-color: transparent !important;
+  transition:
+    transform .18s ease,
+    color .18s ease,
+    background .18s ease,
+    border-color .18s ease,
+    box-shadow .18s ease !important;
+}
+
+.mobile-nav-btn:active {
+  transform: translateY(1px) scale(.97) !important;
+}
+
+.mobile-nav-btn .nav-icon-wrap,
+.mobile-nav-btn span {
+  position: relative !important;
+  width: 28px !important;
+  height: 25px !important;
+  border-radius: 13px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: currentColor !important;
+  background: transparent !important;
+  transition:
+    transform .18s ease,
+    background .18s ease,
+    box-shadow .18s ease !important;
+}
+
+.mobile-nav-btn svg {
+  width: 20px !important;
+  height: 20px !important;
+  stroke-width: 2.35 !important;
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,.20)) !important;
+}
+
+.mobile-nav-btn strong {
+  position: relative !important;
+  top: 0 !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  color: currentColor !important;
+  font-size: 10.5px !important;
+  line-height: 1 !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.mobile-nav-btn:not(.center-home).active,
+.mobile-nav-btn:not(.center-home):hover {
+  color: #ffffff !important;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255,255,255,.16), transparent 42%),
+    linear-gradient(180deg, rgba(139, 92, 246, 0.28), rgba(34, 211, 238, 0.10)) !important;
+  border-color: rgba(196, 181, 253, 0.18) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.10),
+    0 10px 20px rgba(0,0,0,.16),
+    0 0 18px rgba(139, 92, 246, 0.16) !important;
+}
+
+.mobile-nav-btn:not(.center-home).active .nav-icon-wrap,
+.mobile-nav-btn:not(.center-home).active span {
+  transform: translateY(-1px) !important;
+  background: rgba(255,255,255,.08) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+.mobile-nav-btn:not(.center-home).active::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 5px !important;
+  left: 50% !important;
+  width: 18px !important;
+  height: 3px !important;
+  border-radius: 999px !important;
+  transform: translateX(-50%) !important;
+  background: linear-gradient(90deg, #22d3ee, #a78bfa, #f472b6) !important;
+  box-shadow:
+    0 0 12px rgba(34, 211, 238, .46),
+    0 0 20px rgba(167, 139, 250, .30) !important;
+}
+
+.mobile-nav-btn.center-home {
+  width: 66px !important;
+  height: 66px !important;
+  min-height: 66px !important;
+  justify-self: center !important;
+  align-self: center !important;
+  transform: translateY(-14px) !important;
+  padding: 6px 4px 5px !important;
+  gap: 4px !important;
+  border-radius: 25px !important;
+  color: #ffffff !important;
+  background:
+    radial-gradient(circle at 38% 18%, rgba(255,255,255,.40), transparent 34%),
+    radial-gradient(circle at 50% 82%, rgba(124, 58, 237, .22), transparent 44%),
+    linear-gradient(180deg, #ffda5b 0%, #ffb72b 52%, #f08f19 100%) !important;
+  border: 2px solid rgba(255, 236, 166, 0.92) !important;
+  box-shadow:
+    0 0 0 4px rgba(139, 92, 246, 0.18),
+    0 0 34px rgba(255, 183, 43, 0.26),
+    0 16px 28px rgba(255, 171, 31, 0.26),
+    0 8px 18px rgba(0, 0, 0, 0.36),
+    inset 0 8px 14px rgba(255, 255, 255, 0.24),
+    inset 0 -8px 14px rgba(131, 70, 0, 0.18) !important;
+}
+
+.mobile-nav-btn.center-home:active {
+  transform: translateY(-12px) scale(.97) !important;
+}
+
+.mobile-nav-btn.center-home::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -5px !important;
+  border-radius: 30px !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.95), rgba(139, 92, 246, 0.54), rgba(255, 218, 91, 0.32)) border-box !important;
+  border: 1.5px solid transparent !important;
+  -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0) border-box !important;
+  -webkit-mask-composite: xor !important;
+  mask-composite: exclude !important;
+  opacity: .78 !important;
+}
+
+.mobile-nav-btn.center-home::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: -16px !important;
+  z-index: -1 !important;
+  border-radius: 38px !important;
+  pointer-events: none !important;
+  background:
+    radial-gradient(circle, rgba(255, 190, 47, 0.30), transparent 60%),
+    radial-gradient(circle, rgba(139, 92, 246, 0.16), transparent 72%) !important;
+  filter: blur(.5px) !important;
+}
+
+.mobile-nav-btn.center-home .nav-icon-wrap,
+.mobile-nav-btn.center-home span {
+  width: 32px !important;
+  height: 29px !important;
+  border-radius: 14px !important;
+  background: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.16) !important;
+}
+
+.mobile-nav-btn.center-home svg {
+  width: 20px !important;
+  height: 20px !important;
+  stroke-width: 2.55 !important;
+}
+
+.mobile-nav-btn.center-home strong {
+  color: #ffffff !important;
+  font-size: 10.5px !important;
+  font-weight: 950 !important;
+  letter-spacing: -0.04em !important;
+  text-shadow: 0 1px 4px rgba(110, 59, 0, .28) !important;
+}
+
+.mobile-nav-btn .home-glow-dot {
+  display: none !important;
+}
+
+@media (max-width: 430px) {
+  .app-shell {
+    padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .mobile-nav.premium-card,
+  .mobile-nav {
+    width: calc(100% - 18px) !important;
+    max-width: 420px !important;
+    height: 68px !important;
+    min-height: 68px !important;
+    bottom: calc(9px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 7px 7px !important;
+    border-radius: 26px !important;
+    gap: 4px !important;
+  }
+
+  .mobile-nav::before {
+    inset: 4px !important;
+    border-radius: 22px !important;
+  }
+
+  .mobile-nav-btn {
+    height: 51px !important;
+    min-height: 51px !important;
+    padding: 5px 1px 4px !important;
+    border-radius: 17px !important;
+    gap: 3px !important;
+  }
+
+  .mobile-nav-btn .nav-icon-wrap,
+  .mobile-nav-btn span {
+    width: 25px !important;
+    height: 23px !important;
+  }
+
+  .mobile-nav-btn svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .mobile-nav-btn strong {
+    font-size: 9.8px !important;
+  }
+
+  .mobile-nav-btn.center-home {
+    width: 61px !important;
+    height: 61px !important;
+    min-height: 61px !important;
+    transform: translateY(-12px) !important;
+    border-radius: 23px !important;
+  }
+
+  .mobile-nav-btn.center-home:active {
+    transform: translateY(-10px) scale(.97) !important;
+  }
+
+  .mobile-nav-btn.center-home .nav-icon-wrap,
+  .mobile-nav-btn.center-home span {
+    width: 29px !important;
+    height: 26px !important;
+  }
+
+  .mobile-nav-btn.center-home strong {
+    font-size: 9.8px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-nav.premium-card,
+  .mobile-nav {
+    width: calc(100% - 14px) !important;
+    height: 64px !important;
+    min-height: 64px !important;
+    padding: 6px !important;
+    border-radius: 24px !important;
+    gap: 2px !important;
+  }
+
+  .mobile-nav-btn {
+    height: 48px !important;
+    min-height: 48px !important;
+    border-radius: 16px !important;
+  }
+
+  .mobile-nav-btn strong {
+    font-size: 9.2px !important;
+  }
+
+  .mobile-nav-btn.center-home {
+    width: 57px !important;
+    height: 57px !important;
+    min-height: 57px !important;
+    transform: translateY(-11px) !important;
+    border-radius: 21px !important;
   }
 }
