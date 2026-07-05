@@ -7319,3 +7319,72 @@ button:disabled {
     height: 22px !important;
   }
 }
+
+/* =========================================================
+   STARS BIGGER + BALANCE NUMBER SMALLER V1
+   Faqat balance header ichidagi stars icon va balance number.
+========================================================= */
+
+.global-balance-bar .coin-icon.stars-currency-icon,
+.coin-icon.stars-currency-icon {
+  width: 31px !important;
+  height: 31px !important;
+  min-width: 31px !important;
+}
+
+.global-balance-bar .coin-icon.stars-currency-icon img,
+.coin-icon.stars-currency-icon img {
+  width: 31px !important;
+  height: 31px !important;
+  transform: scale(1.08) !important;
+  filter:
+    drop-shadow(0 0 10px rgba(56, 189, 248, .66))
+    drop-shadow(0 2px 6px rgba(0,0,0,.28)) !important;
+}
+
+.global-balance-bar .home-balance-copy strong {
+  font-size: clamp(17px, 4.6vw, 21px) !important;
+  line-height: .94 !important;
+  letter-spacing: -0.045em !important;
+  gap: 8px !important;
+}
+
+@media (max-width: 430px) {
+  .global-balance-bar .coin-icon.stars-currency-icon,
+  .coin-icon.stars-currency-icon {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+  }
+
+  .global-balance-bar .coin-icon.stars-currency-icon img,
+  .coin-icon.stars-currency-icon img {
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .global-balance-bar .home-balance-copy strong {
+    font-size: clamp(16px, 4.8vw, 20px) !important;
+    gap: 7px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .global-balance-bar .coin-icon.stars-currency-icon,
+  .coin-icon.stars-currency-icon {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+  }
+
+  .global-balance-bar .coin-icon.stars-currency-icon img,
+  .coin-icon.stars-currency-icon img {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .global-balance-bar .home-balance-copy strong {
+    font-size: 17px !important;
+    gap: 6px !important;
+  }
+}
