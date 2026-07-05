@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
-import { fetchTelegramGiftPreviews, importTelegramGiftsToCase } from '@/lib/telegramGiftsImporter';
+import { createGiftFromCatalog, fetchTelegramGiftPreviews, importTelegramGiftsToCase, listTelegramGiftCatalog, syncTelegramGiftCatalog } from '@/lib/telegramGiftsImporter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,7 +38,7 @@ async function bootstrap(supabase) {
     supabase.from('users').select('*').order('created_at', { ascending: false }).limit(250),
     supabase
       .from('withdraw_requests')
-      .select('*, gifts(id,title,type,value,image_url)')
+      .select('*, gifts(id,title,type,value,image_url,animation_url,background_value)')
       .order('created_at', { ascending: false })
       .limit(250),
   ]);
@@ -49,11 +49,20 @@ async function bootstrap(supabase) {
     throw firstError;
   }
 
+  let telegramCatalog = [];
+
+  try {
+    telegramCatalog = await listTelegramGiftCatalog(supabase);
+  } catch {
+    telegramCatalog = [];
+  }
+
   return {
     cases: casesRes.data || [],
     gifts: giftsRes.data || [],
     users: usersRes.data || [],
     withdrawals: withdrawalsRes.data || [],
+    telegramCatalog,
   };
 }
 
@@ -128,6 +137,30 @@ export async function POST(request) {
       const gifts = await fetchTelegramGiftPreviews({ limit: Number(body.limit || 120) });
 
       return json({ ok: true, telegramGifts: gifts });
+    }
+
+    if (action === 'telegram_gifts_sync') {
+      const syncResult = await syncTelegramGiftCatalog(supabase, {
+        limit: Number(body.limit || 160),
+        downloadAssets: body.downloadAssets !== false,
+      });
+
+      const data = await bootstrap(supabase);
+
+      return json({ ok: true, syncResult, ...data });
+    }
+
+    if (action === 'telegram_catalog_list') {
+      const telegramCatalog = await listTelegramGiftCatalog(supabase, { limit: Number(body.limit || 500) });
+
+      return json({ ok: true, telegramCatalog });
+    }
+
+    if (action === 'gift_create_from_catalog') {
+      const gift = await createGiftFromCatalog(supabase, body.giftData || {});
+      const data = await bootstrap(supabase);
+
+      return json({ ok: true, gift, ...data });
     }
 
     if (action === 'telegram_gifts_import') {
