@@ -6609,3 +6609,43 @@ button:disabled {
   -webkit-user-select: none !important;
   user-select: none !important;
 }
+
+/* =========================================================
+   NAV ICON WHITE FINAL OVERRIDE
+   SVG/PNG img iconlar qora chiqib qolmasligi uchun.
+   Bu block eng oxirida turishi kerak.
+========================================================= */
+
+.mobile-nav-btn .nav-icon-img {
+  opacity: .64 !important;
+  filter:
+    brightness(0)
+    invert(1)
+    drop-shadow(0 2px 4px rgba(0, 0, 0, .22)) !important;
+}
+
+.mobile-nav-btn.active .nav-icon-img {
+  opacity: 1 !important;
+  filter:
+    brightness(0)
+    invert(1)
+    drop-shadow(0 0 10px rgba(255, 255, 255, .62))
+    drop-shadow(0 0 16px rgba(139, 92, 246, .58)) !important;
+}
+
+.mobile-nav-btn.center-home .nav-icon-img {
+  opacity: 1 !important;
+  filter:
+    brightness(0)
+    invert(1)
+    drop-shadow(0 0 12px rgba(255, 255, 255, .90))
+    drop-shadow(0 0 24px rgba(139, 92, 246, .82)) !important;
+}
+
+.mobile-nav-btn.active strong {
+  color: rgba(255, 255, 255, .98) !important;
+}
+
+.mobile-nav-btn:not(.active) strong {
+  color: rgba(255, 255, 255, .58) !important;
+}
