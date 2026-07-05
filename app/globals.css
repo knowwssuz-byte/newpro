@@ -7737,3 +7737,271 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================================
+   MANUAL GIFT DATABASE ADMIN V1
+========================================================= */
+
+.manual-admin-page .browser-admin-tabs {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.manual-library-layout {
+  grid-template-columns: minmax(280px, 390px) minmax(0, 1fr);
+}
+
+.manual-upload-form input[type="file"] {
+  min-height: 52px;
+  padding: 13px;
+  cursor: pointer;
+}
+
+.manual-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(245px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+.manual-library-card {
+  border-radius: 24px;
+  border: 1px solid rgba(167,139,250,.18);
+  background:
+    radial-gradient(circle at 15% 5%, rgba(139,92,246,.25), transparent 42%),
+    linear-gradient(135deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+  box-shadow:
+    0 18px 44px rgba(0,0,0,.27),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.manual-library-media {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 40% 20%, rgba(255,255,255,.18), transparent 38%),
+    linear-gradient(135deg, rgba(139,92,246,.54), rgba(15,23,42,.86));
+  overflow: hidden;
+}
+
+.manual-library-card strong {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 950;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.manual-library-card p,
+.manual-library-card small {
+  display: block;
+  margin: 4px 0 0;
+  color: rgba(226,232,240,.74);
+  font-size: 12px;
+}
+
+.manual-card-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+
+.manual-card-actions button {
+  flex: 1;
+}
+
+.manual-bg-preview {
+  width: 58px;
+  height: 42px;
+  border-radius: 14px;
+  background: var(--manual-bg);
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: 0 10px 24px rgba(0,0,0,.23);
+  display: inline-grid;
+  place-items: center;
+}
+
+.manual-bg-preview span {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.72);
+  box-shadow: 0 0 18px rgba(255,255,255,.44);
+}
+
+.manual-bg-item {
+  grid-template-columns: 58px minmax(0, 1fr) auto auto;
+}
+
+.manual-background-live {
+  min-height: 92px;
+  border-radius: 20px;
+  background: var(--manual-bg);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 950;
+  text-shadow: 0 2px 12px rgba(0,0,0,.42);
+  border: 1px solid rgba(255,255,255,.18);
+}
+
+.manual-selected-preview {
+  min-height: 98px;
+}
+
+.manual-selected-preview .admin-gift-media {
+  width: 78px;
+  height: 78px;
+  object-fit: contain;
+}
+
+.manual-empty {
+  grid-column: 1 / -1;
+}
+
+.admin-gift-media {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  border-radius: 16px;
+}
+
+@media (max-width: 880px) {
+  .manual-admin-page .browser-admin-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .manual-library-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-bg-item {
+    grid-template-columns: 58px minmax(0, 1fr);
+  }
+}
+
+/* =========================================================
+   SIMPLE MANUAL GIFT FLOW V2
+========================================================= */
+
+.manual-admin-page .simple-manual-tabs {
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+
+.manual-library-layout {
+  grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+}
+
+.manual-upload-form input[type="file"] {
+  min-height: 52px;
+  padding: 13px;
+  cursor: pointer;
+}
+
+.manual-library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
+  gap: 14px;
+  align-content: start;
+}
+
+.manual-library-card {
+  border-radius: 24px;
+  border: 1px solid rgba(167,139,250,.18);
+  background:
+    radial-gradient(circle at 15% 5%, rgba(139,92,246,.25), transparent 42%),
+    linear-gradient(135deg, rgba(15,23,42,.92), rgba(2,6,23,.92));
+  box-shadow:
+    0 18px 44px rgba(0,0,0,.27),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  padding: 14px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.manual-library-media {
+  width: 72px;
+  height: 72px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 40% 20%, rgba(255,255,255,.18), transparent 38%),
+    linear-gradient(135deg, rgba(139,92,246,.54), rgba(15,23,42,.86));
+  overflow: hidden;
+}
+
+.manual-library-card strong {
+  color: #fff;
+  font-size: 15px;
+  font-weight: 950;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.manual-library-card p,
+.manual-library-card small {
+  display: block;
+  margin: 4px 0 0;
+  color: rgba(226,232,240,.74);
+  font-size: 12px;
+}
+
+.manual-card-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+}
+
+.manual-card-actions button {
+  flex: 1;
+}
+
+.manual-selected-preview {
+  min-height: 98px;
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at 20% 8%, rgba(255,255,255,.16), transparent 38%),
+    var(--telegram-gift-bg, linear-gradient(135deg,#7c3aed,#111827));
+}
+
+.manual-selected-preview .admin-gift-media {
+  width: 78px;
+  height: 78px;
+  object-fit: contain;
+}
+
+.admin-gift-media {
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  border-radius: 16px;
+}
+
+.manual-empty {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 880px) {
+  .manual-admin-page .simple-manual-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .manual-library-layout {
+    grid-template-columns: 1fr;
+  }
+}
