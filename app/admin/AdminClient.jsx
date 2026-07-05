@@ -655,7 +655,7 @@ export default function AdminClient() {
               <div>
                 <span>MTProto catalog sync</span>
                 <h2>Telegram Gifts</h2>
-                <p>Bu yerda Telegram akkaunt orqali giftlar 1 marta yuklab olinadi: nomi, floor narxi, image, animation va orqa fon catalogga saqlanadi. Keyin Gifts bo‘limidan casega qo‘shasiz.</p>
+                <p>Bu yerda oddiy 10–15 Stars sovg‘alar emas, faqat collectible/NFTga mos giftlar catalogga olinadi. Nomi, floor/resale narxi, image, animation va orqa fon saqlanadi. Keyin Gifts bo‘limidan casega qo‘shasiz.</p>
               </div>
 
               <div className="telegram-import-form-grid">
@@ -687,7 +687,7 @@ export default function AdminClient() {
 
               {telegramSyncResult ? (
                 <div className="telegram-sync-summary">
-                  <strong>{telegramSyncResult.total || 0}</strong> synced · <strong>{telegramSyncResult.downloaded || 0}</strong> assets downloaded · <strong>{telegramSyncResult.reused || 0}</strong> reused
+                  <strong>{telegramSyncResult.total || 0}</strong> synced · <strong>{telegramSyncResult.downloaded || 0}</strong> assets downloaded · <strong>{telegramSyncResult.reused || 0}</strong> reused · <strong>{telegramSyncResult.cleaned || 0}</strong> pending cleaned · <strong>{telegramSyncResult.skippedRegular || 0}</strong> regular skipped
                 </div>
               ) : null}
             </div>
@@ -713,8 +713,8 @@ export default function AdminClient() {
             ) : (
               <div className="telegram-import-empty">
                 <span>⭐</span>
-                <h3>Catalog hali bo‘sh</h3>
-                <p>“1 marta hammasini yuklab olish” tugmasini bosing. ENV’da TG_API_ID, TG_API_HASH va TG_STRING_SESSION bo‘lishi kerak.</p>
+                <h3>NFT/Collectible catalog hali bo‘sh</h3>
+                <p>“1 marta hammasini yuklab olish” tugmasini bosing. Oddiy Gift/Animated Emoji kartalar endi saqlanmaydi. ENV’da TG_API_ID, TG_API_HASH va TG_STRING_SESSION bo‘lishi kerak.</p>
               </div>
             )}
           </section>
