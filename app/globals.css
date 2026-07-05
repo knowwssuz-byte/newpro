@@ -5887,62 +5887,79 @@ button:disabled {
 }
 
 /* =========================================================
-   BOTTOM NAVBAR REDESIGN V2
-   Faqat pastki navbar uchun final professional redesign.
-   Boshqa bo'limlarga tegilmagan.
+   EDGE ATTACHED NAVBAR DESIGN V1
+   Faqat pastki navbar redesign.
+   Design: dark glass, purple glowing Home, side + bottom flush.
 ========================================================= */
 
 .app-shell {
-  padding-bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
 }
 
+/* Main navbar dock — pastga va yon tomonga yopishgan */
 .mobile-nav.premium-card,
 .mobile-nav {
   position: fixed !important;
-  left: 50% !important;
-  right: auto !important;
-  bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   z-index: 9999 !important;
-  width: calc(100% - 24px) !important;
-  max-width: 430px !important;
-  height: 66px !important;
-  min-height: 66px !important;
-  margin: 0 !important;
-  padding: 7px !important;
-  transform: translateX(-50%) !important;
 
+  width: 100% !important;
+  max-width: none !important;
+  height: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+  min-height: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+  margin: 0 !important;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px)) !important;
+
+  transform: none !important;
   display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   align-items: center !important;
   gap: 4px !important;
 
-  border-radius: 24px !important;
+  border-radius: 30px 30px 0 0 !important;
   overflow: visible !important;
   isolation: isolate !important;
 
   background:
-    linear-gradient(180deg, rgba(28, 31, 55, .88), rgba(9, 12, 26, .96)) !important;
-  border: 1px solid rgba(255, 255, 255, .12) !important;
-  box-shadow:
-    0 22px 48px rgba(0, 0, 0, .48),
-    0 7px 18px rgba(0, 0, 0, .24),
-    inset 0 1px 0 rgba(255, 255, 255, .12),
-    inset 0 -1px 0 rgba(0, 0, 0, .28) !important;
+    radial-gradient(circle at 50% -22%, rgba(124, 58, 237, 0.32), transparent 42%),
+    radial-gradient(circle at 8% 100%, rgba(59, 130, 246, 0.13), transparent 34%),
+    radial-gradient(circle at 92% 100%, rgba(124, 58, 237, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(19, 23, 48, 0.96) 0%, rgba(8, 10, 24, 0.99) 100%) !important;
 
-  backdrop-filter: blur(18px) saturate(145%) !important;
-  -webkit-backdrop-filter: blur(18px) saturate(145%) !important;
+  border-top: 1px solid rgba(167, 139, 250, 0.24) !important;
+  border-left: 0 !important;
+  border-right: 0 !important;
+  border-bottom: 0 !important;
+
+  box-shadow:
+    0 -18px 44px rgba(0, 0, 0, 0.46),
+    0 -1px 0 rgba(255, 255, 255, 0.055),
+    inset 0 1px 0 rgba(255, 255, 255, 0.105),
+    inset 0 -18px 26px rgba(0, 0, 0, 0.28) !important;
+
+  backdrop-filter: blur(18px) saturate(150%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%) !important;
 }
 
+/* Inner neon edge like reference */
 .mobile-nav::before {
   content: "" !important;
   position: absolute !important;
-  inset: 3px !important;
+  left: 8px !important;
+  right: 8px !important;
+  top: 5px !important;
+  bottom: calc(5px + env(safe-area-inset-bottom, 0px)) !important;
   z-index: -1 !important;
-  border-radius: 21px !important;
   pointer-events: none !important;
+  border-radius: 25px 25px 0 0 !important;
   background:
-    radial-gradient(circle at 50% -35%, rgba(139, 92, 246, .30), transparent 45%),
-    linear-gradient(90deg, transparent, rgba(255,255,255,.045), transparent) !important;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), transparent 42%),
+    radial-gradient(circle at 50% 0%, rgba(124, 58, 237, 0.22), transparent 48%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    inset 0 0 0 1px rgba(167, 139, 250, 0.08) !important;
 }
 
 .mobile-nav::after {
@@ -5950,43 +5967,45 @@ button:disabled {
   position: absolute !important;
   left: 18px !important;
   right: 18px !important;
-  top: 0 !important;
-  height: 1px !important;
+  bottom: calc(0px + env(safe-area-inset-bottom, 0px)) !important;
+  height: 2px !important;
   border-radius: 999px !important;
   pointer-events: none !important;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,.34), transparent) !important;
-  opacity: .75 !important;
+  background:
+    linear-gradient(90deg, transparent 0%, rgba(124, 58, 237, 0.78) 22%, rgba(34, 211, 238, 0.42) 50%, rgba(124, 58, 237, 0.78) 78%, transparent 100%) !important;
+  opacity: 0.78 !important;
+  filter: blur(0.2px) !important;
 }
 
+/* Default tabs */
 .mobile-nav-btn {
   position: relative !important;
   z-index: 2 !important;
   width: 100% !important;
-  height: 52px !important;
-  min-height: 52px !important;
+  height: 58px !important;
+  min-height: 58px !important;
   margin: 0 !important;
-  padding: 5px 2px 4px !important;
+  padding: 6px 2px 4px !important;
 
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
   justify-content: center !important;
-  gap: 3px !important;
+  gap: 4px !important;
 
-  border: 1px solid transparent !important;
+  border: 0 !important;
   border-radius: 18px !important;
   background: transparent !important;
-  color: rgba(226, 232, 240, .60) !important;
+  color: rgba(190, 194, 224, 0.58) !important;
   box-shadow: none !important;
 
   cursor: pointer !important;
   -webkit-tap-highlight-color: transparent !important;
   transition:
-    color .18s ease,
-    background .18s ease,
-    border-color .18s ease,
     transform .18s ease,
-    box-shadow .18s ease !important;
+    color .18s ease,
+    opacity .18s ease,
+    background .18s ease !important;
 }
 
 .mobile-nav-btn:active {
@@ -5995,180 +6014,175 @@ button:disabled {
 
 .mobile-nav-btn .nav-icon-wrap,
 .mobile-nav-btn span {
-  width: 27px !important;
-  height: 25px !important;
+  width: 30px !important;
+  height: 27px !important;
   display: grid !important;
   place-items: center !important;
-  border-radius: 12px !important;
+  border-radius: 13px !important;
   color: currentColor !important;
   background: transparent !important;
-  transition:
-    background .18s ease,
-    transform .18s ease,
-    box-shadow .18s ease !important;
 }
 
 .mobile-nav-btn svg {
   width: 19px !important;
   height: 19px !important;
-  stroke-width: 2.35 !important;
+  stroke-width: 2.45 !important;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.18)) !important;
 }
 
 .mobile-nav-btn strong {
   max-width: 100% !important;
   color: currentColor !important;
-  font-size: 9.8px !important;
+  font-size: 10px !important;
   line-height: 1 !important;
-  font-weight: 850 !important;
+  font-weight: 800 !important;
   letter-spacing: -0.025em !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
 
-/* Normal active buttons */
+/* Non-home active tab */
 .mobile-nav-btn:not(.center-home).active {
-  color: #ffffff !important;
+  color: rgba(237, 233, 254, 0.98) !important;
   background:
-    radial-gradient(circle at 50% 15%, rgba(255,255,255,.16), transparent 38%),
-    linear-gradient(180deg, rgba(139, 92, 246, .34), rgba(59, 130, 246, .12)) !important;
-  border-color: rgba(167, 139, 250, .20) !important;
+    radial-gradient(circle at 50% 20%, rgba(124, 58, 237, 0.20), transparent 46%) !important;
+}
+
+.mobile-nav-btn:not(.center-home).active .nav-icon-wrap,
+.mobile-nav-btn:not(.center-home).active span {
+  background: rgba(255, 255, 255, 0.055) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.10),
-    0 9px 18px rgba(0,0,0,.18),
-    0 0 18px rgba(139, 92, 246, .14) !important;
+    inset 0 1px 0 rgba(255,255,255,.08),
+    0 0 14px rgba(124, 58, 237, .14) !important;
 }
 
 .mobile-nav-btn:not(.center-home).active::after {
   content: "" !important;
   position: absolute !important;
-  bottom: 5px !important;
   left: 50% !important;
+  bottom: 4px !important;
   width: 18px !important;
   height: 3px !important;
   border-radius: 999px !important;
   transform: translateX(-50%) !important;
-  background: linear-gradient(90deg, #22d3ee, #8b5cf6) !important;
-  box-shadow: 0 0 12px rgba(34, 211, 238, .40) !important;
+  background: #8b5cf6 !important;
+  box-shadow:
+    0 0 12px rgba(139, 92, 246, .55),
+    0 0 18px rgba(34, 211, 238, .18) !important;
 }
 
-.mobile-nav-btn:not(.center-home).active .nav-icon-wrap,
-.mobile-nav-btn:not(.center-home).active span {
-  background: rgba(255, 255, 255, .075) !important;
-  transform: translateY(-1px) !important;
-}
-
-/* Center Home button — professional purple floating button */
+/* Center Home — reference style purple glowing circle */
 .mobile-nav-btn.center-home {
-  width: 58px !important;
-  height: 58px !important;
-  min-height: 58px !important;
   justify-self: center !important;
   align-self: center !important;
-  padding: 5px 3px 4px !important;
-  border-radius: 21px !important;
-  transform: translateY(-10px) !important;
 
+  width: 66px !important;
+  height: 66px !important;
+  min-height: 66px !important;
+  padding: 6px 4px 5px !important;
+  gap: 3px !important;
+  transform: translateY(-18px) !important;
+
+  border-radius: 50% !important;
   color: #ffffff !important;
+
   background:
-    radial-gradient(circle at 36% 18%, rgba(255,255,255,.34), transparent 32%),
-    linear-gradient(145deg, #9b5cf7 0%, #7c3aed 52%, #4f46e5 100%) !important;
-  border: 1px solid rgba(221, 214, 254, .42) !important;
+    radial-gradient(circle at 38% 24%, rgba(255,255,255,.40), transparent 34%),
+    radial-gradient(circle at 50% 70%, rgba(192, 132, 252, .30), transparent 48%),
+    linear-gradient(145deg, #8b5cf6 0%, #6d28d9 52%, #2e1065 100%) !important;
+
+  border: 1.5px solid rgba(216, 180, 254, .78) !important;
+
   box-shadow:
-    0 0 0 5px rgba(139, 92, 246, .12),
-    0 14px 28px rgba(124, 58, 237, .28),
-    0 7px 18px rgba(0, 0, 0, .34),
-    inset 0 1px 0 rgba(255,255,255,.22),
-    inset 0 -8px 13px rgba(30, 20, 88, .24) !important;
+    0 0 0 7px rgba(88, 28, 135, .25),
+    0 0 0 12px rgba(124, 58, 237, .09),
+    0 0 30px rgba(139, 92, 246, .70),
+    0 12px 28px rgba(76, 29, 149, .52),
+    inset 0 4px 10px rgba(255,255,255,.18),
+    inset 0 -12px 18px rgba(30, 10, 80, .30) !important;
 }
 
 .mobile-nav-btn.center-home:active {
-  transform: translateY(-9px) scale(.97) !important;
+  transform: translateY(-16px) scale(.96) !important;
 }
 
 .mobile-nav-btn.center-home::before {
   content: "" !important;
   position: absolute !important;
-  inset: -7px !important;
+  inset: -9px !important;
   z-index: -1 !important;
-  border-radius: 26px !important;
+  border-radius: 50% !important;
   pointer-events: none !important;
   background:
-    radial-gradient(circle, rgba(139, 92, 246, .26), transparent 62%) !important;
+    radial-gradient(circle, rgba(139, 92, 246, .36), transparent 66%) !important;
+  filter: blur(.2px) !important;
 }
 
 .mobile-nav-btn.center-home::after {
   content: "" !important;
   position: absolute !important;
-  bottom: -3px !important;
-  left: 50% !important;
-  width: 28px !important;
-  height: 4px !important;
-  border-radius: 999px !important;
-  transform: translateX(-50%) !important;
-  background: linear-gradient(90deg, #22d3ee, #a78bfa) !important;
+  inset: -2px !important;
+  border-radius: 50% !important;
+  pointer-events: none !important;
+  border: 1px solid rgba(167, 139, 250, .70) !important;
   box-shadow:
-    0 0 14px rgba(34, 211, 238, .48),
-    0 0 18px rgba(167, 139, 250, .35) !important;
+    0 0 18px rgba(167, 139, 250, .55),
+    inset 0 0 16px rgba(167, 139, 250, .18) !important;
 }
 
 .mobile-nav-btn.center-home .nav-icon-wrap,
 .mobile-nav-btn.center-home span {
-  width: 29px !important;
-  height: 26px !important;
-  border-radius: 13px !important;
-  background: rgba(255,255,255,.15) !important;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.16) !important;
+  width: 38px !important;
+  height: 35px !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .mobile-nav-btn.center-home svg {
-  width: 19px !important;
-  height: 19px !important;
-  stroke-width: 2.55 !important;
+  width: 29px !important;
+  height: 29px !important;
+  stroke-width: 2.65 !important;
+  filter:
+    drop-shadow(0 0 10px rgba(255,255,255,.70))
+    drop-shadow(0 0 18px rgba(167,139,250,.70)) !important;
 }
 
 .mobile-nav-btn.center-home strong {
-  color: #ffffff !important;
-  font-size: 9.7px !important;
-  font-weight: 950 !important;
+  display: none !important;
 }
 
 .mobile-nav-btn .home-glow-dot {
   display: none !important;
 }
 
+/* Mobile tuning */
 @media (max-width: 430px) {
   .app-shell {
-    padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)) !important;
+    padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important;
   }
 
   .mobile-nav.premium-card,
   .mobile-nav {
-    width: calc(100% - 18px) !important;
-    max-width: 410px !important;
-    height: 62px !important;
-    min-height: 62px !important;
-    bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
-    padding: 6px !important;
-    border-radius: 22px !important;
+    height: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: calc(74px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 7px 10px calc(7px + env(safe-area-inset-bottom, 0px)) !important;
+    border-radius: 28px 28px 0 0 !important;
     gap: 3px !important;
   }
 
-  .mobile-nav::before {
-    border-radius: 19px !important;
-  }
-
   .mobile-nav-btn {
-    height: 49px !important;
-    min-height: 49px !important;
-    padding: 4px 1px 3px !important;
-    border-radius: 16px !important;
+    height: 54px !important;
+    min-height: 54px !important;
+    padding: 5px 1px 4px !important;
+    gap: 3px !important;
   }
 
   .mobile-nav-btn .nav-icon-wrap,
   .mobile-nav-btn span {
-    width: 25px !important;
-    height: 23px !important;
+    width: 27px !important;
+    height: 25px !important;
   }
 
   .mobile-nav-btn svg {
@@ -6177,58 +6191,59 @@ button:disabled {
   }
 
   .mobile-nav-btn strong {
-    font-size: 9.2px !important;
+    font-size: 9px !important;
   }
 
   .mobile-nav-btn.center-home {
-    width: 54px !important;
-    height: 54px !important;
-    min-height: 54px !important;
-    border-radius: 20px !important;
-    transform: translateY(-9px) !important;
+    width: 62px !important;
+    height: 62px !important;
+    min-height: 62px !important;
+    transform: translateY(-16px) !important;
   }
 
   .mobile-nav-btn.center-home:active {
-    transform: translateY(-8px) scale(.97) !important;
+    transform: translateY(-14px) scale(.96) !important;
   }
 
   .mobile-nav-btn.center-home .nav-icon-wrap,
   .mobile-nav-btn.center-home span {
-    width: 27px !important;
-    height: 24px !important;
+    width: 36px !important;
+    height: 33px !important;
   }
 
-  .mobile-nav-btn.center-home strong {
-    font-size: 9.2px !important;
+  .mobile-nav-btn.center-home svg {
+    width: 27px !important;
+    height: 27px !important;
   }
 }
 
 @media (max-width: 360px) {
   .mobile-nav.premium-card,
   .mobile-nav {
-    width: calc(100% - 14px) !important;
-    height: 59px !important;
-    min-height: 59px !important;
-    border-radius: 20px !important;
-    padding: 5px !important;
-    gap: 2px !important;
+    height: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+    min-height: calc(70px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px)) !important;
+    border-radius: 25px 25px 0 0 !important;
   }
 
   .mobile-nav-btn {
-    height: 47px !important;
-    min-height: 47px !important;
-    border-radius: 15px !important;
+    height: 51px !important;
+    min-height: 51px !important;
   }
 
   .mobile-nav-btn strong {
-    font-size: 8.8px !important;
+    font-size: 8.4px !important;
   }
 
   .mobile-nav-btn.center-home {
-    width: 51px !important;
-    height: 51px !important;
-    min-height: 51px !important;
-    transform: translateY(-8px) !important;
-    border-radius: 18px !important;
+    width: 58px !important;
+    height: 58px !important;
+    min-height: 58px !important;
+    transform: translateY(-15px) !important;
+  }
+
+  .mobile-nav-btn.center-home svg {
+    width: 25px !important;
+    height: 25px !important;
   }
 }
