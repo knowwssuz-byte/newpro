@@ -5810,7 +5810,7 @@ button:disabled {
 }
 
 .home-promo-stack .promo-image-banner.rocket .promo-webp {
-  transform: translateX(1%) translateY(-18px) scale(.80) rotate(1deg) !important;
+  transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
 }
 
 .home-promo-stack .promo-image-banner.pvp .promo-webp {
