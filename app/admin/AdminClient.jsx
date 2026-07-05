@@ -32,6 +32,12 @@ function money(value) {
   return new Intl.NumberFormat('uz-UZ').format(Number(value || 0));
 }
 
+function smallId(value = '') {
+  const text = String(value || '');
+  if (text.length <= 14) return text;
+  return `${text.slice(0, 7)}...${text.slice(-5)}`;
+}
+
 export default function AdminClient() {
   const [adminKey, setAdminKey] = useState('');
   const [saved, setSaved] = useState(false);
@@ -49,6 +55,16 @@ export default function AdminClient() {
   const [giftForm, setGiftForm] = useState(emptyGiftForm);
   const [balanceUserId, setBalanceUserId] = useState('');
   const [balanceAmount, setBalanceAmount] = useState('');
+
+  const [telegramGifts, setTelegramGifts] = useState([]);
+  const [selectedTelegramGiftIds, setSelectedTelegramGiftIds] = useState([]);
+  const [telegramImportForm, setTelegramImportForm] = useState({
+    caseId: '',
+    defaultChance: '10',
+    defaultStock: '1',
+    rarity: 'legendary',
+    skipExisting: true,
+  });
 
   const giftsByCase = useMemo(() => {
     return gifts.reduce((acc, gift) => {
@@ -125,6 +141,7 @@ export default function AdminClient() {
 
     const firstCaseId = data.cases?.[0]?.id || '';
     setGiftForm((current) => (current.case_id ? current : { ...current, case_id: firstCaseId }));
+    setTelegramImportForm((current) => (current.caseId ? current : { ...current, caseId: firstCaseId }));
   }
 
   async function login(event) {
@@ -140,6 +157,9 @@ export default function AdminClient() {
     setGifts(data.gifts || []);
     setUsers(data.users || []);
     setWithdrawals(data.withdrawals || []);
+
+    const firstCaseId = data.cases?.[0]?.id || '';
+    setTelegramImportForm((current) => ({ ...current, caseId: current.caseId || firstCaseId }));
   }
 
   function logout() {
@@ -150,6 +170,8 @@ export default function AdminClient() {
     setGifts([]);
     setUsers([]);
     setWithdrawals([]);
+    setTelegramGifts([]);
+    setSelectedTelegramGiftIds([]);
   }
 
   async function createCase(event) {
@@ -248,6 +270,62 @@ export default function AdminClient() {
     await bootstrap();
   }
 
+  async function loadTelegramGifts() {
+    const data = await run(() => callAdmin('telegram_gifts_list', { limit: 120 }), 'Telegram gifts olindi ✅');
+
+    if (!data) return;
+
+    const list = data.telegramGifts || [];
+    setTelegramGifts(list);
+    setSelectedTelegramGiftIds(list.slice(0, 12).map((gift) => gift.telegramGiftId));
+  }
+
+  function toggleTelegramGift(id) {
+    setSelectedTelegramGiftIds((current) => {
+      if (current.includes(id)) {
+        return current.filter((item) => item !== id);
+      }
+
+      return [...current, id];
+    });
+  }
+
+  function selectAllTelegramGifts() {
+    setSelectedTelegramGiftIds(telegramGifts.map((gift) => gift.telegramGiftId));
+  }
+
+  function clearTelegramGifts() {
+    setSelectedTelegramGiftIds([]);
+  }
+
+  async function importTelegramGifts(event) {
+    event.preventDefault();
+
+    const data = await run(
+      () =>
+        callAdmin('telegram_gifts_import', {
+          caseId: telegramImportForm.caseId,
+          giftIds: selectedTelegramGiftIds,
+          defaultChance: Number(telegramImportForm.defaultChance || 10),
+          defaultStock: Number(telegramImportForm.defaultStock || 1),
+          rarity: telegramImportForm.rarity,
+          skipExisting: telegramImportForm.skipExisting,
+        }),
+      'Telegram giftlar import qilindi ✅'
+    );
+
+    if (!data) return;
+
+    setCases(data.cases || []);
+    setGifts(data.gifts || []);
+    setUsers(data.users || []);
+    setWithdrawals(data.withdrawals || []);
+
+    const inserted = data.importResult?.inserted?.length || 0;
+    const skipped = data.importResult?.skipped?.length || 0;
+    showToast(`Import: ${inserted} qo‘shildi, ${skipped} skip`);
+  }
+
   if (!saved) {
     return (
       <main className="browser-admin-page">
@@ -300,9 +378,9 @@ export default function AdminClient() {
         {error ? <div className="admin-error wide">{error}</div> : null}
 
         <nav className="browser-admin-tabs">
-          {['cases', 'gifts', 'users', 'withdrawals'].map((item) => (
+          {['cases', 'gifts', 'telegram', 'users', 'withdrawals'].map((item) => (
             <button key={item} type="button" className={tab === item ? 'active' : ''} onClick={() => setTab(item)}>
-              {item}
+              {item === 'telegram' ? 'telegram gifts' : item}
             </button>
           ))}
         </nav>
@@ -387,6 +465,103 @@ export default function AdminClient() {
                 </div>
               ))}
             </div>
+          </section>
+        ) : null}
+
+        {tab === 'telegram' ? (
+          <section className="telegram-import-panel">
+            <form className="telegram-import-controls" onSubmit={importTelegramGifts}>
+              <div>
+                <span>MTProto importer</span>
+                <h2>Telegram gifts import</h2>
+                <p>Telegram account orqali gifts olinadi, rasm/animatsiya Storage’ga yuklanadi, orqa fon gradienti ham saqlanadi.</p>
+              </div>
+
+              <div className="telegram-import-form-grid">
+                <label>
+                  <span>Case</span>
+                  <select value={telegramImportForm.caseId} onChange={(event) => setTelegramImportForm({ ...telegramImportForm, caseId: event.target.value })} required>
+                    <option value="">Case tanlang</option>
+                    {cases.map((caseItem) => (
+                      <option key={caseItem.id} value={caseItem.id}>{caseItem.title}</option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>Default chance</span>
+                  <input type="number" value={telegramImportForm.defaultChance} onChange={(event) => setTelegramImportForm({ ...telegramImportForm, defaultChance: event.target.value })} />
+                </label>
+
+                <label>
+                  <span>Default stock</span>
+                  <input type="number" value={telegramImportForm.defaultStock} onChange={(event) => setTelegramImportForm({ ...telegramImportForm, defaultStock: event.target.value })} />
+                </label>
+
+                <label>
+                  <span>Rarity</span>
+                  <select value={telegramImportForm.rarity} onChange={(event) => setTelegramImportForm({ ...telegramImportForm, rarity: event.target.value })}>
+                    <option value="rare">rare</option>
+                    <option value="epic">epic</option>
+                    <option value="legendary">legendary</option>
+                    <option value="mythic">mythic</option>
+                  </select>
+                </label>
+              </div>
+
+              <label className="telegram-checkbox-row">
+                <input type="checkbox" checked={telegramImportForm.skipExisting} onChange={(event) => setTelegramImportForm({ ...telegramImportForm, skipExisting: event.target.checked })} />
+                <span>Oldin shu casega import qilingan giftlarni skip qilish</span>
+              </label>
+
+              <div className="telegram-import-actions">
+                <button type="button" onClick={loadTelegramGifts} disabled={busy}>
+                  {busy ? 'Loading...' : 'Refresh from Telegram'}
+                </button>
+                <button type="button" onClick={selectAllTelegramGifts} disabled={!telegramGifts.length || busy}>
+                  Select all
+                </button>
+                <button type="button" onClick={clearTelegramGifts} disabled={!selectedTelegramGiftIds.length || busy}>
+                  Clear
+                </button>
+                <button type="submit" disabled={!selectedTelegramGiftIds.length || busy}>
+                  Import selected ({selectedTelegramGiftIds.length})
+                </button>
+              </div>
+            </form>
+
+            {telegramGifts.length ? (
+              <div className="telegram-gifts-grid">
+                {telegramGifts.map((gift) => {
+                  const checked = selectedTelegramGiftIds.includes(gift.telegramGiftId);
+                  return (
+                    <button
+                      type="button"
+                      className={`telegram-gift-card ${checked ? 'selected' : ''}`}
+                      key={gift.telegramGiftId}
+                      onClick={() => toggleTelegramGift(gift.telegramGiftId)}
+                      style={{ '--telegram-gift-bg': gift.background?.cssGradient || 'linear-gradient(135deg,#7c3aed,#111827)' }}
+                    >
+                      <span className="telegram-gift-check">{checked ? '✓' : '+'}</span>
+                      <span className="telegram-gift-orb">⭐</span>
+                      <strong>{gift.title}</strong>
+                      <small>ID: {smallId(gift.telegramGiftId)}</small>
+                      <p>
+                        {gift.stars ? `${gift.stars} ⭐` : 'Stars ?'}
+                        {gift.availabilityRemains ? ` · ${gift.availabilityRemains}/${gift.availabilityTotal || '?'}` : ''}
+                      </p>
+                      <em>{gift.sticker?.mimeType || 'sticker'}</em>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="telegram-import-empty">
+                <span>⭐</span>
+                <h3>Telegram gifts hali olinmagan</h3>
+                <p>Refresh from Telegram tugmasini bosing. ENV’da TG_API_ID, TG_API_HASH, TG_STRING_SESSION bo‘lishi kerak.</p>
+              </div>
+            )}
           </section>
         ) : null}
 
