@@ -7429,78 +7429,174 @@ button:disabled {
     gap: 2px !important;
   }
 }
-
 /* =========================================================
-   BROWSER ADMIN TELEGRAM GIFTS IMPORT V1
+   TELEGRAM GIFT NAME + TGS ANIMATION FIX V1
+   .tgs fayllar browserda video sifatida ochilmaydi, shu sabab
+   lottie-web + pako bilan SVG animation qilib render qilinadi.
 ========================================================= */
 
-.telegram-import-panel {
+.gift-media.tgs-gift-media {
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.tgs-gift-canvas,
+.tgs-gift-canvas > svg,
+.tgs-gift-media > span,
+.tgs-gift-media svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.browser-admin-item .admin-gift-media,
+.admin-gift-media {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 15px !important;
+  object-fit: contain !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 50% 18%, rgba(255,255,255,.20), transparent 42%),
+    linear-gradient(135deg, rgba(139,92,246,.85), rgba(15,23,42,.95)) !important;
+  box-shadow: 0 10px 22px rgba(0,0,0,.22) !important;
+}
+
+.admin-tgs-media > span,
+.admin-tgs-media svg {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+}
+
+.browser-admin-item video.admin-gift-media {
+  background: rgba(255,255,255,.08) !important;
+}
+
+/* =========================================================
+   TELEGRAM CATALOG IMPORT FLOW V1
+   Telegram Gifts tab = catalog sync.
+   Gifts tab = catalogdan casega yuklash.
+========================================================= */
+
+.browser-admin-form label,
+.telegram-import-controls label {
+  display: grid;
+  gap: 7px;
+}
+
+.browser-admin-form label > span,
+.telegram-import-controls label > span,
+.admin-form-heading > span,
+.telegram-import-controls > div > span {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: rgba(196, 181, 253, .90);
+}
+
+.admin-form-heading {
+  display: grid;
+  gap: 5px;
+}
+
+.admin-form-heading p,
+.telegram-import-controls p {
+  margin: 0;
+  color: rgba(226, 232, 240, .70);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.catalog-gift-form {
+  gap: 14px !important;
+}
+
+.selected-catalog-preview,
+.selected-catalog-empty {
+  border-radius: 18px;
+  border: 1px solid rgba(167, 139, 250, .22);
+  background:
+    radial-gradient(circle at 22% 5%, rgba(255,255,255,.16), transparent 40%),
+    var(--telegram-gift-bg, linear-gradient(135deg,#7c3aed,#111827));
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 82px;
+  overflow: hidden;
+}
+
+.selected-catalog-empty {
+  background:
+    linear-gradient(135deg, rgba(15,23,42,.78), rgba(30,41,59,.56));
+  color: rgba(226,232,240,.72);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.selected-catalog-preview strong {
+  display: block;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.selected-catalog-preview p {
+  margin: 4px 0 0;
+  color: rgba(255,255,255,.76);
+  font-size: 12px;
+}
+
+.telegram-catalog-panel {
   display: grid;
   gap: 18px;
 }
 
 .telegram-import-controls {
-  display: grid;
-  gap: 18px;
-  padding: 22px;
-  border-radius: 28px;
-  border: 1px solid rgba(139, 92, 246, 0.22);
+  border-radius: 26px;
+  border: 1px solid rgba(167,139,250,.18);
   background:
-    radial-gradient(circle at 12% 0%, rgba(139, 92, 246, .22), transparent 38%),
-    linear-gradient(145deg, rgba(13, 18, 42, .96), rgba(6, 10, 28, .96));
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .26);
+    radial-gradient(circle at 10% 5%, rgba(139,92,246,.24), transparent 38%),
+    linear-gradient(135deg, rgba(15,23,42,.88), rgba(2,6,23,.92));
+  box-shadow:
+    0 24px 70px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  padding: 18px;
+  display: grid;
+  gap: 16px;
 }
 
 .telegram-import-controls h2 {
-  margin: 4px 0 6px;
   color: #fff;
+  margin: 4px 0 5px;
   font-size: clamp(24px, 4vw, 34px);
-  letter-spacing: -.04em;
-}
-
-.telegram-import-controls p,
-.telegram-import-controls > div > span {
-  margin: 0;
-  color: rgba(226, 232, 240, .72);
 }
 
 .telegram-import-form-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-}
-
-.telegram-import-form-grid label,
-.telegram-checkbox-row {
-  display: grid;
-  gap: 7px;
-  color: rgba(226, 232, 240, .82);
-  font-size: 12px;
-  font-weight: 800;
 }
 
 .telegram-import-form-grid input,
 .telegram-import-form-grid select {
   width: 100%;
-  min-height: 46px;
+  min-height: 44px;
   border-radius: 14px;
-  border: 1px solid rgba(148, 163, 184, .18);
-  background: rgba(2, 6, 23, .58);
+  border: 1px solid rgba(148,163,184,.22);
+  background: rgba(15,23,42,.74);
   color: #fff;
-  padding: 0 13px;
+  padding: 0 12px;
   outline: none;
 }
 
-.telegram-checkbox-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.telegram-checkbox-row input {
-  width: 18px;
-  height: 18px;
-  accent-color: #8b5cf6;
+.telegram-import-form-grid input[readonly] {
+  opacity: .78;
 }
 
 .telegram-import-actions {
@@ -7509,149 +7605,135 @@ button:disabled {
   gap: 10px;
 }
 
-.telegram-import-actions button {
+.telegram-import-actions button,
+.telegram-import-controls button {
   min-height: 44px;
+  border: 0;
   border-radius: 14px;
-  border: 1px solid rgba(167, 139, 250, .22);
-  background: rgba(139, 92, 246, .18);
+  padding: 0 15px;
   color: #fff;
-  padding: 0 16px;
   font-weight: 900;
   cursor: pointer;
+  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+  box-shadow: 0 14px 30px rgba(139,92,246,.22);
 }
 
-.telegram-import-actions button:last-child {
-  background: linear-gradient(135deg, #8b5cf6, #22c55e);
-  border-color: transparent;
-}
-
-.telegram-import-actions button:disabled {
-  opacity: .48;
+.telegram-import-actions button:disabled,
+.telegram-import-controls button:disabled {
+  opacity: .55;
   cursor: not-allowed;
 }
 
-.telegram-gifts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 14px;
+.telegram-sync-summary {
+  border-radius: 16px;
+  border: 1px solid rgba(34,211,238,.20);
+  background: rgba(8,47,73,.32);
+  color: rgba(224,242,254,.90);
+  padding: 12px 13px;
+  font-size: 13px;
 }
 
-.telegram-gift-card {
-  position: relative;
-  min-height: 190px;
-  padding: 18px;
-  border: 1px solid rgba(255, 255, 255, .10);
-  border-radius: 24px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-end;
-  gap: 6px;
+.telegram-sync-summary strong {
   color: #fff;
-  background: var(--telegram-gift-bg, linear-gradient(135deg,#7c3aed,#111827));
-  box-shadow: 0 18px 45px rgba(0, 0, 0, .24);
-  cursor: pointer;
-  text-align: left;
-  isolation: isolate;
 }
 
-.telegram-gift-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
+.telegram-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 13px;
+}
+
+.telegram-catalog-card {
+  min-height: 112px;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.12);
   background:
-    radial-gradient(circle at 50% 20%, rgba(255,255,255,.34), transparent 25%),
-    linear-gradient(180deg, transparent 30%, rgba(2,6,23,.66) 100%);
-}
-
-.telegram-gift-card.selected {
-  border-color: rgba(34, 197, 94, .88);
+    radial-gradient(circle at 22% 10%, rgba(255,255,255,.18), transparent 40%),
+    var(--telegram-gift-bg, linear-gradient(135deg,#7c3aed,#111827));
   box-shadow:
-    0 22px 56px rgba(0,0,0,.28),
-    0 0 0 2px rgba(34,197,94,.24),
-    0 0 34px rgba(34,197,94,.24);
-}
-
-.telegram-gift-check {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
+    0 16px 42px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.12);
+  padding: 12px;
   display: grid;
-  place-items: center;
-  background: rgba(2,6,23,.56);
-  border: 1px solid rgba(255,255,255,.14);
-  font-weight: 1000;
+  grid-template-columns: 62px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
 }
 
-.telegram-gift-orb {
-  position: absolute;
-  top: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 76px;
-  height: 76px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-size: 40px;
-  background: rgba(255,255,255,.14);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 18px 40px rgba(0,0,0,.22);
+.telegram-catalog-card.pending {
+  opacity: .76;
+  filter: saturate(.82);
 }
 
-.telegram-gift-card strong {
-  font-size: 18px;
-  letter-spacing: -.025em;
+.telegram-catalog-card strong {
+  display: block;
+  color: #fff;
+  font-weight: 950;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.telegram-gift-card small,
-.telegram-gift-card p,
-.telegram-gift-card em {
-  margin: 0;
-  color: rgba(255,255,255,.76);
-  font-size: 12px;
+.telegram-catalog-card small,
+.telegram-catalog-card p,
+.telegram-catalog-card em {
+  display: block;
+  margin-top: 3px;
+  color: rgba(255,255,255,.74);
+  font-size: 11.5px;
   font-style: normal;
+}
+
+.telegram-catalog-card em {
+  width: max-content;
+  margin-top: 6px;
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: rgba(255,255,255,.88);
+  background: rgba(15,23,42,.28);
+  border: 1px solid rgba(255,255,255,.12);
+  text-transform: uppercase;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .06em;
 }
 
 .telegram-import-empty {
   min-height: 240px;
-  padding: 30px;
-  border-radius: 28px;
+  border-radius: 26px;
+  border: 1px dashed rgba(167,139,250,.28);
+  background: rgba(15,23,42,.48);
   display: grid;
   place-items: center;
   text-align: center;
-  background: rgba(15,23,42,.62);
-  border: 1px dashed rgba(148,163,184,.28);
+  padding: 28px;
   color: rgba(226,232,240,.78);
 }
 
 .telegram-import-empty span {
-  font-size: 54px;
+  font-size: 42px;
 }
 
 .telegram-import-empty h3 {
-  margin: 10px 0 4px;
+  margin: 8px 0 4px;
   color: #fff;
+  font-size: 20px;
 }
 
-@media (max-width: 900px) {
+.telegram-import-empty p {
+  max-width: 520px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 760px) {
   .telegram-import-form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 560px) {
-  .telegram-import-form-grid,
-  .telegram-gifts-grid {
     grid-template-columns: 1fr;
   }
 
-  .telegram-import-controls {
-    padding: 16px;
-    border-radius: 22px;
+  .telegram-catalog-grid {
+    grid-template-columns: 1fr;
   }
 }
