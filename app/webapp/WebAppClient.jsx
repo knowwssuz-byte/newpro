@@ -941,6 +941,8 @@ export default function WebAppClient() {
         ) : null}
         {busy ? <div className="busy-indicator">Amal bajarilmoqda...</div> : null}
 
+        <GlobalBalanceBar telegramUser={telegramUser} profile={profile} />
+
         <main className="app-main">
           {tab === 'home' ? (
             <HomeView
@@ -1038,6 +1040,45 @@ function BalancePill({ balance }) {
     <div className="balance-pill">
       {coinIcon()}
       <strong>{formatPrice(balance)}</strong>
+    </div>
+  );
+}
+
+
+function GlobalBalanceBar({ telegramUser, profile }) {
+  return (
+    <div className="global-balance-stabilizer">
+      <div className="home-hero premium-card global-balance-bar">
+        <div className="home-hero-bg" aria-hidden="true" />
+
+        <div className="home-user-zone">
+          <div className="home-avatar-wrap">
+            <div className={`home-avatar ${telegramUser?.photo_url ? 'has-photo' : ''}`}>
+              {telegramUser?.photo_url ? (
+                <img src={telegramUser.photo_url} alt="" draggable="false" />
+              ) : (
+                telegramUser?.first_name?.[0] || 'U'
+              )}
+            </div>
+            <span className="avatar-shield settings-badge">
+              <AppIcon name="settings" />
+            </span>
+          </div>
+
+          <div className="home-balance-copy">
+            <span>Your balance</span>
+            <strong>
+              {coinIcon()}
+              {formatPrice(profile?.balance)}
+            </strong>
+          </div>
+        </div>
+
+        <button type="button" className="deposit-button">
+          <AppIcon name="deposit" />
+          <span>Deposit</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -1157,38 +1198,6 @@ function HomeView({
 
   return (
     <section className="home-view premium-home">
-      <div className="home-hero premium-card">
-        <div className="home-hero-bg" aria-hidden="true" />
-
-        <div className="home-user-zone">
-          <div className="home-avatar-wrap">
-            <div className={`home-avatar ${telegramUser?.photo_url ? 'has-photo' : ''}`}>
-              {telegramUser?.photo_url ? (
-                <img src={telegramUser.photo_url} alt="" />
-              ) : (
-                telegramUser?.first_name?.[0] || 'U'
-              )}
-            </div>
-            <span className="avatar-shield settings-badge">
-              <AppIcon name="settings" />
-            </span>
-          </div>
-
-          <div className="home-balance-copy">
-            <span>Your balance</span>
-            <strong>
-              {coinIcon()}
-              {formatPrice(profile?.balance)}
-            </strong>
-          </div>
-        </div>
-
-        <button type="button" className="deposit-button">
-          <AppIcon name="deposit" />
-          <span>Deposit</span>
-        </button>
-      </div>
-
       <div className="home-promo-stack">
         <PromoImageCard
           variant="rocket"
