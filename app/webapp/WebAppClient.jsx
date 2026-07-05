@@ -848,7 +848,6 @@ export default function WebAppClient() {
         <header className="app-header">
           <Brand appName={appName} />
           <div className="header-actions">
-            <BalancePill balance={profile?.balance} />
             <button type="button" className="header-dot-btn" aria-label="Menu">
               ⋮
             </button>
@@ -878,6 +877,7 @@ export default function WebAppClient() {
               onGoInventory={() => setTab('inventory')}
               onOpenCase={openCase}
               onSelectCase={setSelectedCase}
+              onComingSoon={() => showToast('Tez orada 🚀')}
               busy={busy}
             />
           ) : null}
@@ -1078,21 +1078,15 @@ function HomeView({
   onGoInventory,
   onOpenCase,
   onSelectCase,
+  onComingSoon,
   busy,
 }) {
   const featuredCases = cases || [];
-  const topCases = featuredCases.slice(0, 2);
 
-  const rocketCase = topCases[0] || null;
-  const pvpCase = topCases[1] || topCases[0] || null;
-
-  const openPromoCase = (caseItem) => {
-    if (caseItem) {
-      onSelectCase(caseItem);
-      return;
+  const showComingSoon = () => {
+    if (typeof onComingSoon === 'function') {
+      onComingSoon();
     }
-
-    onGoCases();
   };
 
   return (
@@ -1131,10 +1125,10 @@ function HomeView({
           image="/feature/rocket.webp"
           badge="HOT!"
           badgeIcon="rocket"
-          title={rocketCase?.title || 'ROCKET'}
-          subtitle={rocketCase?.description || 'Launch big. Win bigger.'}
-          actionText={rocketCase ? `${formatPrice(rocketCase.price)}` : 'Explore'}
-          onClick={() => openPromoCase(rocketCase)}
+          title="ROCKET"
+          subtitle="Mini game · Tez orada"
+          actionText="Tez orada"
+          onClick={showComingSoon}
         />
 
         <PromoImageCard
@@ -1142,10 +1136,10 @@ function HomeView({
           image="/feature/pvp.webp"
           badge="NEW!"
           badgeIcon="spark"
-          title={pvpCase?.title || 'PVP'}
-          subtitle={pvpCase?.description || 'Battle players and win big.'}
-          actionText={pvpCase ? `${formatPrice(pvpCase.price)}` : 'Enter'}
-          onClick={() => openPromoCase(pvpCase)}
+          title="PVP"
+          subtitle="Battle mode · Tez orada"
+          actionText="Tez orada"
+          onClick={showComingSoon}
         />
       </div>
 
