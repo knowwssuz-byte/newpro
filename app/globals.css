@@ -5810,7 +5810,7 @@ button:disabled {
 }
 
 .home-promo-stack .promo-image-banner.rocket .promo-webp {
-  transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
+  transform: translateX(1%) translateY(-18px) scale(.80) rotate(1deg) !important;
 }
 
 .home-promo-stack .promo-image-banner.pvp .promo-webp {
@@ -5825,7 +5825,7 @@ button:disabled {
   }
 
   .home-promo-stack .promo-image-banner.rocket .promo-webp {
-    transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
+    transform: translateX(1%) translateY(-18px) scale(.80) rotate(1deg) !important;
   }
 
   .home-promo-stack .promo-image-banner.pvp .promo-webp {
@@ -5846,5 +5846,42 @@ button:disabled {
 
   .home-promo-stack .promo-image-banner.pvp .promo-webp {
     transform: translateX(1%) translateY(-16px) scale(.76) !important;
+  }
+}
+
+/* =========================================================
+   ROCKET ONLY POSITION FINAL
+   Faqat Rocket webp 16px tepaga ko'tarilgan holat.
+   PVP joylashuvi o'zgarmaydi.
+========================================================= */
+
+.home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
+  top: -16px !important;
+  bottom: 16px !important;
+}
+
+.home-promo-stack .promo-image-banner.rocket .promo-webp {
+  transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
+}
+
+@media (max-width: 430px) {
+  .home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
+    top: -16px !important;
+    bottom: 16px !important;
+  }
+
+  .home-promo-stack .promo-image-banner.rocket .promo-webp {
+    transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
+    top: -16px !important;
+    bottom: 16px !important;
+  }
+
+  .home-promo-stack .promo-image-banner.rocket .promo-webp {
+    transform: translateX(1%) translateY(-16px) scale(.78) rotate(1deg) !important;
   }
 }
