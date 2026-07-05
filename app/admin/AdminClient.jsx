@@ -566,7 +566,7 @@ export default function AdminClient() {
                   <option value="">Catalogdan gift tanlang</option>
                   {telegramCatalog.map((gift) => (
                     <option key={gift.id} value={gift.id}>
-                      {gift.title} · floor {money(gift.floor_price || gift.star_count)} ⭐
+                      {gift.drop_name || gift.title} · floor {money(gift.floor_price || gift.star_count)} ⭐
                     </option>
                   ))}
                 </select>
@@ -576,7 +576,7 @@ export default function AdminClient() {
                 <div className="selected-catalog-preview" style={{ '--telegram-gift-bg': selectedCatalogGift.background_value || 'linear-gradient(135deg,#7c3aed,#111827)' }}>
                   <AdminGiftMedia gift={selectedCatalogGift} />
                   <div>
-                    <strong>{selectedCatalogGift.title}</strong>
+                    <strong>{selectedCatalogGift.drop_name || selectedCatalogGift.title}</strong>
                     <p>ID: {smallId(selectedCatalogGift.telegram_gift_id)} · Stars: {money(selectedCatalogGift.star_count)} · Floor: {money(selectedCatalogGift.floor_price)} ⭐</p>
                   </div>
                 </div>
@@ -655,7 +655,7 @@ export default function AdminClient() {
               <div>
                 <span>MTProto catalog sync</span>
                 <h2>Telegram Gifts</h2>
-                <p>Bu yerda oddiy 10–15 Stars sovg‘alar emas, faqat collectible/NFTga mos giftlar catalogga olinadi. Nomi, floor/resale narxi, image, animation va orqa fon saqlanadi. Keyin Gifts bo‘limidan casega qo‘shasiz.</p>
+                <p>Bu yerda har bir collection/dropdan faqat 1 ta representative gift catalogga olinadi. Nomi, floor/resale narxi, image, animation va orqa fon saqlanadi. Keyin Gifts bo‘limidan casega qo‘shasiz.</p>
               </div>
 
               <div className="telegram-import-form-grid">
@@ -687,7 +687,7 @@ export default function AdminClient() {
 
               {telegramSyncResult ? (
                 <div className="telegram-sync-summary">
-                  <strong>{telegramSyncResult.total || 0}</strong> synced · <strong>{telegramSyncResult.downloaded || 0}</strong> assets downloaded · <strong>{telegramSyncResult.reused || 0}</strong> reused · <strong>{telegramSyncResult.cleaned || 0}</strong> pending cleaned · <strong>{telegramSyncResult.skippedRegular || 0}</strong> regular skipped
+                  <strong>{telegramSyncResult.collectionsFound || telegramSyncResult.total || 0}</strong> collections · <strong>{telegramSyncResult.total || 0}</strong> saved · <strong>{telegramSyncResult.downloaded || 0}</strong> assets downloaded · <strong>{telegramSyncResult.skippedRegular || 0}</strong> regular skipped
                 </div>
               ) : null}
             </div>
@@ -702,8 +702,8 @@ export default function AdminClient() {
                   >
                     <AdminGiftMedia gift={gift} />
                     <div>
-                      <strong>{gift.title}</strong>
-                      <small>ID: {smallId(gift.telegram_gift_id)}</small>
+                      <strong>{gift.drop_name || gift.title}</strong>
+                      <small>Collection: {gift.collection_key || '—'} · ID: {smallId(gift.telegram_gift_id)}</small>
                       <p>Floor: {money(gift.floor_price || gift.star_count)} ⭐ · Stars: {money(gift.star_count)}</p>
                       <em>{gift.status || 'ready'}</em>
                     </div>
