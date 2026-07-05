@@ -177,8 +177,8 @@ function buildOpeningReel(gifts, winningGift) {
 
 function coinIcon() {
   return (
-    <span className="coin-icon" aria-hidden="true">
-      <AppIcon name="coin" />
+    <span className="coin-icon stars-currency-icon" aria-hidden="true">
+      <img src="/currency/stars.svg" alt="" draggable="false" />
     </span>
   );
 }
@@ -345,6 +345,7 @@ export default function WebAppClient() {
 
   const [profile, setProfile] = useState(null);
   const [telegramUser, setTelegramUser] = useState(null);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [cases, setCases] = useState([]);
   const [gifts, setGifts] = useState([]);
@@ -415,6 +416,32 @@ export default function WebAppClient() {
     },
     [initData]
   );
+
+
+  useEffect(() => {
+    if (!initData) return;
+
+    let cancelled = false;
+
+    const loadProfilePhoto = async () => {
+      try {
+        const data = await apiPost('/api/profile-photo');
+
+        if (!cancelled && data?.photoUrl) {
+          setProfilePhotoUrl(data.photoUrl);
+        }
+      } catch (err) {
+        // Telegram photo_url har doim kelmasligi mumkin. Bu xatoni UIga chiqarmaymiz.
+        console.warn('Profile photo load failed:', err?.message || err);
+      }
+    };
+
+    loadProfilePhoto();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [apiPost, initData]);
 
   const apiFormPost = useCallback(
     async (url, formData) => {
@@ -941,7 +968,7 @@ export default function WebAppClient() {
         ) : null}
         {busy ? <div className="busy-indicator">Amal bajarilmoqda...</div> : null}
 
-        <GlobalBalanceBar telegramUser={telegramUser} profile={profile} />
+        <GlobalBalanceBar telegramUser={telegramUser} profile={profile} profilePhotoUrl={profilePhotoUrl} />
 
         <main className="app-main">
           {tab === 'home' ? (
@@ -1045,7 +1072,18 @@ function BalancePill({ balance }) {
 }
 
 
-function GlobalBalanceBar({ telegramUser, profile }) {
+function GlobalBalanceBar({ telegramUser, profile, profilePhotoUrl }) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const avatarUrl = profilePhotoUrl || telegramUser?.photo_url || '';
+
+  const toggleSettings = () => {
+    setSettingsOpen((value) => !value);
+  };
+
+  const closeSettings = () => {
+    setSettingsOpen(false);
+  };
+
   return (
     <div className="global-balance-stabilizer">
       <div className="home-hero premium-card global-balance-bar">
@@ -1053,16 +1091,45 @@ function GlobalBalanceBar({ telegramUser, profile }) {
 
         <div className="home-user-zone">
           <div className="home-avatar-wrap">
-            <div className={`home-avatar ${telegramUser?.photo_url ? 'has-photo' : ''}`}>
-              {telegramUser?.photo_url ? (
-                <img src={telegramUser.photo_url} alt="" draggable="false" />
+            <div className={`home-avatar ${avatarUrl ? 'has-photo' : ''}`}>
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" draggable="false" />
               ) : (
                 telegramUser?.first_name?.[0] || 'U'
               )}
             </div>
-            <span className="avatar-shield settings-badge">
+
+            <button
+              type="button"
+              className="avatar-shield settings-badge"
+              aria-label="Settings"
+              aria-expanded={settingsOpen ? 'true' : 'false'}
+              onClick={toggleSettings}
+            >
               <AppIcon name="settings" />
-            </span>
+            </button>
+
+            {settingsOpen ? (
+              <div className="quick-settings-menu">
+                <button type="button" onClick={closeSettings}>
+                  <AppIcon name="gift" />
+                  <span>Bonus settings</span>
+                  <em>soon</em>
+                </button>
+
+                <button type="button" onClick={closeSettings}>
+                  <AppIcon name="history" />
+                  <span>Activity</span>
+                  <em>soon</em>
+                </button>
+
+                <button type="button" onClick={closeSettings}>
+                  <AppIcon name="deposit" />
+                  <span>Payment settings</span>
+                  <em>soon</em>
+                </button>
+              </div>
+            ) : null}
           </div>
 
           <div className="home-balance-copy">
