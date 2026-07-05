@@ -828,14 +828,23 @@ export default function WebAppClient() {
     return (
       <div className="minimal-loader-screen">
         <div className="minimal-loader-bg" />
-        <div className="minimal-loader-shell">
-          <div className="casino-hex-loader">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
+        <div className="loader" aria-label="Loading">
+          <div className="loader__balls">
+            <div className="loader__balls__group">
+              <div className="ball item1" />
+              <div className="ball item1" />
+              <div className="ball item1" />
+            </div>
+            <div className="loader__balls__group">
+              <div className="ball item2" />
+              <div className="ball item2" />
+              <div className="ball item2" />
+            </div>
+            <div className="loader__balls__group">
+              <div className="ball item3" />
+              <div className="ball item3" />
+              <div className="ball item3" />
+            </div>
           </div>
         </div>
       </div>
@@ -1195,34 +1204,10 @@ function CasesView({ onGoHome }) {
           ‹ Home
         </button>
         <h1>Games</h1>
-        <p>Rocket va PVP alohida o‘yinlar. Hozircha tayyorlanmoqda.</p>
+        <p>Bu bo‘lim hozircha tayyorlanmoqda.</p>
       </div>
 
-      <div className="games-coming-grid">
-        <PromoImageCard
-          variant="rocket"
-          image="/feature/rocket.webp"
-          badge="HOT!"
-          badgeIcon="rocket"
-          title="ROCKET"
-          subtitle="Mini game · Tez orada"
-          actionText="Tez orada"
-          onClick={() => {}}
-        />
-
-        <PromoImageCard
-          variant="pvp"
-          image="/feature/pvp.webp"
-          badge="NEW!"
-          badgeIcon="spark"
-          title="PVP"
-          subtitle="Battle mode · Tez orada"
-          actionText="Tez orada"
-          onClick={() => {}}
-        />
-      </div>
-
-      <EmptyState icon="games" title="Games tez orada" text="Bu bo‘limda case’lar emas, alohida o‘yinlar chiqadi." />
+      <EmptyState icon="games" title="Hozircha bo‘sh" text="Rocket va PVP Home’da turadi, bosilganda “Tez orada” chiqadi." />
     </section>
   );
 }
@@ -1231,57 +1216,35 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
   const accent = caseAccent(caseItem);
   const badge = caseBadgeText(caseItem, gifts);
   const badgeColor = caseBadgeColor(caseItem);
-  const disabled = busy || gifts.filter(eligibleGift).length === 0;
+  const readyCount = gifts.filter(eligibleGift).length;
+  const disabled = busy || readyCount === 0;
 
   return (
     <button
       type="button"
-      className={`case-card pro-case-card ${disabled ? 'disabled' : ''}`}
+      className={`case-card pro-case-card app-store-case ${disabled ? 'disabled' : ''}`}
       style={{
         '--case-accent': accent,
         '--case-badge': badgeColor,
       }}
       onClick={() => onDetails(caseItem)}
     >
-      <span className="case-card-glow" aria-hidden="true" />
-      <span className="case-card-pattern" aria-hidden="true" />
-
       <div className="case-media">
         {caseItem.image_url ? (
           <img src={caseItem.image_url} alt="" loading="lazy" />
         ) : (
           <AppIcon name="box" />
         )}
+        {badge ? <span className="case-badge floating">{badge}</span> : null}
       </div>
 
       <div className="case-card-body">
-        {badge ? (
-          <span className="case-badge">
-            <AppIcon name="spark" /> {badge}
-          </span>
-        ) : null}
-
         <h3>{caseItem.title}</h3>
-
-        <p>
-          {caseItem.description ||
-            (gifts.length ? `${gifts.length} gifts available` : 'No gifts yet')}
-        </p>
+        <p>{caseItem.description || `${gifts.length || 0} gifts`}</p>
 
         <div className="case-card-footer">
-          <span>{gifts.length ? `${gifts.length} gifts` : 'No gifts'}</span>
-
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={(event) => {
-              event.stopPropagation();
-              onOpen(caseItem);
-            }}
-          >
-            {formatPrice(caseItem.price)}
-            {coinIcon()}
-          </button>
+          <span>{formatPrice(caseItem.price)} {coinIcon()}</span>
+          <em>★</em>
         </div>
       </div>
     </button>
