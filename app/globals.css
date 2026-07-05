@@ -5856,32 +5856,32 @@ button:disabled {
 ========================================================= */
 
 .home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
-  top: -16px !important;
-  bottom: 16px !important;
+  top: -14px !important;
+  bottom: 14px !important;
 }
 
 .home-promo-stack .promo-image-banner.rocket .promo-webp {
-  transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
+  transform: translateX(1%) translateY(-14px) scale(.80) rotate(1deg) !important;
 }
 
 @media (max-width: 430px) {
   .home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
-    top: -16px !important;
-    bottom: 16px !important;
+    top: -14px !important;
+    bottom: 14px !important;
   }
 
   .home-promo-stack .promo-image-banner.rocket .promo-webp {
-    transform: translateX(1%) translateY(-16px) scale(.80) rotate(1deg) !important;
+    transform: translateX(1%) translateY(-14px) scale(.80) rotate(1deg) !important;
   }
 }
 
 @media (max-width: 360px) {
   .home-promo-stack .promo-image-banner.rocket .promo-webp-stage {
-    top: -16px !important;
-    bottom: 16px !important;
+    top: -14px !important;
+    bottom: 14px !important;
   }
 
   .home-promo-stack .promo-image-banner.rocket .promo-webp {
-    transform: translateX(1%) translateY(-16px) scale(.78) rotate(1deg) !important;
+    transform: translateX(1%) translateY(-14px) scale(.78) rotate(1deg) !important;
   }
 }
