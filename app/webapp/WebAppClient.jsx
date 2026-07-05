@@ -443,33 +443,64 @@ export default function WebAppClient() {
   useEffect(() => {
     mountedRef.current = true;
 
-    const app = window.Telegram?.WebApp;
+    let attempts = 0;
+    let telegramTimer = null;
 
-    if (!app) {
-      setLoading(false);
-      setError("Bu sahifa Telegram ichida ochilmagan. Botdagi Web App tugmasidan oching.");
-      return () => {
-        mountedRef.current = false;
-      };
-    }
-
-    app.ready();
-    app.expand();
-    app.MainButton?.hide?.();
-    app.BackButton?.hide?.();
-
-    setTg(app);
-    setInitData(app.initData || '');
-    setTelegramUser(app.initDataUnsafe?.user || null);
-
-    return () => {
+    const cleanup = () => {
       mountedRef.current = false;
+
+      if (telegramTimer) {
+        window.clearTimeout(telegramTimer);
+        telegramTimer = null;
+      }
 
       if (toastTimerRef.current) {
         window.clearTimeout(toastTimerRef.current);
         toastTimerRef.current = null;
       }
     };
+
+    const initTelegram = () => {
+      if (!mountedRef.current) return;
+
+      const app = window.Telegram?.WebApp;
+
+      if (!app) {
+        attempts += 1;
+
+        if (attempts < 80) {
+          telegramTimer = window.setTimeout(initTelegram, 50);
+          return;
+        }
+
+        setLoading(false);
+        setError("Telegram WebApp script yuklanmadi. Botdagi Menu Button/Main App URL aynan /webapp bo‘lishi kerak.");
+        return;
+      }
+
+      try {
+        app.ready();
+        app.expand();
+        app.MainButton?.hide?.();
+        app.BackButton?.hide?.();
+
+        setTg(app);
+        setInitData(app.initData || '');
+        setTelegramUser(app.initDataUnsafe?.user || null);
+
+        if (!app.initData) {
+          setLoading(false);
+          setError("Telegram initData kelmadi. Web App oddiy browserda yoki noto‘g‘ri URL orqali ochilgan. BotFather’da URL: https://your-domain.vercel.app/webapp bo‘lishi kerak.");
+        }
+      } catch (err) {
+        setLoading(false);
+        setError(err.message || "Telegram WebApp ishga tushmadi.");
+      }
+    };
+
+    initTelegram();
+
+    return cleanup;
   }, []);
 
   useEffect(() => {
