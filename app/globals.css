@@ -6508,3 +6508,73 @@ button:disabled {
     gap: 10px !important;
   }
 }
+
+/* =========================================================
+   NAVBAR CUSTOM IMAGE ICON SLOTS V1
+   Icon fayllarni public/nav ichiga qo'yish uchun.
+   Kerakli nomlar:
+   /public/nav/games.svg
+   /public/nav/cases.svg
+   /public/nav/home.svg
+   /public/nav/history.svg
+   /public/nav/referral.svg
+========================================================= */
+
+.mobile-nav-btn .nav-icon-img {
+  width: 21px !important;
+  height: 21px !important;
+  display: block !important;
+  object-fit: contain !important;
+  opacity: .66 !important;
+  filter:
+    grayscale(1)
+    brightness(1.35)
+    drop-shadow(0 2px 4px rgba(0,0,0,.18)) !important;
+  transition:
+    opacity .18s ease,
+    filter .18s ease,
+    transform .18s ease !important;
+}
+
+.mobile-nav-btn.active .nav-icon-img {
+  opacity: 1 !important;
+  filter:
+    grayscale(0)
+    brightness(1.28)
+    drop-shadow(0 0 10px rgba(139, 92, 246, .70))
+    drop-shadow(0 0 16px rgba(167, 139, 250, .38)) !important;
+}
+
+.mobile-nav-btn.center-home .nav-icon-img {
+  width: 31px !important;
+  height: 31px !important;
+  opacity: 1 !important;
+  filter:
+    brightness(1.35)
+    drop-shadow(0 0 10px rgba(255,255,255,.72))
+    drop-shadow(0 0 18px rgba(167,139,250,.70)) !important;
+}
+
+@media (max-width: 430px) {
+  .mobile-nav-btn .nav-icon-img {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .mobile-nav-btn.center-home .nav-icon-img {
+    width: 29px !important;
+    height: 29px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .mobile-nav-btn .nav-icon-img {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .mobile-nav-btn.center-home .nav-icon-img {
+    width: 27px !important;
+    height: 27px !important;
+  }
+}
