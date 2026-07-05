@@ -17,6 +17,7 @@
     "pako": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "sharp": "latest",
     "telegram": "^2.26.22"
   },
   "devDependencies": {
