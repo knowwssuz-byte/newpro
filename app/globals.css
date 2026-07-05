@@ -7429,3 +7429,229 @@ button:disabled {
     gap: 2px !important;
   }
 }
+
+/* =========================================================
+   BROWSER ADMIN TELEGRAM GIFTS IMPORT V1
+========================================================= */
+
+.telegram-import-panel {
+  display: grid;
+  gap: 18px;
+}
+
+.telegram-import-controls {
+  display: grid;
+  gap: 18px;
+  padding: 22px;
+  border-radius: 28px;
+  border: 1px solid rgba(139, 92, 246, 0.22);
+  background:
+    radial-gradient(circle at 12% 0%, rgba(139, 92, 246, .22), transparent 38%),
+    linear-gradient(145deg, rgba(13, 18, 42, .96), rgba(6, 10, 28, .96));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .26);
+}
+
+.telegram-import-controls h2 {
+  margin: 4px 0 6px;
+  color: #fff;
+  font-size: clamp(24px, 4vw, 34px);
+  letter-spacing: -.04em;
+}
+
+.telegram-import-controls p,
+.telegram-import-controls > div > span {
+  margin: 0;
+  color: rgba(226, 232, 240, .72);
+}
+
+.telegram-import-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.telegram-import-form-grid label,
+.telegram-checkbox-row {
+  display: grid;
+  gap: 7px;
+  color: rgba(226, 232, 240, .82);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.telegram-import-form-grid input,
+.telegram-import-form-grid select {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, .18);
+  background: rgba(2, 6, 23, .58);
+  color: #fff;
+  padding: 0 13px;
+  outline: none;
+}
+
+.telegram-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.telegram-checkbox-row input {
+  width: 18px;
+  height: 18px;
+  accent-color: #8b5cf6;
+}
+
+.telegram-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.telegram-import-actions button {
+  min-height: 44px;
+  border-radius: 14px;
+  border: 1px solid rgba(167, 139, 250, .22);
+  background: rgba(139, 92, 246, .18);
+  color: #fff;
+  padding: 0 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.telegram-import-actions button:last-child {
+  background: linear-gradient(135deg, #8b5cf6, #22c55e);
+  border-color: transparent;
+}
+
+.telegram-import-actions button:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+}
+
+.telegram-gifts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.telegram-gift-card {
+  position: relative;
+  min-height: 190px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 24px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 6px;
+  color: #fff;
+  background: var(--telegram-gift-bg, linear-gradient(135deg,#7c3aed,#111827));
+  box-shadow: 0 18px 45px rgba(0, 0, 0, .24);
+  cursor: pointer;
+  text-align: left;
+  isolation: isolate;
+}
+
+.telegram-gift-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(255,255,255,.34), transparent 25%),
+    linear-gradient(180deg, transparent 30%, rgba(2,6,23,.66) 100%);
+}
+
+.telegram-gift-card.selected {
+  border-color: rgba(34, 197, 94, .88);
+  box-shadow:
+    0 22px 56px rgba(0,0,0,.28),
+    0 0 0 2px rgba(34,197,94,.24),
+    0 0 34px rgba(34,197,94,.24);
+}
+
+.telegram-gift-check {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(2,6,23,.56);
+  border: 1px solid rgba(255,255,255,.14);
+  font-weight: 1000;
+}
+
+.telegram-gift-orb {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 76px;
+  height: 76px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 40px;
+  background: rgba(255,255,255,.14);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 18px 40px rgba(0,0,0,.22);
+}
+
+.telegram-gift-card strong {
+  font-size: 18px;
+  letter-spacing: -.025em;
+}
+
+.telegram-gift-card small,
+.telegram-gift-card p,
+.telegram-gift-card em {
+  margin: 0;
+  color: rgba(255,255,255,.76);
+  font-size: 12px;
+  font-style: normal;
+}
+
+.telegram-import-empty {
+  min-height: 240px;
+  padding: 30px;
+  border-radius: 28px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: rgba(15,23,42,.62);
+  border: 1px dashed rgba(148,163,184,.28);
+  color: rgba(226,232,240,.78);
+}
+
+.telegram-import-empty span {
+  font-size: 54px;
+}
+
+.telegram-import-empty h3 {
+  margin: 10px 0 4px;
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .telegram-import-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .telegram-import-form-grid,
+  .telegram-gifts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .telegram-import-controls {
+    padding: 16px;
+    border-radius: 22px;
+  }
+}
