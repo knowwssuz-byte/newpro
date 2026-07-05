@@ -210,6 +210,16 @@ function AppIcon({ name, className = '' }) {
           <path d="M4.8 20.2a7.2 7.2 0 0 1 14.4 0" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
         </svg>
       );
+    case 'referral':
+      return (
+        <svg {...common}>
+          <path d="M9.4 11.3a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z" stroke="currentColor" strokeWidth="2.1" />
+          <path d="M3.9 19.4a5.8 5.8 0 0 1 10.8-2.9" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+          <path d="M16.6 9.5a2.6 2.6 0 1 0 0-5.2" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+          <path d="M16.4 14.3h2.2a2.7 2.7 0 0 1 0 5.4h-2.2" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+          <path d="M17.6 17h-4.7" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
+        </svg>
+      );
     case 'coin':
       return (
         <svg {...common}>
@@ -343,7 +353,7 @@ export default function WebAppClient() {
       { id: 'inventory', icon: 'inventory', label: 'Inventory' },
       { id: 'home', icon: 'home', label: 'Home', center: true },
       { id: 'history', icon: 'history', label: 'History' },
-      { id: 'profile', icon: 'profile', label: 'Profile' },
+      { id: 'referral', icon: 'referral', label: 'Referal' },
     ],
     []
   );
@@ -934,36 +944,10 @@ export default function WebAppClient() {
             <HistoryView history={history} gifts={gifts} cases={cases} withdrawals={withdrawals} />
           ) : null}
 
-          {tab === 'profile' ? (
-            <ProfileView
+          {tab === 'referral' ? (
+            <ReferralView
               telegramUser={telegramUser}
               profile={profile}
-              isAdmin={isAdmin}
-              adminTab={adminTab}
-              setAdminTab={setAdminTab}
-              adminUsers={adminUsers}
-              adminWithdrawals={adminWithdrawals}
-              cases={cases}
-              gifts={gifts}
-              caseForm={caseForm}
-              setCaseForm={setCaseForm}
-              setCaseImageFile={setCaseImageFile}
-              giftForm={giftForm}
-              setGiftForm={setGiftForm}
-              setGiftImageFile={setGiftImageFile}
-              setGiftAnimationFile={setGiftAnimationFile}
-              userForm={userForm}
-              setUserForm={setUserForm}
-              createCase={createCase}
-              updateCase={updateCase}
-              deleteCase={deleteCase}
-              createGift={createGift}
-              updateGift={updateGift}
-              deleteGift={deleteGift}
-              addBalance={addBalance}
-              toggleBan={toggleBan}
-              updateWithdrawal={updateWithdrawal}
-              busy={busy}
             />
           ) : null}
         </main>
@@ -1421,6 +1405,100 @@ function HistoryView({ history, gifts, cases, withdrawals }) {
           ))}
         </div>
       )}
+    </section>
+  );
+}
+
+function ReferralView({ telegramUser, profile }) {
+  const [copied, setCopied] = useState(false);
+
+  const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'GiftMystBot').replace('@', '');
+  const userId = telegramUser?.id || profile?.id || '';
+  const referralCode = userId ? `ref_${userId}` : 'ref';
+  const referralLink = `https://t.me/${botUsername}?start=${referralCode}`;
+  const shareLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Gift Mystga qo‘shiling va bonus oling 🎁')}`;
+
+  const copyReferral = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(referralLink);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = referralLink;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        document.execCommand('copy');
+        textarea.remove();
+      }
+
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1700);
+    } catch (err) {
+      setCopied(false);
+      window.open(shareLink, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  return (
+    <section className="screen-stack referral-view">
+      <div className="referral-hero premium-card">
+        <span className="referral-orb one" aria-hidden="true" />
+        <span className="referral-orb two" aria-hidden="true" />
+
+        <div className="referral-hero-icon">
+          <AppIcon name="referral" />
+        </div>
+
+        <div className="referral-hero-copy">
+          <span>Referal dasturi</span>
+          <h1>Do‘stlaringizni taklif qiling</h1>
+          <p>Linkingizni yuboring. Do‘stingiz botga kirganda referal kodingiz orqali ulanadi.</p>
+        </div>
+      </div>
+
+      <div className="referral-code-card premium-card">
+        <div className="referral-code-head">
+          <span>Sizning referal linkingiz</span>
+          <strong>{referralCode}</strong>
+        </div>
+
+        <div className="referral-link-box">
+          <span>{referralLink}</span>
+        </div>
+
+        <div className="referral-actions">
+          <button type="button" className="referral-copy-btn" onClick={copyReferral}>
+            <AppIcon name={copied ? 'spark' : 'box'} />
+            <span>{copied ? 'Copied' : 'Copy link'}</span>
+          </button>
+
+          <button
+            type="button"
+            className="referral-share-btn"
+            onClick={() => window.open(shareLink, '_blank', 'noopener,noreferrer')}
+          >
+            <AppIcon name="gift" />
+            <span>Share</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="referral-info-grid">
+        <div className="referral-info-card premium-card">
+          <AppIcon name="gem" />
+          <strong>Bonus</strong>
+          <span>Do‘stingiz faol bo‘lganda mukofot berish tizimi uchun tayyor menyu.</span>
+        </div>
+
+        <div className="referral-info-card premium-card">
+          <AppIcon name="history" />
+          <strong>Statistika</strong>
+          <span>Takliflar statistikasi keyingi backend update’da ulanadi.</span>
+        </div>
+      </div>
     </section>
   );
 }
