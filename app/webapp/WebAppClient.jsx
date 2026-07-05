@@ -132,6 +132,27 @@ function delay(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function buildStartAppLink(botUsername, referralCode) {
+  const cleanBot = String(botUsername || 'GiftMystBot').replace('@', '').trim() || 'GiftMystBot';
+  const appShortName = String(process.env.NEXT_PUBLIC_TELEGRAM_APP_SHORT_NAME || '').replace('/', '').trim();
+
+  if (appShortName) {
+    return `https://t.me/${cleanBot}/${appShortName}?startapp=${encodeURIComponent(referralCode)}`;
+  }
+
+  return `https://t.me/${cleanBot}?startapp=${encodeURIComponent(referralCode)}`;
+}
+
+function getTelegramStartParam(app) {
+  const urlParams = new URLSearchParams(window.location.search || '');
+  return (
+    app?.initDataUnsafe?.start_param ||
+    urlParams.get('tgWebAppStartParam') ||
+    urlParams.get('startapp') ||
+    ''
+  );
+}
+
 function randomItem(items) {
   if (!items.length) return null;
   return items[Math.floor(Math.random() * items.length)];
@@ -312,6 +333,7 @@ export default function WebAppClient() {
 
   const [tg, setTg] = useState(null);
   const [initData, setInitData] = useState('');
+  const [startParam, setStartParam] = useState('');
   const [tab, setTab] = useState('home');
   const [adminTab, setAdminTab] = useState('cases');
   const [loading, setLoading] = useState(true);
@@ -342,6 +364,7 @@ export default function WebAppClient() {
   const actionLockRef = useRef(false);
   const openingLockRef = useRef(false);
   const hasBootstrappedRef = useRef(false);
+  const referralTrackedRef = useRef(false);
   const mountedRef = useRef(false);
 
   const giftsByCase = useMemo(() => groupGiftsByCase(gifts), [gifts]);
@@ -503,6 +526,7 @@ export default function WebAppClient() {
 
         setTg(app);
         setInitData(app.initData || '');
+        setStartParam(getTelegramStartParam(app));
         setTelegramUser(app.initDataUnsafe?.user || null);
 
         if (!app.initData) {
@@ -523,6 +547,21 @@ export default function WebAppClient() {
   useEffect(() => {
     loadApp();
   }, [loadApp]);
+
+
+  useEffect(() => {
+    if (!initData || !startParam || referralTrackedRef.current) return;
+
+    const cleanStartParam = String(startParam || '').trim();
+
+    if (!/^ref[_-]?\d+$/i.test(cleanStartParam)) return;
+
+    referralTrackedRef.current = true;
+
+    apiPost('/api/referral/startapp', { startParam: cleanStartParam }).catch((err) => {
+      console.warn('Referral startapp track failed:', err?.message || err);
+    });
+  }, [apiPost, initData, startParam]);
 
   async function runAction(callback, successText, { silent = false } = {}) {
     if (actionLockRef.current) return null;
@@ -1432,7 +1471,7 @@ function ReferralView({ telegramUser, profile }) {
   const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'GiftMystBot').replace('@', '');
   const userId = telegramUser?.id || profile?.id || '';
   const referralCode = userId ? `ref_${userId}` : 'ref';
-  const referralLink = `https://t.me/${botUsername}?start=${referralCode}`;
+  const referralLink = buildStartAppLink(botUsername, referralCode);
   const shareLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Gift Mystga qo‘shiling va bonus oling 🎁')}`;
 
   const copyReferral = async () => {
@@ -1472,7 +1511,7 @@ function ReferralView({ telegramUser, profile }) {
         <div className="referral-hero-copy">
           <span>Referal dasturi</span>
           <h1>Do‘stlaringizni taklif qiling</h1>
-          <p>Linkingizni yuboring. Do‘stingiz botga kirganda referal kodingiz orqali ulanadi.</p>
+          <p>Linkingizni yuboring. Do‘stingiz shu link orqali Web App’ga kirganda referal kodingiz ulanadi.</p>
         </div>
       </div>
 
