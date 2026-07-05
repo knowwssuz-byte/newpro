@@ -2477,3 +2477,378 @@ button:disabled {
     font-size: 13px !important;
   }
 }
+
+
+/* =========================================================
+   V3 FINAL FIX
+   - app ichidagi duplicate Gift Myst header olib tashlandi
+   - balance card yanada ixcham
+   - Rocket/PVP case emas, alohida game card; bosilganda tez orada
+   - Games tab case ko'rsatmaydi
+   - 0 balance endi FREE emas, 0
+   - webp rasmlar card ichiga sig'adigan qilib moslashtirildi
+========================================================= */
+
+.app-header {
+  display: none !important;
+}
+
+.app-main {
+  padding-top: 8px !important;
+}
+
+.premium-home {
+  padding-top: 8px !important;
+}
+
+.home-hero {
+  min-height: 88px !important;
+  padding: 11px 12px !important;
+  border-radius: 22px !important;
+  margin-bottom: 0 !important;
+}
+
+.home-user-zone {
+  gap: 9px !important;
+}
+
+.home-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  font-size: 25px !important;
+  border-width: 2px !important;
+  box-shadow:
+    0 0 0 4px rgba(139, 92, 246, 0.12),
+    0 0 20px rgba(168, 85, 247, 0.40) !important;
+}
+
+.avatar-shield {
+  width: 21px !important;
+  height: 21px !important;
+  right: -6px !important;
+  bottom: -1px !important;
+  border-radius: 9px !important;
+}
+
+.avatar-shield svg {
+  width: 11px !important;
+  height: 11px !important;
+}
+
+.home-balance-copy {
+  gap: 2px !important;
+}
+
+.home-balance-copy > span {
+  font-size: 12px !important;
+  line-height: 1 !important;
+}
+
+.home-balance-copy strong {
+  font-size: clamp(25px, 7vw, 34px) !important;
+  letter-spacing: -0.055em !important;
+  line-height: .92 !important;
+}
+
+.home-balance-copy .coin-icon {
+  width: 25px !important;
+  height: 25px !important;
+}
+
+.deposit-button {
+  min-height: 42px !important;
+  padding: 0 13px !important;
+  border-radius: 16px !important;
+  font-size: 14px !important;
+  gap: 7px !important;
+  white-space: nowrap !important;
+}
+
+.deposit-button svg {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.home-promo-stack {
+  gap: 9px !important;
+  margin: 10px 0 10px !important;
+}
+
+.promo-image-banner {
+  min-height: 112px !important;
+  max-height: 118px !important;
+  padding: 11px 12px !important;
+  border-radius: 21px !important;
+}
+
+.promo-banner-copy {
+  width: 50% !important;
+  gap: 5px !important;
+}
+
+.promo-badge {
+  min-height: 27px !important;
+  padding: 0 9px !important;
+  border-radius: 11px !important;
+  font-size: 10px !important;
+  gap: 5px !important;
+}
+
+.promo-badge svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.promo-banner-text strong {
+  font-size: clamp(27px, 8vw, 37px) !important;
+  line-height: .86 !important;
+  letter-spacing: -0.065em !important;
+}
+
+.promo-banner-text em {
+  max-width: 155px !important;
+  font-size: 10px !important;
+  line-height: 1.10 !important;
+}
+
+.promo-action-chip {
+  min-height: 24px !important;
+  padding: 0 9px !important;
+  border-radius: 999px !important;
+  font-size: 9.5px !important;
+  gap: 5px !important;
+}
+
+.promo-action-chip b {
+  font-size: 15px !important;
+}
+
+.promo-webp-stage {
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 50% !important;
+  place-items: center !important;
+}
+
+.promo-webp {
+  object-position: center !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+}
+
+.promo-image-banner.rocket .promo-webp {
+  transform: translateX(1%) scale(.86) rotate(1deg) !important;
+}
+
+.promo-image-banner.pvp .promo-webp {
+  transform: translateX(1%) scale(.88) !important;
+}
+
+.home-actions-grid {
+  gap: 9px !important;
+  margin: 9px 0 12px !important;
+}
+
+.home-action-btn {
+  min-height: 58px !important;
+  border-radius: 17px !important;
+  padding: 0 11px !important;
+  gap: 7px !important;
+}
+
+.home-action-btn span {
+  width: 29px !important;
+  height: 29px !important;
+  border-radius: 11px !important;
+}
+
+.home-action-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.home-action-btn strong {
+  font-size: 13px !important;
+}
+
+.home-action-btn b {
+  font-size: 22px !important;
+}
+
+.section-title-row.cases-title-only {
+  justify-content: flex-start !important;
+  margin: 0 2px 9px !important;
+}
+
+.section-title-row.cases-title-only h2 {
+  font-size: 25px !important;
+}
+
+.section-title-row.cases-title-only svg {
+  width: 25px !important;
+  height: 25px !important;
+}
+
+.cases-grid {
+  gap: 10px !important;
+}
+
+.pro-case-card {
+  min-height: 120px !important;
+  grid-template-columns: 86px 1fr !important;
+  padding: 9px !important;
+  gap: 10px !important;
+  border-radius: 19px !important;
+}
+
+.case-media {
+  min-height: 96px !important;
+  border-radius: 16px !important;
+}
+
+.case-media img {
+  max-height: 96px !important;
+}
+
+.case-card-body h3 {
+  font-size: 20px !important;
+}
+
+.case-card-body p {
+  min-height: 27px !important;
+  font-size: 11px !important;
+  line-height: 1.18 !important;
+}
+
+.case-badge {
+  min-height: 21px !important;
+  padding: 0 7px !important;
+  font-size: 9px !important;
+}
+
+.case-card-footer button {
+  min-height: 30px !important;
+  padding: 0 9px !important;
+  font-size: 11px !important;
+}
+
+.case-card-footer .coin-icon {
+  width: 17px !important;
+  height: 17px !important;
+}
+
+.games-coming-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.games-coming-grid .promo-image-banner {
+  min-height: 118px !important;
+}
+
+.games-page-header p {
+  margin-bottom: 0;
+}
+
+@media (max-width: 430px) {
+  .app-main {
+    padding-top: 6px !important;
+  }
+
+  .premium-home {
+    padding: 6px 8px 0 !important;
+  }
+
+  .home-hero {
+    min-height: 82px !important;
+    padding: 10px 10px !important;
+    border-radius: 20px !important;
+  }
+
+  .home-avatar {
+    width: 45px !important;
+    height: 45px !important;
+    font-size: 23px !important;
+  }
+
+  .home-balance-copy > span {
+    font-size: 11px !important;
+  }
+
+  .home-balance-copy strong {
+    font-size: 29px !important;
+  }
+
+  .home-balance-copy .coin-icon {
+    width: 23px !important;
+    height: 23px !important;
+  }
+
+  .deposit-button {
+    min-height: 39px !important;
+    padding: 0 11px !important;
+    font-size: 13px !important;
+    border-radius: 14px !important;
+  }
+
+  .deposit-button svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .promo-image-banner {
+    min-height: 106px !important;
+    max-height: 112px !important;
+    padding: 10px 11px !important;
+    border-radius: 19px !important;
+  }
+
+  .promo-banner-copy {
+    width: 51% !important;
+  }
+
+  .promo-banner-text strong {
+    font-size: clamp(25px, 8vw, 34px) !important;
+  }
+
+  .promo-banner-text em {
+    font-size: 9.5px !important;
+  }
+
+  .promo-image-banner.rocket .promo-webp {
+    transform: translateX(2%) scale(.82) rotate(1deg) !important;
+  }
+
+  .promo-image-banner.pvp .promo-webp {
+    transform: translateX(2%) scale(.84) !important;
+  }
+
+  .home-action-btn {
+    min-height: 54px !important;
+    border-radius: 16px !important;
+  }
+
+  .home-action-btn strong {
+    font-size: 12px !important;
+  }
+
+  .pro-case-card {
+    min-height: 112px !important;
+    grid-template-columns: 78px 1fr !important;
+    padding: 8px !important;
+  }
+
+  .case-media {
+    min-height: 88px !important;
+    border-radius: 15px !important;
+  }
+
+  .case-media img {
+    max-height: 88px !important;
+  }
+
+  .case-card-body h3 {
+    font-size: 18px !important;
+  }
+}
