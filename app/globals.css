@@ -3827,3 +3827,259 @@ button:disabled {
     grid-column: span 1;
   }
 }
+
+
+/* =========================================================
+   LOADING FINAL FIX
+   - loader kichikroq
+   - orqasidagi card olib tashlandi
+   - fon kulrang-qoraroq
+   - loader ranglari premium teal/mint
+========================================================= */
+
+.minimal-loader-screen {
+  background:
+    radial-gradient(circle at 50% 42%, rgba(45, 212, 191, 0.12), transparent 26%),
+    radial-gradient(circle at 30% 20%, rgba(148, 163, 184, 0.10), transparent 24%),
+    linear-gradient(145deg, #16181d 0%, #101217 46%, #0a0c10 100%) !important;
+}
+
+.minimal-loader-bg {
+  opacity: 1 !important;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+    radial-gradient(circle at 50% 50%, rgba(34, 211, 238, 0.06), transparent 34%) !important;
+  background-size: 34px 34px, 34px 34px, 100% 100% !important;
+}
+
+.loader {
+  width: auto !important;
+  height: auto !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.loader::before {
+  content: "";
+  position: absolute;
+  width: 112px;
+  height: 112px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(20, 184, 166, 0.16), transparent 64%);
+  filter: blur(6px);
+  z-index: -1;
+}
+
+.loader__balls {
+  gap: 9px !important;
+  filter:
+    drop-shadow(0 12px 18px rgba(0, 0, 0, 0.34))
+    drop-shadow(0 0 16px rgba(45, 212, 191, 0.18)) !important;
+}
+
+.loader__balls__group {
+  width: 24px !important;
+  height: 62px !important;
+}
+
+.ball {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 999px !important;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.22),
+    0 0 18px rgba(45, 212, 191, 0.30),
+    inset 0 3px 5px rgba(255, 255, 255, 0.42),
+    inset 0 -4px 6px rgba(0, 0, 0, 0.18) !important;
+}
+
+.loader__balls__group :nth-child(1) {
+  background:
+    radial-gradient(circle at 32% 24%, #ecfeff 0 16%, #99f6e4 34%, #2dd4bf 100%) !important;
+  animation-name: premiumJumpBall1 !important;
+  animation-duration: 920ms !important;
+  animation-iteration-count: infinite !important;
+}
+
+.loader__balls__group :nth-child(2) {
+  background:
+    radial-gradient(circle at 32% 24%, #f0fdfa 0 16%, #5eead4 34%, #14b8a6 100%) !important;
+  animation-name: premiumJumpBall2 !important;
+  animation-duration: 920ms !important;
+  animation-iteration-count: infinite !important;
+}
+
+.loader__balls__group :nth-child(3) {
+  background:
+    radial-gradient(circle at 32% 24%, #ccfbf1 0 16%, #2dd4bf 34%, #0f766e 100%) !important;
+  animation-name: premiumJumpBall3 !important;
+  animation-duration: 920ms !important;
+  animation-iteration-count: infinite !important;
+}
+
+.loader__balls__group .item1 {
+  animation-delay: 0ms !important;
+}
+
+.loader__balls__group .item2 {
+  animation-delay: 95ms !important;
+}
+
+.loader__balls__group .item3 {
+  animation-delay: 190ms !important;
+}
+
+@keyframes premiumJumpBall1 {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  10% {
+    transform: translateY(0) scale(1.28, 0.78);
+  }
+  12% {
+    transform: translateY(0) scale(0.78, 1.18);
+    animation-timing-function: cubic-bezier(.13, .62, .24, 1);
+  }
+  42% {
+    transform: translateY(-44px) scale(1);
+    animation-timing-function: cubic-bezier(.76, 0, .94, .42);
+  }
+  67% {
+    transform: translateY(0) scale(1, 1);
+  }
+  72% {
+    transform: translateY(0) scale(1.38, 0.50);
+  }
+  82% {
+    transform: translateY(0) scale(0.86, 1.13);
+  }
+  92% {
+    transform: translateY(0) scale(1.05, 0.92);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes premiumJumpBall2 {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  10% {
+    transform: translateY(0) scale(1.28, 0.78);
+  }
+  12% {
+    transform: translateY(0) scale(0.78, 1.18);
+    animation-timing-function: cubic-bezier(.10, .74, .25, 1);
+  }
+  42% {
+    transform: translateY(-44px) scale(1);
+    animation-timing-function: cubic-bezier(.76, 0, .94, .48);
+  }
+  67% {
+    transform: translateY(0) scale(1, 1);
+  }
+  72% {
+    transform: translateY(0) scale(1.38, 0.50);
+  }
+  82% {
+    transform: translateY(0) scale(0.86, 1.13);
+  }
+  92% {
+    transform: translateY(0) scale(1.05, 0.92);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@keyframes premiumJumpBall3 {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  10% {
+    transform: translateY(0) scale(1.28, 0.78);
+  }
+  12% {
+    transform: translateY(0) scale(0.78, 1.18);
+    animation-timing-function: cubic-bezier(.08, .86, .25, 1);
+  }
+  42% {
+    transform: translateY(-44px) scale(1);
+    animation-timing-function: cubic-bezier(.76, 0, .94, .54);
+  }
+  67% {
+    transform: translateY(0) scale(1, 1);
+  }
+  72% {
+    transform: translateY(0) scale(1.38, 0.50);
+  }
+  82% {
+    transform: translateY(0) scale(0.86, 1.13);
+  }
+  92% {
+    transform: translateY(0) scale(1.05, 0.92);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+
+@media (max-width: 430px) {
+  .loader__balls {
+    gap: 8px !important;
+  }
+
+  .loader__balls__group {
+    width: 22px !important;
+    height: 58px !important;
+  }
+
+  .ball {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  @keyframes premiumJumpBall1 {
+    0% { transform: translateY(0) scale(1, 1); }
+    10% { transform: translateY(0) scale(1.28, 0.78); }
+    12% { transform: translateY(0) scale(0.78, 1.18); animation-timing-function: cubic-bezier(.13, .62, .24, 1); }
+    42% { transform: translateY(-40px) scale(1); animation-timing-function: cubic-bezier(.76, 0, .94, .42); }
+    67% { transform: translateY(0) scale(1, 1); }
+    72% { transform: translateY(0) scale(1.38, 0.50); }
+    82% { transform: translateY(0) scale(0.86, 1.13); }
+    92% { transform: translateY(0) scale(1.05, 0.92); }
+    100% { transform: translateY(0) scale(1, 1); }
+  }
+
+  @keyframes premiumJumpBall2 {
+    0% { transform: translateY(0) scale(1, 1); }
+    10% { transform: translateY(0) scale(1.28, 0.78); }
+    12% { transform: translateY(0) scale(0.78, 1.18); animation-timing-function: cubic-bezier(.10, .74, .25, 1); }
+    42% { transform: translateY(-40px) scale(1); animation-timing-function: cubic-bezier(.76, 0, .94, .48); }
+    67% { transform: translateY(0) scale(1, 1); }
+    72% { transform: translateY(0) scale(1.38, 0.50); }
+    82% { transform: translateY(0) scale(0.86, 1.13); }
+    92% { transform: translateY(0) scale(1.05, 0.92); }
+    100% { transform: translateY(0) scale(1, 1); }
+  }
+
+  @keyframes premiumJumpBall3 {
+    0% { transform: translateY(0) scale(1, 1); }
+    10% { transform: translateY(0) scale(1.28, 0.78); }
+    12% { transform: translateY(0) scale(0.78, 1.18); animation-timing-function: cubic-bezier(.08, .86, .25, 1); }
+    42% { transform: translateY(-40px) scale(1); animation-timing-function: cubic-bezier(.76, 0, .94, .54); }
+    67% { transform: translateY(0) scale(1, 1); }
+    72% { transform: translateY(0) scale(1.38, 0.50); }
+    82% { transform: translateY(0) scale(0.86, 1.13); }
+    92% { transform: translateY(0) scale(1.05, 0.92); }
+    100% { transform: translateY(0) scale(1, 1); }
+  }
+}
