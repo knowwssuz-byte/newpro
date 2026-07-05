@@ -2852,3 +2852,413 @@ button:disabled {
     font-size: 18px !important;
   }
 }
+
+
+/* =========================================================
+   V4 REQUESTED ONLY FIXES
+   1) Games tab empty
+   2) Rocket/PVP cards polished + webp fitted
+   3) Cases rendered like app-store cards
+   4) Light one-tone loader with provided balls animation
+========================================================= */
+
+/* Loader: light, one color family */
+.minimal-loader-screen {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(153, 226, 208, 0.34), transparent 34%),
+    linear-gradient(180deg, #f6fffc 0%, #eafff8 55%, #dcfbf2 100%) !important;
+}
+
+.minimal-loader-bg {
+  opacity: .8 !important;
+  background:
+    radial-gradient(circle at 22% 20%, rgba(18, 224, 173, .12), transparent 24%),
+    radial-gradient(circle at 78% 82%, rgba(22, 193, 151, .12), transparent 28%) !important;
+}
+
+.minimal-loader-shell,
+.casino-hex-loader {
+  display: none !important;
+}
+
+.loader {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 190px;
+  height: 150px;
+  border-radius: 34px;
+  background: rgba(255, 255, 255, .58);
+  border: 1px solid rgba(18, 224, 173, .14);
+  box-shadow:
+    0 24px 70px rgba(18, 224, 173, .18),
+    inset 0 1px 0 rgba(255, 255, 255, .90);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.loader__balls {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.loader__balls__group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  position: relative;
+  height: 100px;
+  width: 40px;
+}
+
+.ball {
+  height: 30px;
+  width: 30px;
+  border-radius: 15px;
+  position: absolute;
+  transform-origin: bottom;
+  box-shadow:
+    0 12px 24px rgba(22, 193, 151, .22),
+    inset 0 5px 8px rgba(255, 255, 255, .38),
+    inset 0 -6px 9px rgba(0, 0, 0, .08);
+}
+
+.loader__balls__group :nth-child(1) {
+  background-color: #99e2d0;
+  animation-name: jumpinBallAnimation1;
+  animation-duration: 1000ms;
+  animation-iteration-count: infinite;
+}
+
+@keyframes jumpinBallAnimation1 {
+  0% { transform: translateY(0) scale(1, 1); }
+  10% { transform: translateY(0) scale(1.3, 0.8); }
+  11% { transform: translateY(0) scale(0.7, 1.2); animation-timing-function: cubic-bezier(0, 0, 0.5, 1); }
+  39% { transform: translateY(-75px) scale(1); animation-timing-function: cubic-bezier(0, 0, 0.5, 1); }
+  40% { transform: translateY(-75px) scale(1); }
+  41% { transform: translateY(-75px) scale(1); animation-timing-function: cubic-bezier(1, 0, 1, 0); }
+  69% { transform: translateY(0px) scale(1, 1); animation-timing-function: cubic-bezier(1, 0, 1, 0); }
+  70% { transform: translateY(0) scale(1.5, 0.4); }
+  80% { transform: translateY(0) scale(0.8, 1.2); }
+  90% { transform: translateY(0) scale(1.1, 0.8); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+.loader__balls__group :nth-child(2) {
+  background-color: #12e0ad;
+  animation-name: jumpinBallAnimation2;
+  animation-duration: 1000ms;
+  animation-iteration-count: infinite;
+}
+
+@keyframes jumpinBallAnimation2 {
+  0% { transform: translateY(0) scale(1, 1); }
+  10% { transform: translateY(0) scale(1.3, 0.8); }
+  11% { transform: translateY(0) scale(0.7, 1.2); animation-timing-function: cubic-bezier(0, 0.5, 0.5, 1); }
+  39% { transform: translateY(-75px) scale(1); animation-timing-function: cubic-bezier(0, 0.5, 0.5, 1); }
+  40% { transform: translateY(-75px) scale(1); }
+  41% { transform: translateY(-75px) scale(1); animation-timing-function: cubic-bezier(1, 0, 1, 0.5); }
+  69% { transform: translateY(0px) scale(1, 1); animation-timing-function: cubic-bezier(1, 0, 1, 0.5); }
+  70% { transform: translateY(0) scale(1.5, 0.4); }
+  80% { transform: translateY(0) scale(0.8, 1.2); }
+  90% { transform: translateY(0) scale(1.1, 0.8); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+.loader__balls__group :nth-child(3) {
+  background-color: #16c197;
+  animation-name: jumpinBallAnimation3;
+  animation-duration: 1000ms;
+  animation-iteration-count: infinite;
+}
+
+@keyframes jumpinBallAnimation3 {
+  0% { transform: translateY(0) scale(1, 1); }
+  10% { transform: translateY(0) scale(1.3, 0.8); }
+  11% { transform: translateY(0) scale(0.7, 1.2); animation-timing-function: cubic-bezier(0, 1, 0.5, 1); }
+  39% { transform: translateY(-75px) scale(1); animation-timing-function: cubic-bezier(0, 1, 0.5, 1); }
+  40% { transform: translateY(-75px) scale(1); }
+  41% { transform: translateY(-75px) scale(1); animation-timing-function: cubic-bezier(1, 0, 1, 1); }
+  69% { transform: translateY(0px) scale(1, 1); animation-timing-function: cubic-bezier(1, 0, 1, 1); }
+  70% { transform: translateY(0) scale(1.5, 0.4); }
+  80% { transform: translateY(0) scale(0.8, 1.2); }
+  90% { transform: translateY(0) scale(1.1, 0.8); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+.loader__balls__group .item1 { animation-delay: 0ms; }
+.loader__balls__group .item2 { animation-delay: 100ms; }
+.loader__balls__group .item3 { animation-delay: 200ms; }
+
+/* Rocket/PVP: professional compact cards, webp fully fitted */
+.promo-image-banner {
+  min-height: 116px !important;
+  max-height: 122px !important;
+  padding: 12px 13px !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, .30),
+    inset 0 1px 0 rgba(255, 255, 255, .26) !important;
+}
+
+.promo-image-banner.rocket {
+  background:
+    radial-gradient(circle at 82% 45%, rgba(255,255,255,.32), transparent 21%),
+    radial-gradient(circle at 86% 105%, rgba(38, 140, 255, .38), transparent 34%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, .11) 0 2px, transparent 2px 18px),
+    linear-gradient(135deg, #0d47bd 0%, #1d6bea 56%, #92dcff 100%) !important;
+}
+
+.promo-image-banner.pvp {
+  background:
+    radial-gradient(circle at 84% 42%, rgba(255,255,255,.34), transparent 21%),
+    radial-gradient(circle at 80% 100%, rgba(230, 114, 0, .28), transparent 36%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, .12) 0 2px, transparent 2px 18px),
+    linear-gradient(135deg, #f3a108 0%, #ffc638 58%, #ffe68a 100%) !important;
+}
+
+.promo-image-banner::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 21px;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,.23);
+  box-shadow: inset 0 0 34px rgba(255,255,255,.08);
+  z-index: 4;
+}
+
+.promo-webp-stage {
+  width: 47% !important;
+  right: 3px !important;
+  top: 5px !important;
+  bottom: 5px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: visible !important;
+}
+
+.promo-webp {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  filter:
+    drop-shadow(0 12px 14px rgba(0,0,0,.26))
+    drop-shadow(0 0 12px rgba(255,255,255,.10)) !important;
+}
+
+.promo-image-banner.rocket .promo-webp {
+  transform: translateX(2%) scale(.84) rotate(1deg) !important;
+}
+
+.promo-image-banner.pvp .promo-webp {
+  transform: translateX(2%) scale(.82) !important;
+}
+
+.promo-banner-copy {
+  width: 55% !important;
+}
+
+.promo-banner-text strong {
+  text-shadow:
+    0 2px 0 rgba(0,0,0,.10),
+    0 10px 18px rgba(0,0,0,.20) !important;
+}
+
+/* Cases like Google Play / app cards */
+.premium-cases-grid,
+.cases-grid.premium-cases-grid,
+.cases-grid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 15px !important;
+}
+
+.pro-case-card.app-store-case {
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+  text-align: left !important;
+}
+
+.pro-case-card.app-store-case.disabled {
+  opacity: .85 !important;
+}
+
+.app-store-case .case-card-glow,
+.app-store-case .case-card-pattern {
+  display: none !important;
+}
+
+.app-store-case .case-media {
+  position: relative !important;
+  width: 100% !important;
+  aspect-ratio: 1 / 1 !important;
+  min-height: 0 !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  display: grid !important;
+  place-items: center !important;
+  background:
+    radial-gradient(circle at 28% 20%, rgba(255,255,255,.16), transparent 34%),
+    linear-gradient(145deg, rgba(255,255,255,.08), rgba(255,255,255,.03)) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  box-shadow:
+    0 12px 26px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.13) !important;
+}
+
+.app-store-case .case-media img {
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  border-radius: inherit !important;
+  filter: none !important;
+}
+
+.app-store-case .case-media svg {
+  width: 42px !important;
+  height: 42px !important;
+  color: rgba(255,255,255,.72) !important;
+}
+
+.app-store-case .case-badge.floating {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  z-index: 2 !important;
+  min-height: 23px !important;
+  max-width: 46px !important;
+  padding: 0 8px !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--case-badge), #fb7185) !important;
+  font-size: 9px !important;
+  font-weight: 950 !important;
+  letter-spacing: .02em !important;
+  white-space: nowrap !important;
+}
+
+.app-store-case .case-card-body {
+  display: grid !important;
+  gap: 3px !important;
+  padding: 0 1px !important;
+}
+
+.app-store-case .case-card-body h3 {
+  margin: 0 !important;
+  font-family: var(--font-ui) !important;
+  font-size: 14px !important;
+  line-height: 1.16 !important;
+  font-weight: 850 !important;
+  letter-spacing: -0.018em !important;
+  color: rgba(255,255,255,.94) !important;
+  overflow: hidden !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2 !important;
+  -webkit-box-orient: vertical !important;
+}
+
+.app-store-case .case-card-body p {
+  margin: 0 !important;
+  min-height: 0 !important;
+  color: rgba(226,232,240,.66) !important;
+  font-size: 11.5px !important;
+  line-height: 1.15 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  display: block !important;
+}
+
+.app-store-case .case-card-footer {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 4px !important;
+  margin-top: 1px !important;
+  color: rgba(226,232,240,.67) !important;
+  font-size: 11.5px !important;
+  font-weight: 750 !important;
+}
+
+.app-store-case .case-card-footer > span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  color: rgba(226,232,240,.67) !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+}
+
+.app-store-case .case-card-footer .coin-icon {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+.app-store-case .case-card-footer em {
+  font-style: normal !important;
+  color: rgba(226,232,240,.58) !important;
+  font-size: 11px !important;
+}
+
+.games-coming-grid {
+  display: none !important;
+}
+
+@media (max-width: 430px) {
+  .promo-image-banner {
+    min-height: 109px !important;
+    max-height: 115px !important;
+    padding: 11px 12px !important;
+  }
+
+  .promo-webp-stage {
+    width: 46% !important;
+    right: 2px !important;
+  }
+
+  .promo-image-banner.rocket .promo-webp {
+    transform: translateX(1%) scale(.80) rotate(1deg) !important;
+  }
+
+  .promo-image-banner.pvp .promo-webp {
+    transform: translateX(1%) scale(.78) !important;
+  }
+
+  .premium-cases-grid,
+  .cases-grid.premium-cases-grid,
+  .cases-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 13px !important;
+  }
+
+  .app-store-case .case-media {
+    border-radius: 16px !important;
+  }
+
+  .app-store-case .case-card-body h3 {
+    font-size: 13px !important;
+  }
+
+  .app-store-case .case-card-body p,
+  .app-store-case .case-card-footer {
+    font-size: 10.5px !important;
+  }
+}
