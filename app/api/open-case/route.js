@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 function toNumber(value, fallback = 0) {
   const number = Number(value);
@@ -46,12 +47,14 @@ function pickWeightedGift(gifts) {
     .filter((gift) => gift.is_active !== false && gift.stock > 0 && gift.chance > 0);
 
   const totalChance = pool.reduce((sum, gift) => sum + gift.chance, 0);
+
   if (pool.length === 0 || totalChance <= 0) return null;
 
   let random = Math.random() * totalChance;
 
   for (const gift of pool) {
     random -= gift.chance;
+
     if (random <= 0) return gift;
   }
 
@@ -60,17 +63,37 @@ function pickWeightedGift(gifts) {
 
 function shouldFallbackRpc(error) {
   if (!error) return false;
+
   const message = String(error.message || '').toLowerCase();
-  return error.code === 'PGRST202' || message.includes('could not find the function') || message.includes('function public.open_case_atomic');
+
+  return (
+    error.code === 'PGRST202' ||
+    message.includes('could not find the function') ||
+    message.includes('function public.open_case_atomic')
+  );
 }
 
 function mapRpcError(error) {
   const message = String(error?.message || 'Server xatosi');
 
-  if (message.includes('USER_BANNED')) return { message: 'Siz bloklangansiz', status: 403 };
-  if (message.includes('CASE_NOT_FOUND')) return { message: 'Case topilmadi yoki aktiv emas', status: 404 };
-  if (message.includes('INSUFFICIENT_BALANCE')) return { message: 'Balans yetarli emas', status: 400 };
-  if (message.includes('NO_READY_GIFTS')) return { message: 'Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda active=true, chance > 0 va stock > 0 ekanini tekshiring.', status: 400 };
+  if (message.includes('USER_BANNED')) {
+    return { message: 'Siz bloklangansiz', status: 403 };
+  }
+
+  if (message.includes('CASE_NOT_FOUND')) {
+    return { message: 'Case topilmadi yoki aktiv emas', status: 404 };
+  }
+
+  if (message.includes('INSUFFICIENT_BALANCE')) {
+    return { message: 'Balans yetarli emas', status: 400 };
+  }
+
+  if (message.includes('NO_READY_GIFTS')) {
+    return {
+      message: 'Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda active=true, chance > 0 va stock > 0 ekanini tekshiring.',
+      status: 400,
+    };
+  }
 
   return { message, status: 500 };
 }
@@ -95,7 +118,9 @@ function formatRpcResponse(payload) {
     price: toNumber(data.price),
     rewardAmount,
     history,
-    reelPool: Array.isArray(data.reelPool || data.reel_pool) ? (data.reelPool || data.reel_pool).map(publicGift) : [],
+    reelPool: Array.isArray(data.reelPool || data.reel_pool)
+      ? (data.reelPool || data.reel_pool).map(publicGift)
+      : [],
     opening: {
       totalChance,
       poolSize,
@@ -113,6 +138,7 @@ async function openCaseWithRpc(supabase, userId, caseId) {
   });
 
   if (error) throw error;
+
   return formatRpcResponse(data);
 }
 
@@ -147,7 +173,9 @@ async function openCaseFallback(supabase, auth, dbUser, caseId) {
     .eq('is_active', true)
     .single();
 
-  if (caseError || !caseItem) return jsonError('Case topilmadi yoki aktiv emas', 404);
+  if (caseError || !caseItem) {
+    return jsonError('Case topilmadi yoki aktiv emas', 404);
+  }
 
   const userBalance = toNumber(dbUser.balance);
   const casePrice = Math.max(toNumber(caseItem.price), 0);
@@ -170,23 +198,31 @@ async function openCaseFallback(supabase, auth, dbUser, caseId) {
   if (giftsError) throw new Error(giftsError.message);
 
   const gifts = (giftRows || []).map(normalizeGift);
+
   if (gifts.length === 0) {
-    return jsonError('Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda sovg‘a active=true, chance > 0 va stock > 0 ekanini tekshiring.', 400, {
-      reason: 'NO_READY_GIFTS',
-    });
+    return jsonError(
+      'Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda sovg‘a active=true, chance > 0 va stock > 0 ekanini tekshiring.',
+      400,
+      { reason: 'NO_READY_GIFTS' }
+    );
   }
 
   const totalChance = gifts.reduce((sum, gift) => sum + gift.chance, 0);
-  if (totalChance <= 0) return jsonError('Bu case uchun chance sozlanmagan');
+
+  if (totalChance <= 0) {
+    return jsonError('Bu case uchun chance sozlanmagan');
+  }
 
   let selectedGift = null;
   let updatedGift = null;
 
   for (let attempt = 0; attempt < 5; attempt += 1) {
     selectedGift = pickWeightedGift(gifts);
+
     if (!selectedGift) break;
 
     const stockResult = await decrementGiftStock(supabase, selectedGift);
+
     if (stockResult.ok) {
       updatedGift = stockResult.gift;
       break;
@@ -194,7 +230,11 @@ async function openCaseFallback(supabase, auth, dbUser, caseId) {
   }
 
   if (!updatedGift) {
-    return jsonError('Sovg‘a stocki boshqa ochishda tugab qoldi. Stockni ko‘paytiring yoki qayta urinib ko‘ring.', 409, { reason: 'STOCK_CHANGED' });
+    return jsonError(
+      'Sovg‘a stocki boshqa ochishda tugab qoldi. Stockni ko‘paytiring yoki qayta urinib ko‘ring.',
+      409,
+      { reason: 'STOCK_CHANGED' }
+    );
   }
 
   const rewardAmount = rewardType(updatedGift) === 'balance' ? Math.max(0, toNumber(updatedGift.value)) : 0;
@@ -245,6 +285,7 @@ async function openCaseFallback(supabase, auth, dbUser, caseId) {
 export async function POST(request) {
   try {
     const auth = await readTelegramRequest(request);
+
     if (!auth.ok) return jsonError(auth.error, auth.status);
 
     const supabase = getSupabaseAdmin();
@@ -256,6 +297,7 @@ export async function POST(request) {
 
     try {
       const rpcResult = await openCaseWithRpc(supabase, Number(auth.telegramUser.id), caseId);
+
       return Response.json(rpcResult);
     } catch (rpcError) {
       if (!shouldFallbackRpc(rpcError)) {
