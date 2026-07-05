@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { fetchTelegramGiftPreviews, importTelegramGiftsToCase } from '@/lib/telegramGiftsImporter';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 function json(data, status = 200) {
   return NextResponse.json(data, { status });
@@ -9,7 +11,9 @@ function json(data, status = 200) {
 
 function getBearer(request) {
   const value = request.headers.get('authorization') || '';
+
   if (!value.toLowerCase().startsWith('bearer ')) return '';
+
   return value.slice(7).trim();
 }
 
@@ -71,41 +75,75 @@ export async function POST(request) {
     if (action === 'case_create') {
       const payload = body.caseData || {};
       const { data, error } = await supabase.from('cases').insert(payload).select('*').single();
+
       if (error) throw error;
+
       return json({ ok: true, case: data });
     }
 
     if (action === 'case_update') {
       const { caseId, updates } = body;
       const { data, error } = await supabase.from('cases').update(updates || {}).eq('id', caseId).select('*').single();
+
       if (error) throw error;
+
       return json({ ok: true, case: data });
     }
 
     if (action === 'case_delete') {
       const { error } = await supabase.from('cases').delete().eq('id', body.caseId);
+
       if (error) throw error;
+
       return json({ ok: true });
     }
 
     if (action === 'gift_create') {
       const payload = body.giftData || {};
       const { data, error } = await supabase.from('gifts').insert(payload).select('*').single();
+
       if (error) throw error;
+
       return json({ ok: true, gift: data });
     }
 
     if (action === 'gift_update') {
       const { giftId, updates } = body;
       const { data, error } = await supabase.from('gifts').update(updates || {}).eq('id', giftId).select('*').single();
+
       if (error) throw error;
+
       return json({ ok: true, gift: data });
     }
 
     if (action === 'gift_delete') {
       const { error } = await supabase.from('gifts').delete().eq('id', body.giftId);
+
       if (error) throw error;
+
       return json({ ok: true });
+    }
+
+    if (action === 'telegram_gifts_list') {
+      const gifts = await fetchTelegramGiftPreviews({ limit: Number(body.limit || 120) });
+
+      return json({ ok: true, telegramGifts: gifts });
+    }
+
+    if (action === 'telegram_gifts_import') {
+      const result = await importTelegramGiftsToCase(supabase, {
+        caseId: body.caseId,
+        giftIds: body.giftIds || [],
+        defaultChance: Number(body.defaultChance || 10),
+        defaultStock: Number(body.defaultStock || 1),
+        rarity: body.rarity || 'legendary',
+        isActive: body.isActive !== false,
+        skipExisting: body.skipExisting !== false,
+      });
+
+      const data = await bootstrap(supabase);
+
+      return json({ ok: true, importResult: result, ...data });
     }
 
     if (action === 'user_add_balance') {
@@ -125,15 +163,10 @@ export async function POST(request) {
       if (readError) throw readError;
 
       const nextBalance = Number(user.balance || 0) + amount;
-
-      const { data, error } = await supabase
-        .from('users')
-        .update({ balance: nextBalance })
-        .eq('id', userId)
-        .select('*')
-        .single();
+      const { data, error } = await supabase.from('users').update({ balance: nextBalance }).eq('id', userId).select('*').single();
 
       if (error) throw error;
+
       return json({ ok: true, user: data });
     }
 
@@ -146,6 +179,7 @@ export async function POST(request) {
         .single();
 
       if (error) throw error;
+
       return json({ ok: true, user: data });
     }
 
@@ -164,6 +198,7 @@ export async function POST(request) {
         .single();
 
       if (error) throw error;
+
       return json({ ok: true, withdrawal: data });
     }
 
