@@ -4450,3 +4450,172 @@ button:disabled {
     100% { width: 78px; height: 34px; margin-top: 44px; margin-left: 0; }
   }
 }
+
+
+/* =========================================================
+   BOX LOADER V2 — overlap fix
+   Absolute top/left used instead of margin positioning.
+   This prevents boxes from stacking on each other.
+========================================================= */
+
+.loader.box-loader {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 84px !important;
+  height: 84px !important;
+  display: block !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter:
+    drop-shadow(0 18px 28px rgba(0, 0, 0, 0.24))
+    drop-shadow(0 0 18px rgba(255, 255, 255, 0.06)) !important;
+}
+
+.loader.box-loader .box1,
+.loader.box-loader .box2,
+.loader.box-loader .box3 {
+  position: absolute !important;
+  display: block !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+  border-radius: 9px !important;
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.36), transparent 28%),
+    linear-gradient(145deg, #d8d8d8 0%, #bdbdbd 52%, #9e9e9e 100%) !important;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -8px 12px rgba(0, 0, 0, 0.08) !important;
+  will-change: width, height, top, left;
+}
+
+.loader.box-loader .box1 {
+  width: 84px !important;
+  height: 36px !important;
+  top: 48px !important;
+  left: 0 !important;
+  animation: finalBoxLoader1 3s 1s ease-in-out infinite !important;
+}
+
+.loader.box-loader .box2 {
+  width: 36px !important;
+  height: 36px !important;
+  top: 0 !important;
+  left: 0 !important;
+  animation: finalBoxLoader2 3s 1s ease-in-out infinite !important;
+}
+
+.loader.box-loader .box3 {
+  width: 36px !important;
+  height: 36px !important;
+  top: 0 !important;
+  left: 48px !important;
+  animation: finalBoxLoader3 3s 1s ease-in-out infinite !important;
+}
+
+@keyframes finalBoxLoader1 {
+  0% { width: 84px; height: 36px; top: 48px; left: 0; }
+  12.5% { width: 36px; height: 36px; top: 48px; left: 0; }
+  25% { width: 36px; height: 36px; top: 48px; left: 0; }
+  37.5% { width: 36px; height: 36px; top: 48px; left: 0; }
+  50% { width: 36px; height: 36px; top: 48px; left: 0; }
+  62.5% { width: 36px; height: 36px; top: 48px; left: 0; }
+  75% { width: 36px; height: 84px; top: 0; left: 0; }
+  87.5% { width: 36px; height: 36px; top: 0; left: 0; }
+  100% { width: 36px; height: 36px; top: 0; left: 0; }
+}
+
+@keyframes finalBoxLoader2 {
+  0% { width: 36px; height: 36px; top: 0; left: 0; }
+  12.5% { width: 36px; height: 36px; top: 0; left: 0; }
+  25% { width: 36px; height: 36px; top: 0; left: 0; }
+  37.5% { width: 36px; height: 36px; top: 0; left: 0; }
+  50% { width: 84px; height: 36px; top: 0; left: 0; }
+  62.5% { width: 36px; height: 36px; top: 0; left: 48px; }
+  75% { width: 36px; height: 36px; top: 0; left: 48px; }
+  87.5% { width: 36px; height: 36px; top: 0; left: 48px; }
+  100% { width: 36px; height: 36px; top: 0; left: 48px; }
+}
+
+@keyframes finalBoxLoader3 {
+  0% { width: 36px; height: 36px; top: 0; left: 48px; }
+  12.5% { width: 36px; height: 36px; top: 0; left: 48px; }
+  25% { width: 36px; height: 84px; top: 0; left: 48px; }
+  37.5% { width: 36px; height: 36px; top: 48px; left: 48px; }
+  50% { width: 36px; height: 36px; top: 48px; left: 48px; }
+  62.5% { width: 36px; height: 36px; top: 48px; left: 48px; }
+  75% { width: 36px; height: 36px; top: 48px; left: 48px; }
+  87.5% { width: 36px; height: 36px; top: 48px; left: 48px; }
+  100% { width: 84px; height: 36px; top: 48px; left: 0; }
+}
+
+@media (max-width: 430px) {
+  .loader.box-loader {
+    width: 78px !important;
+    height: 78px !important;
+  }
+
+  .loader.box-loader .box1 {
+    width: 78px !important;
+    height: 33px !important;
+    top: 45px !important;
+    left: 0 !important;
+  }
+
+  .loader.box-loader .box2 {
+    width: 33px !important;
+    height: 33px !important;
+    top: 0 !important;
+    left: 0 !important;
+  }
+
+  .loader.box-loader .box3 {
+    width: 33px !important;
+    height: 33px !important;
+    top: 0 !important;
+    left: 45px !important;
+  }
+
+  @keyframes finalBoxLoader1 {
+    0% { width: 78px; height: 33px; top: 45px; left: 0; }
+    12.5% { width: 33px; height: 33px; top: 45px; left: 0; }
+    25% { width: 33px; height: 33px; top: 45px; left: 0; }
+    37.5% { width: 33px; height: 33px; top: 45px; left: 0; }
+    50% { width: 33px; height: 33px; top: 45px; left: 0; }
+    62.5% { width: 33px; height: 33px; top: 45px; left: 0; }
+    75% { width: 33px; height: 78px; top: 0; left: 0; }
+    87.5% { width: 33px; height: 33px; top: 0; left: 0; }
+    100% { width: 33px; height: 33px; top: 0; left: 0; }
+  }
+
+  @keyframes finalBoxLoader2 {
+    0% { width: 33px; height: 33px; top: 0; left: 0; }
+    12.5% { width: 33px; height: 33px; top: 0; left: 0; }
+    25% { width: 33px; height: 33px; top: 0; left: 0; }
+    37.5% { width: 33px; height: 33px; top: 0; left: 0; }
+    50% { width: 78px; height: 33px; top: 0; left: 0; }
+    62.5% { width: 33px; height: 33px; top: 0; left: 45px; }
+    75% { width: 33px; height: 33px; top: 0; left: 45px; }
+    87.5% { width: 33px; height: 33px; top: 0; left: 45px; }
+    100% { width: 33px; height: 33px; top: 0; left: 45px; }
+  }
+
+  @keyframes finalBoxLoader3 {
+    0% { width: 33px; height: 33px; top: 0; left: 45px; }
+    12.5% { width: 33px; height: 33px; top: 0; left: 45px; }
+    25% { width: 33px; height: 78px; top: 0; left: 45px; }
+    37.5% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    50% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    62.5% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    75% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    87.5% { width: 33px; height: 33px; top: 45px; left: 45px; }
+    100% { width: 78px; height: 33px; top: 45px; left: 0; }
+  }
+}
