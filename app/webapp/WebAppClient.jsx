@@ -1429,60 +1429,10 @@ function isImageAnimationUrl(url = '') {
 
 function isTgsAnimationUrl(url = '') {
   const cleanUrl = String(url || '').split('?')[0].toLowerCase();
-
-  return (
-    cleanUrl.endsWith('.tgs') ||
-    cleanUrl.endsWith('.json') ||
-    cleanUrl.endsWith('.lottie') ||
-    cleanUrl.includes('/telegram/animations/') ||
-    cleanUrl.includes('/manual-gifts/lottie/')
-  );
+  return cleanUrl.endsWith('.tgs') || cleanUrl.includes('/telegram/animations/');
 }
 
-async function loadLottieAnimationData(src) {
-  const response = await fetch(src, { cache: 'force-cache' });
-
-  if (!response.ok) {
-    throw new Error(`Lottie download failed: ${response.status}`);
-  }
-
-  const buffer = await response.arrayBuffer();
-  const bytes = new Uint8Array(buffer);
-  const decoded = new TextDecoder().decode(bytes);
-
-  try {
-    return JSON.parse(decoded);
-  } catch {
-    // davom etamiz
-  }
-
-  try {
-    const pakoModule = await import('pako');
-    const pako = pakoModule.default || pakoModule;
-    const jsonText = pako.ungzip(bytes, { to: 'string' });
-    return JSON.parse(jsonText);
-  } catch {
-    // davom etamiz
-  }
-
-  try {
-    const fflateModule = await import('fflate');
-    const files = fflateModule.unzipSync(bytes);
-    const fileName =
-      Object.keys(files).find((name) => name.startsWith('animations/') && name.endsWith('.json')) ||
-      Object.keys(files).find((name) => name.endsWith('.json') && !name.endsWith('manifest.json'));
-
-    if (!fileName) {
-      throw new Error('Lottie zip ichida animation JSON topilmadi.');
-    }
-
-    return JSON.parse(new TextDecoder().decode(files[fileName]));
-  } catch (error) {
-    throw new Error(error?.message || 'Lottie/TGS o‘qilmadi.');
-  }
-}
-
-function TelegramTgsAnimation({ src, className, autoplay = true, loop = true }) {
+function TelegramTgsAnimation({ src, className }) {
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -1491,30 +1441,37 @@ function TelegramTgsAnimation({ src, className, autoplay = true, loop = true }) 
 
     async function loadAnimation() {
       try {
-        const [{ default: lottie }, animationData] = await Promise.all([
+        const [{ default: lottie }, pakoModule] = await Promise.all([
           import('lottie-web'),
-          loadLottieAnimationData(src),
+          import('pako'),
         ]);
+        const pako = pakoModule.default || pakoModule;
+        const response = await fetch(src, { cache: 'force-cache' });
+
+        if (!response.ok) {
+          throw new Error(`TGS download failed: ${response.status}`);
+        }
+
+        const buffer = await response.arrayBuffer();
+        let jsonText = '';
+
+        try {
+          jsonText = pako.ungzip(new Uint8Array(buffer), { to: 'string' });
+        } catch {
+          jsonText = new TextDecoder().decode(buffer);
+        }
 
         if (cancelled || !containerRef.current) return;
 
         animation = lottie.loadAnimation({
           container: containerRef.current,
           renderer: 'svg',
-          loop,
-          autoplay,
-          animationData,
+          loop: true,
+          autoplay: true,
+          animationData: JSON.parse(jsonText),
         });
-
-        if (!autoplay) {
-          animation.addEventListener('DOMLoaded', () => {
-            if (!cancelled && animation) {
-              animation.goToAndStop(0, true);
-            }
-          });
-        }
       } catch (error) {
-        console.warn('TGS/Lottie animation failed:', error?.message || error);
+        console.warn('TGS animation failed:', error?.message || error);
       }
     }
 
@@ -1526,10 +1483,10 @@ function TelegramTgsAnimation({ src, className, autoplay = true, loop = true }) 
         animation.destroy();
       }
     };
-  }, [src, autoplay, loop]);
+  }, [src]);
 
   return (
-    <span className={`${className} tgs-gift-media ${autoplay ? 'is-playing' : 'is-static'}`}>
+    <span className={`${className} tgs-gift-media`}>
       <span ref={containerRef} className="tgs-gift-canvas" />
     </span>
   );
@@ -1557,21 +1514,11 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
   const animationUrl = gift.animation_url || '';
   const imageUrl = gift.image_url || '';
 
-  // Agar TGS/Lottie bo‘lsa:
-  // - case reel/card uchun preferStatic=true: TGS'ning birinchi frame'i static preview bo'ladi
-  // - result/inventory uchun preferStatic=false: animatsiya o'ynaydi
-  if (animationUrl && isTgsAnimationUrl(animationUrl)) {
-    return (
-      <TelegramTgsAnimation
-        src={animationUrl}
-        className={mediaClass}
-        autoplay={!preferStatic}
-        loop={!preferStatic}
-      />
-    );
-  }
-
   if (animationUrl && !preferStatic) {
+    if (isTgsAnimationUrl(animationUrl)) {
+      return <TelegramTgsAnimation src={animationUrl} className={mediaClass} />;
+    }
+
     if (isImageAnimationUrl(animationUrl)) {
       return <img className={`${mediaClass} gift-media-visual animated-webp-media`} src={animationUrl} alt="" loading="lazy" draggable="false" />;
     }
