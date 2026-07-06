@@ -8883,3 +8883,439 @@ video.gift-media.gift-media-visual,
 .manual-selected-preview .admin-gift-media, .manual-selected-preview .gift-media { background:transparent !important; object-fit:contain !important; }
 .gift-media.gift-media-visual, img.gift-media.gift-media-visual, .pro-reel-item .gift-media.gift-media-visual, .win-gift-media .gift-media.gift-media-visual { background:transparent !important; object-fit:contain !important; object-position:center !important; -webkit-user-drag:none !important; user-select:none !important; }
 @media (max-width:520px){ .manual-bg-color-row{grid-template-columns:84px minmax(0,1fr)!important;} .manual-bg-preset-row{grid-template-columns:repeat(3,minmax(0,1fr))!important;} }
+
+/* =========================================================
+   CASE DETAIL + SUPER REEL V8
+   Referencega yaqin: title + mini reel + big open + gray prize cards.
+========================================================= */
+
+.case-detail-v8 {
+  width: min(100%, 540px) !important;
+  padding: 0 !important;
+  border-radius: 30px !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(139,92,246,.18), transparent 34%),
+    linear-gradient(180deg, rgba(14,16,32,.98), rgba(3,7,20,.99)) !important;
+}
+
+.case-v8-hero {
+  position: relative !important;
+  padding: 20px 16px 18px !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 90% 0%, color-mix(in srgb, var(--case-preview-accent, #8b5cf6) 35%, transparent), transparent 30%),
+    radial-gradient(circle at 8% 100%, rgba(139,92,246,.24), transparent 35%),
+    linear-gradient(180deg, rgba(31,34,48,.95), rgba(12,15,28,.98)) !important;
+  border-bottom: 1px solid rgba(255,255,255,.08) !important;
+}
+
+.case-v8-hero::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  opacity: .45 !important;
+  background:
+    linear-gradient(115deg, transparent 0%, rgba(255,255,255,.08) 38%, transparent 62%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.045) 0 1px, transparent 1px 17px) !important;
+  animation: caseHeroSheen 6.2s linear infinite !important;
+}
+
+.case-v8-title {
+  position: relative !important;
+  z-index: 2 !important;
+  padding-right: 44px !important;
+}
+
+.case-v8-title h2 {
+  margin: 8px 0 3px !important;
+  color: #fff !important;
+  font-size: clamp(28px, 8vw, 40px) !important;
+  line-height: .95 !important;
+  letter-spacing: -.055em !important;
+}
+
+.case-v8-title p {
+  margin: 0 0 14px !important;
+  color: rgba(226,232,240,.72) !important;
+  font-size: 13px !important;
+  line-height: 1.45 !important;
+}
+
+.case-v8-reel-preview {
+  position: relative !important;
+  z-index: 2 !important;
+  height: 92px !important;
+  margin: 10px 0 16px !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.055)),
+    linear-gradient(135deg, #303034 0%, #202126 100%) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 18px 44px rgba(0,0,0,.28) !important;
+}
+
+.case-v8-reel-preview::before,
+.case-v8-reel-preview::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 58px !important;
+  z-index: 4 !important;
+  pointer-events: none !important;
+}
+
+.case-v8-reel-preview::before {
+  left: 0 !important;
+  background: linear-gradient(90deg, rgba(32,33,38,.95), transparent) !important;
+}
+
+.case-v8-reel-preview::after {
+  right: 0 !important;
+  background: linear-gradient(270deg, rgba(32,33,38,.95), transparent) !important;
+}
+
+.case-v8-reel-marker {
+  position: absolute !important;
+  left: 50% !important;
+  width: 0 !important;
+  height: 0 !important;
+  transform: translateX(-50%) !important;
+  z-index: 6 !important;
+  filter: drop-shadow(0 0 10px rgba(139,92,246,.85)) !important;
+}
+
+.case-v8-reel-marker.top {
+  top: 0 !important;
+  border-left: 10px solid transparent !important;
+  border-right: 10px solid transparent !important;
+  border-top: 12px solid #8b5cf6 !important;
+}
+
+.case-v8-reel-marker.bottom {
+  bottom: 0 !important;
+  border-left: 10px solid transparent !important;
+  border-right: 10px solid transparent !important;
+  border-bottom: 12px solid #8b5cf6 !important;
+}
+
+.case-v8-reel-preview::selection {
+  background: transparent !important;
+}
+
+.case-v8-reel-track {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 0 14px !important;
+  animation: caseStripIdle 6.4s linear infinite !important;
+}
+
+.case-v8-reel-card,
+.case-v8-reel-empty {
+  flex: 0 0 70px !important;
+  width: 70px !important;
+  height: 70px !important;
+  border-radius: 13px !important;
+  display: grid !important;
+  place-items: center !important;
+  background:
+    radial-gradient(circle at 45% 16%, rgba(255,255,255,.18), transparent 36%),
+    linear-gradient(145deg, #3a3a3f, #24252a) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 12px 22px rgba(0,0,0,.28) !important;
+}
+
+.case-v8-reel-card .gift-media {
+  width: 62px !important;
+  height: 62px !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 8px 12px rgba(0,0,0,.34)) !important;
+}
+
+.case-v8-open-btn {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  border: 0 !important;
+  border-radius: 18px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  color: #fff !important;
+  font-size: 16px !important;
+  font-weight: 950 !important;
+  cursor: pointer !important;
+  background: linear-gradient(135deg, #ff7a1a 0%, #ef4444 100%) !important;
+  box-shadow:
+    0 18px 40px rgba(239,68,68,.26),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+  animation: openPulse 2.4s ease-in-out infinite !important;
+}
+
+.case-v8-open-btn:disabled {
+  opacity: .55 !important;
+  cursor: not-allowed !important;
+  animation: none !important;
+  filter: grayscale(.3) !important;
+}
+
+.case-v8-open-btn svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+.case-v8-stats {
+  position: relative !important;
+  z-index: 2 !important;
+  margin-top: 11px !important;
+  display: flex !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  flex-wrap: wrap !important;
+}
+
+.case-v8-stats span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  min-height: 30px !important;
+  padding: 0 11px !important;
+  border-radius: 999px !important;
+  background: rgba(255,255,255,.075) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  color: rgba(255,255,255,.82) !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+.case-v8-prizes-head {
+  padding-top: 18px !important;
+}
+
+.case-v8-prize-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  padding: 0 16px 18px !important;
+  max-height: min(340px, 40dvh) !important;
+}
+
+.case-v8-prize-card,
+.premium-prize-card.case-v8-prize-card {
+  position: relative !important;
+  min-height: 170px !important;
+  padding: 10px !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-content: start !important;
+  gap: 8px !important;
+  border-radius: 20px !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.035)),
+    linear-gradient(145deg, #303034, #1f2025) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 14px 30px rgba(0,0,0,.24) !important;
+  animation: prizeFloat 4.8s ease-in-out infinite !important;
+  animation-delay: var(--float-delay, 0s) !important;
+}
+
+.case-v8-prize-image {
+  height: 104px !important;
+  border-radius: 16px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 50% 16%, rgba(255,255,255,.16), transparent 38%),
+    linear-gradient(145deg, #3a3b40, #24252b) !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+}
+
+.case-v8-prize-image .gift-media {
+  width: 92px !important;
+  height: 92px !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  filter:
+    drop-shadow(0 12px 16px rgba(0,0,0,.36))
+    drop-shadow(0 0 14px rgba(255,255,255,.10)) !important;
+}
+
+.case-v8-prize-copy {
+  min-width: 0 !important;
+  text-align: center !important;
+}
+
+.case-v8-prize-copy strong {
+  display: block !important;
+  color: #fff !important;
+  font-size: 13px !important;
+  font-weight: 950 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.case-v8-prize-copy span {
+  display: block !important;
+  margin-top: 3px !important;
+  color: rgba(226,232,240,.66) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.pro-reel-track {
+  gap: 12px !important;
+  padding: 20px 50% !important;
+}
+
+.pro-reel-track.is-preparing {
+  animation: proReelReadyFlowV8 1.15s linear infinite !important;
+}
+
+.pro-reel-track.is-rolling {
+  animation: proReelPerfectStopV8 4.15s cubic-bezier(.08, .78, .10, 1) forwards !important;
+}
+
+.pro-reel-item.media-only,
+.pro-reel-item.media-only.premium-reel-item,
+.super-reel-item {
+  flex: 0 0 108px !important;
+  width: 108px !important;
+  height: 108px !important;
+  min-width: 108px !important;
+  border-radius: 24px !important;
+  padding: 9px !important;
+}
+
+.super-reel-item,
+.pro-reel-item.media-only.super-reel-item {
+  background:
+    radial-gradient(circle at 44% 16%, rgba(255,255,255,.18), transparent 38%),
+    linear-gradient(145deg, #34353b 0%, #202126 100%) !important;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  box-shadow:
+    0 18px 34px rgba(0,0,0,.35),
+    inset 0 1px 0 rgba(255,255,255,.15) !important;
+  animation: reelCardIdleV8 2.7s ease-in-out infinite !important;
+  animation-delay: var(--reel-item-delay, 0s) !important;
+}
+
+.super-reel-item .gift-media {
+  width: 90px !important;
+  height: 90px !important;
+  max-width: 90px !important;
+  max-height: 90px !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  filter:
+    drop-shadow(0 12px 16px rgba(0,0,0,.36))
+    drop-shadow(0 0 12px rgba(255,255,255,.10)) !important;
+}
+
+.pro-reel-shell {
+  height: 154px !important;
+}
+
+.reel-center-line {
+  z-index: 6 !important;
+  background: linear-gradient(180deg, transparent, rgba(255,217,116,.72), transparent) !important;
+  box-shadow: 0 0 28px rgba(255,217,116,.34) !important;
+}
+
+.reel-center-line span {
+  background: linear-gradient(135deg, #fde68a, #f59e0b) !important;
+  color: #7c2d12 !important;
+  box-shadow: 0 0 24px rgba(245,158,11,.45) !important;
+}
+
+.gift-media.gift-media-visual,
+img.gift-media.gift-media-visual,
+.pro-reel-item .gift-media.gift-media-visual,
+.win-gift-media .gift-media.gift-media-visual {
+  background: transparent !important;
+  object-fit: contain !important;
+  object-position: center !important;
+}
+
+@keyframes caseStripIdle {
+  0% { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(-164px,0,0); }
+}
+
+@keyframes proReelReadyFlowV8 {
+  from { transform: translate3d(0,0,0); }
+  to { transform: translate3d(-480px,0,0); }
+}
+
+@keyframes proReelPerfectStopV8 {
+  0% { transform: translate3d(0,0,0); filter: blur(0); }
+  10% { transform: translate3d(-320px,0,0); filter: blur(1.2px); }
+  34% { filter: blur(2px); }
+  68% { transform: translate3d(calc((var(--reel-distance) * -1) - 150px),0,0); filter: blur(.75px); }
+  84% { transform: translate3d(calc((var(--reel-distance) * -1) + 34px),0,0); filter: blur(0); }
+  92% { transform: translate3d(calc((var(--reel-distance) * -1) - 12px),0,0); }
+  97% { transform: translate3d(calc((var(--reel-distance) * -1) + 5px),0,0); }
+  100% { transform: translate3d(calc(var(--reel-distance) * -1),0,0); filter: blur(0); }
+}
+
+@keyframes reelCardIdleV8 {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(0,-3px,0) scale(1.012); }
+}
+
+@media (max-width: 520px) {
+  .case-detail-v8 {
+    border-radius: 28px !important;
+  }
+
+  .case-v8-hero {
+    padding: 18px 14px 16px !important;
+  }
+
+  .case-v8-reel-preview {
+    height: 86px !important;
+    border-radius: 20px !important;
+  }
+
+  .case-v8-reel-card {
+    flex-basis: 64px !important;
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .case-v8-reel-card .gift-media {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  .case-v8-prize-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .case-v8-prize-card,
+  .premium-prize-card.case-v8-prize-card {
+    min-height: 154px !important;
+  }
+
+  .case-v8-prize-image {
+    height: 92px !important;
+  }
+
+  .case-v8-prize-image .gift-media {
+    width: 82px !important;
+    height: 82px !important;
+  }
+}
