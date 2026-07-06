@@ -162,7 +162,7 @@ function buildOpeningReel(gifts, winningGift) {
   const safeGifts = gifts.length ? gifts : [winningGift].filter(Boolean);
   const reel = [];
 
-  for (let index = 0; index < 38; index += 1) {
+  for (let index = 0; index < 40; index += 1) {
     reel.push(randomItem(safeGifts));
   }
 
@@ -685,7 +685,7 @@ export default function WebAppClient() {
 
       tg?.HapticFeedback?.impactOccurred?.('medium');
 
-      await delay(4300);
+      await delay(4200);
 
       setOpening({
         stage: 'result',
@@ -970,71 +970,82 @@ export default function WebAppClient() {
 
         <GlobalBalanceBar telegramUser={telegramUser} profile={profile} profilePhotoUrl={profilePhotoUrl} />
 
-        <main className="app-main">
-          {tab === 'home' ? (
-            <HomeView
-              telegramUser={telegramUser}
-              profile={profile}
-              cases={activeCases}
-              giftsByCase={giftsByCase}
-              onGoCases={() => setTab('games')}
-              onGoInventory={() => setTab('inventory')}
-              onOpenCase={openCase}
-              onSelectCase={setSelectedCase}
-              onComingSoon={() => showToast('Tez orada 🚀')}
+        <main className={`app-main ${selectedCase ? 'case-page-main' : ''}`}>
+          {selectedCase ? (
+            <CaseDetailPage
+              caseItem={selectedCase}
+              gifts={giftsByCase[selectedCase.id] || []}
               busy={busy}
+              onBack={() => setSelectedCase(null)}
+              onOpen={() => openCase(selectedCase)}
             />
-          ) : null}
+          ) : (
+            <>
+              {tab === 'home' ? (
+                <HomeView
+                  telegramUser={telegramUser}
+                  profile={profile}
+                  cases={activeCases}
+                  giftsByCase={giftsByCase}
+                  onGoCases={() => setTab('games')}
+                  onGoInventory={() => setTab('inventory')}
+                  onOpenCase={openCase}
+                  onSelectCase={setSelectedCase}
+                  onComingSoon={() => showToast('Tez orada 🚀')}
+                  busy={busy}
+                />
+              ) : null}
 
-          {tab === 'games' ? (
-            <CasesView
-              cases={activeCases}
-              giftsByCase={giftsByCase}
-              busy={busy}
-              onOpenCase={openCase}
-              onSelectCase={setSelectedCase}
-              onGoHome={() => setTab('home')}
-            />
-          ) : null}
+              {tab === 'games' ? (
+                <CasesView
+                  cases={activeCases}
+                  giftsByCase={giftsByCase}
+                  busy={busy}
+                  onOpenCase={openCase}
+                  onSelectCase={setSelectedCase}
+                  onGoHome={() => setTab('home')}
+                />
+              ) : null}
 
-          {tab === 'inventory' ? (
-            <InventoryView
-              history={history}
-              gifts={gifts}
-              cases={cases}
-              withdrawals={withdrawals}
-              busy={busy}
-              onWithdraw={createWithdraw}
-            />
-          ) : null}
+              {tab === 'inventory' ? (
+                <InventoryView
+                  history={history}
+                  gifts={gifts}
+                  cases={cases}
+                  withdrawals={withdrawals}
+                  busy={busy}
+                  onWithdraw={createWithdraw}
+                />
+              ) : null}
 
-          {tab === 'history' ? (
-            <HistoryView history={history} gifts={gifts} cases={cases} withdrawals={withdrawals} />
-          ) : null}
+              {tab === 'history' ? (
+                <HistoryView history={history} gifts={gifts} cases={cases} withdrawals={withdrawals} />
+              ) : null}
 
-          {tab === 'referral' ? (
-            <ReferralView
-              telegramUser={telegramUser}
-              profile={profile}
-            />
-          ) : null}
+              {tab === 'referral' ? (
+                <ReferralView
+                  telegramUser={telegramUser}
+                  profile={profile}
+                />
+              ) : null}
+            </>
+          )}
         </main>
 
         <nav className="mobile-nav premium-card" aria-label="Bottom navigation">
           {navItems.map((item) => (
-            <NavButton key={item.id} item={item} active={tab === item.id} onClick={() => setTab(item.id)} mobile />
+            <NavButton
+              key={item.id}
+              item={item}
+              active={!selectedCase && tab === item.id}
+              onClick={() => {
+                setSelectedCase(null);
+                setTab(item.id);
+              }}
+              mobile
+            />
           ))}
         </nav>
-
-        {selectedCase ? (
-          <CaseDetailsModal
-            caseItem={selectedCase}
-            gifts={giftsByCase[selectedCase.id] || []}
-            busy={busy}
-            onClose={() => setSelectedCase(null)}
-            onOpen={() => openCase(selectedCase)}
-          />
-        ) : null}
 
         {opening ? (
           <OpeningModal
@@ -2007,92 +2018,100 @@ function AdminList({ title, children }) {
   );
 }
 
-function CaseDetailsModal({ caseItem, gifts, busy, onClose, onOpen }) {
+function CaseDetailPage({ caseItem, gifts, busy, onBack, onOpen }) {
   const readyGifts = gifts.filter(eligibleGift);
   const isFree = Number(caseItem.price || 0) === 0;
   const openText = isFree ? 'OPEN FREE' : `OPEN ${formatPrice(caseItem.price)}`;
   const previewGifts = readyGifts.length ? readyGifts : gifts;
   const stripSource = previewGifts.length ? previewGifts : [];
   const stripGifts = stripSource.length
-    ? Array.from({ length: Math.min(7, Math.max(5, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
+    ? Array.from({ length: Math.min(8, Math.max(6, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
     : [];
 
   return (
-    <div className="modal-backdrop case-preview-backdrop" role="dialog" aria-modal="true">
-      <div className="case-detail-modal premium-card case-preview-modal case-detail-v8">
-        <button type="button" className="close-btn case-preview-close" onClick={onClose}>×</button>
-
-        <div
-          className="case-v8-hero"
-          style={{
-            '--case-preview-accent': caseAccent(caseItem),
-            '--case-preview-badge': caseBadgeColor(caseItem),
-          }}
-        >
-          <div className="case-v8-title">
-            <span className="eyebrow">Premium case</span>
-            <h2>{caseItem.title}</h2>
-            <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
-          </div>
-
-          <div className="case-v8-reel-preview">
-            <span className="case-v8-reel-marker top" aria-hidden="true" />
-            <span className="case-v8-reel-marker bottom" aria-hidden="true" />
-            <div className="case-v8-reel-track">
-              {stripGifts.map((gift, index) => (
-                <div className="case-v8-reel-card" key={`${gift.id}-strip-${index}`}>
-                  <GiftMedia gift={gift} preferStatic />
-                </div>
-              ))}
-              {!stripGifts.length ? (
-                <div className="case-v8-reel-empty">
-                  <AppIcon name="box" />
-                </div>
-              ) : null}
-            </div>
-          </div>
-
-          <button type="button" className="case-v8-open-btn" disabled={busy || readyGifts.length === 0} onClick={onOpen}>
-            <AppIcon name="spark" />
-            <span>{busy ? 'Opening...' : openText}</span>
-          </button>
-
-          <div className="case-v8-stats">
-            <span><AppIcon name="gift" /> {readyGifts.length || 0} gifts</span>
-            <span>{coinIcon()} {isFree ? 'Free' : formatPrice(caseItem.price)}</span>
-          </div>
-        </div>
-
-        <div className="case-prizes-head case-v8-prizes-head">
-          <div>
-            <span className="eyebrow">Inside this case</span>
-            <h3>Sovg‘alar</h3>
-          </div>
-          <strong>{readyGifts.length || 0}/{gifts.length || 0}</strong>
-        </div>
-
-        <div className="case-prize-grid case-v8-prize-grid">
-          {previewGifts.map((gift, index) => (
-            <div
-              className="gift-chip-card premium-prize-card case-v8-prize-card"
-              key={gift.id}
-              style={{
-                '--float-delay': `${(index % 6) * 0.13}s`,
-              }}
-            >
-              <span className="prize-card-shine" aria-hidden="true" />
-              <div className="case-v8-prize-image">
-                <GiftMedia gift={gift} compact preferStatic />
-              </div>
-              <div className="case-v8-prize-copy">
-                <strong>{gift.title}</strong>
-                <span>{gift.chance}% · stock {gift.stock}</span>
-              </div>
-            </div>
-          ))}
+    <section className="case-page-screen">
+      <div className="case-page-top">
+        <button type="button" className="case-page-back" onClick={onBack} aria-label="Back">
+          ←
+        </button>
+        <div>
+          <span className="eyebrow">Case detail</span>
+          <h1>{caseItem.title}</h1>
         </div>
       </div>
-    </div>
+
+      <div
+        className="case-page-hero premium-card"
+        style={{
+          '--case-page-accent': caseAccent(caseItem),
+          '--case-page-badge': caseBadgeColor(caseItem),
+        }}
+      >
+        <span className="case-page-glow glow-one" aria-hidden="true" />
+        <span className="case-page-glow glow-two" aria-hidden="true" />
+
+        <div className="case-page-copy">
+          <span className="case-page-pill">Premium case</span>
+          <h2>{caseItem.title}</h2>
+          <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
+        </div>
+
+        <div className="case-page-reel-preview" aria-label="Case prizes preview">
+          <span className="case-page-marker top" aria-hidden="true" />
+          <span className="case-page-marker bottom" aria-hidden="true" />
+          <div className="case-page-strip">
+            {stripGifts.map((gift, index) => (
+              <div className="case-page-strip-card" key={`${gift.id}-strip-${index}`}>
+                <GiftMedia gift={gift} preferStatic />
+              </div>
+            ))}
+
+            {!stripGifts.length ? (
+              <div className="case-page-strip-empty">
+                <AppIcon name="box" />
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <button type="button" className="case-page-open-btn" disabled={busy || readyGifts.length === 0} onClick={onOpen}>
+          <AppIcon name="spark" />
+          <span>{busy ? 'Opening...' : openText}</span>
+        </button>
+
+        <div className="case-page-stats">
+          <span><AppIcon name="gift" /> {readyGifts.length || 0} gifts</span>
+          <span>{coinIcon()} {isFree ? 'Free' : formatPrice(caseItem.price)}</span>
+        </div>
+      </div>
+
+      <div className="case-page-prizes-head">
+        <div>
+          <span className="eyebrow">Inside this case</span>
+          <h2>Sovg‘alar</h2>
+        </div>
+        <strong>{readyGifts.length || 0}/{gifts.length || 0}</strong>
+      </div>
+
+      <div className="case-page-prize-grid">
+        {previewGifts.map((gift, index) => (
+          <div
+            className="case-page-prize-card"
+            key={gift.id}
+            style={{ '--float-delay': `${(index % 6) * 0.13}s` }}
+          >
+            <span className="prize-card-shine" aria-hidden="true" />
+            <div className="case-page-prize-image">
+              <GiftMedia gift={gift} compact preferStatic />
+            </div>
+            <div className="case-page-prize-copy">
+              <strong>{gift.title}</strong>
+              <span>{gift.chance}% · stock {gift.stock}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
