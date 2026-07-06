@@ -88,6 +88,7 @@ export default function AdminClient() {
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
   const [libraryForm, setLibraryForm] = useState(emptyLibraryForm);
   const [libraryFile, setLibraryFile] = useState(null);
+  const [lottieFile, setLottieFile] = useState(null);
   const [giftForm, setGiftForm] = useState(emptyGiftForm);
   const [backgroundColor, setBackgroundColor] = useState('#7c3aed');
 
@@ -265,6 +266,7 @@ export default function AdminClient() {
     formData.append('adminKey', adminKey);
     formData.append('title', libraryForm.title);
     formData.append('webp_file', libraryFile);
+    if (lottieFile) formData.append('animation_file', lottieFile);
 
     const data = await run(() => callAdminForm(formData), 'Gift bazaga yuklandi ✅');
 
@@ -273,9 +275,12 @@ export default function AdminClient() {
     applyBootstrap(data);
     setLibraryForm(emptyLibraryForm);
     setLibraryFile(null);
+    setLottieFile(null);
 
     const input = document.getElementById('manual-webp-input');
     if (input) input.value = '';
+    const animationInput = document.getElementById('manual-lottie-input');
+    if (animationInput) animationInput.value = '';
   }
 
   async function updateLibraryGift(giftId, updates) {
@@ -462,7 +467,7 @@ export default function AdminClient() {
               <div className="admin-form-heading">
                 <span>Manual gift database</span>
                 <h2>Gift bazaga qo‘shish</h2>
-                <p>Faqat gift nomi va WEBP kiriting. PNG avtomatik shu WEBP’dan olinadi.</p>
+                <p>Gift nomi, WEBP preview va TGS/Lottie animatsiya kiriting. PNG avtomatik WEBP’dan olinadi.</p>
               </div>
 
               <label>
@@ -471,8 +476,14 @@ export default function AdminClient() {
               </label>
 
               <label>
-                <span>WEBP fayl</span>
+                <span>WEBP preview fayl</span>
                 <input id="manual-webp-input" type="file" accept="image/webp,.webp" onChange={(event) => setLibraryFile(event.target.files?.[0] || null)} required />
+              </label>
+
+              <label>
+                <span>TGS / Lottie animatsiya</span>
+                <input id="manual-lottie-input" type="file" accept=".tgs,.json,.lottie,application/json" onChange={(event) => setLottieFile(event.target.files?.[0] || null)} />
+                <small className="manual-field-note">Yutganda shu animatsiya chiqadi. Case aylanishida esa PNG preview ishlaydi.</small>
               </label>
 
               <button type="submit" disabled={busy}>{busy ? 'Yuklanmoqda...' : 'Gift bazaga yuklash'}</button>
@@ -486,8 +497,8 @@ export default function AdminClient() {
                   </div>
                   <div>
                     <strong>{gift.title}</strong>
-                    <p>{gift.is_active === false ? 'hidden' : 'active'}</p>
-                    <small>WEBP original + PNG preview</small>
+                    <p>{gift.is_active === false ? 'hidden' : 'active'} · {gift.animation_url ? 'TGS/Lottie bor' : 'animatsiya yo‘q'}</p>
+                    <small>PNG preview + TGS/Lottie animatsiya</small>
                   </div>
                   <div className="manual-card-actions">
                     <button type="button" onClick={() => updateLibraryGift(gift.id, { is_active: gift.is_active === false })}>
@@ -500,7 +511,7 @@ export default function AdminClient() {
                 <div className="telegram-import-empty manual-empty">
                   <span>🎁</span>
                   <h3>Gift baza bo‘sh</h3>
-                  <p>Gift nomi va WEBP yuklang.</p>
+                  <p>Gift nomi, WEBP preview va TGS/Lottie yuklang.</p>
                 </div>
               )}
             </div>
@@ -537,18 +548,34 @@ export default function AdminClient() {
               </label>
 
               <div className="manual-bg-builder">
-                <label>
-                  <span>Fon rangi</span>
-                  <input
-                    type="color"
-                    value={backgroundColor}
-                    onChange={(event) => {
-                      const nextColor = event.target.value;
-                      setBackgroundColor(nextColor);
-                      setGiftForm({ ...giftForm, background_value: gradientFromColor(nextColor) });
-                    }}
-                  />
-                </label>
+                <div className="manual-bg-color-row">
+                  <label>
+                    <span>Fon rangi</span>
+                    <input
+                      type="color"
+                      value={backgroundColor}
+                      onChange={(event) => {
+                        const nextColor = event.target.value;
+                        setBackgroundColor(nextColor);
+                        setGiftForm({ ...giftForm, background_value: gradientFromColor(nextColor) });
+                      }}
+                    />
+                  </label>
+
+                  <label>
+                    <span>HEX / RGB</span>
+                    <input
+                      type="text"
+                      value={backgroundColor}
+                      onChange={(event) => {
+                        const nextColor = event.target.value.trim();
+                        setBackgroundColor(nextColor || '#7c3aed');
+                        setGiftForm({ ...giftForm, background_value: gradientFromColor(nextColor || '#7c3aed') });
+                      }}
+                      placeholder="#7c3aed"
+                    />
+                  </label>
+                </div>
 
                 <div className="manual-bg-preset-row">
                   {backgroundPresets.map((preset) => (
