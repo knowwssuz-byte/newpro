@@ -1429,7 +1429,14 @@ function isImageAnimationUrl(url = '') {
 
 function isTgsAnimationUrl(url = '') {
   const cleanUrl = String(url || '').split('?')[0].toLowerCase();
-  return cleanUrl.endsWith('.tgs') || cleanUrl.includes('/telegram/animations/');
+
+  return (
+    cleanUrl.endsWith('.tgs') ||
+    cleanUrl.endsWith('.json') ||
+    cleanUrl.endsWith('.lottie') ||
+    cleanUrl.includes('/telegram/animations/') ||
+    cleanUrl.includes('/manual-gifts/lottie/')
+  );
 }
 
 function TelegramTgsAnimation({ src, className }) {
@@ -1520,14 +1527,14 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
     }
 
     if (isImageAnimationUrl(animationUrl)) {
-      return <img className={`${mediaClass} animated-webp-media`} src={animationUrl} alt="" loading="lazy" draggable="false" />;
+      return <img className={`${mediaClass} gift-media-visual animated-webp-media`} src={animationUrl} alt="" loading="lazy" draggable="false" />;
     }
 
-    return <video className={mediaClass} src={animationUrl} autoPlay loop muted playsInline />;
+    return <video className={`${mediaClass} gift-media-visual`} src={animationUrl} autoPlay loop muted playsInline />;
   }
 
   if (imageUrl) {
-    return <img className={mediaClass} src={imageUrl} alt="" loading="lazy" draggable="false" />;
+    return <img className={`${mediaClass} gift-media-visual`} src={imageUrl} alt="" loading="lazy" draggable="false" />;
   }
 
   return (
@@ -2022,40 +2029,79 @@ function AdminList({ title, children }) {
 
 function CaseDetailsModal({ caseItem, gifts, busy, onClose, onOpen }) {
   const readyGifts = gifts.filter(eligibleGift);
+  const isFree = Number(caseItem.price || 0) === 0;
+  const openText = isFree ? 'OPEN FREE' : `OPEN ${formatPrice(caseItem.price)}`;
+  const previewGifts = readyGifts.length ? readyGifts : gifts;
 
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true">
-      <div className="case-detail-modal premium-card">
-        <button type="button" className="close-btn" onClick={onClose}>×</button>
+    <div className="modal-backdrop case-preview-backdrop" role="dialog" aria-modal="true">
+      <div className="case-detail-modal premium-card case-preview-modal">
+        <button type="button" className="close-btn case-preview-close" onClick={onClose}>×</button>
 
-        <div className="case-detail-head">
-          <div className="case-detail-thumb">
-            {caseItem.image_url ? <img src={caseItem.image_url} alt="" /> : <AppIcon name="box" />}
+        <div
+          className="case-preview-hero"
+          style={{
+            '--case-preview-accent': caseAccent(caseItem),
+            '--case-preview-badge': caseBadgeColor(caseItem),
+          }}
+        >
+          <span className="case-preview-orb orb-one" aria-hidden="true" />
+          <span className="case-preview-orb orb-two" aria-hidden="true" />
+
+          <div className="case-preview-image-wrap">
+            {caseItem.image_url ? (
+              <img className="case-preview-case-img" src={caseItem.image_url} alt="" draggable="false" />
+            ) : (
+              <span className="case-preview-case-fallback">
+                <AppIcon name="box" />
+              </span>
+            )}
           </div>
-          <div>
-            <span className="eyebrow">Case</span>
+
+          <div className="case-preview-copy">
+            <span className="eyebrow">Premium case</span>
             <h2>{caseItem.title}</h2>
-            <p>{caseItem.description || 'Premium case reward'}</p>
+            <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
+
+            <div className="case-preview-stats">
+              <span><AppIcon name="gift" /> {readyGifts.length || 0} gifts</span>
+              <span>{coinIcon()} {isFree ? 'Free' : formatPrice(caseItem.price)}</span>
+            </div>
+
+            <button type="button" className="case-open-hero-btn" disabled={busy || readyGifts.length === 0} onClick={onOpen}>
+              <AppIcon name="spark" />
+              <span>{busy ? 'Opening...' : openText}</span>
+            </button>
           </div>
         </div>
 
-        <div className="gift-grid">
-          {gifts.map((gift) => (
+        <div className="case-prizes-head">
+          <div>
+            <span className="eyebrow">Inside this case</span>
+            <h3>Sovg‘alar</h3>
+          </div>
+          <strong>{readyGifts.length || 0}/{gifts.length || 0}</strong>
+        </div>
+
+        <div className="case-prize-grid">
+          {previewGifts.map((gift, index) => (
             <div
-              className="gift-chip-card"
+              className="gift-chip-card premium-prize-card"
               key={gift.id}
-              style={{ '--gift-bg': gift.background_value || defaultGiftBackground(gift.rarity) }}
+              style={{
+                '--gift-bg': gift.background_value || defaultGiftBackground(gift.rarity),
+                '--float-delay': `${(index % 6) * 0.18}s`,
+              }}
             >
+              <span className="prize-card-shine" aria-hidden="true" />
               <GiftMedia gift={gift} compact preferStatic />
-              <strong>{gift.title}</strong>
-              <span>{gift.chance}% · stock {gift.stock}</span>
+              <div>
+                <strong>{gift.title}</strong>
+                <span>{gift.chance}% · stock {gift.stock}</span>
+              </div>
             </div>
           ))}
         </div>
-
-        <button type="button" className="primary-btn big" disabled={busy || readyGifts.length === 0} onClick={onOpen}>
-          Open for {formatPrice(caseItem.price)} {coinIcon()}
-        </button>
       </div>
     </div>
   );
@@ -2091,7 +2137,14 @@ function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
                 key={opening.spinKey}
               >
                 {opening.reel.map((gift, index) => (
-                  <div className="pro-reel-item media-only" key={`${gift.id}-${index}`}>
+                  <div
+                    className="pro-reel-item media-only premium-reel-item"
+                    key={`${gift.id}-${index}`}
+                    style={{
+                      '--gift-bg': gift.background_value || defaultGiftBackground(gift.rarity),
+                      '--reel-item-delay': `${index * 0.035}s`,
+                    }}
+                  >
                     <GiftMedia gift={gift} preferStatic />
                   </div>
                 ))}
@@ -2109,7 +2162,12 @@ function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
               YOU WON
             </span>
 
-            <div className="win-gift-media">
+            <div
+              className="win-gift-media premium-win-gift-media"
+              style={{
+                '--gift-bg': opening.gift?.background_value || defaultGiftBackground(opening.gift?.rarity),
+              }}
+            >
               <GiftMedia gift={opening.gift} />
             </div>
 
