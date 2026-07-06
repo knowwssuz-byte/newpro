@@ -162,7 +162,7 @@ function buildOpeningReel(gifts, winningGift) {
   const safeGifts = gifts.length ? gifts : [winningGift].filter(Boolean);
   const reel = [];
 
-  for (let index = 0; index < 30; index += 1) {
+  for (let index = 0; index < 38; index += 1) {
     reel.push(randomItem(safeGifts));
   }
 
@@ -685,7 +685,7 @@ export default function WebAppClient() {
 
       tg?.HapticFeedback?.impactOccurred?.('medium');
 
-      await delay(3350);
+      await delay(4300);
 
       setOpening({
         stage: 'result',
@@ -1511,20 +1511,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
     );
   }
 
-  const animationUrl = gift.animation_url || '';
-  const imageUrl = gift.image_url || '';
-
-  if (animationUrl && !preferStatic) {
-    if (isTgsAnimationUrl(animationUrl)) {
-      return <TelegramTgsAnimation src={animationUrl} className={mediaClass} />;
-    }
-
-    if (isImageAnimationUrl(animationUrl)) {
-      return <img className={`${mediaClass} gift-media-visual animated-webp-media`} src={animationUrl} alt="" loading="lazy" draggable="false" />;
-    }
-
-    return <video className={`${mediaClass} gift-media-visual`} src={animationUrl} autoPlay loop muted playsInline />;
-  }
+  const imageUrl = gift.image_url || gift.png_url || gift.webp_url || '';
 
   if (imageUrl) {
     return <img className={`${mediaClass} gift-media-visual`} src={imageUrl} alt="" loading="lazy" draggable="false" />;
@@ -2025,50 +2012,58 @@ function CaseDetailsModal({ caseItem, gifts, busy, onClose, onOpen }) {
   const isFree = Number(caseItem.price || 0) === 0;
   const openText = isFree ? 'OPEN FREE' : `OPEN ${formatPrice(caseItem.price)}`;
   const previewGifts = readyGifts.length ? readyGifts : gifts;
+  const stripSource = previewGifts.length ? previewGifts : [];
+  const stripGifts = stripSource.length
+    ? Array.from({ length: Math.min(7, Math.max(5, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
+    : [];
 
   return (
     <div className="modal-backdrop case-preview-backdrop" role="dialog" aria-modal="true">
-      <div className="case-detail-modal premium-card case-preview-modal">
+      <div className="case-detail-modal premium-card case-preview-modal case-detail-v8">
         <button type="button" className="close-btn case-preview-close" onClick={onClose}>×</button>
 
         <div
-          className="case-preview-hero"
+          className="case-v8-hero"
           style={{
             '--case-preview-accent': caseAccent(caseItem),
             '--case-preview-badge': caseBadgeColor(caseItem),
           }}
         >
-          <span className="case-preview-orb orb-one" aria-hidden="true" />
-          <span className="case-preview-orb orb-two" aria-hidden="true" />
-
-          <div className="case-preview-image-wrap">
-            {caseItem.image_url ? (
-              <img className="case-preview-case-img" src={caseItem.image_url} alt="" draggable="false" />
-            ) : (
-              <span className="case-preview-case-fallback">
-                <AppIcon name="box" />
-              </span>
-            )}
-          </div>
-
-          <div className="case-preview-copy">
+          <div className="case-v8-title">
             <span className="eyebrow">Premium case</span>
             <h2>{caseItem.title}</h2>
             <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
+          </div>
 
-            <div className="case-preview-stats">
-              <span><AppIcon name="gift" /> {readyGifts.length || 0} gifts</span>
-              <span>{coinIcon()} {isFree ? 'Free' : formatPrice(caseItem.price)}</span>
+          <div className="case-v8-reel-preview">
+            <span className="case-v8-reel-marker top" aria-hidden="true" />
+            <span className="case-v8-reel-marker bottom" aria-hidden="true" />
+            <div className="case-v8-reel-track">
+              {stripGifts.map((gift, index) => (
+                <div className="case-v8-reel-card" key={`${gift.id}-strip-${index}`}>
+                  <GiftMedia gift={gift} preferStatic />
+                </div>
+              ))}
+              {!stripGifts.length ? (
+                <div className="case-v8-reel-empty">
+                  <AppIcon name="box" />
+                </div>
+              ) : null}
             </div>
+          </div>
 
-            <button type="button" className="case-open-hero-btn" disabled={busy || readyGifts.length === 0} onClick={onOpen}>
-              <AppIcon name="spark" />
-              <span>{busy ? 'Opening...' : openText}</span>
-            </button>
+          <button type="button" className="case-v8-open-btn" disabled={busy || readyGifts.length === 0} onClick={onOpen}>
+            <AppIcon name="spark" />
+            <span>{busy ? 'Opening...' : openText}</span>
+          </button>
+
+          <div className="case-v8-stats">
+            <span><AppIcon name="gift" /> {readyGifts.length || 0} gifts</span>
+            <span>{coinIcon()} {isFree ? 'Free' : formatPrice(caseItem.price)}</span>
           </div>
         </div>
 
-        <div className="case-prizes-head">
+        <div className="case-prizes-head case-v8-prizes-head">
           <div>
             <span className="eyebrow">Inside this case</span>
             <h3>Sovg‘alar</h3>
@@ -2076,19 +2071,20 @@ function CaseDetailsModal({ caseItem, gifts, busy, onClose, onOpen }) {
           <strong>{readyGifts.length || 0}/{gifts.length || 0}</strong>
         </div>
 
-        <div className="case-prize-grid">
+        <div className="case-prize-grid case-v8-prize-grid">
           {previewGifts.map((gift, index) => (
             <div
-              className="gift-chip-card premium-prize-card"
+              className="gift-chip-card premium-prize-card case-v8-prize-card"
               key={gift.id}
               style={{
-                '--gift-bg': gift.background_value || defaultGiftBackground(gift.rarity),
-                '--float-delay': `${(index % 6) * 0.18}s`,
+                '--float-delay': `${(index % 6) * 0.13}s`,
               }}
             >
               <span className="prize-card-shine" aria-hidden="true" />
-              <GiftMedia gift={gift} compact preferStatic />
-              <div>
+              <div className="case-v8-prize-image">
+                <GiftMedia gift={gift} compact preferStatic />
+              </div>
+              <div className="case-v8-prize-copy">
                 <strong>{gift.title}</strong>
                 <span>{gift.chance}% · stock {gift.stock}</span>
               </div>
@@ -2102,8 +2098,8 @@ function CaseDetailsModal({ caseItem, gifts, busy, onClose, onOpen }) {
 
 function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
   const isResult = opening.stage === 'result';
-  const itemWidth = 118;
-  const gap = 14;
+  const itemWidth = 108;
+  const gap = 12;
   const stopIndex = Math.max(0, opening.reel.length - 5);
   const distance = stopIndex * (itemWidth + gap);
 
@@ -2131,11 +2127,10 @@ function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
               >
                 {opening.reel.map((gift, index) => (
                   <div
-                    className="pro-reel-item media-only premium-reel-item"
+                    className="pro-reel-item media-only premium-reel-item super-reel-item"
                     key={`${gift.id}-${index}`}
                     style={{
-                      '--gift-bg': gift.background_value || defaultGiftBackground(gift.rarity),
-                      '--reel-item-delay': `${index * 0.035}s`,
+                      '--reel-item-delay': `${index * 0.026}s`,
                     }}
                   >
                     <GiftMedia gift={gift} preferStatic />
