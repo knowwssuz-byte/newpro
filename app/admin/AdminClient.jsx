@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const emptyCaseForm = {
   title: '',
@@ -61,7 +61,102 @@ function firstGradientColor(value = '') {
   return match?.[0] || '#7c3aed';
 }
 
+async function loadAdminLottieAnimationData(src) {
+  const response = await fetch(src, { cache: 'force-cache' });
+
+  if (!response.ok) {
+    throw new Error(`Lottie download failed: ${response.status}`);
+  }
+
+  const buffer = await response.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  const decoded = new TextDecoder().decode(bytes);
+
+  try {
+    return JSON.parse(decoded);
+  } catch {
+    // davom etamiz
+  }
+
+  try {
+    const pakoModule = await import('pako');
+    const pako = pakoModule.default || pakoModule;
+    return JSON.parse(pako.ungzip(bytes, { to: 'string' }));
+  } catch {
+    // davom etamiz
+  }
+
+  const fflateModule = await import('fflate');
+  const files = fflateModule.unzipSync(bytes);
+  const fileName =
+    Object.keys(files).find((name) => name.startsWith('animations/') && name.endsWith('.json')) ||
+    Object.keys(files).find((name) => name.endsWith('.json') && !name.endsWith('manifest.json'));
+
+  if (!fileName) {
+    throw new Error('Lottie zip ichida animation JSON topilmadi.');
+  }
+
+  return JSON.parse(new TextDecoder().decode(files[fileName]));
+}
+
+function AdminLottiePreview({ src, className = 'admin-gift-media', autoplay = false }) {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    let animation = null;
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const [{ default: lottie }, animationData] = await Promise.all([
+          import('lottie-web'),
+          loadAdminLottieAnimationData(src),
+        ]);
+
+        if (cancelled || !containerRef.current) return;
+
+        animation = lottie.loadAnimation({
+          container: containerRef.current,
+          renderer: 'svg',
+          loop: autoplay,
+          autoplay,
+          animationData,
+        });
+
+        if (!autoplay) {
+          animation.addEventListener('DOMLoaded', () => {
+            if (!cancelled && animation) {
+              animation.goToAndStop(0, true);
+            }
+          });
+        }
+      } catch (error) {
+        console.warn('Admin lottie preview failed:', error?.message || error);
+      }
+    }
+
+    load();
+
+    return () => {
+      cancelled = true;
+      if (animation) animation.destroy();
+    };
+  }, [src, autoplay]);
+
+  return (
+    <span className={`${className} admin-lottie-preview`}>
+      <span ref={containerRef} />
+    </span>
+  );
+}
+
 function GiftImage({ gift, className = 'admin-gift-media' }) {
+  const animationUrl = gift?.animation_url || '';
+
+  if (animationUrl) {
+    return <AdminLottiePreview src={animationUrl} className={className} />;
+  }
+
   const url = gift?.png_url || gift?.image_url || gift?.webp_url || '';
 
   if (!url) {
@@ -256,8 +351,8 @@ export default function AdminClient() {
   async function createLibraryGift(event) {
     event.preventDefault();
 
-    if (!libraryFile) {
-      setError('WEBP fayl tanlang.');
+    if (!lottieFile) {
+      setError('TGS/Lottie animatsiya faylini tanlang.');
       return;
     }
 
@@ -265,8 +360,8 @@ export default function AdminClient() {
     formData.append('action', 'gift_library_create');
     formData.append('adminKey', adminKey);
     formData.append('title', libraryForm.title);
-    formData.append('webp_file', libraryFile);
-    if (lottieFile) formData.append('animation_file', lottieFile);
+    if (libraryFile) formData.append('webp_file', libraryFile);
+    formData.append('animation_file', lottieFile);
 
     const data = await run(() => callAdminForm(formData), 'Gift bazaga yuklandi ✅');
 
@@ -467,7 +562,7 @@ export default function AdminClient() {
               <div className="admin-form-heading">
                 <span>Manual gift database</span>
                 <h2>Gift bazaga qo‘shish</h2>
-                <p>Gift nomi, WEBP preview va TGS/Lottie animatsiya kiriting. PNG avtomatik WEBP’dan olinadi.</p>
+                <p>Gift nomi va TGS/Lottie animatsiya kiriting. Case aylanishidagi preview ham shu TGS’ning birinchi frame’idan olinadi. WEBP faqat optional fallback.</p>
               </div>
 
               <label>
@@ -476,14 +571,15 @@ export default function AdminClient() {
               </label>
 
               <label>
-                <span>WEBP preview fayl</span>
-                <input id="manual-webp-input" type="file" accept="image/webp,.webp" onChange={(event) => setLibraryFile(event.target.files?.[0] || null)} required />
+                <span>TGS / Lottie animatsiya</span>
+                <input id="manual-lottie-input" type="file" accept=".tgs,.json,.lottie,application/json" onChange={(event) => setLottieFile(event.target.files?.[0] || null)} required />
+                <small className="manual-field-note">Majburiy. Case aylanishida shu TGS’ning 1-frame preview’i chiqadi, yutganda esa animatsiya o‘ynaydi.</small>
               </label>
 
               <label>
-                <span>TGS / Lottie animatsiya</span>
-                <input id="manual-lottie-input" type="file" accept=".tgs,.json,.lottie,application/json" onChange={(event) => setLottieFile(event.target.files?.[0] || null)} />
-                <small className="manual-field-note">Yutganda shu animatsiya chiqadi. Case aylanishida esa PNG preview ishlaydi.</small>
+                <span>WEBP fallback optional</span>
+                <input id="manual-webp-input" type="file" accept="image/webp,.webp" onChange={(event) => setLibraryFile(event.target.files?.[0] || null)} />
+                <small className="manual-field-note">Kerak bo‘lmasa bo‘sh qoldiring.</small>
               </label>
 
               <button type="submit" disabled={busy}>{busy ? 'Yuklanmoqda...' : 'Gift bazaga yuklash'}</button>
@@ -498,7 +594,7 @@ export default function AdminClient() {
                   <div>
                     <strong>{gift.title}</strong>
                     <p>{gift.is_active === false ? 'hidden' : 'active'} · {gift.animation_url ? 'TGS/Lottie bor' : 'animatsiya yo‘q'}</p>
-                    <small>PNG preview + TGS/Lottie animatsiya</small>
+                    <small>TGS/Lottie preview + animation</small>
                   </div>
                   <div className="manual-card-actions">
                     <button type="button" onClick={() => updateLibraryGift(gift.id, { is_active: gift.is_active === false })}>
@@ -511,7 +607,7 @@ export default function AdminClient() {
                 <div className="telegram-import-empty manual-empty">
                   <span>🎁</span>
                   <h3>Gift baza bo‘sh</h3>
-                  <p>Gift nomi, WEBP preview va TGS/Lottie yuklang.</p>
+                  <p>Gift nomi va TGS/Lottie yuklang.</p>
                 </div>
               )}
             </div>
