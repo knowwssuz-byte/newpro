@@ -174,6 +174,42 @@ async function uploadManualGiftWebp(supabase, file, title = '') {
   };
 }
 
+async function uploadOptionalLottieAnimation(supabase, file, title = '') {
+  if (!file || typeof file.arrayBuffer !== 'function' || file.size <= 0) {
+    return '';
+  }
+
+  const fileName = clean(file.name || '').toLowerCase();
+  const ext = fileName.split('.').pop() || '';
+  const allowed = ['tgs', 'json', 'lottie'];
+
+  if (!allowed.includes(ext)) {
+    throw new Error('Animatsiya uchun faqat .tgs, .json yoki .lottie fayl yuklang.');
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const prefix = clean(title)
+    .toLowerCase()
+    .replace(/[^a-z0-9а-яё]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40) || 'gift';
+
+  const contentType =
+    ext === 'json' || ext === 'lottie'
+      ? 'application/json'
+      : 'application/octet-stream';
+
+  const uploaded = await uploadPublicAsset(supabase, {
+    buffer,
+    contentType,
+    folder: 'manual-gifts/lottie',
+    ext,
+    prefix,
+  });
+
+  return uploaded?.publicUrl || '';
+}
+
 async function insertGiftWithOptionalColumns(supabase, row, optionalRow) {
   const fullRow = {
     ...row,
@@ -203,12 +239,14 @@ async function handleFormAction(request, formData, supabase) {
   if (action === 'gift_library_create') {
     const title = clean(formData.get('title'));
     const file = formData.get('webp_file');
+    const animationFile = formData.get('animation_file');
 
     if (!title) {
       throw new Error('Gift nomini yozing.');
     }
 
     const assets = await uploadManualGiftWebp(supabase, file, title);
+    const animationUrl = await uploadOptionalLottieAnimation(supabase, animationFile, title);
 
     const { data, error } = await supabase
       .from('gift_library')
@@ -216,6 +254,7 @@ async function handleFormAction(request, formData, supabase) {
         title,
         webp_url: assets.webpUrl,
         png_url: assets.pngUrl,
+        animation_url: animationUrl,
         is_active: true,
       })
       .select('*')
@@ -343,8 +382,9 @@ export async function POST(request) {
         stock: Math.max(0, Math.floor(toNumber(data.stock, 1))),
         // Case aylanishida va cardlarda static PNG chiqadi.
         image_url: libraryGift.png_url || libraryGift.webp_url || '',
-        // Yutganda/result/inventory joylarida original WEBP animatsiya ishlaydi.
-        animation_url: libraryGift.webp_url || '',
+        // Yutganda/result/inventory joylarida TGS/Lottie ishlaydi.
+        // Agar animatsiya yuklanmagan bo‘lsa, static PNG qoladi.
+        animation_url: libraryGift.animation_url || '',
         background_value: backgroundValue,
         rarity: clean(data.rarity || 'rare'),
         is_active: data.is_active !== false,
