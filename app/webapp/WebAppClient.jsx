@@ -162,7 +162,7 @@ function buildOpeningReel(gifts, winningGift) {
   const safeGifts = gifts.length ? gifts : [winningGift].filter(Boolean);
   const reel = [];
 
-  for (let index = 0; index < 40; index += 1) {
+  for (let index = 0; index < 46; index += 1) {
     reel.push(randomItem(safeGifts));
   }
 
@@ -635,7 +635,7 @@ export default function WebAppClient() {
 
     openingLockRef.current = true;
     setError('');
-    setSelectedCase(null);
+    setSelectedCase(caseItem);
 
     const previewReel = buildOpeningReel(activeGiftPool, null);
 
@@ -685,7 +685,7 @@ export default function WebAppClient() {
 
       tg?.HapticFeedback?.impactOccurred?.('medium');
 
-      await delay(4200);
+      await delay(4550);
 
       setOpening({
         stage: 'result',
@@ -975,9 +975,23 @@ export default function WebAppClient() {
             <CaseDetailPage
               caseItem={selectedCase}
               gifts={giftsByCase[selectedCase.id] || []}
+              opening={
+                opening && String(opening.caseItem?.id) === String(selectedCase.id)
+                  ? opening
+                  : null
+              }
               busy={busy}
-              onBack={() => setSelectedCase(null)}
+              onBack={() => {
+                setOpening(null);
+                setSelectedCase(null);
+              }}
               onOpen={() => openCase(selectedCase)}
+              onCloseResult={() => setOpening(null)}
+              onInventory={() => {
+                setOpening(null);
+                setSelectedCase(null);
+                setTab('inventory');
+              }}
             />
           ) : (
             <>
@@ -1039,6 +1053,7 @@ export default function WebAppClient() {
               item={item}
               active={!selectedCase && tab === item.id}
               onClick={() => {
+                setOpening(null);
                 setSelectedCase(null);
                 setTab(item.id);
               }}
@@ -1047,7 +1062,7 @@ export default function WebAppClient() {
           ))}
         </nav>
 
-        {opening ? (
+        {opening && !selectedCase ? (
           <OpeningModal
             opening={opening}
             onClose={() => setOpening(null)}
@@ -2018,18 +2033,25 @@ function AdminList({ title, children }) {
   );
 }
 
-function CaseDetailPage({ caseItem, gifts, busy, onBack, onOpen }) {
+function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onCloseResult, onInventory }) {
   const readyGifts = gifts.filter(eligibleGift);
   const isFree = Number(caseItem.price || 0) === 0;
   const openText = isFree ? 'OPEN FREE' : `OPEN ${formatPrice(caseItem.price)}`;
   const previewGifts = readyGifts.length ? readyGifts : gifts;
+  const inlineOpening = opening && String(opening.caseItem?.id) === String(caseItem.id) ? opening : null;
+  const isSpinning = inlineOpening && inlineOpening.stage !== 'result';
+  const isResult = inlineOpening?.stage === 'result';
+  const itemWidth = 112;
+  const gap = 12;
+  const stopIndex = inlineOpening ? Math.max(0, inlineOpening.reel.length - 5) : 0;
+  const distance = stopIndex * (itemWidth + gap);
   const stripSource = previewGifts.length ? previewGifts : [];
   const stripGifts = stripSource.length
-    ? Array.from({ length: Math.min(8, Math.max(6, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
+    ? Array.from({ length: Math.min(9, Math.max(7, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
     : [];
 
   return (
-    <section className="case-page-screen">
+    <section className={`case-page-screen ${isSpinning ? 'is-inline-spinning' : ''} ${isResult ? 'has-inline-result' : ''}`}>
       <div className="case-page-top">
         <button type="button" className="case-page-back" onClick={onBack} aria-label="Back">
           ←
@@ -2041,7 +2063,7 @@ function CaseDetailPage({ caseItem, gifts, busy, onBack, onOpen }) {
       </div>
 
       <div
-        className="case-page-hero premium-card"
+        className="case-page-hero premium-card inline-case-hero"
         style={{
           '--case-page-accent': caseAccent(caseItem),
           '--case-page-badge': caseBadgeColor(caseItem),
@@ -2056,33 +2078,90 @@ function CaseDetailPage({ caseItem, gifts, busy, onBack, onOpen }) {
           <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
         </div>
 
-        <div className="case-page-reel-preview" aria-label="Case prizes preview">
+        <div className={`case-page-reel-preview inline-reel-preview ${isSpinning ? 'is-live' : ''}`} aria-label="Case prizes preview">
           <span className="case-page-marker top" aria-hidden="true" />
           <span className="case-page-marker bottom" aria-hidden="true" />
-          <div className="case-page-strip">
-            {stripGifts.map((gift, index) => (
-              <div className="case-page-strip-card" key={`${gift.id}-strip-${index}`}>
-                <GiftMedia gift={gift} preferStatic />
-              </div>
-            ))}
 
-            {!stripGifts.length ? (
-              <div className="case-page-strip-empty">
-                <AppIcon name="box" />
-              </div>
-            ) : null}
-          </div>
+          {isSpinning ? (
+            <div
+              className={`case-page-spin-track ${inlineOpening.stage === 'preparing' ? 'is-preparing' : 'is-rolling'}`}
+              style={{
+                '--reel-distance': `${distance}px`,
+              }}
+              key={inlineOpening.spinKey}
+            >
+              {inlineOpening.reel.map((gift, index) => (
+                <div
+                  className="case-page-spin-card"
+                  key={`${gift.id}-${index}`}
+                  style={{
+                    '--spin-gift-bg': gift.background_value || defaultGiftBackground(gift.rarity),
+                    '--spin-delay': `${index * 0.022}s`,
+                  }}
+                >
+                  <GiftMedia gift={gift} preferStatic />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="case-page-strip">
+              {stripGifts.map((gift, index) => (
+                <div
+                  className="case-page-strip-card"
+                  key={`${gift.id}-strip-${index}`}
+                  style={{
+                    '--spin-gift-bg': gift.background_value || defaultGiftBackground(gift.rarity),
+                  }}
+                >
+                  <GiftMedia gift={gift} preferStatic />
+                </div>
+              ))}
+
+              {!stripGifts.length ? (
+                <div className="case-page-strip-empty">
+                  <AppIcon name="box" />
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
 
-        <button type="button" className="case-page-open-btn" disabled={busy || readyGifts.length === 0} onClick={onOpen}>
+        <button type="button" className="case-page-open-btn" disabled={busy || isSpinning || readyGifts.length === 0} onClick={onOpen}>
           <AppIcon name="spark" />
-          <span>{busy ? 'Opening...' : openText}</span>
+          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'PREPARING...' : 'ROLLING...') : openText}</span>
         </button>
 
         <div className="case-page-stats">
           <span><AppIcon name="gift" /> {readyGifts.length || 0} gifts</span>
           <span>{coinIcon()} {isFree ? 'Free' : formatPrice(caseItem.price)}</span>
         </div>
+
+        {isResult ? (
+          <div
+            className={`inline-win-card ${isBalanceReward(inlineOpening.gift) ? 'balance-win' : ''}`}
+            style={{
+              '--inline-win-bg': inlineOpening.gift?.background_value || defaultGiftBackground(inlineOpening.gift?.rarity),
+            }}
+          >
+            <div className="inline-win-media">
+              <GiftMedia gift={inlineOpening.gift} />
+            </div>
+            <div className="inline-win-copy">
+              <span>YOU WON</span>
+              <strong>{inlineOpening.gift?.title || 'Reward'}</strong>
+              <p>{rewardSubtitle(inlineOpening.gift)}</p>
+            </div>
+            <div className="inline-win-actions">
+              <button type="button" className="ghost-btn" onClick={onCloseResult}>Close</button>
+              {!isBalanceReward(inlineOpening.gift) ? (
+                <button type="button" className="primary-btn" onClick={onInventory}>Inventory</button>
+              ) : null}
+              <button type="button" className="primary-btn" disabled={busy} onClick={onOpen}>
+                Open again
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="case-page-prizes-head">
@@ -2117,7 +2196,7 @@ function CaseDetailPage({ caseItem, gifts, busy, onBack, onOpen }) {
 
 function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
   const isResult = opening.stage === 'result';
-  const itemWidth = 108;
+  const itemWidth = 112;
   const gap = 12;
   const stopIndex = Math.max(0, opening.reel.length - 5);
   const distance = stopIndex * (itemWidth + gap);
