@@ -23,5 +23,9 @@
   "devDependencies": {
     "eslint": "latest",
     "eslint-config-next": "latest"
-  }
+  },
+  "fflate": "latest",
+  "lottie-web": "latest",
+  "pako": "latest",
+  "sharp": "latest"
 }
