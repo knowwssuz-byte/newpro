@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import sharp from 'sharp';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 
@@ -119,72 +118,31 @@ async function uploadPublicAsset(supabase, { buffer, contentType, folder, ext, p
   };
 }
 
-async function uploadManualGiftWebp(supabase, file, title = '') {
-  if (!file || typeof file.arrayBuffer !== 'function' || file.size <= 0) {
-    throw new Error('WEBP fayl tanlanmagan.');
-  }
-
-  const fileName = clean(file.name || '').toLowerCase();
-  const fileType = clean(file.type).toLowerCase();
-
-  if (!fileName.endsWith('.webp') && fileType !== 'image/webp') {
-    throw new Error('Faqat .webp gift yuklang.');
-  }
-
-  const originalBuffer = Buffer.from(await file.arrayBuffer());
-  const prefix = clean(title)
-    .toLowerCase()
-    .replace(/[^a-z0-9а-яё]+/gi, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 40) || 'gift';
-
-  const pngBuffer = await sharp(originalBuffer, {
-    animated: false,
-    limitInputPixels: false,
-  })
-    .resize({
-      width: 512,
-      height: 512,
-      fit: 'contain',
-      background: { r: 0, g: 0, b: 0, alpha: 0 },
-    })
-    .png()
-    .toBuffer();
-
-  const [webpAsset, pngAsset] = await Promise.all([
-    uploadPublicAsset(supabase, {
-      buffer: originalBuffer,
-      contentType: 'image/webp',
-      folder: 'manual-gifts/webp',
-      ext: 'webp',
-      prefix,
-    }),
-    uploadPublicAsset(supabase, {
-      buffer: pngBuffer,
-      contentType: 'image/png',
-      folder: 'manual-gifts/png',
-      ext: 'png',
-      prefix,
-    }),
-  ]);
-
-  return {
-    webpUrl: webpAsset.publicUrl,
-    pngUrl: pngAsset.publicUrl,
-  };
+function extensionFromFile(file) {
+  const fileName = clean(file?.name || '').toLowerCase();
+  const ext = fileName.split('.').pop() || '';
+  if (ext === 'png' || ext === 'svg') return ext;
+  const type = clean(file?.type).toLowerCase();
+  if (type === 'image/png') return 'png';
+  if (type.includes('svg')) return 'svg';
+  return '';
 }
 
-async function uploadOptionalLottieAnimation(supabase, file, title = '') {
+function contentTypeFromExt(ext) {
+  if (ext === 'svg') return 'image/svg+xml';
+  if (ext === 'png') return 'image/png';
+  return 'application/octet-stream';
+}
+
+async function uploadGiftImage(supabase, file, title = '') {
   if (!file || typeof file.arrayBuffer !== 'function' || file.size <= 0) {
-    return '';
+    throw new Error('PNG yoki SVG rasm fayl tanlanmagan.');
   }
 
-  const fileName = clean(file.name || '').toLowerCase();
-  const ext = fileName.split('.').pop() || '';
-  const allowed = ['tgs', 'json', 'lottie'];
+  const ext = extensionFromFile(file);
 
-  if (!allowed.includes(ext)) {
-    throw new Error('Animatsiya uchun faqat .tgs, .json yoki .lottie fayl yuklang.');
+  if (!['png', 'svg'].includes(ext)) {
+    throw new Error('Faqat PNG yoki SVG gift rasmi yuklang.');
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -192,22 +150,20 @@ async function uploadOptionalLottieAnimation(supabase, file, title = '') {
     .toLowerCase()
     .replace(/[^a-z0-9а-яё]+/gi, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 40) || 'gift';
-
-  const contentType =
-    ext === 'json' || ext === 'lottie'
-      ? 'application/json'
-      : 'application/octet-stream';
+    .slice(0, 42) || 'gift';
 
   const uploaded = await uploadPublicAsset(supabase, {
     buffer,
-    contentType,
-    folder: 'manual-gifts/lottie',
+    contentType: contentTypeFromExt(ext),
+    folder: 'manual-gifts/images',
     ext,
     prefix,
   });
 
-  return uploaded?.publicUrl || '';
+  return {
+    imageUrl: uploaded.publicUrl,
+    imageType: ext,
+  };
 }
 
 async function insertGiftWithOptionalColumns(supabase, row, optionalRow) {
@@ -238,33 +194,28 @@ async function handleFormAction(request, formData, supabase) {
 
   if (action === 'gift_library_create') {
     const title = clean(formData.get('title'));
-    const file = formData.get('webp_file');
-    const animationFile = formData.get('animation_file');
+    const price = toNumber(formData.get('price'), 0);
+    const backgroundValue = clean(formData.get('background_value'));
+    const file = formData.get('image_file');
 
     if (!title) {
       throw new Error('Gift nomini yozing.');
     }
 
-    if (!animationFile || typeof animationFile.arrayBuffer !== 'function' || animationFile.size <= 0) {
-      throw new Error('TGS/Lottie animatsiya faylini yuklang.');
+    if (!backgroundValue) {
+      throw new Error('Fon rangi yoki gradient kiritilmagan.');
     }
 
-    // Endi TGS/Lottie asosiy manba. PNG preview ham WebApp’da shu TGS’ning
-    // birinchi frame’i sifatida render qilinadi. WEBP faqat optional fallback.
-    const assets =
-      file && typeof file.arrayBuffer === 'function' && file.size > 0
-        ? await uploadManualGiftWebp(supabase, file, title)
-        : { webpUrl: '', pngUrl: '' };
-
-    const animationUrl = await uploadOptionalLottieAnimation(supabase, animationFile, title);
+    const image = await uploadGiftImage(supabase, file, title);
 
     const { data, error } = await supabase
       .from('gift_library')
       .insert({
         title,
-        webp_url: assets.webpUrl,
-        png_url: assets.pngUrl,
-        animation_url: animationUrl,
+        price,
+        background_value: backgroundValue,
+        image_url: image.imageUrl,
+        image_type: image.imageType,
         is_active: true,
       })
       .select('*')
@@ -361,7 +312,6 @@ export async function POST(request) {
       const data = body.giftData || {};
       const caseId = clean(data.case_id);
       const libraryGiftId = clean(data.library_gift_id);
-      const backgroundValue = clean(data.background_value);
 
       if (!caseId) {
         return json({ ok: false, error: 'Case tanlanmagan.' }, 400);
@@ -369,10 +319,6 @@ export async function POST(request) {
 
       if (!libraryGiftId) {
         return json({ ok: false, error: 'Gift bazadan gift tanlanmagan.' }, 400);
-      }
-
-      if (!backgroundValue) {
-        return json({ ok: false, error: 'Fon rangi yoki gradient kiritilmagan.' }, 400);
       }
 
       const { data: libraryGift, error: libraryError } = await supabase
@@ -383,26 +329,26 @@ export async function POST(request) {
 
       if (libraryError) throw libraryError;
 
+      const price = toNumber(data.price ?? libraryGift.price, 0);
+
       const row = {
         case_id: caseId,
         title: clean(data.title || libraryGift.title),
         type: 'gift',
-        value: clean(libraryGift.id),
+        value: String(price || libraryGift.id),
         chance: Math.max(0, toNumber(data.chance, 10)),
         stock: Math.max(0, Math.floor(toNumber(data.stock, 1))),
-        // Case aylanishida static preview TGS/Lottie birinchi frame'idan olinadi.
-        // Agar optional WEBP yuklangan bo‘lsa, PNG fallback ham saqlanadi.
-        image_url: libraryGift.png_url || libraryGift.webp_url || '',
-        // Yutganda/result/inventory joylarida TGS/Lottie animatsiya ishlaydi.
-        animation_url: libraryGift.animation_url || '',
-        background_value: backgroundValue,
+        image_url: libraryGift.image_url || libraryGift.png_url || libraryGift.webp_url || '',
+        animation_url: '',
+        background_value: libraryGift.background_value || 'linear-gradient(135deg,#7c3aed,#111827)',
         rarity: clean(data.rarity || 'rare'),
         is_active: data.is_active !== false,
       };
 
       const optionalRow = {
         library_gift_id: libraryGift.id,
-        source: 'manual_library',
+        floor_price: price,
+        source: 'image_library',
       };
 
       const gift = await insertGiftWithOptionalColumns(supabase, row, optionalRow);
