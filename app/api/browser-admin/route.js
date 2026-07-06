@@ -245,7 +245,17 @@ async function handleFormAction(request, formData, supabase) {
       throw new Error('Gift nomini yozing.');
     }
 
-    const assets = await uploadManualGiftWebp(supabase, file, title);
+    if (!animationFile || typeof animationFile.arrayBuffer !== 'function' || animationFile.size <= 0) {
+      throw new Error('TGS/Lottie animatsiya faylini yuklang.');
+    }
+
+    // Endi TGS/Lottie asosiy manba. PNG preview ham WebApp’da shu TGS’ning
+    // birinchi frame’i sifatida render qilinadi. WEBP faqat optional fallback.
+    const assets =
+      file && typeof file.arrayBuffer === 'function' && file.size > 0
+        ? await uploadManualGiftWebp(supabase, file, title)
+        : { webpUrl: '', pngUrl: '' };
+
     const animationUrl = await uploadOptionalLottieAnimation(supabase, animationFile, title);
 
     const { data, error } = await supabase
@@ -380,10 +390,10 @@ export async function POST(request) {
         value: clean(libraryGift.id),
         chance: Math.max(0, toNumber(data.chance, 10)),
         stock: Math.max(0, Math.floor(toNumber(data.stock, 1))),
-        // Case aylanishida va cardlarda static PNG chiqadi.
+        // Case aylanishida static preview TGS/Lottie birinchi frame'idan olinadi.
+        // Agar optional WEBP yuklangan bo‘lsa, PNG fallback ham saqlanadi.
         image_url: libraryGift.png_url || libraryGift.webp_url || '',
-        // Yutganda/result/inventory joylarida TGS/Lottie ishlaydi.
-        // Agar animatsiya yuklanmagan bo‘lsa, static PNG qoladi.
+        // Yutganda/result/inventory joylarida TGS/Lottie animatsiya ishlaydi.
         animation_url: libraryGift.animation_url || '',
         background_value: backgroundValue,
         rarity: clean(data.rarity || 'rare'),
