@@ -8868,123 +8868,18 @@ video.gift-media.gift-media-visual,
   }
 }
 
-/* =========================================================
-   LOTTIE/TGS MANUAL GIFT V5
-   WEBP freeze muammosini kamaytirish uchun:
-   - Reel/card: PNG preview
-   - Win/result: TGS/Lottie animation
-========================================================= */
-
-.manual-field-note {
-  display: block !important;
-  margin-top: 7px !important;
-  color: rgba(226,232,240,.66) !important;
-  font-size: 11.5px !important;
-  line-height: 1.45 !important;
-}
-
-.manual-upload-form input[type="file"] + .manual-field-note {
-  margin-top: 6px !important;
-}
-
-.tgs-gift-media,
-.gift-media.tgs-gift-media {
-  background: transparent !important;
-  overflow: visible !important;
-}
-
-.tgs-gift-canvas,
-.tgs-gift-canvas svg {
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-}
-
-.win-gift-media .tgs-gift-media,
-.premium-win-gift-media .tgs-gift-media {
-  width: 82% !important;
-  height: 82% !important;
-  filter:
-    drop-shadow(0 18px 24px rgba(0,0,0,.36))
-    drop-shadow(0 0 24px rgba(255,255,255,.13)) !important;
-}
-
-.pro-reel-item .tgs-gift-media {
-  width: 94px !important;
-  height: 94px !important;
-}
 
 /* =========================================================
-   TGS PRIMARY + STATIC PREVIEW V6
-   PNG preview endi TGS/Lottie birinchi frame'i orqali olinadi.
+   IMAGE-ONLY GIFT DATABASE V7
 ========================================================= */
-
-.admin-lottie-preview {
-  display: grid !important;
-  place-items: center !important;
-  background: transparent !important;
-  overflow: visible !important;
-}
-
-.admin-lottie-preview > span,
-.admin-lottie-preview svg {
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-}
-
-.tgs-gift-media.is-static,
-.gift-media.tgs-gift-media.is-static {
-  background: transparent !important;
-  animation: none !important;
-}
-
-.tgs-gift-media.is-playing,
-.gift-media.tgs-gift-media.is-playing {
-  background: transparent !important;
-}
-
-.tgs-gift-media .tgs-gift-canvas,
-.tgs-gift-media .tgs-gift-canvas svg {
-  width: 100% !important;
-  height: 100% !important;
-  display: block !important;
-  overflow: visible !important;
-}
-
-.pro-reel-item .tgs-gift-media,
-.pro-reel-item .tgs-gift-media.is-static {
-  width: 94px !important;
-  height: 94px !important;
-  filter:
-    drop-shadow(0 12px 16px rgba(0,0,0,.36))
-    drop-shadow(0 0 16px rgba(255,255,255,.12)) !important;
-}
-
-.premium-prize-card .tgs-gift-media.is-static,
-.case-prize-grid .tgs-gift-media.is-static {
-  width: 58px !important;
-  height: 58px !important;
-  filter: drop-shadow(0 10px 14px rgba(0,0,0,.32)) !important;
-}
-
-.win-gift-media .tgs-gift-media.is-playing,
-.premium-win-gift-media .tgs-gift-media.is-playing {
-  width: 82% !important;
-  height: 82% !important;
-  filter:
-    drop-shadow(0 18px 24px rgba(0,0,0,.36))
-    drop-shadow(0 0 24px rgba(255,255,255,.13)) !important;
-}
-
-.manual-library-media .admin-lottie-preview,
-.manual-library-card .admin-lottie-preview {
-  width: 72px !important;
-  height: 72px !important;
-}
-
-.browser-admin-form input#manual-lottie-input {
-  border-color: rgba(34,211,238,.34) !important;
-  background:
-    linear-gradient(135deg, rgba(8,47,73,.32), rgba(15,23,42,.82)) !important;
-}
+.image-only-library-card { background: radial-gradient(circle at 18% 5%, rgba(255,255,255,.20), transparent 36%), var(--manual-card-bg, linear-gradient(135deg,#7c3aed,#111827)) !important; }
+.image-only-library-card .manual-library-media { background: rgba(2,6,23,.25) !important; border: 1px solid rgba(255,255,255,.14) !important; }
+.image-only-library-card .admin-gift-media { width:72px !important; height:72px !important; object-fit:contain !important; background:transparent !important; filter:drop-shadow(0 10px 16px rgba(0,0,0,.34)) drop-shadow(0 0 14px rgba(255,255,255,.12)) !important; }
+.manual-background-live { min-height:86px !important; border-radius:18px !important; display:grid !important; place-items:center !important; color:#fff !important; font-weight:950 !important; background:var(--manual-bg, linear-gradient(135deg,#7c3aed,#111827)) !important; border:1px solid rgba(255,255,255,.16) !important; text-shadow:0 2px 12px rgba(0,0,0,.45) !important; }
+.manual-bg-builder { display:grid !important; gap:12px !important; padding:12px !important; border-radius:18px !important; border:1px solid rgba(167,139,250,.18) !important; background:rgba(255,255,255,.045) !important; }
+.manual-bg-color-row { display:grid !important; grid-template-columns:92px minmax(0,1fr) !important; gap:10px !important; align-items:end !important; }
+.manual-bg-preset-row { display:grid !important; grid-template-columns:repeat(6,minmax(0,1fr)) !important; gap:8px !important; }
+.manual-bg-preset-row button { min-height:38px !important; border-radius:12px !important; padding:0 8px !important; background:linear-gradient(135deg,var(--preset-color),#111827) !important; color:#fff !important; font-weight:950 !important; border:0 !important; }
+.manual-selected-preview .admin-gift-media, .manual-selected-preview .gift-media { background:transparent !important; object-fit:contain !important; }
+.gift-media.gift-media-visual, img.gift-media.gift-media-visual, .pro-reel-item .gift-media.gift-media-visual, .win-gift-media .gift-media.gift-media-visual { background:transparent !important; object-fit:contain !important; object-position:center !important; -webkit-user-drag:none !important; user-select:none !important; }
+@media (max-width:520px){ .manual-bg-color-row{grid-template-columns:84px minmax(0,1fr)!important;} .manual-bg-preset-row{grid-template-columns:repeat(3,minmax(0,1fr))!important;} }
