@@ -9950,3 +9950,333 @@ img.gift-media.gift-media-visual,
     font-size: 17px !important;
   }
 }
+
+/* =========================================================
+   RAFFLE ROLLER LOGIC FIX V12
+   Promptdagi raffle-roller kabi: JS transition bilan reset -> move.
+   Open bosilganda modal chiqmaydi, shu reelning o'zi aylanadi.
+========================================================= */
+
+.inline-case-hero {
+  padding-bottom: 16px !important;
+}
+
+.inline-reel-preview,
+.case-page-reel-preview.inline-reel-preview {
+  position: relative !important;
+  height: 136px !important;
+  margin: 14px 0 16px !important;
+  border-radius: 26px !important;
+  overflow: hidden !important;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.045)),
+    linear-gradient(145deg, #26282f 0%, #171920 100%) !important;
+  border: 1px solid rgba(255,255,255,.13) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 18px 44px rgba(0,0,0,.30) !important;
+}
+
+.inline-reel-preview.is-live {
+  height: 148px !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 22px 54px rgba(0,0,0,.36),
+    0 0 0 1px rgba(245,158,11,.10) !important;
+}
+
+.inline-reel-preview::before,
+.inline-reel-preview::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 76px !important;
+  z-index: 4 !important;
+  pointer-events: none !important;
+}
+
+.inline-reel-preview::before {
+  left: 0 !important;
+  background: linear-gradient(90deg, rgba(23,25,32,.97), transparent) !important;
+}
+
+.inline-reel-preview::after {
+  right: 0 !important;
+  background: linear-gradient(270deg, rgba(23,25,32,.97), transparent) !important;
+}
+
+.case-page-spin-track.js-raffle-track {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 0 50% !important;
+  will-change: transform !important;
+  transform: translate3d(0,0,0);
+  transition: none;
+}
+
+.case-page-spin-track.js-raffle-track.is-preparing {
+  animation: rafflePrepareFlowV12 1.05s linear infinite !important;
+}
+
+.case-page-spin-track.js-raffle-track.is-rolling {
+  animation: none !important;
+}
+
+.case-page-spin-card {
+  flex: 0 0 112px !important;
+  width: 112px !important;
+  height: 112px !important;
+  min-width: 112px !important;
+  border-radius: 24px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 32% 14%, rgba(255,255,255,.23), transparent 38%),
+    var(--spin-gift-bg, linear-gradient(135deg,#7c3aed,#111827)) !important;
+  border: 1px solid rgba(255,255,255,.15) !important;
+  box-shadow:
+    0 20px 36px rgba(0,0,0,.36),
+    inset 0 1px 0 rgba(255,255,255,.17) !important;
+  animation: raffleCardIdleV12 2.55s ease-in-out infinite !important;
+  animation-delay: var(--spin-delay, 0s) !important;
+}
+
+.case-page-spin-card.target-win-item {
+  box-shadow:
+    0 20px 38px rgba(0,0,0,.38),
+    0 0 0 1px rgba(245,158,11,.45),
+    0 0 26px rgba(245,158,11,.22),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+
+.case-page-spin-card .gift-media,
+.case-page-spin-card .gift-media.gift-media-visual {
+  width: 94px !important;
+  height: 94px !important;
+  max-width: 94px !important;
+  max-height: 94px !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  filter:
+    drop-shadow(0 12px 18px rgba(0,0,0,.38))
+    drop-shadow(0 0 14px rgba(255,255,255,.12)) !important;
+  transform: translateZ(0) !important;
+}
+
+.case-page-marker.top {
+  border-top-color: #f59e0b !important;
+}
+
+.case-page-marker.bottom {
+  border-bottom-color: #f59e0b !important;
+}
+
+.case-page-marker {
+  z-index: 8 !important;
+  filter:
+    drop-shadow(0 0 8px rgba(245,158,11,.95))
+    drop-shadow(0 0 18px rgba(245,158,11,.52)) !important;
+}
+
+.inline-win-card {
+  position: relative !important;
+  z-index: 3 !important;
+  margin-top: 14px !important;
+  padding: 12px !important;
+  display: grid !important;
+  grid-template-columns: 92px minmax(0, 1fr) !important;
+  gap: 12px !important;
+  align-items: center !important;
+  border-radius: 22px !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,.22), transparent 34%),
+    var(--inline-win-bg, linear-gradient(135deg,#7c3aed,#111827)) !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow:
+    0 18px 42px rgba(0,0,0,.32),
+    inset 0 1px 0 rgba(255,255,255,.15) !important;
+  animation: inlineWinInV12 .32s cubic-bezier(.2,.9,.2,1) both !important;
+}
+
+.inline-win-card::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -40% auto auto -25% !important;
+  width: 45% !important;
+  height: 200% !important;
+  transform: rotate(22deg) !important;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.22), transparent) !important;
+  animation: inlineWinShineV12 2.8s ease-in-out infinite !important;
+  pointer-events: none !important;
+}
+
+.inline-win-media {
+  width: 92px !important;
+  height: 92px !important;
+  border-radius: 18px !important;
+  display: grid !important;
+  place-items: center !important;
+  background: rgba(2,6,23,.18) !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+}
+
+.inline-win-media .gift-media {
+  width: 78px !important;
+  height: 78px !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  filter: drop-shadow(0 12px 18px rgba(0,0,0,.38)) !important;
+}
+
+.inline-win-copy {
+  min-width: 0 !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.inline-win-copy span {
+  display: inline-flex !important;
+  width: max-content !important;
+  min-height: 24px !important;
+  padding: 0 9px !important;
+  align-items: center !important;
+  border-radius: 999px !important;
+  background: rgba(0,0,0,.22) !important;
+  color: #fef3c7 !important;
+  font-size: 10px !important;
+  font-weight: 950 !important;
+  letter-spacing: .05em !important;
+}
+
+.inline-win-copy strong {
+  display: block !important;
+  margin-top: 6px !important;
+  color: #fff !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.04em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+.inline-win-copy p {
+  margin: 4px 0 0 !important;
+  color: rgba(255,255,255,.78) !important;
+  font-size: 12px !important;
+  line-height: 1.35 !important;
+  font-weight: 850 !important;
+}
+
+.inline-win-actions {
+  position: relative !important;
+  z-index: 1 !important;
+  grid-column: 1 / -1 !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.inline-win-actions .ghost-btn,
+.inline-win-actions .primary-btn {
+  min-height: 40px !important;
+  border-radius: 13px !important;
+  font-size: 12px !important;
+  padding: 0 10px !important;
+  white-space: nowrap !important;
+}
+
+.case-page-screen.is-inline-spinning .case-page-prize-grid {
+  opacity: .52 !important;
+  filter: saturate(.82) brightness(.86) !important;
+  pointer-events: none !important;
+  transition: opacity .25s ease, filter .25s ease !important;
+}
+
+@keyframes rafflePrepareFlowV12 {
+  0% { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(-496px,0,0); }
+}
+
+@keyframes raffleCardIdleV12 {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(0,-3px,0) scale(1.014); }
+}
+
+@keyframes inlineWinInV12 {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(.96); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes inlineWinShineV12 {
+  0%, 30%, 100% { transform: translateX(-160%) rotate(22deg); opacity: 0; }
+  46% { opacity: 1; }
+  72% { transform: translateX(340%) rotate(22deg); opacity: 0; }
+}
+
+@media (max-width: 520px) {
+  .inline-reel-preview,
+  .case-page-reel-preview.inline-reel-preview {
+    height: 126px !important;
+    border-radius: 24px !important;
+  }
+
+  .inline-reel-preview.is-live {
+    height: 140px !important;
+  }
+
+  .case-page-spin-card {
+    flex-basis: 104px !important;
+    width: 104px !important;
+    height: 104px !important;
+    min-width: 104px !important;
+    border-radius: 22px !important;
+  }
+
+  .case-page-spin-card .gift-media,
+  .case-page-spin-card .gift-media.gift-media-visual {
+    width: 88px !important;
+    height: 88px !important;
+  }
+
+  .inline-win-card {
+    grid-template-columns: 78px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    padding: 10px !important;
+    border-radius: 20px !important;
+  }
+
+  .inline-win-media {
+    width: 78px !important;
+    height: 78px !important;
+    border-radius: 16px !important;
+  }
+
+  .inline-win-media .gift-media {
+    width: 66px !important;
+    height: 66px !important;
+  }
+
+  .inline-win-copy strong {
+    font-size: 18px !important;
+  }
+
+  .inline-win-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 7px !important;
+  }
+
+  .inline-win-actions .ghost-btn,
+  .inline-win-actions .primary-btn {
+    min-height: 38px !important;
+    font-size: 11px !important;
+    padding: 0 8px !important;
+  }
+}
