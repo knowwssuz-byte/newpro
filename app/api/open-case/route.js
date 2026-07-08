@@ -9,10 +9,25 @@ function toNumber(value, fallback = 0) {
   return Number.isFinite(number) ? number : fallback;
 }
 
+function visibleChance(gift) {
+  return Math.max(0, toNumber(gift?.chance, 0));
+}
+
+function realChance(gift) {
+  return Math.max(
+    0,
+    toNumber(
+      gift?.real_chance ?? gift?.drop_chance ?? gift?.true_chance ?? gift?.chance,
+      visibleChance(gift)
+    )
+  );
+}
+
 function normalizeGift(gift) {
   return {
     ...gift,
-    chance: toNumber(gift.chance),
+    chance: visibleChance(gift),
+    real_chance: realChance(gift),
     stock: toNumber(gift.stock),
   };
 }
@@ -30,8 +45,11 @@ function publicGift(gift) {
     title: gift.title,
     type: rewardType(gift),
     value: gift.value,
-    chance: toNumber(gift.chance),
+    chance: visibleChance(gift),
+    real_chance: realChance(gift),
     stock: toNumber(gift.stock),
+    floor_price: toNumber(gift.floor_price ?? gift.sell_price ?? gift.buy_price ?? gift.value, 0),
+    sell_price: toNumber(gift.sell_price ?? gift.buy_price ?? gift.floor_price ?? gift.value, 0),
     is_active: gift.is_active,
     image_url: gift.image_url || null,
     animation_url: gift.animation_url || null,
@@ -44,16 +62,16 @@ function publicGift(gift) {
 function pickWeightedGift(gifts) {
   const pool = gifts
     .map(normalizeGift)
-    .filter((gift) => gift.is_active !== false && gift.stock > 0 && gift.chance > 0);
+    .filter((gift) => gift.is_active !== false && gift.stock > 0 && realChance(gift) > 0);
 
-  const totalChance = pool.reduce((sum, gift) => sum + gift.chance, 0);
+  const totalChance = pool.reduce((sum, gift) => sum + realChance(gift), 0);
 
   if (pool.length === 0 || totalChance <= 0) return null;
 
   let random = Math.random() * totalChance;
 
   for (const gift of pool) {
-    random -= gift.chance;
+    random -= realChance(gift);
 
     if (random <= 0) return gift;
   }
@@ -90,7 +108,7 @@ function mapRpcError(error) {
 
   if (message.includes('NO_READY_GIFTS')) {
     return {
-      message: 'Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda active=true, chance > 0 va stock > 0 ekanini tekshiring.',
+      message: 'Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda active=true, real_chance > 0 va stock > 0 ekanini tekshiring.',
       status: 400,
     };
   }
@@ -192,8 +210,7 @@ async function openCaseFallback(supabase, auth, dbUser, caseId) {
     .select('*')
     .eq('case_id', caseId)
     .eq('is_active', true)
-    .gt('stock', 0)
-    .gt('chance', 0);
+    .gt('stock', 0);
 
   if (giftsError) throw new Error(giftsError.message);
 
@@ -201,16 +218,16 @@ async function openCaseFallback(supabase, auth, dbUser, caseId) {
 
   if (gifts.length === 0) {
     return jsonError(
-      'Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda sovg‘a active=true, chance > 0 va stock > 0 ekanini tekshiring.',
+      'Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda sovg‘a active=true, real_chance > 0 va stock > 0 ekanini tekshiring.',
       400,
       { reason: 'NO_READY_GIFTS' }
     );
   }
 
-  const totalChance = gifts.reduce((sum, gift) => sum + gift.chance, 0);
+  const totalChance = gifts.reduce((sum, gift) => sum + realChance(gift), 0);
 
   if (totalChance <= 0) {
-    return jsonError('Bu case uchun chance sozlanmagan');
+    return jsonError('Bu case uchun haqiqiy chance sozlanmagan');
   }
 
   let selectedGift = null;
@@ -295,17 +312,8 @@ export async function POST(request) {
     if (!caseId) return jsonError('caseId kerak');
     if (dbUser.is_banned) return jsonError('Siz bloklangansiz', 403);
 
-    try {
-      const rpcResult = await openCaseWithRpc(supabase, Number(auth.telegramUser.id), caseId);
-
-      return Response.json(rpcResult);
-    } catch (rpcError) {
-      if (!shouldFallbackRpc(rpcError)) {
-        const mapped = mapRpcError(rpcError);
-        return jsonError(mapped.message, mapped.status);
-      }
-    }
-
+    // real_chance alohida ishlashi uchun JS fallback ishlatiladi.
+    // Eski open_case_atomic RPC faqat chance ustunini bilishi mumkin.
     return openCaseFallback(supabase, auth, dbUser, caseId);
   } catch (error) {
     return jsonError(error.message || 'Server xatosi', 500);
