@@ -10814,3 +10814,39 @@ img.gift-media.gift-media-visual,
     animation-duration: 20s !important;
   }
 }
+
+/* =========================================================
+   IDLE SLOW + PREPARE FAST V19
+   - Ochilmagan paytdagi sovg'alar sekinroq yuradi
+   - Preparing minimal kutish vaqti JS’da 420ms -> 140ms qilindi
+========================================================= */
+
+.case-page-idle-track {
+  animation-duration: 42s !important;
+}
+
+.case-page-idle-card {
+  animation-duration: 4.6s !important;
+}
+
+.case-page-spin-track.js-raffle-track.is-preparing {
+  animation-duration: .72s !important;
+}
+
+.case-page-open-btn span {
+  transition: opacity .16s ease, transform .16s ease !important;
+}
+
+@media (max-width: 520px) {
+  .case-page-idle-track {
+    animation-duration: 38s !important;
+  }
+
+  .case-page-idle-card {
+    animation-duration: 4.2s !important;
+  }
+
+  .case-page-spin-track.js-raffle-track.is-preparing {
+    animation-duration: .68s !important;
+  }
+}
