@@ -188,6 +188,20 @@ function groupGiftsByCase(gifts) {
   }, {});
 }
 
+function sortCasesForDisplay(items = []) {
+  return [...items].sort((a, b) => {
+    const pinnedDiff = Number(Boolean(b?.is_pinned)) - Number(Boolean(a?.is_pinned));
+    if (pinnedDiff) return pinnedDiff;
+
+    const aOrder = Number.isFinite(Number(a?.sort_order)) ? Number(a.sort_order) : 999999;
+    const bOrder = Number.isFinite(Number(b?.sort_order)) ? Number(b.sort_order) : 999999;
+
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    return new Date(b?.created_at || 0).getTime() - new Date(a?.created_at || 0).getTime();
+  });
+}
+
 function delay(ms) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
@@ -457,7 +471,7 @@ export default function WebAppClient() {
   const mountedRef = useRef(false);
 
   const giftsByCase = useMemo(() => groupGiftsByCase(gifts), [gifts]);
-  const activeCases = useMemo(() => cases.filter((item) => item.is_active !== false), [cases]);
+  const activeCases = useMemo(() => sortCasesForDisplay(cases.filter((item) => item.is_active !== false)), [cases]);
 
   const navItems = useMemo(
     () => [
