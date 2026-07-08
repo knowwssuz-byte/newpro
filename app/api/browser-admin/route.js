@@ -213,6 +213,7 @@ async function handleFormAction(request, formData, supabase) {
       .insert({
         title,
         price,
+        buy_price: price,
         background_value: backgroundValue,
         image_url: image.imageUrl,
         image_type: image.imageType,
@@ -348,6 +349,9 @@ export async function POST(request) {
       const optionalRow = {
         library_gift_id: libraryGift.id,
         floor_price: price,
+        sell_price: price,
+        buy_price: price,
+        real_chance: realChanceValue,
         source: 'image_library',
       };
 
