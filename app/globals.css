@@ -10358,3 +10358,227 @@ img.gift-media.gift-media-visual,
     transform: translate3d(-496px, 0, 0);
   }
 }
+
+/* =========================================================
+   WIN RESULT SELL/CLOSE V15
+   Case ochilib bo'lganda yutuq alohida ekranga chiqadi.
+   Pastida faqat 2 ta tugma: Sotish va Yopish.
+========================================================= */
+
+.case-page-screen.has-inline-result {
+  padding-bottom: 26px !important;
+}
+
+.win-screen-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 18px 16px calc(86px + env(safe-area-inset-bottom)) !important;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(139,92,246,.26), transparent 34%),
+    rgba(2,6,23,.62) !important;
+  backdrop-filter: blur(14px) saturate(1.1) !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.1) !important;
+  animation: winLayerInV15 .18s ease-out both !important;
+}
+
+.win-screen-card {
+  position: relative !important;
+  width: min(100%, 360px) !important;
+  min-height: 420px !important;
+  padding: 18px !important;
+  border-radius: 30px !important;
+  overflow: hidden !important;
+  display: grid !important;
+  grid-template-rows: auto 1fr auto auto !important;
+  align-items: center !important;
+  justify-items: center !important;
+  gap: 12px !important;
+  background:
+    radial-gradient(circle at 50% 14%, rgba(255,255,255,.24), transparent 34%),
+    var(--win-screen-bg, linear-gradient(135deg,#7c3aed,#111827)) !important;
+  border: 1px solid rgba(255,255,255,.18) !important;
+  box-shadow:
+    0 28px 88px rgba(0,0,0,.52),
+    0 0 0 1px rgba(255,255,255,.06),
+    inset 0 1px 0 rgba(255,255,255,.17) !important;
+  animation: winCardInV15 .32s cubic-bezier(.2,.9,.2,1) both !important;
+}
+
+.win-screen-card::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  pointer-events: none !important;
+  opacity: .42 !important;
+  background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 1px, transparent 1px 18px),
+    radial-gradient(circle at 50% 50%, transparent 0 34%, rgba(0,0,0,.22) 72%) !important;
+}
+
+.win-screen-shine {
+  position: absolute !important;
+  inset: -40% auto auto -32% !important;
+  width: 48% !important;
+  height: 220% !important;
+  transform: rotate(22deg) !important;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.24), transparent) !important;
+  animation: winScreenShineV15 3s ease-in-out infinite !important;
+  pointer-events: none !important;
+}
+
+.win-screen-badge {
+  position: relative !important;
+  z-index: 2 !important;
+  min-height: 34px !important;
+  padding: 0 14px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  border-radius: 999px !important;
+  color: #fef3c7 !important;
+  background: rgba(0,0,0,.26) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+  letter-spacing: .06em !important;
+}
+
+.win-screen-media {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 190px !important;
+  height: 190px !important;
+  border-radius: 36px !important;
+  display: grid !important;
+  place-items: center !important;
+  background:
+    radial-gradient(circle at 50% 22%, rgba(255,255,255,.20), transparent 42%),
+    rgba(2,6,23,.20) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.14),
+    0 22px 48px rgba(0,0,0,.32) !important;
+}
+
+.win-screen-media .gift-media,
+.win-screen-media .gift-media.gift-media-visual {
+  width: 158px !important;
+  height: 158px !important;
+  max-width: 158px !important;
+  max-height: 158px !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  filter:
+    drop-shadow(0 20px 28px rgba(0,0,0,.42))
+    drop-shadow(0 0 18px rgba(255,255,255,.14)) !important;
+  animation: winGiftFloatV15 3.4s ease-in-out infinite !important;
+}
+
+.win-screen-copy {
+  position: relative !important;
+  z-index: 2 !important;
+  min-width: 0 !important;
+  width: 100% !important;
+  text-align: center !important;
+}
+
+.win-screen-copy strong {
+  display: block !important;
+  color: #fff !important;
+  font-size: clamp(28px, 8vw, 36px) !important;
+  line-height: .96 !important;
+  font-weight: 950 !important;
+  letter-spacing: -.055em !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  text-shadow: 0 2px 18px rgba(0,0,0,.28) !important;
+}
+
+.win-screen-copy p {
+  margin: 6px 0 0 !important;
+  color: rgba(255,255,255,.78) !important;
+  font-size: 13px !important;
+  font-weight: 850 !important;
+}
+
+.win-screen-actions {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+.win-screen-actions button {
+  min-height: 52px !important;
+  border: 0 !important;
+  border-radius: 17px !important;
+  color: #fff !important;
+  font-size: 15px !important;
+  font-weight: 950 !important;
+  cursor: pointer !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 14px 30px rgba(0,0,0,.26) !important;
+}
+
+.sell-btn {
+  background: linear-gradient(135deg, #22c55e, #10b981) !important;
+}
+
+.close-win-btn {
+  background: linear-gradient(135deg, #64748b, #334155) !important;
+}
+
+.inline-win-card {
+  display: none !important;
+}
+
+@keyframes winLayerInV15 {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes winCardInV15 {
+  from { opacity: 0; transform: translate3d(0, 16px, 0) scale(.94); }
+  to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes winScreenShineV15 {
+  0%, 28%, 100% { transform: translateX(-160%) rotate(22deg); opacity: 0; }
+  45% { opacity: 1; }
+  76% { transform: translateX(340%) rotate(22deg); opacity: 0; }
+}
+
+@keyframes winGiftFloatV15 {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(0,-8px,0) scale(1.03); }
+}
+
+@media (max-width: 420px) {
+  .win-screen-card {
+    width: min(100%, 330px) !important;
+    min-height: 382px !important;
+    padding: 16px !important;
+    border-radius: 28px !important;
+  }
+
+  .win-screen-media {
+    width: 162px !important;
+    height: 162px !important;
+    border-radius: 30px !important;
+  }
+
+  .win-screen-media .gift-media,
+  .win-screen-media .gift-media.gift-media-visual {
+    width: 136px !important;
+    height: 136px !important;
+  }
+
+  .win-screen-actions button {
+    min-height: 48px !important;
+    border-radius: 16px !important;
+  }
+}
