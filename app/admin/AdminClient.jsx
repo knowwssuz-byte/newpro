@@ -26,6 +26,7 @@ const emptyGiftForm = {
   title: '',
   price: '',
   chance: '10',
+  real_chance: '10',
   stock: '1',
   rarity: 'rare',
   is_active: true,
@@ -312,6 +313,7 @@ export default function AdminClient() {
       library_gift_id: gift.id,
       title: gift.title || '',
       price: String(gift.price ?? ''),
+      real_chance: current.real_chance || current.chance || '10',
     }));
   }
 
@@ -324,6 +326,7 @@ export default function AdminClient() {
           giftData: {
             ...giftForm,
             chance: Number(giftForm.chance || 0),
+            real_chance: Number(giftForm.real_chance || giftForm.chance || 0),
             stock: Number(giftForm.stock || 0),
           },
         }),
@@ -550,7 +553,7 @@ export default function AdminClient() {
               <div className="admin-form-heading">
                 <span>Case gift</span>
                 <h2>Casega gift qo‘shish</h2>
-                <p>Bazadan gift tanlang. Narx va fon avtomatik olinadi, faqat chance/stock sozlanadi.</p>
+                <p>Bazadan gift tanlang. Narx va fon avtomatik olinadi, ko‘rinadigan chance, haqiqiy chance va stock sozlanadi.</p>
               </div>
 
               <label>
@@ -603,10 +606,16 @@ export default function AdminClient() {
                   <input type="number" value={giftForm.stock} onChange={(event) => setGiftForm({ ...giftForm, stock: event.target.value })} />
                 </label>
                 <label>
-                  <span>Chance</span>
+                  <span>Ko‘rinadigan chance %</span>
                   <input type="number" value={giftForm.chance} onChange={(event) => setGiftForm({ ...giftForm, chance: event.target.value })} />
                 </label>
               </div>
+
+              <label>
+                <span>Haqiqiy tushish chance %</span>
+                <input type="number" value={giftForm.real_chance} onChange={(event) => setGiftForm({ ...giftForm, real_chance: event.target.value })} />
+                <small className="manual-field-note">0 bo‘lsa gift case ichida ko‘rinadi, lekin umuman tushmaydi.</small>
+              </label>
 
               <label>
                 <span>Rarity</span>
@@ -631,7 +640,7 @@ export default function AdminClient() {
                   <GiftImage gift={gift} />
                   <div>
                     <strong>{gift.title}</strong>
-                    <p>{money(gift.floor_price || gift.value)} ⭐ · chance {gift.chance}% · stock {gift.stock}</p>
+                    <p>{money(gift.floor_price || gift.value)} ⭐ · visible {gift.chance}% · real {gift.real_chance ?? gift.chance}% · stock {gift.stock}</p>
                   </div>
                   <button type="button" onClick={() => updateGift(gift.id, { is_active: gift.is_active === false })}>
                     {gift.is_active === false ? 'Show' : 'Hide'}
