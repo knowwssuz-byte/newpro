@@ -10316,3 +10316,45 @@ img.gift-media.gift-media-visual,
     transition-duration: 2.2s !important;
   }
 }
+
+/* =========================================================
+   RAFFLE TRANSFORM IMPORTANT FIX V14
+   Eski .case-page-spin-track { transform: translate3d(0,0,0) !important; }
+   qoidalari JS transformni bosib qo‘yayotgan edi.
+   Endi transform CSS variable orqali ishlaydi, inline style faqat --raffle-x beradi.
+========================================================= */
+
+.case-page-reel-preview.inline-reel-preview .case-page-spin-track.js-raffle-track,
+.inline-reel-preview .case-page-spin-track.js-raffle-track,
+.case-page-spin-track.js-raffle-track {
+  transform: translate3d(var(--raffle-x, 0px), 0, 0) !important;
+  transition: var(--raffle-transition, none) !important;
+  filter: var(--raffle-filter, blur(0px)) !important;
+  animation: none !important;
+  will-change: transform, filter !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  min-width: max-content !important;
+}
+
+.case-page-reel-preview.inline-reel-preview .case-page-spin-track.js-raffle-track.is-preparing {
+  animation: rafflePrepareFlowV14 1.05s linear infinite !important;
+  transition: none !important;
+}
+
+.case-page-reel-preview.inline-reel-preview .case-page-spin-track.js-raffle-track.is-rolling {
+  animation: none !important;
+}
+
+.case-page-reel-preview.inline-reel-preview .case-page-spin-track.js-raffle-track.is-rolling .case-page-spin-card {
+  animation-duration: 2.35s !important;
+}
+
+@keyframes rafflePrepareFlowV14 {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-496px, 0, 0);
+  }
+}
