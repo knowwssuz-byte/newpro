@@ -19,6 +19,7 @@ const emptyGiftForm = {
   type: 'gift',
   value: '',
   chance: '10',
+  real_chance: '10',
   stock: '999',
   rarity: 'rare',
   image_url: '',
@@ -33,12 +34,12 @@ const emptyUserForm = {
 };
 
 const GIFT_BACKGROUND_PRESETS = [
-  { name: 'Gold', value: 'linear-gradient(135deg,#ffbf1b 0%,#ff7a00 45%,#241100 100%)' },
-  { name: 'Emerald', value: 'linear-gradient(135deg,#24e28a 0%,#10b981 45%,#06281b 100%)' },
-  { name: 'Violet', value: 'linear-gradient(135deg,#8b5cf6 0%,#4c1d95 50%,#140927 100%)' },
-  { name: 'Ocean', value: 'linear-gradient(135deg,#38bdf8 0%,#2563eb 50%,#07172f 100%)' },
-  { name: 'Rose', value: 'linear-gradient(135deg,#fb7185 0%,#db2777 50%,#2a0612 100%)' },
-  { name: 'Dark', value: 'linear-gradient(135deg,#323232 0%,#171717 55%,#050505 100%)' },
+  { name: 'Gold', value: '#f59e0b' },
+  { name: 'Emerald', value: '#22c55e' },
+  { name: 'Violet', value: '#8b5cf6' },
+  { name: 'Ocean', value: '#2563eb' },
+  { name: 'Rose', value: '#e11d48' },
+  { name: 'Dark', value: '#2d3340' },
 ];
 
 function defaultGiftBackground(rarity = 'rare') {
@@ -50,8 +51,44 @@ function defaultGiftBackground(rarity = 'rare') {
   return GIFT_BACKGROUND_PRESETS[5].value;
 }
 
+function toChanceNumber(value, fallback = 0) {
+  const number = Number(value ?? fallback);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+function visibleChance(gift) {
+  return Math.max(0, toChanceNumber(gift?.chance, 0));
+}
+
+function realChance(gift) {
+  return Math.max(
+    0,
+    toChanceNumber(
+      gift?.real_chance ?? gift?.drop_chance ?? gift?.true_chance ?? gift?.chance,
+      visibleChance(gift)
+    )
+  );
+}
+
 function eligibleGift(gift) {
-  return gift?.is_active !== false && Number(gift?.stock || 0) > 0 && Number(gift?.chance || 0) > 0;
+  return gift?.is_active !== false && Number(gift?.stock || 0) > 0;
+}
+
+function openableGift(gift) {
+  return eligibleGift(gift) && realChance(gift) > 0;
+}
+
+function solidGiftBackground(value, fallback = '#2d3340') {
+  const raw = String(value || '').trim();
+
+  if (!raw) return fallback;
+  if (/^#[0-9a-fA-F]{3,8}$/.test(raw)) return raw;
+  if (/^rgba?\(/.test(raw) || /^hsla?\(/.test(raw)) return raw;
+
+  const hex = raw.match(/#[0-9a-fA-F]{6}/)?.[0];
+  if (hex) return hex;
+
+  return fallback;
 }
 
 function rewardType(gift) {
@@ -74,7 +111,7 @@ function rewardSubtitle(gift) {
 function giftSellPrice(gift) {
   if (!gift || isBalanceReward(gift)) return 0;
 
-  const rawValue = gift.floor_price ?? gift.price ?? gift.value ?? 0;
+  const rawValue = gift.sell_price ?? gift.buy_price ?? gift.floor_price ?? gift.price ?? gift.value ?? 0;
   const number = Number(rawValue);
 
   return Number.isFinite(number) ? Math.max(0, number) : 0;
@@ -127,14 +164,14 @@ function caseBadgeText(caseItem, gifts = []) {
   if (caseItem?.badge_text) return String(caseItem.badge_text).toUpperCase();
   const readyGifts = gifts.filter(eligibleGift);
   if (!readyGifts.length) return '';
-  const minChance = readyGifts.reduce((min, gift) => Math.min(min, Number(gift.chance || 100)), 100);
+  const minChance = readyGifts.reduce((min, gift) => Math.min(min, visibleChance(gift) || 100), 100);
   if (minChance <= 5) return 'LIMITED';
   if (Number(caseItem?.price || 0) === 0) return 'FREE';
   return '';
 }
 
 function giftRarity(gift) {
-  const chance = Number(gift?.chance || 0);
+  const chance = visibleChance(gift);
   if (chance <= 3) return 'mythic';
   if (chance <= 8) return 'legendary';
   if (chance <= 18) return 'epic';
@@ -669,11 +706,11 @@ export default function WebAppClient() {
     if (!caseItem || openingLockRef.current) return;
 
     const caseGifts = giftsByCase[caseItem.id] || [];
-    const activeGiftPool = caseGifts.filter(eligibleGift);
+    const activeGiftPool = caseGifts.filter(openableGift);
 
     if (activeGiftPool.length === 0) {
       setSelectedCase(caseItem);
-      setError("Bu case ochilishi uchun kamida 1 ta aktiv sovg'a kerak: chance > 0 va stock > 0.");
+      setError("Bu case ochilishi uchun kamida 1 ta tushadigan sovg'a kerak: real chance > 0 va stock > 0.");
       tg?.HapticFeedback?.notificationOccurred?.('error');
       return;
     }
@@ -915,6 +952,7 @@ export default function WebAppClient() {
         title: cleanTitle,
         value: currentRewardType === 'balance' ? String(balanceAmount) : giftForm.value,
         chance: chanceNumber,
+        real_chance: Number(giftForm.real_chance || giftForm.chance || 0),
         stock: stockNumber,
         rarity,
         is_active: true,
@@ -2047,7 +2085,7 @@ function AdminPanel({
                 <GiftMedia gift={gift} compact preferStatic />
                 <div className="admin-item-main">
                   <strong>{gift.title}</strong>
-                  <span>{gift.type} · chance {gift.chance}% · stock {gift.stock}</span>
+                  <span>{gift.type} · chance {visibleChance(gift)}% · stock {gift.stock}</span>
                 </div>
                 <button type="button" onClick={() => updateGift(gift, { is_active: gift.is_active === false })}>
                   {gift.is_active === false ? 'Show' : 'Hide'}
@@ -2167,12 +2205,8 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
       return undefined;
     }
 
-    // 1) reset
     setRollerStyle(resetStyle);
 
-    // 2) force browser to paint reset, then start real raffle movement.
-    // CSS’da eski transform: translate3d(0,0,0) !important borligi uchun
-    // transform endi CSS variable orqali beriladi: --raffle-x.
     startTimer = window.setTimeout(() => {
       if (trackRef.current) {
         trackRef.current.getBoundingClientRect();
@@ -2198,41 +2232,69 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
     };
   }, [opening?.spinKey, opening?.stage, distance]);
 
+  const idleLoopGifts = idleGifts.length
+    ? Array.from({ length: Math.max(14, idleGifts.length * 3) }, (_, index) => idleGifts[index % idleGifts.length])
+    : [];
+
   return (
     <div className={`case-page-reel-preview inline-reel-preview ${isLive ? 'is-live' : ''} ${isResult ? 'is-result' : ''}`} aria-label="Case prizes preview">
       <span className="case-page-marker top" aria-hidden="true" />
       <span className="case-page-marker bottom" aria-hidden="true" />
 
-      <div
-        ref={trackRef}
-        className={`case-page-spin-track js-raffle-track ${isPreparing ? 'is-preparing' : ''} ${isRolling ? 'is-rolling' : ''}`}
-        style={rollerStyle}
-      >
-        {reel.map((gift, index) => (
-          <div
-            className={`case-page-spin-card ${isRolling && index === targetIndex ? 'target-win-item' : ''}`}
-            key={`${gift?.id || 'gift'}-${index}-${opening?.spinKey || 'idle'}`}
-            style={{
-              '--spin-gift-bg': gift?.background_value || defaultGiftBackground(gift?.rarity),
-              '--spin-delay': `${index * 0.022}s`,
-            }}
-          >
-            <GiftMedia gift={gift} preferStatic />
-          </div>
-        ))}
+      {!isLive ? (
+        <div className="case-page-idle-track">
+          {idleLoopGifts.map((gift, index) => (
+            <div
+              className="case-page-idle-card"
+              key={`${gift?.id || 'gift'}-idle-${index}`}
+              style={{
+                '--spin-gift-bg': solidGiftBackground(gift?.background_value, defaultGiftBackground(gift?.rarity)),
+                '--idle-delay': `${index * 0.11}s`,
+              }}
+            >
+              <GiftMedia gift={gift} preferStatic />
+            </div>
+          ))}
 
-        {!reel.length ? (
-          <div className="case-page-strip-empty">
-            <AppIcon name="box" />
-          </div>
-        ) : null}
-      </div>
+          {!idleLoopGifts.length ? (
+            <div className="case-page-strip-empty">
+              <AppIcon name="box" />
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <div
+          ref={trackRef}
+          className={`case-page-spin-track js-raffle-track ${isPreparing ? 'is-preparing' : ''} ${isRolling ? 'is-rolling' : ''}`}
+          style={rollerStyle}
+        >
+          {reel.map((gift, index) => (
+            <div
+              className={`case-page-spin-card ${isRolling && index === targetIndex ? 'target-win-item' : ''}`}
+              key={`${gift?.id || 'gift'}-${index}-${opening?.spinKey || 'idle'}`}
+              style={{
+                '--spin-gift-bg': solidGiftBackground(gift?.background_value, defaultGiftBackground(gift?.rarity)),
+                '--spin-delay': `${index * 0.022}s`,
+              }}
+            >
+              <GiftMedia gift={gift} preferStatic />
+            </div>
+          ))}
+
+          {!reel.length ? (
+            <div className="case-page-strip-empty">
+              <AppIcon name="box" />
+            </div>
+          ) : null}
+        </div>
+      )}
     </div>
   );
 }
 
 function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onCloseResult, onSellResult }) {
   const readyGifts = gifts.filter(eligibleGift);
+  const openableGifts = readyGifts.filter(openableGift);
   const isFree = Number(caseItem.price || 0) === 0;
   const openText = isFree ? 'OPEN FREE' : `OPEN ${formatPrice(caseItem.price)}`;
   const previewGifts = readyGifts.length ? readyGifts : gifts;
@@ -2286,7 +2348,7 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
           targetIndex={targetIndex}
         />
 
-        <button type="button" className="case-page-open-btn" disabled={busy || isSpinning || readyGifts.length === 0} onClick={onOpen}>
+        <button type="button" className="case-page-open-btn" disabled={busy || isSpinning || openableGifts.length === 0} onClick={onOpen}>
           <AppIcon name="spark" />
           <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'PREPARING...' : 'ROLLING...') : openText}</span>
         </button>
@@ -2301,7 +2363,7 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
             <div
               className={`win-screen-card ${isBalanceReward(inlineOpening.gift) ? 'balance-win' : ''}`}
               style={{
-                '--win-screen-bg': inlineOpening.gift?.background_value || defaultGiftBackground(inlineOpening.gift?.rarity),
+                '--win-screen-bg': solidGiftBackground(inlineOpening.gift?.background_value, defaultGiftBackground(inlineOpening.gift?.rarity)),
               }}
             >
               <span className="win-screen-shine" aria-hidden="true" />
@@ -2350,7 +2412,7 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
             </div>
             <div className="case-page-prize-copy">
               <strong>{gift.title}</strong>
-              <span>{gift.chance}% · stock {gift.stock}</span>
+              <span>{visibleChance(gift)}% · stock {gift.stock}</span>
             </div>
           </div>
         ))}
