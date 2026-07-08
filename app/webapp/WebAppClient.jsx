@@ -2055,9 +2055,9 @@ function AdminList({ title, children }) {
 function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, targetIndex = 0 }) {
   const trackRef = useRef(null);
   const [rollerStyle, setRollerStyle] = useState({
-    transition: 'none',
-    transform: 'translate3d(0px,0,0)',
-    filter: 'blur(0px)',
+    '--raffle-x': '0px',
+    '--raffle-transition': 'none',
+    '--raffle-filter': 'blur(0px)',
   });
 
   const isLive = opening && opening.stage !== 'result';
@@ -2070,21 +2070,19 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
     let startTimer = null;
     let cleanTimer = null;
 
+    const resetStyle = {
+      '--raffle-x': '0px',
+      '--raffle-transition': 'none',
+      '--raffle-filter': 'blur(0px)',
+    };
+
     if (!opening) {
-      setRollerStyle({
-        transition: 'none',
-        transform: 'translate3d(0px,0,0)',
-        filter: 'blur(0px)',
-      });
+      setRollerStyle(resetStyle);
       return undefined;
     }
 
     if (opening.stage === 'preparing') {
-      setRollerStyle({
-        transition: 'none',
-        transform: 'translate3d(0px,0,0)',
-        filter: 'blur(0px)',
-      });
+      setRollerStyle(resetStyle);
       return undefined;
     }
 
@@ -2093,29 +2091,26 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
     }
 
     // 1) reset
-    setRollerStyle({
-      transition: 'none',
-      transform: 'translate3d(0px,0,0)',
-      filter: 'blur(0px)',
-    });
+    setRollerStyle(resetStyle);
 
     // 2) force browser to paint reset, then start real raffle movement.
-    // Telegram WebView sometimes batches style writes; timeout + reflow fixes "ROLLING but not moving".
+    // CSS’da eski transform: translate3d(0,0,0) !important borligi uchun
+    // transform endi CSS variable orqali beriladi: --raffle-x.
     startTimer = window.setTimeout(() => {
       if (trackRef.current) {
         trackRef.current.getBoundingClientRect();
       }
 
       setRollerStyle({
-        transition: 'transform 4.85s cubic-bezier(.08,.60,0,1), filter .55s ease',
-        transform: `translate3d(-${distance}px,0,0)`,
-        filter: 'blur(.15px)',
+        '--raffle-x': `-${distance}px`,
+        '--raffle-transition': 'transform 4.85s cubic-bezier(.08,.60,0,1), filter .55s ease',
+        '--raffle-filter': 'blur(.15px)',
       });
 
       cleanTimer = window.setTimeout(() => {
         setRollerStyle((current) => ({
           ...current,
-          filter: 'blur(0px)',
+          '--raffle-filter': 'blur(0px)',
         }));
       }, 3920);
     }, 90);
