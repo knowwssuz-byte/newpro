@@ -10582,3 +10582,124 @@ img.gift-media.gift-media-visual,
     border-radius: 16px !important;
   }
 }
+
+/* =========================================================
+   IDLE MOTION + SELL PRICE + SOLID GIFT BACKGROUNDS V16
+========================================================= */
+
+.case-page-strip {
+  animation: caseIdleGiftDriftV16 10.5s linear infinite !important;
+  will-change: transform !important;
+}
+
+.case-page-screen:not(.is-inline-spinning) .case-page-reel-preview:hover .case-page-strip {
+  animation-play-state: paused !important;
+}
+
+.case-page-strip-card,
+.case-page-spin-card,
+.case-v8-reel-card {
+  background: var(--spin-gift-bg, #2d3340) !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  box-shadow:
+    0 16px 32px rgba(0,0,0,.28),
+    inset 0 1px 0 rgba(255,255,255,.18) !important;
+}
+
+.case-page-prize-card,
+.premium-prize-card.case-v8-prize-card {
+  background: #2d2f35 !important;
+  border: 1px solid rgba(255,255,255,.14) !important;
+  box-shadow:
+    0 14px 28px rgba(0,0,0,.24),
+    inset 0 1px 0 rgba(255,255,255,.12) !important;
+}
+
+.case-page-prize-image,
+.case-v8-prize-image {
+  background: #34373f !important;
+  border: 1px solid rgba(255,255,255,.12) !important;
+}
+
+.win-screen-card {
+  background: var(--win-screen-bg, #7c3aed) !important;
+}
+
+.inline-win-card {
+  background: var(--inline-win-bg, #7c3aed) !important;
+}
+
+.win-screen-card::before,
+.case-page-spin-card::before,
+.case-page-strip-card::before,
+.case-page-prize-card::before {
+  background: none !important;
+}
+
+.win-screen-card {
+  width: min(100%, 350px) !important;
+  min-height: 410px !important;
+  gap: 12px !important;
+}
+
+.win-screen-media {
+  width: 184px !important;
+  height: 184px !important;
+  background: rgba(2,6,23,.18) !important;
+}
+
+.win-screen-media .gift-media,
+.win-screen-media .gift-media.gift-media-visual {
+  width: 154px !important;
+  height: 154px !important;
+}
+
+.sell-btn {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+}
+
+.close-win-btn {
+  background: linear-gradient(135deg, #64748b 0%, #334155 100%) !important;
+}
+
+.status-badge.sold {
+  color: #fecaca !important;
+  background: rgba(239,68,68,.14) !important;
+  border: 1px solid rgba(239,68,68,.25) !important;
+}
+
+.manual-background-live,
+.image-only-library-card {
+  background: var(--manual-bg, var(--manual-card-bg, #7c3aed)) !important;
+}
+
+.manual-bg-preset-row button {
+  background: var(--preset-color, #7c3aed) !important;
+}
+
+@keyframes caseIdleGiftDriftV16 {
+  0% { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(-164px,0,0); }
+}
+
+@media (max-width: 420px) {
+  .win-screen-card {
+    width: min(100%, 324px) !important;
+    min-height: 382px !important;
+  }
+
+  .win-screen-media {
+    width: 158px !important;
+    height: 158px !important;
+  }
+
+  .win-screen-media .gift-media,
+  .win-screen-media .gift-media.gift-media-visual {
+    width: 132px !important;
+    height: 132px !important;
+  }
+
+  .win-screen-actions button {
+    font-size: 13px !important;
+  }
+}
