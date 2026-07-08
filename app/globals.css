@@ -10280,3 +10280,39 @@ img.gift-media.gift-media-visual,
     padding: 0 8px !important;
   }
 }
+
+/* =========================================================
+   RAFFLE START BUG FIX V13
+   Telegram WebView’da transform batching sabab "ROLLING..." bo‘lib,
+   track joyida turib qolishini tuzatadi.
+========================================================= */
+
+.case-page-spin-track.js-raffle-track {
+  transition-property: transform, filter !important;
+  will-change: transform, filter !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  transform-style: preserve-3d !important;
+}
+
+.case-page-spin-track.js-raffle-track.is-rolling {
+  animation: none !important;
+}
+
+.case-page-spin-track.js-raffle-track.is-rolling .case-page-spin-card {
+  animation-duration: 2.35s !important;
+}
+
+.inline-reel-preview.is-live .case-page-spin-track.js-raffle-track {
+  min-width: max-content !important;
+}
+
+.case-page-spin-track.js-raffle-track .case-page-spin-card {
+  transform: translateZ(0) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-page-spin-track.js-raffle-track.is-rolling {
+    transition-duration: 2.2s !important;
+  }
+}
