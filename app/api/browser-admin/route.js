@@ -122,27 +122,32 @@ function extensionFromFile(file) {
   const fileName = clean(file?.name || '').toLowerCase();
   const ext = fileName.split('.').pop() || '';
   if (ext === 'png' || ext === 'svg') return ext;
+  if (ext === 'jpg' || ext === 'jpeg') return 'jpg';
+
   const type = clean(file?.type).toLowerCase();
   if (type === 'image/png') return 'png';
+  if (type === 'image/jpeg' || type === 'image/jpg') return 'jpg';
   if (type.includes('svg')) return 'svg';
+
   return '';
 }
 
 function contentTypeFromExt(ext) {
   if (ext === 'svg') return 'image/svg+xml';
   if (ext === 'png') return 'image/png';
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
   return 'application/octet-stream';
 }
 
 async function uploadGiftImage(supabase, file, title = '') {
   if (!file || typeof file.arrayBuffer !== 'function' || file.size <= 0) {
-    throw new Error('PNG yoki SVG rasm fayl tanlanmagan.');
+    throw new Error('PNG, JPG yoki SVG rasm fayl tanlanmagan.');
   }
 
   const ext = extensionFromFile(file);
 
-  if (!['png', 'svg'].includes(ext)) {
-    throw new Error('Faqat PNG yoki SVG gift rasmi yuklang.');
+  if (!['png', 'jpg', 'svg'].includes(ext)) {
+    throw new Error('Faqat PNG, JPG yoki SVG rasm yuklang.');
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
@@ -156,6 +161,38 @@ async function uploadGiftImage(supabase, file, title = '') {
     buffer,
     contentType: contentTypeFromExt(ext),
     folder: 'manual-gifts/images',
+    ext,
+    prefix,
+  });
+
+  return {
+    imageUrl: uploaded.publicUrl,
+    imageType: ext,
+  };
+}
+
+async function uploadCaseImage(supabase, file, title = '') {
+  if (!file || typeof file.arrayBuffer !== 'function' || file.size <= 0) {
+    throw new Error('Case rasmi uchun PNG, JPG yoki SVG fayl tanlang.');
+  }
+
+  const ext = extensionFromFile(file);
+
+  if (!['png', 'jpg', 'svg'].includes(ext)) {
+    throw new Error('Case rasmi faqat PNG, JPG yoki SVG bo‘lishi kerak.');
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const prefix = clean(title)
+    .toLowerCase()
+    .replace(/[^a-z0-9а-яё]+/gi, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 42) || 'case';
+
+  const uploaded = await uploadPublicAsset(supabase, {
+    buffer,
+    contentType: contentTypeFromExt(ext),
+    folder: 'manual-cases/images',
     ext,
     prefix,
   });
@@ -191,6 +228,46 @@ async function insertGiftWithOptionalColumns(supabase, row, optionalRow) {
 
 async function handleFormAction(request, formData, supabase) {
   const action = clean(formData.get('action'));
+
+  if (action === 'case_create_upload') {
+    const title = clean(formData.get('title'));
+    const description = clean(formData.get('description'));
+    const price = toNumber(formData.get('price'), 0);
+    const badgeText = clean(formData.get('badge_text'));
+    const badgeColor = clean(formData.get('badge_color')) || '#8b5cf6';
+    const accentColor = clean(formData.get('accent_color')) || '#22c55e';
+    const cardStyle = clean(formData.get('card_style')) || 'default';
+    const isActive = clean(formData.get('is_active')) !== 'false';
+    const file = formData.get('image_file');
+
+    if (!title) {
+      throw new Error('Case nomini yozing.');
+    }
+
+    const image = await uploadCaseImage(supabase, file, title);
+
+    const { data, error } = await supabase
+      .from('cases')
+      .insert({
+        title,
+        description,
+        price,
+        image_url: image.imageUrl,
+        badge_text: badgeText,
+        badge_color: badgeColor,
+        accent_color: accentColor,
+        card_style: cardStyle,
+        is_active: isActive,
+      })
+      .select('*')
+      .single();
+
+    if (error) throw error;
+
+    const boot = await bootstrap(supabase);
+
+    return json({ ok: true, case: data, ...boot });
+  }
 
   if (action === 'gift_library_create') {
     const title = clean(formData.get('title'));
