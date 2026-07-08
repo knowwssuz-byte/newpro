@@ -2,6 +2,41 @@ import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+async function fetchCases(supabase, { onlyActive = false } = {}) {
+  let ordered = supabase
+    .from('cases')
+    .select('*')
+    .order('is_pinned', { ascending: false })
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+
+  if (onlyActive) ordered = ordered.eq('is_active', true);
+
+  const result = await ordered;
+
+  if (!result.error) return result.data || [];
+
+  const text = `${result.error?.message || ''} ${result.error?.details || ''} ${result.error?.hint || ''}`;
+
+  if (text.includes('sort_order') || text.includes('is_pinned') || result.error?.code === '42703') {
+    let fallback = supabase
+      .from('cases')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (onlyActive) fallback = fallback.eq('is_active', true);
+
+    const fallbackResult = await fallback;
+
+    if (fallbackResult.error) throw new Error(fallbackResult.error.message);
+
+    return fallbackResult.data || [];
+  }
+
+  throw new Error(result.error.message);
+}
 
 export async function POST(request) {
   try {
@@ -18,16 +53,14 @@ export async function POST(request) {
       return jsonError('Siz bloklangansiz', 403);
     }
 
-    let casesQuery = supabase.from('cases').select('*').order('created_at', { ascending: false });
     let giftsQuery = supabase.from('gifts').select('*').order('created_at', { ascending: false });
 
     if (!auth.isAdmin) {
-      casesQuery = casesQuery.eq('is_active', true);
       giftsQuery = giftsQuery.eq('is_active', true);
     }
 
-    const [casesResult, giftsResult, historyResult, withdrawResult] = await Promise.all([
-      casesQuery,
+    const [cases, giftsResult, historyResult, withdrawResult] = await Promise.all([
+      fetchCases(supabase, { onlyActive: !auth.isAdmin }),
       giftsQuery,
       supabase
         .from('open_history')
@@ -43,7 +76,6 @@ export async function POST(request) {
         .limit(30),
     ]);
 
-    if (casesResult.error) throw new Error(casesResult.error.message);
     if (giftsResult.error) throw new Error(giftsResult.error.message);
     if (historyResult.error) throw new Error(historyResult.error.message);
     if (withdrawResult.error) throw new Error(withdrawResult.error.message);
@@ -53,7 +85,7 @@ export async function POST(request) {
       user: dbUser,
       telegramUser: auth.telegramUser,
       isAdmin: auth.isAdmin,
-      cases: casesResult.data || [],
+      cases,
       gifts: giftsResult.data || [],
       history: historyResult.data || [],
       withdrawals: withdrawResult.data || [],
