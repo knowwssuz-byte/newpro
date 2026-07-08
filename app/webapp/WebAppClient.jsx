@@ -71,6 +71,29 @@ function rewardSubtitle(gift) {
   return gift?.value ? String(gift.value) : 'Gift reward';
 }
 
+function giftSellPrice(gift) {
+  if (!gift || isBalanceReward(gift)) return 0;
+
+  const rawValue = gift.floor_price ?? gift.price ?? gift.value ?? 0;
+  const number = Number(rawValue);
+
+  return Number.isFinite(number) ? Math.max(0, number) : 0;
+}
+
+function sellButtonText(gift) {
+  const price = giftSellPrice(gift);
+
+  return price > 0 ? `Sotish ${formatPrice(price)} ⭐` : 'Sotish';
+}
+
+function sellConfirmText(gift) {
+  const price = giftSellPrice(gift);
+
+  return price > 0
+    ? `Siz buni ${formatPrice(price)} ⭐ ga sotmoqchimisiz?`
+    : 'Siz buni sotmoqchimisiz?';
+}
+
 function money(value) {
   const number = Number(value || 0);
   return new Intl.NumberFormat('uz-UZ').format(number);
@@ -698,6 +721,7 @@ export default function WebAppClient() {
         reel,
         winningIndex,
         opening: result.opening,
+        history: result.history || null,
         balanceBefore: result.balanceBefore,
         balanceAfter: result.balanceAfter,
         spinKey,
@@ -724,6 +748,7 @@ export default function WebAppClient() {
         reel,
         winningIndex,
         opening: result.opening,
+        history: result.history || null,
         balanceBefore: result.balanceBefore,
         balanceAfter: result.balanceAfter,
         spinKey,
@@ -742,6 +767,46 @@ export default function WebAppClient() {
   async function createWithdraw(giftId) {
     await runAction(() => apiPost('/api/withdraw', { giftId }), 'Yechish so‘rovi yuborildi ✅');
     await loadApp({ silent: true });
+  }
+
+  async function sellOpeningReward(openingPayload) {
+    if (!openingPayload?.gift || isBalanceReward(openingPayload.gift)) {
+      showToast('Bu reward balansga avtomatik qo‘shiladi');
+      return;
+    }
+
+    const historyId = openingPayload.history?.id;
+    const price = giftSellPrice(openingPayload.gift);
+
+    if (!historyId) {
+      showToast('Sotish uchun history ID topilmadi. Inventorydan tekshiring.');
+      return;
+    }
+
+    if (!window.confirm(sellConfirmText(openingPayload.gift))) {
+      return;
+    }
+
+    const result = await runAction(
+      () =>
+        apiPost('/api/sell-gift', {
+          historyId,
+        }),
+      price > 0 ? `Sotildi: ${formatPrice(price)} ⭐` : 'Sotildi ✅'
+    );
+
+    if (!result) return;
+
+    if (result.user) {
+      setProfile(result.user);
+    } else if (typeof result.balance !== 'undefined') {
+      setProfile((current) => (current ? { ...current, balance: result.balance } : current));
+    }
+
+    setOpening(null);
+    setSelectedCase(null);
+    await loadApp({ silent: true });
+    setTab('inventory');
   }
 
   async function uploadCaseImage() {
@@ -1018,12 +1083,7 @@ export default function WebAppClient() {
               }}
               onOpen={() => openCase(selectedCase)}
               onCloseResult={() => setOpening(null)}
-              onSellResult={() => {
-                setOpening(null);
-                setSelectedCase(null);
-                setTab('inventory');
-                showToast('Sotish Inventory bo‘limida davom etadi');
-              }}
+              onSellResult={sellOpeningReward}
             />
           ) : (
             <>
@@ -1575,7 +1635,8 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onWithdraw })
     const gift = gifts.find((giftItem) => String(giftItem.id) === String(item.gift_id));
     const caseItem = cases.find((caseValue) => String(caseValue.id) === String(item.case_id));
     const request = withdrawals.find((withdraw) => String(withdraw.gift_id) === String(item.gift_id));
-    return { item, gift, caseItem, request };
+    const isSold = Boolean(item.sold_at);
+    return { item, gift, caseItem, request, isSold };
   });
 
   return (
@@ -1589,12 +1650,12 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onWithdraw })
         <EmptyState icon="inventory" title="Inventory bo‘sh" text="Case ochib, sovg‘a yuting." />
       ) : (
         <div className="inventory-list">
-          {wins.map(({ item, gift, caseItem, request }) => (
+          {wins.map(({ item, gift, caseItem, request, isSold }) => (
             <div className="inventory-card premium-card" key={item.id}>
               <GiftMedia gift={gift} />
               <div>
-                <span className={`status-badge ${request?.status || 'available'}`}>
-                  {request?.status || 'available'}
+                <span className={`status-badge ${isSold ? 'sold' : request?.status || 'available'}`}>
+                  {isSold ? 'sold' : request?.status || 'available'}
                 </span>
                 <h3>{gift?.title || 'Sovg‘a'}</h3>
                 <p>
@@ -1605,6 +1666,10 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onWithdraw })
               {isBalanceReward(gift) ? (
                 <button type="button" disabled className="ghost-btn">
                   Balansga qo‘shilgan
+                </button>
+              ) : isSold ? (
+                <button type="button" disabled className="ghost-btn">
+                  Sotilgan
                 </button>
               ) : (
                 <button
@@ -1629,7 +1694,8 @@ function HistoryView({ history, gifts, cases, withdrawals }) {
     const gift = gifts.find((giftItem) => String(giftItem.id) === String(item.gift_id));
     const caseItem = cases.find((caseValue) => String(caseValue.id) === String(item.case_id));
     const request = withdrawals.find((withdraw) => String(withdraw.gift_id) === String(item.gift_id));
-    return { item, gift, caseItem, request };
+    const isSold = Boolean(item.sold_at);
+    return { item, gift, caseItem, request, isSold };
   });
 
   return (
@@ -1643,7 +1709,7 @@ function HistoryView({ history, gifts, cases, withdrawals }) {
         <EmptyState icon="history" title="History bo‘sh" text="Birinchi case’ni oching." />
       ) : (
         <div className="activity-list">
-          {rows.map(({ item, gift, caseItem, request }) => (
+          {rows.map(({ item, gift, caseItem, request, isSold }) => (
             <div className="activity-row premium-card" key={item.id}>
               <GiftMedia gift={gift} compact preferStatic />
               <div>
@@ -1653,7 +1719,7 @@ function HistoryView({ history, gifts, cases, withdrawals }) {
                   {item.created_at ? new Date(item.created_at).toLocaleString('uz-UZ') : ''}
                 </span>
               </div>
-              {request ? <span className={`status-badge ${request.status}`}>{request.status}</span> : null}
+              {isSold ? <span className="status-badge sold">sold</span> : request ? <span className={`status-badge ${request.status}`}>{request.status}</span> : null}
             </div>
           ))}
         </div>
@@ -2251,8 +2317,8 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
               </div>
 
               <div className="win-screen-actions">
-                <button type="button" className="sell-btn" onClick={onSellResult}>
-                  Sotish
+                <button type="button" className="sell-btn" onClick={() => onSellResult(inlineOpening)}>
+                  {sellButtonText(inlineOpening.gift)}
                 </button>
                 <button type="button" className="close-win-btn" onClick={onCloseResult}>
                   Yopish
