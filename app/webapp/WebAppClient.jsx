@@ -1018,10 +1018,11 @@ export default function WebAppClient() {
               }}
               onOpen={() => openCase(selectedCase)}
               onCloseResult={() => setOpening(null)}
-              onInventory={() => {
+              onSellResult={() => {
                 setOpening(null);
                 setSelectedCase(null);
                 setTab('inventory');
+                showToast('Sotish Inventory bo‘limida davom etadi');
               }}
             />
           ) : (
@@ -2060,7 +2061,8 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
     '--raffle-filter': 'blur(0px)',
   });
 
-  const isLive = opening && opening.stage !== 'result';
+  const isLive = Boolean(opening);
+  const isResult = opening?.stage === 'result';
   const isRolling = opening?.stage === 'rolling';
   const isPreparing = opening?.stage === 'preparing';
   const reel = isLive ? opening.reel : idleGifts;
@@ -2083,6 +2085,15 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
 
     if (opening.stage === 'preparing') {
       setRollerStyle(resetStyle);
+      return undefined;
+    }
+
+    if (opening.stage === 'result') {
+      setRollerStyle({
+        '--raffle-x': `-${distance}px`,
+        '--raffle-transition': 'none',
+        '--raffle-filter': 'blur(0px)',
+      });
       return undefined;
     }
 
@@ -2122,7 +2133,7 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
   }, [opening?.spinKey, opening?.stage, distance]);
 
   return (
-    <div className={`case-page-reel-preview inline-reel-preview ${isLive ? 'is-live' : ''}`} aria-label="Case prizes preview">
+    <div className={`case-page-reel-preview inline-reel-preview ${isLive ? 'is-live' : ''} ${isResult ? 'is-result' : ''}`} aria-label="Case prizes preview">
       <span className="case-page-marker top" aria-hidden="true" />
       <span className="case-page-marker bottom" aria-hidden="true" />
 
@@ -2154,7 +2165,7 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
   );
 }
 
-function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onCloseResult, onInventory }) {
+function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onCloseResult, onSellResult }) {
   const readyGifts = gifts.filter(eligibleGift);
   const isFree = Number(caseItem.price || 0) === 0;
   const openText = isFree ? 'OPEN FREE' : `OPEN ${formatPrice(caseItem.price)}`;
@@ -2220,28 +2231,33 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
         </div>
 
         {isResult ? (
-          <div
-            className={`inline-win-card ${isBalanceReward(inlineOpening.gift) ? 'balance-win' : ''}`}
-            style={{
-              '--inline-win-bg': inlineOpening.gift?.background_value || defaultGiftBackground(inlineOpening.gift?.rarity),
-            }}
-          >
-            <div className="inline-win-media">
-              <GiftMedia gift={inlineOpening.gift} />
-            </div>
-            <div className="inline-win-copy">
-              <span>YOU WON</span>
-              <strong>{inlineOpening.gift?.title || 'Reward'}</strong>
-              <p>{rewardSubtitle(inlineOpening.gift)}</p>
-            </div>
-            <div className="inline-win-actions">
-              <button type="button" className="ghost-btn" onClick={onCloseResult}>Close</button>
-              {!isBalanceReward(inlineOpening.gift) ? (
-                <button type="button" className="primary-btn" onClick={onInventory}>Inventory</button>
-              ) : null}
-              <button type="button" className="primary-btn" disabled={busy} onClick={onOpen}>
-                Open again
-              </button>
+          <div className="win-screen-layer" role="dialog" aria-modal="true">
+            <div
+              className={`win-screen-card ${isBalanceReward(inlineOpening.gift) ? 'balance-win' : ''}`}
+              style={{
+                '--win-screen-bg': inlineOpening.gift?.background_value || defaultGiftBackground(inlineOpening.gift?.rarity),
+              }}
+            >
+              <span className="win-screen-shine" aria-hidden="true" />
+              <span className="win-screen-badge">YOU WON</span>
+
+              <div className="win-screen-media">
+                <GiftMedia gift={inlineOpening.gift} />
+              </div>
+
+              <div className="win-screen-copy">
+                <strong>{inlineOpening.gift?.title || 'Reward'}</strong>
+                <p>{rewardSubtitle(inlineOpening.gift)}</p>
+              </div>
+
+              <div className="win-screen-actions">
+                <button type="button" className="sell-btn" onClick={onSellResult}>
+                  Sotish
+                </button>
+                <button type="button" className="close-win-btn" onClick={onCloseResult}>
+                  Yopish
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
