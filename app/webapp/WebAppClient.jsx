@@ -715,7 +715,7 @@ export default function WebAppClient() {
 
       tg?.HapticFeedback?.impactOccurred?.('medium');
 
-      await delay(5000);
+      await delay(5150);
 
       setOpening({
         stage: 'result',
@@ -2054,6 +2054,12 @@ function AdminList({ title, children }) {
 
 function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, targetIndex = 0 }) {
   const trackRef = useRef(null);
+  const [rollerStyle, setRollerStyle] = useState({
+    transition: 'none',
+    transform: 'translate3d(0px,0,0)',
+    filter: 'blur(0px)',
+  });
+
   const isLive = opening && opening.stage !== 'result';
   const isRolling = opening?.stage === 'rolling';
   const isPreparing = opening?.stage === 'preparing';
@@ -2061,23 +2067,63 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
   const distance = Math.max(0, (targetIndex * (itemWidth + gap)) + (itemWidth / 2));
 
   useEffect(() => {
-    const track = trackRef.current;
-    if (!track || !opening) return;
+    let startTimer = null;
+    let cleanTimer = null;
 
-    track.style.transition = 'none';
-    track.style.transform = 'translate3d(0px,0,0)';
-    track.style.filter = 'blur(0px)';
+    if (!opening) {
+      setRollerStyle({
+        transition: 'none',
+        transform: 'translate3d(0px,0,0)',
+        filter: 'blur(0px)',
+      });
+      return undefined;
+    }
 
-    if (opening.stage !== 'rolling') return;
+    if (opening.stage === 'preparing') {
+      setRollerStyle({
+        transition: 'none',
+        transform: 'translate3d(0px,0,0)',
+        filter: 'blur(0px)',
+      });
+      return undefined;
+    }
 
-    // Raffle roller logic: reset -> force layout -> set transition -> move to winner.
-    // Bu CSS keyframe emas, shuning uchun WebViewda ham barqaror ishlaydi.
-    window.requestAnimationFrame(() => {
-      if (!trackRef.current) return;
+    if (opening.stage !== 'rolling') {
+      return undefined;
+    }
 
-      trackRef.current.style.transition = 'transform 4.8s cubic-bezier(.08,.6,0,1), filter .42s ease';
-      trackRef.current.style.transform = `translate3d(-${distance}px,0,0)`;
+    // 1) reset
+    setRollerStyle({
+      transition: 'none',
+      transform: 'translate3d(0px,0,0)',
+      filter: 'blur(0px)',
     });
+
+    // 2) force browser to paint reset, then start real raffle movement.
+    // Telegram WebView sometimes batches style writes; timeout + reflow fixes "ROLLING but not moving".
+    startTimer = window.setTimeout(() => {
+      if (trackRef.current) {
+        trackRef.current.getBoundingClientRect();
+      }
+
+      setRollerStyle({
+        transition: 'transform 4.85s cubic-bezier(.08,.60,0,1), filter .55s ease',
+        transform: `translate3d(-${distance}px,0,0)`,
+        filter: 'blur(.15px)',
+      });
+
+      cleanTimer = window.setTimeout(() => {
+        setRollerStyle((current) => ({
+          ...current,
+          filter: 'blur(0px)',
+        }));
+      }, 3920);
+    }, 90);
+
+    return () => {
+      if (startTimer) window.clearTimeout(startTimer);
+      if (cleanTimer) window.clearTimeout(cleanTimer);
+    };
   }, [opening?.spinKey, opening?.stage, distance]);
 
   return (
@@ -2088,6 +2134,7 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
       <div
         ref={trackRef}
         className={`case-page-spin-track js-raffle-track ${isPreparing ? 'is-preparing' : ''} ${isRolling ? 'is-rolling' : ''}`}
+        style={rollerStyle}
       >
         {reel.map((gift, index) => (
           <div
