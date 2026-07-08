@@ -10952,3 +10952,146 @@ img.gift-media.gift-media-visual,
     padding: 0 11px !important;
   }
 }
+
+/* =========================================================
+   CASE OVERLAP + ORDER/PIN ADMIN V23
+   - Case detail ichida hero/gift grid ustma-ust chiqishini to'g'rilaydi.
+   - Admin panelda pin va joy almashtirish tugmalari uchun style.
+========================================================= */
+
+.case-page-main,
+.app-main.case-page-main {
+  padding-bottom: calc(122px + env(safe-area-inset-bottom)) !important;
+  overflow-x: hidden !important;
+}
+
+.case-page-screen {
+  position: relative !important;
+  display: grid !important;
+  gap: 18px !important;
+  align-content: start !important;
+  padding-bottom: 24px !important;
+}
+
+.case-page-hero,
+.inline-case-hero {
+  position: relative !important;
+  z-index: 2 !important;
+  margin-bottom: 4px !important;
+  overflow: hidden !important;
+}
+
+.case-page-prizes-head {
+  position: relative !important;
+  z-index: 1 !important;
+  margin-top: 4px !important;
+  padding-top: 0 !important;
+  clear: both !important;
+}
+
+.case-page-prize-grid {
+  position: relative !important;
+  z-index: 1 !important;
+  margin-top: -2px !important;
+  padding-bottom: 28px !important;
+}
+
+.case-page-prize-card {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+.case-page-reel-preview.inline-reel-preview {
+  position: relative !important;
+  z-index: 2 !important;
+  margin-bottom: 15px !important;
+}
+
+.case-page-open-btn {
+  position: relative !important;
+  z-index: 2 !important;
+}
+
+/* Navbar gift card ustiga chiqmasligi uchun safe bottom */
+.mobile-nav {
+  z-index: 80 !important;
+}
+
+.admin-case-order-item {
+  grid-template-columns: auto minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: 12px !important;
+}
+
+.admin-case-order-item.is-pinned {
+  border-color: rgba(245, 158, 11, .32) !important;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(245,158,11,.12), transparent 34%),
+    rgba(15,23,42,.82) !important;
+}
+
+.case-order-actions {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-wrap: wrap !important;
+  gap: 7px !important;
+}
+
+.case-order-actions button {
+  min-height: 36px !important;
+  padding: 0 11px !important;
+  border-radius: 12px !important;
+  font-size: 12px !important;
+  font-weight: 950 !important;
+}
+
+.case-order-actions button:disabled {
+  opacity: .38 !important;
+  cursor: not-allowed !important;
+}
+
+.admin-case-media {
+  object-fit: contain !important;
+  background: rgba(255,255,255,.06) !important;
+}
+
+@media (max-width: 720px) {
+  .admin-case-order-item {
+    grid-template-columns: auto minmax(0, 1fr) !important;
+  }
+
+  .case-order-actions {
+    grid-column: 1 / -1 !important;
+    justify-content: stretch !important;
+  }
+
+  .case-order-actions button {
+    flex: 1 1 auto !important;
+  }
+}
+
+@media (max-width: 520px) {
+  .case-page-screen {
+    gap: 16px !important;
+    padding-bottom: 28px !important;
+  }
+
+  .case-page-main,
+  .app-main.case-page-main {
+    padding-bottom: calc(118px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .case-page-hero,
+  .inline-case-hero {
+    margin-bottom: 6px !important;
+  }
+
+  .case-page-prizes-head {
+    margin-top: 2px !important;
+  }
+
+  .case-page-prize-grid {
+    padding-bottom: 38px !important;
+  }
+}
