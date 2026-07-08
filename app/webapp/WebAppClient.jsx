@@ -2233,7 +2233,7 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, tar
   }, [opening?.spinKey, opening?.stage, distance]);
 
   const idleLoopGifts = idleGifts.length
-    ? Array.from({ length: Math.max(14, idleGifts.length * 3) }, (_, index) => idleGifts[index % idleGifts.length])
+    ? Array.from({ length: Math.max(18, idleGifts.length * 5) }, (_, index) => idleGifts[index % idleGifts.length])
     : [];
 
   return (
