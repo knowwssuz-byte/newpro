@@ -215,7 +215,14 @@ async function insertGiftWithOptionalColumns(supabase, row, optionalRow) {
 
   const text = `${error.message || ''} ${error.details || ''} ${error.hint || ''}`;
 
-  if (text.includes('library_gift_id') || text.includes('source')) {
+  if (
+    text.includes('library_gift_id') ||
+    text.includes('floor_price') ||
+    text.includes('sell_price') ||
+    text.includes('buy_price') ||
+    text.includes('real_chance') ||
+    text.includes('source')
+  ) {
     const retry = await supabase.from('gifts').insert(row).select('*').single();
 
     if (retry.error) throw retry.error;
@@ -407,18 +414,23 @@ export async function POST(request) {
 
       if (libraryError) throw libraryError;
 
-      const price = toNumber(data.price ?? libraryGift.price, 0);
+      const price = toNumber(data.price ?? libraryGift.buy_price ?? libraryGift.price, 0);
+      const visibleChanceValue = Math.max(0, toNumber(data.chance, 10));
+      const realChanceValue = Math.max(
+        0,
+        toNumber(data.real_chance ?? data.drop_chance ?? visibleChanceValue, visibleChanceValue)
+      );
 
       const row = {
         case_id: caseId,
         title: clean(data.title || libraryGift.title),
         type: 'gift',
         value: String(price || libraryGift.id),
-        chance: Math.max(0, toNumber(data.chance, 10)),
+        chance: visibleChanceValue,
         stock: Math.max(0, Math.floor(toNumber(data.stock, 1))),
         image_url: libraryGift.image_url || libraryGift.png_url || libraryGift.webp_url || '',
         animation_url: '',
-        background_value: libraryGift.background_value || 'linear-gradient(135deg,#7c3aed,#111827)',
+        background_value: libraryGift.background_value || '#7c3aed',
         rarity: clean(data.rarity || 'rare'),
         is_active: data.is_active !== false,
       };
