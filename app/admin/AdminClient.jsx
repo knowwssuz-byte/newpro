@@ -62,6 +62,17 @@ function firstGradientColor(value = '') {
   return match?.[0] || '#7c3aed';
 }
 
+
+function CaseImage({ caseItem }) {
+  const url = caseItem?.image_url || '';
+
+  if (!url) {
+    return <span className="admin-mini-icon">📦</span>;
+  }
+
+  return <img className="admin-gift-media admin-case-media" src={url} alt="" loading="lazy" draggable="false" />;
+}
+
 function GiftImage({ gift, className = 'admin-gift-media' }) {
   const url = gift?.image_url || gift?.png_url || gift?.webp_url || '';
 
@@ -87,6 +98,7 @@ export default function AdminClient() {
   const [withdrawals, setWithdrawals] = useState([]);
 
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
+  const [caseFile, setCaseFile] = useState(null);
   const [libraryForm, setLibraryForm] = useState(emptyLibraryForm);
   const [libraryFile, setLibraryFile] = useState(null);
   const [giftForm, setGiftForm] = useState(emptyGiftForm);
@@ -226,19 +238,34 @@ export default function AdminClient() {
   async function createCase(event) {
     event.preventDefault();
 
-    await run(
-      () =>
-        callAdmin('case_create', {
-          caseData: {
-            ...caseForm,
-            price: Number(caseForm.price || 0),
-          },
-        }),
-      'Case qo‘shildi ✅'
-    );
+    if (!caseFile) {
+      setError('Case uchun PNG, JPG yoki SVG rasm tanlang.');
+      return;
+    }
 
+    const formData = new FormData();
+    formData.append('action', 'case_create_upload');
+    formData.append('adminKey', adminKey);
+    formData.append('title', caseForm.title);
+    formData.append('description', caseForm.description);
+    formData.append('price', caseForm.price);
+    formData.append('badge_text', caseForm.badge_text);
+    formData.append('badge_color', caseForm.badge_color);
+    formData.append('accent_color', caseForm.accent_color);
+    formData.append('card_style', caseForm.card_style);
+    formData.append('is_active', String(caseForm.is_active !== false));
+    formData.append('image_file', caseFile);
+
+    const data = await run(() => callAdminForm(formData), 'Case qo‘shildi ✅');
+
+    if (!data) return;
+
+    applyBootstrap(data);
     setCaseForm(emptyCaseForm);
-    await bootstrap();
+    setCaseFile(null);
+
+    const input = document.getElementById('case-image-input');
+    if (input) input.value = '';
   }
 
   async function updateCase(caseId, updates) {
@@ -438,19 +465,59 @@ export default function AdminClient() {
 
         {tab === 'cases' ? (
           <section className="browser-admin-grid">
-            <form className="browser-admin-form" onSubmit={createCase}>
-              <h2>Case qo‘shish</h2>
-              <input placeholder="Title" value={caseForm.title} onChange={(event) => setCaseForm({ ...caseForm, title: event.target.value })} required />
-              <input placeholder="Description" value={caseForm.description} onChange={(event) => setCaseForm({ ...caseForm, description: event.target.value })} />
-              <input type="number" placeholder="Price" value={caseForm.price} onChange={(event) => setCaseForm({ ...caseForm, price: event.target.value })} />
-              <input placeholder="Image URL" value={caseForm.image_url} onChange={(event) => setCaseForm({ ...caseForm, image_url: event.target.value })} />
-              <button type="submit" disabled={busy}>Case qo‘shish</button>
+            <form className="browser-admin-form case-upload-form" onSubmit={createCase}>
+              <div className="admin-form-heading">
+                <span>Case image upload</span>
+                <h2>Case qo‘shish</h2>
+                <p>Endi case rasmi URL emas, fayl sifatida yuklanadi. PNG, JPG yoki SVG ishlaydi.</p>
+              </div>
+
+              <label>
+                <span>Case nomi</span>
+                <input placeholder="Title" value={caseForm.title} onChange={(event) => setCaseForm({ ...caseForm, title: event.target.value })} required />
+              </label>
+
+              <label>
+                <span>Izoh</span>
+                <input placeholder="Description" value={caseForm.description} onChange={(event) => setCaseForm({ ...caseForm, description: event.target.value })} />
+              </label>
+
+              <label>
+                <span>Ochish narxi</span>
+                <input type="number" placeholder="Price" value={caseForm.price} onChange={(event) => setCaseForm({ ...caseForm, price: event.target.value })} />
+              </label>
+
+              <label>
+                <span>Case rasmi</span>
+                <input
+                  id="case-image-input"
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/svg+xml,.png,.jpg,.jpeg,.svg"
+                  onChange={(event) => setCaseFile(event.target.files?.[0] || null)}
+                  required
+                />
+                <small className="manual-field-note">PNG tavsiya qilinadi. JPG va SVG ham qo‘shildi.</small>
+              </label>
+
+              <div className="browser-admin-two">
+                <label>
+                  <span>Badge rangi</span>
+                  <input type="color" value={caseForm.badge_color} onChange={(event) => setCaseForm({ ...caseForm, badge_color: event.target.value })} />
+                </label>
+                <label>
+                  <span>Accent rangi</span>
+                  <input type="color" value={caseForm.accent_color} onChange={(event) => setCaseForm({ ...caseForm, accent_color: event.target.value })} />
+                </label>
+              </div>
+
+              <button type="submit" disabled={busy}>{busy ? 'Yuklanmoqda...' : 'Case qo‘shish'}</button>
             </form>
 
             <div className="browser-admin-list">
               <h2>Cases</h2>
               {cases.map((caseItem) => (
                 <div className="browser-admin-item" key={caseItem.id}>
+                  <CaseImage caseItem={caseItem} />
                   <div>
                     <strong>{caseItem.title}</strong>
                     <p>{money(caseItem.price)} ⭐ · {caseItem.is_active === false ? 'hidden' : 'active'}</p>
