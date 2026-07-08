@@ -180,9 +180,9 @@ function buildOpeningReel(gifts, winningGift) {
     return fallback;
   };
 
-  // Winner har doim bitta aniq indexga qo'yiladi.
-  // JS distance va CSS item o'lchami bir xil bo'lgani uchun markazda to'xtaydi.
-  for (let index = 0; index < 46; index += 1) {
+  // Raffle logic: winner doim aniq indexga qo'yiladi.
+  // Keyin JS transition o'sha indexni marker markaziga olib keladi.
+  for (let index = 0; index < 48; index += 1) {
     reel.push(pickDifferent());
   }
 
@@ -191,11 +191,16 @@ function buildOpeningReel(gifts, winningGift) {
     reel.push(winningGift);
   }
 
-  for (let index = 0; index < 6; index += 1) {
+  for (let index = 0; index < 8; index += 1) {
     reel.push(pickDifferent());
   }
 
   return reel.filter(Boolean);
+}
+
+function getWinningIndexFromReel(reel = []) {
+  // buildOpeningReel: 48 random + winner + 8 random => winner index = length - 9
+  return Math.max(0, reel.length - 9);
 }
 
 function coinIcon() {
@@ -684,12 +689,14 @@ export default function WebAppClient() {
 
       const reel = buildOpeningReel(activeGiftPool, result.gift);
       const spinKey = Date.now();
+      const winningIndex = getWinningIndexFromReel(reel);
 
       setOpening({
         stage: 'rolling',
         caseItem,
         gift: result.gift,
         reel,
+        winningIndex,
         opening: result.opening,
         balanceBefore: result.balanceBefore,
         balanceAfter: result.balanceAfter,
@@ -708,13 +715,14 @@ export default function WebAppClient() {
 
       tg?.HapticFeedback?.impactOccurred?.('medium');
 
-      await delay(4550);
+      await delay(5000);
 
       setOpening({
         stage: 'result',
         caseItem,
         gift: result.gift,
         reel,
+        winningIndex,
         opening: result.opening,
         balanceBefore: result.balanceBefore,
         balanceAfter: result.balanceAfter,
@@ -2044,6 +2052,66 @@ function AdminList({ title, children }) {
   );
 }
 
+function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, targetIndex = 0 }) {
+  const trackRef = useRef(null);
+  const isLive = opening && opening.stage !== 'result';
+  const isRolling = opening?.stage === 'rolling';
+  const isPreparing = opening?.stage === 'preparing';
+  const reel = isLive ? opening.reel : idleGifts;
+  const distance = Math.max(0, (targetIndex * (itemWidth + gap)) + (itemWidth / 2));
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track || !opening) return;
+
+    track.style.transition = 'none';
+    track.style.transform = 'translate3d(0px,0,0)';
+    track.style.filter = 'blur(0px)';
+
+    if (opening.stage !== 'rolling') return;
+
+    // Raffle roller logic: reset -> force layout -> set transition -> move to winner.
+    // Bu CSS keyframe emas, shuning uchun WebViewda ham barqaror ishlaydi.
+    window.requestAnimationFrame(() => {
+      if (!trackRef.current) return;
+
+      trackRef.current.style.transition = 'transform 4.8s cubic-bezier(.08,.6,0,1), filter .42s ease';
+      trackRef.current.style.transform = `translate3d(-${distance}px,0,0)`;
+    });
+  }, [opening?.spinKey, opening?.stage, distance]);
+
+  return (
+    <div className={`case-page-reel-preview inline-reel-preview ${isLive ? 'is-live' : ''}`} aria-label="Case prizes preview">
+      <span className="case-page-marker top" aria-hidden="true" />
+      <span className="case-page-marker bottom" aria-hidden="true" />
+
+      <div
+        ref={trackRef}
+        className={`case-page-spin-track js-raffle-track ${isPreparing ? 'is-preparing' : ''} ${isRolling ? 'is-rolling' : ''}`}
+      >
+        {reel.map((gift, index) => (
+          <div
+            className={`case-page-spin-card ${isRolling && index === targetIndex ? 'target-win-item' : ''}`}
+            key={`${gift?.id || 'gift'}-${index}-${opening?.spinKey || 'idle'}`}
+            style={{
+              '--spin-gift-bg': gift?.background_value || defaultGiftBackground(gift?.rarity),
+              '--spin-delay': `${index * 0.022}s`,
+            }}
+          >
+            <GiftMedia gift={gift} preferStatic />
+          </div>
+        ))}
+
+        {!reel.length ? (
+          <div className="case-page-strip-empty">
+            <AppIcon name="box" />
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onCloseResult, onInventory }) {
   const readyGifts = gifts.filter(eligibleGift);
   const isFree = Number(caseItem.price || 0) === 0;
@@ -2054,8 +2122,10 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
   const isResult = inlineOpening?.stage === 'result';
   const itemWidth = 112;
   const gap = 12;
-  const stopIndex = inlineOpening ? Math.max(0, inlineOpening.reel.length - 5) : 0;
-  const distance = stopIndex * (itemWidth + gap);
+  const targetIndex =
+    typeof inlineOpening?.winningIndex === 'number'
+      ? inlineOpening.winningIndex
+      : getWinningIndexFromReel(inlineOpening?.reel || []);
   const stripSource = previewGifts.length ? previewGifts : [];
   const stripGifts = stripSource.length
     ? Array.from({ length: Math.min(9, Math.max(7, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
@@ -2089,53 +2159,13 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
           <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
         </div>
 
-        <div className={`case-page-reel-preview inline-reel-preview ${isSpinning ? 'is-live' : ''}`} aria-label="Case prizes preview">
-          <span className="case-page-marker top" aria-hidden="true" />
-          <span className="case-page-marker bottom" aria-hidden="true" />
-
-          {isSpinning ? (
-            <div
-              className={`case-page-spin-track ${inlineOpening.stage === 'preparing' ? 'is-preparing' : 'is-rolling'}`}
-              style={{
-                '--reel-distance': `${distance}px`,
-              }}
-              key={inlineOpening.spinKey}
-            >
-              {inlineOpening.reel.map((gift, index) => (
-                <div
-                  className="case-page-spin-card"
-                  key={`${gift.id}-${index}`}
-                  style={{
-                    '--spin-gift-bg': gift.background_value || defaultGiftBackground(gift.rarity),
-                    '--spin-delay': `${index * 0.022}s`,
-                  }}
-                >
-                  <GiftMedia gift={gift} preferStatic />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="case-page-strip">
-              {stripGifts.map((gift, index) => (
-                <div
-                  className="case-page-strip-card"
-                  key={`${gift.id}-strip-${index}`}
-                  style={{
-                    '--spin-gift-bg': gift.background_value || defaultGiftBackground(gift.rarity),
-                  }}
-                >
-                  <GiftMedia gift={gift} preferStatic />
-                </div>
-              ))}
-
-              {!stripGifts.length ? (
-                <div className="case-page-strip-empty">
-                  <AppIcon name="box" />
-                </div>
-              ) : null}
-            </div>
-          )}
-        </div>
+        <InlineRaffleRoller
+          opening={inlineOpening}
+          idleGifts={stripGifts}
+          itemWidth={itemWidth}
+          gap={gap}
+          targetIndex={targetIndex}
+        />
 
         <button type="button" className="case-page-open-btn" disabled={busy || isSpinning || readyGifts.length === 0} onClick={onOpen}>
           <AppIcon name="spark" />
