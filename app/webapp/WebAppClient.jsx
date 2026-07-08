@@ -740,7 +740,7 @@ export default function WebAppClient() {
 
       const [result] = await Promise.all([
         apiPost('/api/open-case', { caseId: caseItem.id }),
-        delay(420),
+        delay(140),
       ]);
 
       if (!result?.gift) {
@@ -2350,7 +2350,7 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
 
         <button type="button" className="case-page-open-btn" disabled={busy || isSpinning || openableGifts.length === 0} onClick={onOpen}>
           <AppIcon name="spark" />
-          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'PREPARING...' : 'ROLLING...') : openText}</span>
+          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING...' : 'ROLLING...') : openText}</span>
         </button>
 
         <div className="case-page-stats">
