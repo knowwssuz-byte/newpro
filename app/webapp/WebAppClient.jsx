@@ -161,15 +161,38 @@ function randomItem(items) {
 function buildOpeningReel(gifts, winningGift) {
   const safeGifts = gifts.length ? gifts : [winningGift].filter(Boolean);
   const reel = [];
+  let previousId = '';
 
+  const pickDifferent = () => {
+    if (!safeGifts.length) return null;
+    if (safeGifts.length === 1) return safeGifts[0];
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const picked = randomItem(safeGifts);
+      if (String(picked?.id || '') !== previousId) {
+        previousId = String(picked?.id || '');
+        return picked;
+      }
+    }
+
+    const fallback = randomItem(safeGifts);
+    previousId = String(fallback?.id || '');
+    return fallback;
+  };
+
+  // Winner har doim bitta aniq indexga qo'yiladi.
+  // JS distance va CSS item o'lchami bir xil bo'lgani uchun markazda to'xtaydi.
   for (let index = 0; index < 46; index += 1) {
-    reel.push(randomItem(safeGifts));
+    reel.push(pickDifferent());
   }
 
-  if (winningGift) reel.push(winningGift);
+  if (winningGift) {
+    previousId = String(winningGift.id || '');
+    reel.push(winningGift);
+  }
 
-  for (let index = 0; index < 4; index += 1) {
-    reel.push(randomItem(safeGifts));
+  for (let index = 0; index < 6; index += 1) {
+    reel.push(pickDifferent());
   }
 
   return reel.filter(Boolean);
@@ -1004,7 +1027,7 @@ export default function WebAppClient() {
                   onGoCases={() => setTab('games')}
                   onGoInventory={() => setTab('inventory')}
                   onOpenCase={openCase}
-                  onSelectCase={setSelectedCase}
+                  onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
                   onComingSoon={() => showToast('Tez orada 🚀')}
                   busy={busy}
                 />
@@ -1016,7 +1039,7 @@ export default function WebAppClient() {
                   giftsByCase={giftsByCase}
                   busy={busy}
                   onOpenCase={openCase}
-                  onSelectCase={setSelectedCase}
+                  onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
                   onGoHome={() => setTab('home')}
                 />
               ) : null}
@@ -1062,18 +1085,6 @@ export default function WebAppClient() {
           ))}
         </nav>
 
-        {opening && !selectedCase ? (
-          <OpeningModal
-            opening={opening}
-            onClose={() => setOpening(null)}
-            onInventory={() => {
-              setOpening(null);
-              setTab('inventory');
-            }}
-            onOpenAgain={() => openCase(opening.caseItem)}
-            busy={busy}
-          />
-        ) : null}
       </div>
     </div>
   );
