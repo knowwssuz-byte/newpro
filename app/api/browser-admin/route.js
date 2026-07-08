@@ -60,9 +60,51 @@ async function safeSelect(supabase, table, queryBuilder, fallback = []) {
   return data || fallback;
 }
 
+async function fetchCasesForAdmin(supabase) {
+  const ordered = await supabase
+    .from('cases')
+    .select('*')
+    .order('is_pinned', { ascending: false })
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+
+  if (!ordered.error) return ordered.data || [];
+
+  const text = `${ordered.error?.message || ''} ${ordered.error?.details || ''} ${ordered.error?.hint || ''}`;
+
+  if (text.includes('sort_order') || text.includes('is_pinned') || ordered.error?.code === '42703') {
+    const fallback = await supabase
+      .from('cases')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (fallback.error) throw fallback.error;
+
+    return fallback.data || [];
+  }
+
+  throw ordered.error;
+}
+
+async function normalizeCaseOrder(supabase, cases = []) {
+  const sorted = [...cases].sort((a, b) => {
+    const pinnedDiff = Number(Boolean(b?.is_pinned)) - Number(Boolean(a?.is_pinned));
+    if (pinnedDiff) return pinnedDiff;
+
+    const aOrder = Number.isFinite(Number(a?.sort_order)) ? Number(a.sort_order) : 999999;
+    const bOrder = Number.isFinite(Number(b?.sort_order)) ? Number(b.sort_order) : 999999;
+
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    return new Date(b?.created_at || 0).getTime() - new Date(a?.created_at || 0).getTime();
+  });
+
+  return sorted;
+}
+
 async function bootstrap(supabase) {
   const [cases, gifts, users, withdrawals, giftLibrary] = await Promise.all([
-    safeSelect(supabase, 'cases', supabase.from('cases').select('*').order('created_at', { ascending: false })),
+    fetchCasesForAdmin(supabase),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').order('created_at', { ascending: false })),
     safeSelect(supabase, 'users', supabase.from('users').select('*').order('created_at', { ascending: false }).limit(250)),
     safeSelect(
@@ -82,7 +124,7 @@ async function bootstrap(supabase) {
   ]);
 
   return {
-    cases,
+    cases: await normalizeCaseOrder(supabase, cases),
     gifts,
     users,
     withdrawals,
@@ -252,6 +294,8 @@ async function handleFormAction(request, formData, supabase) {
     }
 
     const image = await uploadCaseImage(supabase, file, title);
+    const { count } = await supabase.from('cases').select('id', { count: 'exact', head: true });
+    const nextSortOrder = Number(count || 0) + 1;
 
     const { data, error } = await supabase
       .from('cases')
@@ -264,6 +308,8 @@ async function handleFormAction(request, formData, supabase) {
         badge_color: badgeColor,
         accent_color: accentColor,
         card_style: cardStyle,
+        is_pinned: false,
+        sort_order: nextSortOrder,
         is_active: isActive,
       })
       .select('*')
@@ -340,11 +386,56 @@ export async function POST(request) {
 
     if (action === 'case_create') {
       const payload = body.caseData || {};
-      const { data, error } = await supabase.from('cases').insert(payload).select('*').single();
+      const { count } = await supabase.from('cases').select('id', { count: 'exact', head: true });
+      const nextSortOrder = Number(count || 0) + 1;
+
+      let { data, error } = await supabase
+        .from('cases')
+        .insert({
+          ...payload,
+          is_pinned: Boolean(payload.is_pinned),
+          sort_order: Number(payload.sort_order || nextSortOrder),
+        })
+        .select('*')
+        .single();
+
+      if (error) {
+        const text = `${error.message || ''} ${error.details || ''} ${error.hint || ''}`;
+
+        if (text.includes('is_pinned') || text.includes('sort_order') || error.code === '42703') {
+          const retry = await supabase.from('cases').insert(payload).select('*').single();
+          data = retry.data;
+          error = retry.error;
+        }
+      }
 
       if (error) throw error;
 
       return json({ ok: true, case: data });
+    }
+
+    if (action === 'case_reorder') {
+      const caseIds = Array.isArray(body.caseIds) ? body.caseIds.filter(Boolean) : [];
+
+      if (!caseIds.length) {
+        return json({ ok: false, error: 'caseIds kerak.' }, 400);
+      }
+
+      const updates = caseIds.map((caseId, index) =>
+        supabase
+          .from('cases')
+          .update({ sort_order: index + 1 })
+          .eq('id', caseId)
+      );
+
+      const results = await Promise.all(updates);
+      const failed = results.find((result) => result.error);
+
+      if (failed?.error) throw failed.error;
+
+      const cases = await fetchCasesForAdmin(supabase);
+
+      return json({ ok: true, cases: await normalizeCaseOrder(supabase, cases) });
     }
 
     if (action === 'case_update') {
