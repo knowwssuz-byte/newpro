@@ -17,7 +17,7 @@ const emptyCaseForm = {
 const emptyLibraryForm = {
   title: '',
   price: '',
-  background_value: gradientFromColor('#7c3aed'),
+  background_value: '#7c3aed',
 };
 
 const emptyGiftForm = {
@@ -52,9 +52,7 @@ const backgroundPresets = [
 ];
 
 function gradientFromColor(color = '#7c3aed') {
-  const cleanColor = String(color || '#7c3aed').trim();
-
-  return `radial-gradient(circle at 24% 12%, rgba(255,255,255,.22), transparent 28%), linear-gradient(135deg, ${cleanColor} 0%, #111827 68%, #020617 100%)`;
+  return String(color || '#7c3aed').trim() || '#7c3aed';
 }
 
 function firstGradientColor(value = '') {
@@ -470,7 +468,7 @@ export default function AdminClient() {
               <div className="admin-form-heading">
                 <span>Image gift database</span>
                 <h2>Gift bazaga qo‘shish</h2>
-                <p>Gift nomi, narxi, fon rangi va PNG/SVG rasm kiriting. Animatsiya ishlatilmaydi.</p>
+                <p>Gift nomi, buy price/sotish narxi, oddiy fon rangi va PNG/SVG rasm kiriting. Animatsiya ishlatilmaydi.</p>
               </div>
 
               <label>
@@ -479,7 +477,7 @@ export default function AdminClient() {
               </label>
 
               <label>
-                <span>Narxi</span>
+                <span>Buy price / Sotish narxi</span>
                 <input type="number" value={libraryForm.price} onChange={(event) => setLibraryForm({ ...libraryForm, price: event.target.value })} placeholder="0" required />
               </label>
 
@@ -502,7 +500,7 @@ export default function AdminClient() {
                   ))}
                 </div>
                 <label>
-                  <span>Gradient/CSS</span>
+                  <span>Oddiy fon rangi</span>
                   <textarea value={libraryForm.background_value} onChange={(event) => { const value = event.target.value; setBackgroundColor(firstGradientColor(value)); setLibraryForm({ ...libraryForm, background_value: value }); }} rows={3} required />
                 </label>
                 <div className="manual-background-live" style={{ '--manual-bg': libraryForm.background_value }}>Fon preview</div>
@@ -580,7 +578,7 @@ export default function AdminClient() {
                   <GiftImage gift={selectedLibraryGift} />
                   <div>
                     <strong>{giftForm.title || selectedLibraryGift.title}</strong>
-                    <p>Narx: {money(giftForm.price || selectedLibraryGift.price)} ⭐ · fon bazadan olinadi.</p>
+                    <p>Sotish narxi: {money(giftForm.price || selectedLibraryGift.price)} ⭐ · fon bazadan olinadi.</p>
                   </div>
                 </div>
               ) : (
@@ -595,7 +593,7 @@ export default function AdminClient() {
               </label>
 
               <label>
-                <span>Narxi</span>
+                <span>Sotish narxi</span>
                 <input type="number" value={giftForm.price} onChange={(event) => setGiftForm({ ...giftForm, price: event.target.value })} />
               </label>
 
