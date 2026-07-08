@@ -9763,3 +9763,190 @@ img.gift-media.gift-media-visual,
     padding: 0 8px !important;
   }
 }
+
+/* =========================================================
+   CASE OPENING LOGIC FINAL V11
+   - OpeningModal render qilinmaydi
+   - Aylanish faqat case detail sahifasidagi reel ichida
+   - CSS item size = JS itemWidth, shuning uchun center stop to'g'ri
+========================================================= */
+
+.case-page-main {
+  padding-bottom: 118px !important;
+}
+
+.case-page-screen.is-inline-spinning .case-page-top,
+.case-page-screen.has-inline-result .case-page-top {
+  opacity: .98 !important;
+}
+
+.inline-reel-preview,
+.case-page-reel-preview.inline-reel-preview {
+  height: 158px !important;
+  margin: 16px 0 16px !important;
+  border-radius: 28px !important;
+  overflow: hidden !important;
+}
+
+.inline-reel-preview.is-live {
+  height: 164px !important;
+}
+
+.case-page-spin-track {
+  gap: 12px !important;
+  padding: 0 50% !important;
+  transform: translate3d(0,0,0) !important;
+  backface-visibility: hidden !important;
+  will-change: transform, filter !important;
+}
+
+.case-page-spin-card,
+.case-page-spin-card:nth-child(n) {
+  flex: 0 0 112px !important;
+  width: 112px !important;
+  height: 112px !important;
+  min-width: 112px !important;
+  max-width: 112px !important;
+  border-radius: 24px !important;
+}
+
+.case-page-spin-card .gift-media,
+.case-page-spin-card .gift-media.gift-media-visual {
+  width: 92px !important;
+  height: 92px !important;
+  max-width: 92px !important;
+  max-height: 92px !important;
+  object-fit: contain !important;
+}
+
+.case-page-spin-track.is-rolling {
+  animation: inlineReelRealStopV11 4.55s cubic-bezier(.06,.78,.08,1) forwards !important;
+}
+
+.case-page-spin-track.is-preparing {
+  animation: inlineReelReadyV11 .92s linear infinite !important;
+}
+
+.inline-win-card {
+  margin-top: 12px !important;
+  padding: 10px !important;
+  grid-template-columns: 82px minmax(0,1fr) !important;
+  gap: 10px !important;
+  border-radius: 20px !important;
+}
+
+.inline-win-media {
+  width: 82px !important;
+  height: 82px !important;
+  border-radius: 17px !important;
+}
+
+.inline-win-media .gift-media {
+  width: 68px !important;
+  height: 68px !important;
+}
+
+.inline-win-copy strong {
+  font-size: 19px !important;
+  max-width: 100% !important;
+}
+
+.inline-win-actions {
+  grid-template-columns: 1fr 1fr 1fr !important;
+}
+
+.inline-win-actions .ghost-btn,
+.inline-win-actions .primary-btn {
+  min-height: 38px !important;
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  padding: 0 8px !important;
+}
+
+.case-page-prize-grid {
+  margin-bottom: 4px !important;
+}
+
+.case-page-prize-card {
+  min-height: 150px !important;
+}
+
+.case-page-prize-image {
+  height: 88px !important;
+}
+
+.case-page-prize-image .gift-media {
+  width: 78px !important;
+  height: 78px !important;
+}
+
+/* Inline opening bo'lganda global overlay ochilmasin */
+.opening-backdrop:not(.force-debug) {
+  display: none !important;
+}
+
+@keyframes inlineReelReadyV11 {
+  0% { transform: translate3d(0,0,0); }
+  100% { transform: translate3d(-496px,0,0); }
+}
+
+@keyframes inlineReelRealStopV11 {
+  0% { transform: translate3d(0,0,0); filter: blur(0); }
+  8% { transform: translate3d(-340px,0,0); filter: blur(1.3px); }
+  22% { filter: blur(2.2px); }
+  48% { transform: translate3d(calc((var(--reel-distance) * -1) - 420px),0,0); filter: blur(1.4px); }
+  66% { transform: translate3d(calc((var(--reel-distance) * -1) - 168px),0,0); filter: blur(.7px); }
+  80% { transform: translate3d(calc((var(--reel-distance) * -1) + 46px),0,0); filter: blur(0); }
+  88% { transform: translate3d(calc((var(--reel-distance) * -1) - 24px),0,0); }
+  94% { transform: translate3d(calc((var(--reel-distance) * -1) + 9px),0,0); }
+  98% { transform: translate3d(calc((var(--reel-distance) * -1) - 3px),0,0); }
+  100% { transform: translate3d(calc(var(--reel-distance) * -1),0,0); filter: blur(0); }
+}
+
+@media (max-width: 520px) {
+  .inline-reel-preview,
+  .case-page-reel-preview.inline-reel-preview {
+    height: 150px !important;
+    border-radius: 26px !important;
+  }
+
+  .inline-reel-preview.is-live {
+    height: 156px !important;
+  }
+
+  .case-page-spin-card,
+  .case-page-spin-card:nth-child(n) {
+    flex-basis: 112px !important;
+    width: 112px !important;
+    height: 112px !important;
+    min-width: 112px !important;
+    max-width: 112px !important;
+    border-radius: 23px !important;
+  }
+
+  .case-page-spin-card .gift-media,
+  .case-page-spin-card .gift-media.gift-media-visual {
+    width: 90px !important;
+    height: 90px !important;
+  }
+
+  .inline-win-card {
+    grid-template-columns: 72px minmax(0,1fr) !important;
+    padding: 9px !important;
+    gap: 9px !important;
+  }
+
+  .inline-win-media {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .inline-win-media .gift-media {
+    width: 60px !important;
+    height: 60px !important;
+  }
+
+  .inline-win-copy strong {
+    font-size: 17px !important;
+  }
+}
