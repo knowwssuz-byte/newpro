@@ -42,6 +42,20 @@ function smallId(value = '') {
   return `${text.slice(0, 7)}...${text.slice(-5)}`;
 }
 
+function sortCasesForDisplay(items = []) {
+  return [...items].sort((a, b) => {
+    const pinnedDiff = Number(Boolean(b?.is_pinned)) - Number(Boolean(a?.is_pinned));
+    if (pinnedDiff) return pinnedDiff;
+
+    const aOrder = Number.isFinite(Number(a?.sort_order)) ? Number(a.sort_order) : 999999;
+    const bOrder = Number.isFinite(Number(b?.sort_order)) ? Number(b.sort_order) : 999999;
+
+    if (aOrder !== bOrder) return aOrder - bOrder;
+
+    return new Date(b?.created_at || 0).getTime() - new Date(a?.created_at || 0).getTime();
+  });
+}
+
 
 const backgroundPresets = [
   { title: 'Purple', color: '#7c3aed' },
@@ -143,13 +157,14 @@ export default function AdminClient() {
   }
 
   function applyBootstrap(data) {
-    setCases(data.cases || []);
+    setCases(sortCasesForDisplay(data.cases || []));
     setGifts(data.gifts || []);
     setUsers(data.users || []);
     setWithdrawals(data.withdrawals || []);
     setGiftLibrary(data.giftLibrary || []);
 
-    const firstCaseId = data.cases?.[0]?.id || '';
+    const sortedCases = sortCasesForDisplay(data.cases || []);
+    const firstCaseId = sortedCases?.[0]?.id || '';
     setGiftForm((current) => ({
       ...current,
       case_id: current.case_id || firstCaseId,
@@ -271,6 +286,51 @@ export default function AdminClient() {
   async function updateCase(caseId, updates) {
     await run(() => callAdmin('case_update', { caseId, updates }), 'Case yangilandi ✅');
     await bootstrap();
+  }
+
+  async function togglePinCase(caseItem) {
+    await run(
+      () =>
+        callAdmin('case_update', {
+          caseId: caseItem.id,
+          updates: {
+            is_pinned: !caseItem.is_pinned,
+          },
+        }),
+      caseItem.is_pinned ? 'Case pin olib tashlandi' : 'Case pin qilindi 📌'
+    );
+
+    await bootstrap();
+  }
+
+  async function moveCase(caseId, direction) {
+    const sorted = sortCasesForDisplay(cases);
+    const currentIndex = sorted.findIndex((item) => String(item.id) === String(caseId));
+
+    if (currentIndex < 0) return;
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+
+    if (targetIndex < 0 || targetIndex >= sorted.length) return;
+
+    const next = [...sorted];
+    const [item] = next.splice(currentIndex, 1);
+    next.splice(targetIndex, 0, item);
+
+    setCases(next.map((caseItem, index) => ({ ...caseItem, sort_order: index + 1 })));
+
+    const result = await run(
+      () =>
+        callAdmin('case_reorder', {
+          caseIds: next.map((caseItem) => caseItem.id),
+        }),
+      'Case joylashuvi yangilandi ✅',
+      { silent: true }
+    );
+
+    if (!result) {
+      await bootstrap();
+    }
   }
 
   async function deleteCase(caseId) {
@@ -469,7 +529,7 @@ export default function AdminClient() {
               <div className="admin-form-heading">
                 <span>Case image upload</span>
                 <h2>Case qo‘shish</h2>
-                <p>Endi case rasmi URL emas, fayl sifatida yuklanadi. PNG, JPG yoki SVG ishlaydi.</p>
+                <p>Endi case rasmi URL emas, fayl sifatida yuklanadi. PNG, JPG yoki SVG ishlaydi. Pastdagi ro‘yxatda Pin va ↑↓ bilan joylashuvni boshqarasiz.</p>
               </div>
 
               <label>
@@ -515,17 +575,27 @@ export default function AdminClient() {
 
             <div className="browser-admin-list">
               <h2>Cases</h2>
-              {cases.map((caseItem) => (
-                <div className="browser-admin-item" key={caseItem.id}>
+              {sortCasesForDisplay(cases).map((caseItem, index) => (
+                <div className={`browser-admin-item admin-case-order-item ${caseItem.is_pinned ? 'is-pinned' : ''}`} key={caseItem.id}>
                   <CaseImage caseItem={caseItem} />
                   <div>
-                    <strong>{caseItem.title}</strong>
-                    <p>{money(caseItem.price)} ⭐ · {caseItem.is_active === false ? 'hidden' : 'active'}</p>
+                    <strong>{caseItem.is_pinned ? '📌 ' : ''}{caseItem.title}</strong>
+                    <p>
+                      #{Number(caseItem.sort_order || index + 1)} · {money(caseItem.price)} ⭐ · {caseItem.is_active === false ? 'hidden' : 'active'}
+                    </p>
                   </div>
-                  <button type="button" onClick={() => updateCase(caseItem.id, { is_active: caseItem.is_active === false })}>
-                    {caseItem.is_active === false ? 'Show' : 'Hide'}
-                  </button>
-                  <button type="button" className="admin-danger-light" onClick={() => deleteCase(caseItem.id)}>Delete</button>
+
+                  <div className="case-order-actions">
+                    <button type="button" onClick={() => togglePinCase(caseItem)}>
+                      {caseItem.is_pinned ? 'Unpin' : 'Pin'}
+                    </button>
+                    <button type="button" disabled={index === 0} onClick={() => moveCase(caseItem.id, 'up')}>↑</button>
+                    <button type="button" disabled={index === cases.length - 1} onClick={() => moveCase(caseItem.id, 'down')}>↓</button>
+                    <button type="button" onClick={() => updateCase(caseItem.id, { is_active: caseItem.is_active === false })}>
+                      {caseItem.is_active === false ? 'Show' : 'Hide'}
+                    </button>
+                    <button type="button" className="admin-danger-light" onClick={() => deleteCase(caseItem.id)}>Delete</button>
+                  </div>
                 </div>
               ))}
             </div>
