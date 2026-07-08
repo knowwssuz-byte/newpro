@@ -15,7 +15,7 @@ function rewardType(gift) {
 }
 
 function sellPrice(gift) {
-  const price = toNumber(gift?.floor_price ?? gift?.price ?? gift?.value, 0);
+  const price = toNumber(gift?.sell_price ?? gift?.buy_price ?? gift?.floor_price ?? gift?.price ?? gift?.value, 0);
 
   return Math.max(0, price);
 }
