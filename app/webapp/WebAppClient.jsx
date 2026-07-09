@@ -33,6 +33,8 @@ const emptyUserForm = {
   amount: '',
 };
 
+const WARMED_IMAGE_URLS = new Set();
+
 const GIFT_BACKGROUND_PRESETS = [
   { name: 'Gold', value: '#f59e0b' },
   { name: 'Emerald', value: '#22c55e' },
@@ -51,31 +53,39 @@ function warmImageCacheFromData(...groups) {
   if (typeof window === 'undefined') return;
 
   const urls = [];
-  const seen = new Set();
-
   groups.flat().filter(Boolean).forEach((item) => {
     const url = typeof item === 'string' ? item : imageUrlOf(item);
-    if (!url || seen.has(url)) return;
-    seen.add(url);
+    if (!url || WARMED_IMAGE_URLS.has(url)) return;
+
+    WARMED_IMAGE_URLS.add(url);
     urls.push(url);
   });
 
-  const warm = () => {
-    urls.slice(0, 48).forEach((url, index) => {
-      const img = new Image();
-      img.decoding = 'async';
-      img.loading = index < 18 ? 'eager' : 'lazy';
-      img.src = url;
-      if (typeof img.decode === 'function') {
-        img.decode().catch(() => {});
-      }
-    });
+  if (!urls.length) return;
+
+  const loadOne = (url, eager = false) => {
+    const img = new Image();
+    img.decoding = 'async';
+    img.loading = eager ? 'eager' : 'lazy';
+    img.src = url;
+
+    if (typeof img.decode === 'function') {
+      img.decode().catch(() => {});
+    }
   };
 
+  // Birinchi ko'rinadigan rasmlar darhol qizdiriladi.
+  urls.slice(0, 18).forEach((url) => loadOne(url, true));
+
+  const rest = urls.slice(18, 72);
+  if (!rest.length) return;
+
+  const warmRest = () => rest.forEach((url) => loadOne(url, false));
+
   if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(warm, { timeout: 900 });
+    window.requestIdleCallback(warmRest, { timeout: 1200 });
   } else {
-    window.setTimeout(warm, 80);
+    window.setTimeout(warmRest, 160);
   }
 }
 
@@ -522,7 +532,7 @@ export default function WebAppClient() {
   );
 
   useEffect(() => {
-    warmImageCacheFromData(activeCases.slice(0, 8), gifts.slice(0, 36), selectedCase ? giftsByCase[selectedCase.id] || [] : []);
+    warmImageCacheFromData(activeCases.slice(0, 8), gifts.slice(0, 42), selectedCase ? giftsByCase[selectedCase.id] || [] : []);
   }, [activeCases, gifts, giftsByCase, selectedCase]);
 
   const showToast = useCallback((message) => {
@@ -624,7 +634,7 @@ export default function WebAppClient() {
         const data = await apiPost('/api/bootstrap');
         if (!mountedRef.current) return;
 
-        warmImageCacheFromData(data.cases || [], data.gifts || [], data.history || [], profilePhotoUrl || '');
+        warmImageCacheFromData(data.cases || [], data.gifts || [], data.history || []);
         setProfile(data.user);
         setTelegramUser(data.telegramUser);
         setIsAdmin(Boolean(data.isAdmin));
@@ -2228,7 +2238,7 @@ function AdminList({ title, children }) {
   );
 }
 
-function InlineRaffleRoller({ opening, idleGifts, itemWidth = 92, gap = 10, targetIndex = 0 }) {
+function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targetIndex = 0 }) {
   const trackRef = useRef(null);
   const [rollerStyle, setRollerStyle] = useState({
     '--raffle-x': '0px',
@@ -2367,13 +2377,13 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
   const readyGifts = gifts.filter(eligibleGift);
   const openableGifts = readyGifts.filter(openableGift);
   const isFree = Number(caseItem.price || 0) === 0;
-  const openText = isFree ? 'OPEN FREE' : `OPEN ${formatPrice(caseItem.price)}`;
+  const openText = isFree ? 'OPEN' : `OPEN ${formatPrice(caseItem.price)}`;
   const previewGifts = readyGifts.length ? readyGifts : gifts;
   const inlineOpening = opening && String(opening.caseItem?.id) === String(caseItem.id) ? opening : null;
   const isSpinning = inlineOpening && inlineOpening.stage !== 'result';
   const isResult = inlineOpening?.stage === 'result';
-  const itemWidth = 92;
-  const gap = 10;
+  const itemWidth = 84;
+  const gap = 9;
   const targetIndex =
     typeof inlineOpening?.winningIndex === 'number'
       ? inlineOpening.winningIndex
@@ -2496,8 +2506,8 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
 
 function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
   const isResult = opening.stage === 'result';
-  const itemWidth = 92;
-  const gap = 10;
+  const itemWidth = 84;
+  const gap = 9;
   const stopIndex = Math.max(0, opening.reel.length - 5);
   const distance = stopIndex * (itemWidth + gap);
 
