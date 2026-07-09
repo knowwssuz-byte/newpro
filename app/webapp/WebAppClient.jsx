@@ -2380,6 +2380,8 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
           <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
         </button>
 
+      </div>
+
         {isResult ? (
           <div className="win-screen-layer" role="dialog" aria-modal="true">
             <div
@@ -2401,9 +2403,15 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
               </div>
 
               <div className="win-screen-actions">
-                <button type="button" className="sell-btn" onClick={() => onSellResult(inlineOpening)}>
-                  {sellButtonText(inlineOpening.gift)}
-                </button>
+                {!isBalanceReward(inlineOpening.gift) ? (
+                  <button type="button" className="sell-btn" onClick={() => onSellResult(inlineOpening)}>
+                    {sellButtonText(inlineOpening.gift)}
+                  </button>
+                ) : (
+                  <button type="button" className="sell-btn" onClick={onCloseResult}>
+                    Balansga qo‘shildi
+                  </button>
+                )}
                 <button type="button" className="close-win-btn" onClick={onCloseResult}>
                   Yopish
                 </button>
@@ -2411,7 +2419,6 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
             </div>
           </div>
         ) : null}
-      </div>
 
       <div className="case-page-prizes-head">
         <div>
