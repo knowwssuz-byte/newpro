@@ -42,6 +42,43 @@ const GIFT_BACKGROUND_PRESETS = [
   { name: 'Dark', value: '#2d3340' },
 ];
 
+
+function imageUrlOf(item) {
+  return item?.image_url || item?.png_url || item?.webp_url || '';
+}
+
+function warmImageCacheFromData(...groups) {
+  if (typeof window === 'undefined') return;
+
+  const urls = [];
+  const seen = new Set();
+
+  groups.flat().filter(Boolean).forEach((item) => {
+    const url = typeof item === 'string' ? item : imageUrlOf(item);
+    if (!url || seen.has(url)) return;
+    seen.add(url);
+    urls.push(url);
+  });
+
+  const warm = () => {
+    urls.slice(0, 48).forEach((url, index) => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.loading = index < 18 ? 'eager' : 'lazy';
+      img.src = url;
+      if (typeof img.decode === 'function') {
+        img.decode().catch(() => {});
+      }
+    });
+  };
+
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(warm, { timeout: 900 });
+  } else {
+    window.setTimeout(warm, 80);
+  }
+}
+
 function defaultGiftBackground(rarity = 'rare') {
   const key = String(rarity || 'rare').toLowerCase();
   if (key === 'mythic') return GIFT_BACKGROUND_PRESETS[4].value;
@@ -484,6 +521,10 @@ export default function WebAppClient() {
     []
   );
 
+  useEffect(() => {
+    warmImageCacheFromData(activeCases.slice(0, 8), gifts.slice(0, 36), selectedCase ? giftsByCase[selectedCase.id] || [] : []);
+  }, [activeCases, gifts, giftsByCase, selectedCase]);
+
   const showToast = useCallback((message) => {
     if (toastTimerRef.current) {
       window.clearTimeout(toastTimerRef.current);
@@ -583,6 +624,7 @@ export default function WebAppClient() {
         const data = await apiPost('/api/bootstrap');
         if (!mountedRef.current) return;
 
+        warmImageCacheFromData(data.cases || [], data.gifts || [], data.history || [], profilePhotoUrl || '');
         setProfile(data.user);
         setTelegramUser(data.telegramUser);
         setIsAdmin(Boolean(data.isAdmin));
@@ -1679,7 +1721,9 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
         className={`${mediaClass} gift-media-visual`}
         src={imageUrl}
         alt=""
-        loading="lazy"
+        loading={preferStatic ? 'eager' : 'lazy'}
+        decoding="async"
+        fetchPriority={preferStatic ? 'high' : 'auto'}
         draggable="false"
         onDragStart={(event) => event.preventDefault()}
         onContextMenu={(event) => event.preventDefault()}
@@ -2184,7 +2228,7 @@ function AdminList({ title, children }) {
   );
 }
 
-function InlineRaffleRoller({ opening, idleGifts, itemWidth = 112, gap = 12, targetIndex = 0 }) {
+function InlineRaffleRoller({ opening, idleGifts, itemWidth = 92, gap = 10, targetIndex = 0 }) {
   const trackRef = useRef(null);
   const [rollerStyle, setRollerStyle] = useState({
     '--raffle-x': '0px',
@@ -2328,8 +2372,8 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
   const inlineOpening = opening && String(opening.caseItem?.id) === String(caseItem.id) ? opening : null;
   const isSpinning = inlineOpening && inlineOpening.stage !== 'result';
   const isResult = inlineOpening?.stage === 'result';
-  const itemWidth = 112;
-  const gap = 12;
+  const itemWidth = 92;
+  const gap = 10;
   const targetIndex =
     typeof inlineOpening?.winningIndex === 'number'
       ? inlineOpening.winningIndex
@@ -2452,8 +2496,8 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
 
 function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
   const isResult = opening.stage === 'result';
-  const itemWidth = 112;
-  const gap = 12;
+  const itemWidth = 92;
+  const gap = 10;
   const stopIndex = Math.max(0, opening.reel.length - 5);
   const distance = stopIndex * (itemWidth + gap);
 
