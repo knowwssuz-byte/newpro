@@ -778,6 +778,12 @@ export default function WebAppClient() {
         spinKey,
       });
 
+      tg?.HapticFeedback?.impactOccurred?.('medium');
+
+      // Animatsiya paytida balance/gifts/history state'larini yangilamaslik kerak.
+      // Aks holda Telegram WebView qayta render qilib, reel qotib/stutter bo'lishi mumkin.
+      await delay(5000);
+
       setProfile((current) => (current ? { ...current, balance: result.balanceAfter ?? result.balance } : current));
 
       setGifts((current) =>
@@ -787,10 +793,6 @@ export default function WebAppClient() {
       if (result.history?.id) {
         setHistory((current) => [result.history, ...current.filter((item) => String(item.id) !== String(result.history.id))]);
       }
-
-      tg?.HapticFeedback?.impactOccurred?.('medium');
-
-      await delay(5150);
 
       setOpening({
         stage: 'result',
@@ -1672,7 +1674,18 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
   const imageUrl = gift.image_url || gift.png_url || gift.webp_url || '';
 
   if (imageUrl) {
-    return <img className={`${mediaClass} gift-media-visual`} src={imageUrl} alt="" loading="lazy" draggable="false" />;
+    return (
+      <img
+        className={`${mediaClass} gift-media-visual`}
+        src={imageUrl}
+        alt=""
+        loading="lazy"
+        draggable="false"
+        onDragStart={(event) => event.preventDefault()}
+        onContextMenu={(event) => event.preventDefault()}
+        aria-hidden="true"
+      />
+    );
   }
 
   return (
@@ -2364,13 +2377,8 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
 
         <button type="button" className="case-page-open-btn" disabled={busy || isSpinning || openableGifts.length === 0} onClick={onOpen}>
           <AppIcon name="spark" />
-          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING...' : 'ROLLING...') : openText}</span>
+          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
         </button>
-
-        <div className="case-page-stats">
-          <span><AppIcon name="gift" /> {readyGifts.length || 0} gifts</span>
-          <span>{coinIcon()} {isFree ? 'Free' : formatPrice(caseItem.price)}</span>
-        </div>
 
         {isResult ? (
           <div className="win-screen-layer" role="dialog" aria-modal="true">
