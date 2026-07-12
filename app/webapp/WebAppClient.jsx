@@ -2429,7 +2429,14 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
           targetIndex={targetIndex}
         />
 
-        <button type="button" className="case-page-open-btn" disabled={busy || isSpinning || openableGifts.length === 0} onClick={onOpen}>
+        <button
+          type="button"
+          className="case-page-open-btn"
+          disabled={busy || isSpinning || openableGifts.length === 0}
+          onClick={onOpen}
+          aria-busy={isSpinning}
+          aria-live="polite"
+        >
           <AppIcon name="spark" />
           <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
         </button>
@@ -2479,7 +2486,7 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
           <span className="eyebrow">Inside this case</span>
           <h2>Sovg‘alar</h2>
         </div>
-        <strong>{readyGifts.length || 0}/{gifts.length || 0}</strong>
+        <strong>{previewGifts.length || 0} ta</strong>
       </div>
 
       <div className="case-page-prize-grid">
@@ -2499,6 +2506,13 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
             </div>
           </div>
         ))}
+        {!previewGifts.length ? (
+          <div className="case-page-empty-prizes">
+            <AppIcon name="box" />
+            <strong>Hozircha sovg‘alar yo‘q</strong>
+            <span>Bu case tez orada to‘ldiriladi.</span>
+          </div>
+        ) : null}
       </div>
     </section>
   );
