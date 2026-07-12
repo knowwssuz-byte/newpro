@@ -12381,3 +12381,4 @@ body {
 .win-screen-card{max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;overflow:hidden!important;touch-action:manipulation!important}
 @media(prefers-reduced-motion:reduce){.case-page-idle-track{animation:none!important}.case-page-spin-card.target-win-item{animation:none!important}}
 .tgs-static-preview{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;pointer-events:none!important;user-select:none!important;-webkit-user-drag:none!important}
+.promo-feature-animation{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;filter:drop-shadow(0 16px 20px rgba(0,0,0,.3))!important}.promo-feature-animation .tgs-gift-canvas{width:100%!important;height:100%!important}.feature-admin-layout{grid-template-columns:minmax(300px,390px) minmax(0,1fr)!important}
