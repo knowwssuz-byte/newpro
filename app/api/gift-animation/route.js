@@ -1,6 +1,8 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+import { gunzipSync } from 'zlib';
+
 function allowedStorageUrl(rawUrl) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const bucket = process.env.SUPABASE_GIFT_ASSETS_BUCKET || 'gift-assets';
@@ -24,13 +26,31 @@ export async function GET(request) {
   try {
     const upstream = await fetch(source, { cache: 'force-cache', next: { revalidate: 86400 } });
     if (!upstream.ok) return Response.json({ ok: false, error: `Animation topilmadi (${upstream.status})` }, { status: 502 });
-    const bytes = await upstream.arrayBuffer();
+    const bytes = Buffer.from(await upstream.arrayBuffer());
     if (!bytes.byteLength || bytes.byteLength > 8 * 1024 * 1024) {
       return Response.json({ ok: false, error: 'Animation fayli bo‘sh yoki juda katta' }, { status: 422 });
     }
-    return new Response(bytes, {
+
+    let jsonBytes = bytes;
+    try {
+      jsonBytes = gunzipSync(bytes);
+    } catch {
+      // Eski yozuvlar oddiy JSON bo‘lishi mumkin.
+    }
+
+    let animationData;
+    try {
+      animationData = JSON.parse(jsonBytes.toString('utf8'));
+    } catch {
+      return Response.json({ ok: false, error: 'TGS ichidagi JSON yaroqsiz' }, { status: 422 });
+    }
+
+    if (!animationData || !Array.isArray(animationData.layers)) {
+      return Response.json({ ok: false, error: 'Lottie layers topilmadi' }, { status: 422 });
+    }
+
+    return Response.json({ ok: true, animationData }, {
       headers: {
-        'Content-Type': 'application/x-tgsticker',
         'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
         'X-Content-Type-Options': 'nosniff',
       },
