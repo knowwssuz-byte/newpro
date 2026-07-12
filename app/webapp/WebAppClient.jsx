@@ -1654,11 +1654,7 @@ function TelegramTgsAnimation({ src, className }) {
 
     async function loadAnimation() {
       try {
-        const [{ default: lottie }, pakoModule] = await Promise.all([
-          import('lottie-web'),
-          import('pako'),
-        ]);
-        const pako = pakoModule.default || pakoModule;
+        const { default: lottie } = await import('lottie-web');
         setFailed(false);
         const proxiedSrc = `/api/gift-animation?url=${encodeURIComponent(src)}`;
         const response = await fetch(proxiedSrc, { cache: 'force-cache' });
@@ -1667,14 +1663,8 @@ function TelegramTgsAnimation({ src, className }) {
           throw new Error(`TGS download failed: ${response.status}`);
         }
 
-        const buffer = await response.arrayBuffer();
-        let jsonText = '';
-
-        try {
-          jsonText = pako.ungzip(new Uint8Array(buffer), { to: 'string' });
-        } catch {
-          jsonText = new TextDecoder().decode(buffer);
-        }
+        const payload = await response.json();
+        if (!payload?.ok || !payload.animationData) throw new Error(payload?.error || 'Animation data missing');
 
         if (cancelled || !containerRef.current) return;
 
@@ -1683,7 +1673,7 @@ function TelegramTgsAnimation({ src, className }) {
           renderer: 'svg',
           loop: true,
           autoplay: true,
-          animationData: JSON.parse(jsonText),
+          animationData: payload.animationData,
         });
       } catch (error) {
         console.warn('TGS animation failed:', error?.message || error);
