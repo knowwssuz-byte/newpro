@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { fetchUniqueTelegramGift } from '@/lib/telegramGiftsImporter';
@@ -36,8 +37,8 @@ async function fetchUniqueGift(slug) {
 async function uploadLottie(supabase, lottie, slug, kind) {
   if (!lottie || typeof lottie !== 'object') return '';
   const asset = await uploadPublicAsset(supabase, {
-    buffer: Buffer.from(JSON.stringify(lottie)), contentType: 'application/json',
-    folder: `telegram-nft/${slug}`, ext: 'json', prefix: kind,
+    buffer: gzipSync(Buffer.from(JSON.stringify(lottie))), contentType: 'application/x-tgsticker',
+    folder: `telegram-nft/${slug}`, ext: 'tgs', prefix: kind,
   });
   return asset?.publicUrl || '';
 }
