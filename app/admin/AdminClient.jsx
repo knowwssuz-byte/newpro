@@ -15,9 +15,8 @@ const emptyCaseForm = {
 };
 
 const emptyLibraryForm = {
-  title: '',
+  gift_url: '',
   price: '',
-  background_value: '#7c3aed',
 };
 
 const emptyGiftForm = {
@@ -114,7 +113,6 @@ export default function AdminClient() {
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
   const [caseFile, setCaseFile] = useState(null);
   const [libraryForm, setLibraryForm] = useState(emptyLibraryForm);
-  const [libraryFile, setLibraryFile] = useState(null);
   const [giftForm, setGiftForm] = useState(emptyGiftForm);
   const [backgroundColor, setBackgroundColor] = useState('#7c3aed');
 
@@ -343,31 +341,15 @@ export default function AdminClient() {
   async function createLibraryGift(event) {
     event.preventDefault();
 
-    if (!libraryFile) {
-      setError('PNG yoki SVG rasm tanlang.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('action', 'gift_library_create');
-    formData.append('adminKey', adminKey);
-    formData.append('title', libraryForm.title);
-    formData.append('price', libraryForm.price);
-    formData.append('background_value', libraryForm.background_value);
-    formData.append('image_file', libraryFile);
-
-    const data = await run(() => callAdminForm(formData), 'Gift bazaga yuklandi ✅');
+    const data = await run(
+      () => callAdmin('gift_link_import', { giftUrl: libraryForm.gift_url, price: Number(libraryForm.price || 0) }),
+      'Telegram gift linkdan yuklandi ✅'
+    );
 
     if (!data) return;
 
     applyBootstrap(data);
     setLibraryForm(emptyLibraryForm);
-    setLibraryFile(null);
-
-    setBackgroundColor('#7c3aed');
-
-    const input = document.getElementById('manual-image-input');
-    if (input) input.value = '';
   }
 
   async function updateLibraryGift(giftId, updates) {
@@ -606,14 +588,15 @@ export default function AdminClient() {
           <section className="browser-admin-grid manual-library-layout">
             <form className="browser-admin-form manual-upload-form" onSubmit={createLibraryGift}>
               <div className="admin-form-heading">
-                <span>Image gift database</span>
-                <h2>Gift bazaga qo‘shish</h2>
-                <p>Gift nomi, buy price/sotish narxi, oddiy fon rangi va PNG/SVG rasm kiriting. Animatsiya ishlatilmaydi.</p>
+                <span>Telegram NFT importer</span>
+                <h2>Gift linkdan qo‘shish</h2>
+                <p>Telegram NFT havolasini kiriting. Nomi, raqami, model, symbol, fon va animatsiya avtomatik olinadi.</p>
               </div>
 
               <label>
-                <span>Gift nomi</span>
-                <input value={libraryForm.title} onChange={(event) => setLibraryForm({ ...libraryForm, title: event.target.value })} placeholder="Masalan: Snoop Dogg" required />
+                <span>Telegram gift havolasi</span>
+                <input type="url" value={libraryForm.gift_url} onChange={(event) => setLibraryForm({ ...libraryForm, gift_url: event.target.value })} placeholder="https://t.me/nft/ViceCream-134506" required />
+                <small className="manual-field-note">Faqat t.me/nft/GiftName-123 formatidagi link.</small>
               </label>
 
               <label>
@@ -621,38 +604,7 @@ export default function AdminClient() {
                 <input type="number" value={libraryForm.price} onChange={(event) => setLibraryForm({ ...libraryForm, price: event.target.value })} placeholder="0" required />
               </label>
 
-              <div className="manual-bg-builder">
-                <div className="manual-bg-color-row">
-                  <label>
-                    <span>Fon rangi</span>
-                    <input type="color" value={backgroundColor} onChange={(event) => { const nextColor = event.target.value; setBackgroundColor(nextColor); setLibraryForm({ ...libraryForm, background_value: gradientFromColor(nextColor) }); }} />
-                  </label>
-                  <label>
-                    <span>HEX / rang</span>
-                    <input type="text" value={backgroundColor} onChange={(event) => { const nextColor = event.target.value.trim() || '#7c3aed'; setBackgroundColor(nextColor); setLibraryForm({ ...libraryForm, background_value: gradientFromColor(nextColor) }); }} placeholder="#22c55e" />
-                  </label>
-                </div>
-                <div className="manual-bg-preset-row">
-                  {backgroundPresets.map((preset) => (
-                    <button key={preset.title} type="button" style={{ '--preset-color': preset.color }} onClick={() => { setBackgroundColor(preset.color); setLibraryForm({ ...libraryForm, background_value: gradientFromColor(preset.color) }); }}>
-                      {preset.title}
-                    </button>
-                  ))}
-                </div>
-                <label>
-                  <span>Oddiy fon rangi</span>
-                  <textarea value={libraryForm.background_value} onChange={(event) => { const value = event.target.value; setBackgroundColor(firstGradientColor(value)); setLibraryForm({ ...libraryForm, background_value: value }); }} rows={3} required />
-                </label>
-                <div className="manual-background-live" style={{ '--manual-bg': libraryForm.background_value }}>Fon preview</div>
-              </div>
-
-              <label>
-                <span>PNG yoki SVG rasm</span>
-                <input id="manual-image-input" type="file" accept="image/png,image/svg+xml,.png,.svg" onChange={(event) => setLibraryFile(event.target.files?.[0] || null)} required />
-                <small className="manual-field-note">PNG tavsiya qilinadi. SVG ham ishlaydi.</small>
-              </label>
-
-              <button type="submit" disabled={busy}>{busy ? 'Yuklanmoqda...' : 'Gift bazaga yuklash'}</button>
+              <button type="submit" disabled={busy || !libraryForm.gift_url}>{busy ? 'Telegramdan olinmoqda...' : 'Linkdan giftni olish'}</button>
             </form>
 
             <div className="manual-library-grid">
@@ -663,8 +615,8 @@ export default function AdminClient() {
                   </div>
                   <div>
                     <strong>{gift.title}</strong>
-                    <p>{money(gift.price)} ⭐ · {gift.image_type?.toUpperCase() || 'IMG'} · {gift.is_active === false ? 'hidden' : 'active'}</p>
-                    <small>Static rasm + fon bazada</small>
+                    <p>{money(gift.price)} ⭐ · {gift.slug || 'Telegram NFT'} · {gift.is_active === false ? 'hidden' : 'active'}</p>
+                    <small>{gift.model_name || 'Animated model'} · {gift.symbol_name || 'symbol'} · #{gift.gift_number || '?'}</small>
                   </div>
                   <div className="manual-card-actions">
                     <button type="button" onClick={() => updateLibraryGift(gift.id, { is_active: gift.is_active === false })}>
@@ -677,7 +629,7 @@ export default function AdminClient() {
                 <div className="telegram-import-empty manual-empty">
                   <span>🎁</span>
                   <h3>Gift baza bo‘sh</h3>
-                  <p>Gift nomi, narxi, fon rangi va PNG/SVG rasm yuklang.</p>
+                  <p>Telegram NFT linkini kiriting. Gift animatsiyasi va metadata avtomatik olinadi.</p>
                 </div>
               )}
             </div>
