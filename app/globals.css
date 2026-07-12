@@ -12370,3 +12370,13 @@ body {
 .admin-lottie-media{width:100%!important;height:100%!important}
 .manual-library-media .admin-lottie-media,.selected-catalog-preview .admin-lottie-media{filter:drop-shadow(0 8px 12px rgba(0,0,0,.25))}
 .tgs-gift-media{position:relative!important}.tgs-gift-media>.app-icon{position:absolute!important;inset:25%!important;width:50%!important;height:50%!important;opacity:.5!important}
+
+/* Reel precision, seamless loop and fixed result overlay */
+.case-page-idle-track{width:max-content!important;animation:caseIdleSeamlessV29 34s linear infinite!important;will-change:transform!important}
+@keyframes caseIdleSeamlessV29{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(-50% - 4.5px),0,0)}}
+.case-page-reel-preview:hover .case-page-idle-track{animation-play-state:running!important}
+.case-page-spin-card.target-win-item{animation:winningPulseV29 .72s ease-out 4.25s both!important}
+@keyframes winningPulseV29{0%{filter:brightness(1)}55%{filter:brightness(1.3);transform:scale(1.035)}100%{filter:brightness(1.12);transform:scale(1)}}
+.win-screen-layer{position:fixed!important;inset:0!important;width:100dvw!important;height:100dvh!important;overflow:hidden!important;overscroll-behavior:none!important;touch-action:none!important;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))!important}
+.win-screen-card{max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;overflow:hidden!important;touch-action:manipulation!important}
+@media(prefers-reduced-motion:reduce){.case-page-idle-track{animation:none!important}.case-page-spin-card.target-win-item{animation:none!important}}
