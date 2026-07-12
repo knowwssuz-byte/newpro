@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const emptyCaseForm = {
   title: '',
@@ -88,12 +88,42 @@ function CaseImage({ caseItem }) {
 
 function GiftImage({ gift, className = 'admin-gift-media' }) {
   const url = gift?.image_url || gift?.png_url || gift?.webp_url || '';
+  const animationUrl = gift?.animation_url || '';
+
+  if (!url && animationUrl) {
+    return <AdminLottie src={animationUrl} className={className} />;
+  }
 
   if (!url) {
     return <span className="admin-mini-icon">🎁</span>;
   }
 
   return <img className={className} src={url} alt="" loading="lazy" draggable="false" />;
+}
+
+function AdminLottie({ src, className }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    let animation = null;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ default: lottie }, pakoModule] = await Promise.all([import('lottie-web'), import('pako')]);
+        const response = await fetch(src, { cache: 'force-cache' });
+        if (!response.ok) throw new Error(`Animation download failed: ${response.status}`);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        let text;
+        try { text = (pakoModule.default || pakoModule).ungzip(bytes, { to: 'string' }); }
+        catch { text = new TextDecoder().decode(bytes); }
+        if (cancelled || !ref.current) return;
+        animation = lottie.loadAnimation({ container: ref.current, renderer: 'svg', loop: true, autoplay: true, animationData: JSON.parse(text) });
+      } catch { /* preview buzilsa admin form ishlashda davom etadi */ }
+    })();
+    return () => { cancelled = true; animation?.destroy(); };
+  }, [src]);
+
+  return <span ref={ref} className={`${className} admin-lottie-media`} aria-hidden="true" />;
 }
 
 export default function AdminClient() {
