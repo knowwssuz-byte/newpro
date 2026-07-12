@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { fetchUniqueTelegramGift } from '@/lib/telegramGiftsImporter';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,26 @@ function toNumber(value, fallback = 0) {
   const number = Number(value ?? fallback);
 
   return Number.isFinite(number) ? number : fallback;
+}
+
+function parseTelegramGiftLink(value) {
+  const text = clean(value);
+  const match = text.match(/^(?:https?:\/\/)?(?:t\.me|telegram\.me)\/nft\/([a-z0-9_-]+)$/i);
+  if (!match) throw new Error('Link formati noto‘g‘ri. Masalan: https://t.me/nft/ViceCream-134506');
+  return { slug: match[1], url: `https://t.me/nft/${match[1]}` };
+}
+
+async function fetchUniqueGift(slug) {
+  return fetchUniqueTelegramGift(slug);
+}
+
+async function uploadLottie(supabase, lottie, slug, kind) {
+  if (!lottie || typeof lottie !== 'object') return '';
+  const asset = await uploadPublicAsset(supabase, {
+    buffer: Buffer.from(JSON.stringify(lottie)), contentType: 'application/json',
+    folder: `telegram-nft/${slug}`, ext: 'json', prefix: kind,
+  });
+  return asset?.publicUrl || '';
 }
 
 function getBearer(request) {
@@ -484,6 +505,27 @@ export async function POST(request) {
       return json({ ok: true });
     }
 
+    if (action === 'gift_link_import') {
+      const parsed = parseTelegramGiftLink(body.giftUrl);
+      const gift = await fetchUniqueGift(parsed.slug);
+      const modelUrl = await uploadLottie(supabase, gift.model?.lottie, parsed.slug, 'model');
+      const symbolUrl = await uploadLottie(supabase, gift.symbol?.lottie, parsed.slug, 'symbol');
+      if (!modelUrl) throw new Error('Gift model animatsiyasi olinmadi. PHP MTProto sessionini tekshiring.');
+      const center = clean(gift.backdrop?.centerColor || '#7c3aed');
+      const edge = clean(gift.backdrop?.edgeColor || '#111827');
+      const row = {
+        title: clean(gift.name) + (gift.num ? ` #${gift.num}` : ''), price: Math.max(0, toNumber(body.price, 0)),
+        buy_price: Math.max(0, toNumber(body.price, 0)), image_url: '', image_type: 'lottie',
+        animation_url: modelUrl, background_value: `radial-gradient(circle at 50% 38%, ${center}, ${edge})`, is_active: true,
+      };
+      const optional = { slug: parsed.slug, source_url: parsed.url, gift_number: gift.num || null, total_supply: gift.total || null,
+        model_name: clean(gift.model?.name), symbol_name: clean(gift.symbol?.name), backdrop_name: clean(gift.backdrop?.name), symbol_url: symbolUrl };
+      let result = await supabase.from('gift_library').upsert({ ...row, ...optional }, { onConflict: 'slug' }).select('*').single();
+      if (result.error?.code === '42703') result = await supabase.from('gift_library').insert(row).select('*').single();
+      if (result.error) throw result.error;
+      return json({ ok: true, libraryGift: result.data, ...(await bootstrap(supabase)) });
+    }
+
     if (action === 'gift_create_from_library') {
       const data = body.giftData || {};
       const caseId = clean(data.case_id);
@@ -520,7 +562,7 @@ export async function POST(request) {
         chance: visibleChanceValue,
         stock: Math.max(0, Math.floor(toNumber(data.stock, 1))),
         image_url: libraryGift.image_url || libraryGift.png_url || libraryGift.webp_url || '',
-        animation_url: '',
+        animation_url: libraryGift.animation_url || '',
         background_value: libraryGift.background_value || '#7c3aed',
         rarity: clean(data.rarity || 'rare'),
         is_active: data.is_active !== false,
@@ -532,7 +574,7 @@ export async function POST(request) {
         sell_price: price,
         buy_price: price,
         real_chance: realChanceValue,
-        source: 'image_library',
+        source: libraryGift.slug ? 'telegram_nft' : 'image_library',
       };
 
       const gift = await insertGiftWithOptionalColumns(supabase, row, optionalRow);
