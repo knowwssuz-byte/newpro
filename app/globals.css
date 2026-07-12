@@ -12369,3 +12369,4 @@ body {
 .tgs-gift-canvas,.tgs-gift-canvas svg,.admin-lottie-media svg{display:block!important;width:100%!important;height:100%!important}
 .admin-lottie-media{width:100%!important;height:100%!important}
 .manual-library-media .admin-lottie-media,.selected-catalog-preview .admin-lottie-media{filter:drop-shadow(0 8px 12px rgba(0,0,0,.25))}
+.tgs-gift-media{position:relative!important}.tgs-gift-media>.app-icon{position:absolute!important;inset:25%!important;width:50%!important;height:50%!important;opacity:.5!important}
