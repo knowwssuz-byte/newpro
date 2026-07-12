@@ -125,7 +125,7 @@ async function normalizeCaseOrder(supabase, cases = []) {
 }
 
 async function bootstrap(supabase) {
-  const [cases, gifts, users, withdrawals, giftLibrary] = await Promise.all([
+  const [cases, gifts, users, withdrawals, giftLibrary, featureRows] = await Promise.all([
     fetchCasesForAdmin(supabase),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').order('created_at', { ascending: false })),
     safeSelect(supabase, 'users', supabase.from('users').select('*').order('created_at', { ascending: false }).limit(250)),
@@ -143,6 +143,7 @@ async function bootstrap(supabase) {
       'gift_library',
       supabase.from('gift_library').select('*').order('created_at', { ascending: false })
     ),
+    safeSelect(supabase, 'app_settings', supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp'])),
   ]);
 
   return {
@@ -151,6 +152,7 @@ async function bootstrap(supabase) {
     users,
     withdrawals,
     giftLibrary,
+    featureSettings: Object.fromEntries((featureRows || []).map((item) => [item.key, item.value || {}])),
   };
 }
 
@@ -527,6 +529,26 @@ export async function POST(request) {
       }
       if (result.error) throw result.error;
       return json({ ok: true, libraryGift: result.data, ...(await bootstrap(supabase)) });
+    }
+
+    if (action === 'feature_animation_update') {
+      const slot = clean(body.slot).toLowerCase();
+      if (!['rocket', 'pvp'].includes(slot)) return json({ ok: false, error: 'Feature turi noto‘g‘ri.' }, 400);
+      const parsed = parseTelegramGiftLink(body.giftUrl);
+      const gift = await fetchUniqueGift(parsed.slug);
+      const animationUrl = await uploadLottie(supabase, gift.model?.lottie, parsed.slug, `feature-${slot}`);
+      if (!animationUrl) throw new Error('Gift animatsiyasi olinmadi.');
+      const center = clean(gift.backdrop?.centerColor || '#7c3aed');
+      const edge = clean(gift.backdrop?.edgeColor || '#111827');
+      const value = {
+        slot, source_url: parsed.url, slug: parsed.slug, animation_url: animationUrl,
+        title: clean(gift.name), model_name: clean(gift.model?.name),
+        background_value: `radial-gradient(circle at 50% 38%, ${center}, ${edge})`,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from('app_settings').upsert({ key: `feature_${slot}`, value }, { onConflict: 'key' });
+      if (error) throw error;
+      return json({ ok: true, setting: value, ...(await bootstrap(supabase)) });
     }
 
     if (action === 'gift_create_from_library') {
