@@ -12380,3 +12380,4 @@ body {
 .win-screen-layer{position:fixed!important;inset:0!important;width:100dvw!important;height:100dvh!important;overflow:hidden!important;overscroll-behavior:none!important;touch-action:none!important;padding:max(14px,env(safe-area-inset-top)) 14px max(14px,env(safe-area-inset-bottom))!important}
 .win-screen-card{max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;overflow:hidden!important;touch-action:manipulation!important}
 @media(prefers-reduced-motion:reduce){.case-page-idle-track{animation:none!important}.case-page-spin-card.target-win-item{animation:none!important}}
+.tgs-static-preview{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;pointer-events:none!important;user-select:none!important;-webkit-user-drag:none!important}
