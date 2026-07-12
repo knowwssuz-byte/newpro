@@ -59,7 +59,7 @@ export async function POST(request) {
       giftsQuery = giftsQuery.eq('is_active', true);
     }
 
-    const [cases, giftsResult, historyResult, withdrawResult] = await Promise.all([
+    const [cases, giftsResult, historyResult, withdrawResult, featureResult] = await Promise.all([
       fetchCases(supabase, { onlyActive: !auth.isAdmin }),
       giftsQuery,
       supabase
@@ -74,11 +74,15 @@ export async function POST(request) {
         .eq('user_id', auth.telegramUser.id)
         .order('created_at', { ascending: false })
         .limit(30),
+      supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp']),
     ]);
 
     if (giftsResult.error) throw new Error(giftsResult.error.message);
     if (historyResult.error) throw new Error(historyResult.error.message);
     if (withdrawResult.error) throw new Error(withdrawResult.error.message);
+    const featureSettings = featureResult.error
+      ? {}
+      : Object.fromEntries((featureResult.data || []).map((item) => [item.key, item.value || {}]));
 
     return Response.json({
       ok: true,
@@ -89,6 +93,7 @@ export async function POST(request) {
       gifts: giftsResult.data || [],
       history: historyResult.data || [],
       withdrawals: withdrawResult.data || [],
+      featureSettings,
     });
   } catch (error) {
     return jsonError(error.message || 'Server xatosi', 500);
