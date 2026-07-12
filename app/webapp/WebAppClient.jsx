@@ -1644,9 +1644,50 @@ function isTgsAnimationUrl(url = '') {
   return cleanUrl.endsWith('.tgs') || cleanUrl.includes('/telegram/animations/');
 }
 
-function TelegramTgsAnimation({ src, className }) {
+const tgsDataCache = new Map();
+const tgsPreviewCache = new Map();
+
+function loadTgsData(src) {
+  if (!tgsDataCache.has(src)) {
+    tgsDataCache.set(src, fetch(`/api/gift-animation?url=${encodeURIComponent(src)}`, { cache: 'force-cache' })
+      .then(async (response) => {
+        const payload = await response.json().catch(() => null);
+        if (!response.ok || !payload?.ok || !payload.animationData) throw new Error(payload?.error || `TGS download failed: ${response.status}`);
+        return payload.animationData;
+      })
+      .catch((error) => { tgsDataCache.delete(src); throw error; }));
+  }
+  return tgsDataCache.get(src);
+}
+
+async function createTgsPreview(src) {
+  if (!tgsPreviewCache.has(src)) {
+    tgsPreviewCache.set(src, (async () => {
+      const [{ default: lottie }, animationData] = await Promise.all([import('lottie-web'), loadTgsData(src)]);
+      const host = document.createElement('div');
+      Object.assign(host.style, { position: 'fixed', left: '-9999px', top: '-9999px', width: '180px', height: '180px', opacity: '0', pointerEvents: 'none' });
+      document.body.appendChild(host);
+      const animation = lottie.loadAnimation({ container: host, renderer: 'svg', loop: false, autoplay: false, animationData });
+      try {
+        await new Promise((resolve, reject) => {
+          const timer = window.setTimeout(() => reject(new Error('Preview timeout')), 6000);
+          animation.addEventListener('DOMLoaded', () => { window.clearTimeout(timer); resolve(); });
+          animation.addEventListener('data_failed', () => { window.clearTimeout(timer); reject(new Error('Preview failed')); });
+        });
+        animation.goToAndStop(0, true);
+        const svg = host.querySelector('svg');
+        if (!svg) throw new Error('Preview SVG topilmadi');
+        return URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)], { type: 'image/svg+xml' }));
+      } finally { animation.destroy(); host.remove(); }
+    })().catch((error) => { tgsPreviewCache.delete(src); throw error; }));
+  }
+  return tgsPreviewCache.get(src);
+}
+
+function TelegramTgsAnimation({ src, className, animate = false }) {
   const containerRef = useRef(null);
   const [failed, setFailed] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState('');
 
   useEffect(() => {
     let animation = null;
@@ -1654,17 +1695,13 @@ function TelegramTgsAnimation({ src, className }) {
 
     async function loadAnimation() {
       try {
-        const { default: lottie } = await import('lottie-web');
         setFailed(false);
-        const proxiedSrc = `/api/gift-animation?url=${encodeURIComponent(src)}`;
-        const response = await fetch(proxiedSrc, { cache: 'force-cache' });
-
-        if (!response.ok) {
-          throw new Error(`TGS download failed: ${response.status}`);
+        if (!animate) {
+          const url = await createTgsPreview(src);
+          if (!cancelled) setPreviewUrl(url);
+          return;
         }
-
-        const payload = await response.json();
-        if (!payload?.ok || !payload.animationData) throw new Error(payload?.error || 'Animation data missing');
+        const [{ default: lottie }, animationData] = await Promise.all([import('lottie-web'), loadTgsData(src)]);
 
         if (cancelled || !containerRef.current) return;
 
@@ -1673,7 +1710,7 @@ function TelegramTgsAnimation({ src, className }) {
           renderer: 'svg',
           loop: true,
           autoplay: true,
-          animationData: payload.animationData,
+          animationData,
         });
       } catch (error) {
         console.warn('TGS animation failed:', error?.message || error);
@@ -1689,17 +1726,18 @@ function TelegramTgsAnimation({ src, className }) {
         animation.destroy();
       }
     };
-  }, [src]);
+  }, [src, animate]);
 
   return (
     <span className={`${className} tgs-gift-media`}>
-      <span ref={containerRef} className="tgs-gift-canvas" />
+      {previewUrl && !animate ? <img src={previewUrl} className="tgs-static-preview" alt="" draggable="false" /> : null}
+      {animate ? <span ref={containerRef} className="tgs-gift-canvas" /> : null}
       {failed ? <AppIcon name="gift" /> : null}
     </span>
   );
 }
 
-function GiftMedia({ gift, compact = false, preferStatic = false }) {
+function GiftMedia({ gift, compact = false, preferStatic = false, animate = false }) {
   const mediaClass = compact ? 'gift-media compact' : 'gift-media';
 
   if (!gift) {
@@ -1739,7 +1777,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
   }
 
   if (animationUrl && isTgsAnimationUrl(animationUrl)) {
-    return <TelegramTgsAnimation src={animationUrl} className={mediaClass} />;
+    return <TelegramTgsAnimation src={animationUrl} className={mediaClass} animate={animate} />;
   }
 
   if (animationUrl && isImageAnimationUrl(animationUrl)) {
@@ -2488,7 +2526,7 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
               <span className="win-screen-badge">YOU WON</span>
 
               <div className="win-screen-media">
-                <GiftMedia gift={inlineOpening.gift} />
+                <GiftMedia gift={inlineOpening.gift} animate />
               </div>
 
               <div className="win-screen-copy">
@@ -2614,7 +2652,7 @@ function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
                 '--gift-bg': opening.gift?.background_value || defaultGiftBackground(opening.gift?.rarity),
               }}
             >
-              <GiftMedia gift={opening.gift} />
+              <GiftMedia gift={opening.gift} animate />
             </div>
 
             <h2>{opening.gift?.title || 'Reward'}</h2>
