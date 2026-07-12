@@ -312,9 +312,20 @@ export async function POST(request) {
     if (!caseId) return jsonError('caseId kerak');
     if (dbUser.is_banned) return jsonError('Siz bloklangansiz', 403);
 
-    // real_chance alohida ishlashi uchun JS fallback ishlatiladi.
-    // Eski open_case_atomic RPC faqat chance ustunini bilishi mumkin.
-    return openCaseFallback(supabase, auth, dbUser, caseId);
+    try {
+      return Response.json(await openCaseWithRpc(supabase, Number(auth.telegramUser.id), caseId));
+    } catch (rpcError) {
+      if (shouldFallbackRpc(rpcError)) {
+        return jsonError(
+          'Xavfsiz case ochish funksiyasi o‘rnatilmagan. Supabase SQL ichida gift-system-fix.sql faylini ishga tushiring.',
+          503,
+          { reason: 'OPEN_CASE_RPC_MISSING' }
+        );
+      }
+
+      const mapped = mapRpcError(rpcError);
+      return jsonError(mapped.message, mapped.status);
+    }
   } catch (error) {
     return jsonError(error.message || 'Server xatosi', 500);
   }

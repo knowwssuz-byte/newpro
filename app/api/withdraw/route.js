@@ -9,15 +9,25 @@ export async function POST(request) {
 
     const supabase = getSupabaseAdmin();
     const dbUser = await ensureUser(auth.telegramUser);
-    const { giftId } = auth.body || {};
+    const { historyId } = auth.body || {};
 
-    if (!giftId) return jsonError('giftId kerak');
+    if (!historyId) return jsonError('historyId kerak');
     if (dbUser.is_banned) return jsonError('Siz bloklangansiz', 403);
+
+    const { data: history, error: historyError } = await supabase
+      .from('open_history')
+      .select('*')
+      .eq('id', historyId)
+      .eq('user_id', Number(auth.telegramUser.id))
+      .single();
+
+    if (historyError || !history) return jsonError('Yutuq topilmadi', 404);
+    if (history.sold_at) return jsonError('Sotilgan sovg‘ani yechib bo‘lmaydi', 400);
 
     const { data: gift, error: giftError } = await supabase
       .from('gifts')
       .select('*')
-      .eq('id', giftId)
+      .eq('id', history.gift_id)
       .single();
 
     if (giftError || !gift) return jsonError('Sovg‘a topilmadi', 404);
@@ -25,11 +35,22 @@ export async function POST(request) {
       return jsonError('Balans reward avtomatik balansga qo‘shiladi. Uni yechishga yuborish shart emas.', 400);
     }
 
+    const { data: existing, error: existingError } = await supabase
+      .from('withdraw_requests')
+      .select('id,status')
+      .eq('user_id', Number(auth.telegramUser.id))
+      .eq('history_id', history.id)
+      .maybeSingle();
+
+    if (existingError) throw new Error(existingError.message);
+    if (existing) return jsonError('Bu yutuq uchun so‘rov allaqachon yuborilgan', 409);
+
     const { data, error } = await supabase
       .from('withdraw_requests')
       .insert({
         user_id: auth.telegramUser.id,
-        gift_id: giftId,
+        gift_id: gift.id,
+        history_id: history.id,
         status: 'pending',
       })
       .select('*')

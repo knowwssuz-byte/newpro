@@ -869,8 +869,8 @@ export default function WebAppClient() {
     }
   }
 
-  async function createWithdraw(giftId) {
-    await runAction(() => apiPost('/api/withdraw', { giftId }), 'Yechish so‘rovi yuborildi ✅');
+  async function createWithdraw(historyId) {
+    await runAction(() => apiPost('/api/withdraw', { historyId }), 'Yechish so‘rovi yuborildi ✅');
     await loadApp({ silent: true });
   }
 

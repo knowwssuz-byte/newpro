@@ -1,4 +1,5 @@
 import './globals.css';
+import Script from 'next/script';
 
 export const metadata = {
   title: 'Gift Myst',
@@ -8,10 +9,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="uz">
-      <head>
-        <script src="https://telegram.org/js/telegram-web-app.js" />
-      </head>
-      <body>{children}</body>
+      <body>
+        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
+        {children}
+      </body>
     </html>
   );
 }
