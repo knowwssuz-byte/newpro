@@ -500,6 +500,7 @@ export default function WebAppClient() {
   const [gifts, setGifts] = useState([]);
   const [history, setHistory] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [featureSettings, setFeatureSettings] = useState({});
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminWithdrawals, setAdminWithdrawals] = useState([]);
 
@@ -642,6 +643,7 @@ export default function WebAppClient() {
         setGifts(data.gifts || []);
         setHistory(data.history || []);
         setWithdrawals(data.withdrawals || []);
+        setFeatureSettings(data.featureSettings || {});
 
         if (data.cases?.[0]?.id) {
           setGiftForm((current) => (current.case_id ? current : { ...current, case_id: data.cases[0].id }));
@@ -1205,6 +1207,7 @@ export default function WebAppClient() {
                   onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
                   onComingSoon={() => showToast('Tez orada 🚀')}
                   busy={busy}
+                  featureSettings={featureSettings}
                 />
               ) : null}
 
@@ -1405,6 +1408,7 @@ function PromoImageCard({
   subtitle,
   actionText,
   onClick,
+  animationUrl,
 }) {
   const [failed, setFailed] = useState(false);
 
@@ -1436,7 +1440,9 @@ function PromoImageCard({
       </div>
 
       <div className="promo-webp-stage" aria-hidden="true">
-        {!failed && image ? (
+        {animationUrl ? (
+          <TelegramTgsAnimation src={animationUrl} className="promo-webp promo-feature-animation" animate />
+        ) : !failed && image ? (
           <img
             src={image}
             alt=""
@@ -1466,6 +1472,7 @@ function HomeView({
   onSelectCase,
   onComingSoon,
   busy,
+  featureSettings,
 }) {
   const featuredCases = cases || [];
 
@@ -1480,7 +1487,7 @@ function HomeView({
       <div className="home-promo-stack">
         <PromoImageCard
           variant="rocket"
-          image="/feature/rocket.webp"
+          animationUrl={featureSettings?.feature_rocket?.animation_url || ''}
           badge="HOT!"
           badgeIcon="rocket"
           title="ROCKET"
@@ -1491,7 +1498,7 @@ function HomeView({
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/pvp.webp"
+          animationUrl={featureSettings?.feature_pvp?.animation_url || ''}
           badge="NEW!"
           badgeIcon="spark"
           title="PVP"
