@@ -522,7 +522,9 @@ export async function POST(request) {
       const optional = { slug: parsed.slug, source_url: parsed.url, gift_number: gift.num || null, total_supply: gift.total || null,
         model_name: clean(gift.model?.name), symbol_name: clean(gift.symbol?.name), backdrop_name: clean(gift.backdrop?.name), symbol_url: symbolUrl };
       let result = await supabase.from('gift_library').upsert({ ...row, ...optional }, { onConflict: 'slug' }).select('*').single();
-      if (result.error?.code === '42703') result = await supabase.from('gift_library').insert(row).select('*').single();
+      if (result.error?.code === '42703' || result.error?.code === '42P10') {
+        result = await supabase.from('gift_library').insert(row).select('*').single();
+      }
       if (result.error) throw result.error;
       return json({ ok: true, libraryGift: result.data, ...(await bootstrap(supabase)) });
     }
