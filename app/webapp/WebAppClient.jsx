@@ -2255,7 +2255,14 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
   const isRolling = opening?.stage === 'rolling';
   const isPreparing = opening?.stage === 'preparing';
   const reel = isLive ? opening.reel : idleGifts;
-  const distance = Math.max(0, (targetIndex * (itemWidth + gap)) + (itemWidth / 2));
+
+  const measureWinningDistance = () => {
+    const track = trackRef.current;
+    const viewport = track?.parentElement;
+    const target = track?.querySelector('[data-winning="true"]');
+    if (!track || !viewport || !target) return Math.max(0, (targetIndex * (itemWidth + gap)) + (itemWidth / 2));
+    return Math.max(0, target.offsetLeft + (target.offsetWidth / 2) - (viewport.clientWidth / 2));
+  };
 
   useEffect(() => {
     let startTimer = null;
@@ -2278,8 +2285,9 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
     }
 
     if (opening.stage === 'result') {
+      const measuredDistance = measureWinningDistance();
       setRollerStyle({
-        '--raffle-x': `-${distance}px`,
+        '--raffle-x': `-${measuredDistance}px`,
         '--raffle-transition': 'none',
         '--raffle-filter': 'blur(0px)',
       });
@@ -2293,12 +2301,13 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
     setRollerStyle(resetStyle);
 
     startTimer = window.setTimeout(() => {
+      const measuredDistance = measureWinningDistance();
       if (trackRef.current) {
         trackRef.current.getBoundingClientRect();
       }
 
       setRollerStyle({
-        '--raffle-x': `-${distance}px`,
+        '--raffle-x': `-${measuredDistance}px`,
         '--raffle-transition': 'transform 4.85s cubic-bezier(.08,.60,0,1), filter .55s ease',
         '--raffle-filter': 'blur(.15px)',
       });
@@ -2315,11 +2324,12 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
       if (startTimer) window.clearTimeout(startTimer);
       if (cleanTimer) window.clearTimeout(cleanTimer);
     };
-  }, [opening?.spinKey, opening?.stage, distance]);
+  }, [opening?.spinKey, opening?.stage, targetIndex, itemWidth, gap]);
 
-  const idleLoopGifts = idleGifts.length
+  const idleLoopBase = idleGifts.length
     ? Array.from({ length: Math.max(18, idleGifts.length * 5) }, (_, index) => idleGifts[index % idleGifts.length])
     : [];
+  const idleLoopGifts = idleLoopBase.length ? [...idleLoopBase, ...idleLoopBase] : [];
 
   return (
     <div className={`case-page-reel-preview inline-reel-preview ${isLive ? 'is-live' : ''} ${isResult ? 'is-result' : ''}`} aria-label="Case prizes preview">
@@ -2356,6 +2366,7 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
           {reel.map((gift, index) => (
             <div
               className={`case-page-spin-card ${isRolling && index === targetIndex ? 'target-win-item' : ''}`}
+              data-winning={index === targetIndex ? 'true' : undefined}
               key={`${gift?.id || 'gift'}-${index}-${opening?.spinKey || 'idle'}`}
               style={{
                 '--spin-gift-bg': solidGiftBackground(gift?.background_value, defaultGiftBackground(gift?.rarity)),
@@ -2396,6 +2407,24 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
   const stripGifts = stripSource.length
     ? Array.from({ length: Math.min(9, Math.max(7, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
     : [];
+
+  useEffect(() => {
+    if (!isResult) return undefined;
+    const scrollY = window.scrollY;
+    const body = document.body;
+    const previous = { position: body.style.position, top: body.style.top, width: body.style.width, overflow: body.style.overflow };
+    body.style.position = 'fixed';
+    body.style.top = `-${scrollY}px`;
+    body.style.width = '100%';
+    body.style.overflow = 'hidden';
+    return () => {
+      body.style.position = previous.position;
+      body.style.top = previous.top;
+      body.style.width = previous.width;
+      body.style.overflow = previous.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isResult]);
 
   return (
     <section className={`case-page-screen ${isSpinning ? 'is-inline-spinning' : ''} ${isResult ? 'has-inline-result' : ''}`}>
