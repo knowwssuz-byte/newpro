@@ -1646,6 +1646,7 @@ function isTgsAnimationUrl(url = '') {
 
 function TelegramTgsAnimation({ src, className }) {
   const containerRef = useRef(null);
+  const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let animation = null;
@@ -1658,7 +1659,9 @@ function TelegramTgsAnimation({ src, className }) {
           import('pako'),
         ]);
         const pako = pakoModule.default || pakoModule;
-        const response = await fetch(src, { cache: 'force-cache' });
+        setFailed(false);
+        const proxiedSrc = `/api/gift-animation?url=${encodeURIComponent(src)}`;
+        const response = await fetch(proxiedSrc, { cache: 'force-cache' });
 
         if (!response.ok) {
           throw new Error(`TGS download failed: ${response.status}`);
@@ -1684,6 +1687,7 @@ function TelegramTgsAnimation({ src, className }) {
         });
       } catch (error) {
         console.warn('TGS animation failed:', error?.message || error);
+        if (!cancelled) setFailed(true);
       }
     }
 
@@ -1700,6 +1704,7 @@ function TelegramTgsAnimation({ src, className }) {
   return (
     <span className={`${className} tgs-gift-media`}>
       <span ref={containerRef} className="tgs-gift-canvas" />
+      {failed ? <AppIcon name="gift" /> : null}
     </span>
   );
 }
