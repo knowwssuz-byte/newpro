@@ -1724,6 +1724,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
   }
 
   const imageUrl = gift.image_url || gift.png_url || gift.webp_url || '';
+  const animationUrl = gift.animation_url || '';
 
   if (imageUrl) {
     return (
@@ -1740,6 +1741,14 @@ function GiftMedia({ gift, compact = false, preferStatic = false }) {
         aria-hidden="true"
       />
     );
+  }
+
+  if (animationUrl && isTgsAnimationUrl(animationUrl)) {
+    return <TelegramTgsAnimation src={animationUrl} className={mediaClass} />;
+  }
+
+  if (animationUrl && isImageAnimationUrl(animationUrl)) {
+    return <img className={`${mediaClass} gift-media-visual`} src={animationUrl} alt="" loading="lazy" decoding="async" draggable="false" aria-hidden="true" />;
   }
 
   return (
@@ -2494,7 +2503,10 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
           <div
             className="case-page-prize-card"
             key={gift.id}
-            style={{ '--float-delay': `${(index % 6) * 0.13}s` }}
+            style={{
+              '--float-delay': `${(index % 6) * 0.13}s`,
+              '--gift-card-bg': solidGiftBackground(gift.background_value, defaultGiftBackground(gift.rarity)),
+            }}
           >
             <span className="prize-card-shine" aria-hidden="true" />
             <div className="case-page-prize-image">
