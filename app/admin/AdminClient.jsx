@@ -31,6 +31,8 @@ const emptyGiftForm = {
   is_active: true,
 };
 
+const emptyFeatureForm = { slot: 'rocket', gift_url: '' };
+
 function money(value) {
   return new Intl.NumberFormat('uz-UZ').format(Number(value || 0));
 }
@@ -139,6 +141,8 @@ export default function AdminClient() {
   const [giftLibrary, setGiftLibrary] = useState([]);
   const [users, setUsers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [featureSettings, setFeatureSettings] = useState({});
+  const [featureForm, setFeatureForm] = useState(emptyFeatureForm);
 
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
   const [caseFile, setCaseFile] = useState(null);
@@ -190,6 +194,7 @@ export default function AdminClient() {
     setUsers(data.users || []);
     setWithdrawals(data.withdrawals || []);
     setGiftLibrary(data.giftLibrary || []);
+    setFeatureSettings(data.featureSettings || {});
 
     const sortedCases = sortCasesForDisplay(data.cases || []);
     const firstCaseId = sortedCases?.[0]?.id || '';
@@ -442,6 +447,17 @@ export default function AdminClient() {
     }));
   }
 
+  async function updateFeatureAnimation(event) {
+    event.preventDefault();
+    const data = await run(
+      () => callAdmin('feature_animation_update', { slot: featureForm.slot, giftUrl: featureForm.gift_url }),
+      `${featureForm.slot.toUpperCase()} animatsiyasi yangilandi ✅`
+    );
+    if (!data) return;
+    applyBootstrap(data);
+    setFeatureForm((current) => ({ ...current, gift_url: '' }));
+  }
+
   async function updateGift(giftId, updates) {
     await run(() => callAdmin('gift_update', { giftId, updates }), 'Gift yangilandi ✅');
     await bootstrap();
@@ -526,6 +542,7 @@ export default function AdminClient() {
             ['cases', 'Cases'],
             ['library', 'Gift baza'],
             ['gifts', 'Casega gift'],
+            ['features', 'PVP / Rocket'],
             ['users', 'Users'],
             ['withdrawals', 'Withdrawals'],
           ].map(([id, label]) => (
@@ -610,6 +627,28 @@ export default function AdminClient() {
                   </div>
                 </div>
               ))}
+            </div>
+          </section>
+        ) : null}
+
+        {tab === 'features' ? (
+          <section className="browser-admin-grid feature-admin-layout">
+            <form className="browser-admin-form" onSubmit={updateFeatureAnimation}>
+              <div className="admin-form-heading">
+                <span>Home animations</span>
+                <h2>PVP / Rocket animatsiyasi</h2>
+                <p>Eski WEBP o‘rniga Telegram NFT link kiriting. Animatsiya avtomatik olinadi va Home kartasiga qo‘yiladi.</p>
+              </div>
+              <label><span>Bo‘lim</span><select value={featureForm.slot} onChange={(event) => setFeatureForm({ ...featureForm, slot: event.target.value })}><option value="rocket">Rocket</option><option value="pvp">PVP</option></select></label>
+              <label><span>Telegram NFT link</span><input type="url" value={featureForm.gift_url} onChange={(event) => setFeatureForm({ ...featureForm, gift_url: event.target.value })} placeholder="https://t.me/nft/InputKey-45302" required /></label>
+              <button type="submit" disabled={busy || !featureForm.gift_url}>{busy ? 'Yuklanmoqda...' : 'Animatsiyani qo‘yish'}</button>
+            </form>
+            <div className="browser-admin-list feature-admin-list">
+              <h2>Hozirgi animatsiyalar</h2>
+              {['rocket', 'pvp'].map((slot) => {
+                const setting = featureSettings[`feature_${slot}`] || {};
+                return <div className="browser-admin-item" key={slot}><GiftImage gift={{ animation_url: setting.animation_url }} /><div><strong>{slot.toUpperCase()}</strong><p>{setting.title || 'Animatsiya tanlanmagan'}</p><small>{setting.slug || 'Telegram NFT link kiriting'}</small></div></div>;
+              })}
             </div>
           </section>
         ) : null}
