@@ -33,6 +33,20 @@ const emptyGiftForm = {
 
 const emptyFeatureForm = { slot: 'rocket', gift_url: '' };
 
+const featureDefaults = {
+  rocket: { scale: 80, offset_x: 0, offset_y: -16 },
+  pvp: { scale: 78, offset_x: 0, offset_y: -18 },
+};
+
+function featureLayout(slot, setting = {}) {
+  const defaults = featureDefaults[slot] || featureDefaults.rocket;
+  return {
+    scale: Number.isFinite(Number(setting.scale)) ? Number(setting.scale) : defaults.scale,
+    offset_x: Number.isFinite(Number(setting.offset_x)) ? Number(setting.offset_x) : defaults.offset_x,
+    offset_y: Number.isFinite(Number(setting.offset_y)) ? Number(setting.offset_y) : defaults.offset_y,
+  };
+}
+
 function money(value) {
   return new Intl.NumberFormat('uz-UZ').format(Number(value || 0));
 }
@@ -111,21 +125,57 @@ function AdminLottie({ src, className }) {
     let cancelled = false;
     (async () => {
       try {
-        const [{ default: lottie }, pakoModule] = await Promise.all([import('lottie-web'), import('pako')]);
-        const response = await fetch(src, { cache: 'force-cache' });
+        const { default: lottie } = await import('lottie-web');
+        const response = await fetch(`/api/gift-animation?url=${encodeURIComponent(src)}`, { cache: 'force-cache' });
         if (!response.ok) throw new Error(`Animation download failed: ${response.status}`);
-        const bytes = new Uint8Array(await response.arrayBuffer());
-        let text;
-        try { text = (pakoModule.default || pakoModule).ungzip(bytes, { to: 'string' }); }
-        catch { text = new TextDecoder().decode(bytes); }
+        const payload = await response.json();
+        const animationData = payload?.animationData || payload;
         if (cancelled || !ref.current) return;
-        animation = lottie.loadAnimation({ container: ref.current, renderer: 'svg', loop: true, autoplay: true, animationData: JSON.parse(text) });
+        animation = lottie.loadAnimation({ container: ref.current, renderer: 'svg', loop: true, autoplay: true, animationData });
       } catch { /* preview buzilsa admin form ishlashda davom etadi */ }
     })();
     return () => { cancelled = true; animation?.destroy(); };
   }, [src]);
 
   return <span ref={ref} className={`${className} admin-lottie-media`} aria-hidden="true" />;
+}
+
+function FeaturePreviewCard({ slot, setting, onLayoutChange, onSave, busy }) {
+  const layout = featureLayout(slot, setting);
+  const isPvp = slot === 'pvp';
+  const style = {
+    '--feature-scale': String(layout.scale / 100),
+    '--feature-x': `${layout.offset_x}px`,
+    '--feature-y': `${layout.offset_y}px`,
+  };
+
+  const change = (key, value) => onLayoutChange(slot, key, Number(value));
+
+  return (
+    <article className="admin-feature-editor">
+      <div className={`promo-banner promo-image-banner premium-promo ${slot} admin-feature-preview`} style={style}>
+        <span className="promo-shine" aria-hidden="true" />
+        <div className="promo-banner-copy">
+          <span className={`promo-badge ${isPvp ? 'new' : ''}`}>{isPvp ? '✦ NEW!' : '🚀 HOT!'}</span>
+          <span className="promo-banner-text"><strong>{slot.toUpperCase()}</strong><em>{isPvp ? 'Battle mode · Tez orada' : 'Mini game · Tez orada'}</em></span>
+          <span className="promo-action-chip">Tez orada <b>›</b></span>
+        </div>
+        <div className="promo-webp-stage" aria-hidden="true">
+          {setting?.animation_url ? <AdminLottie src={setting.animation_url} className="promo-webp promo-feature-animation" /> : <span className="promo-fallback-icon">{isPvp ? '🥊' : '🚀'}</span>}
+        </div>
+      </div>
+
+      <div className="admin-feature-controls">
+        <label><span>Hajmi</span><output>{layout.scale}%</output><input type="range" min="35" max="160" step="1" value={layout.scale} onChange={(event) => change('scale', event.target.value)} /></label>
+        <label><span>Gorizontal X</span><output>{layout.offset_x}px</output><input type="range" min="-140" max="140" step="1" value={layout.offset_x} onChange={(event) => change('offset_x', event.target.value)} /></label>
+        <label><span>Vertikal Y</span><output>{layout.offset_y}px</output><input type="range" min="-100" max="100" step="1" value={layout.offset_y} onChange={(event) => change('offset_y', event.target.value)} /></label>
+        <div className="admin-feature-control-actions">
+          <button type="button" className="admin-secondary-button" onClick={() => onLayoutChange(slot, null, featureDefaults[slot])}>Standart</button>
+          <button type="button" onClick={() => onSave(slot)} disabled={busy}>{busy ? 'Saqlanmoqda...' : 'Joylashuvni saqlash'}</button>
+        </div>
+      </div>
+    </article>
+  );
 }
 
 export default function AdminClient() {
@@ -458,6 +508,23 @@ export default function AdminClient() {
     setFeatureForm((current) => ({ ...current, gift_url: '' }));
   }
 
+  function changeFeatureLayout(slot, key, value) {
+    setFeatureSettings((current) => {
+      const settingKey = `feature_${slot}`;
+      const nextLayout = key ? { [key]: value } : value;
+      return { ...current, [settingKey]: { ...(current[settingKey] || {}), ...nextLayout } };
+    });
+  }
+
+  async function saveFeatureLayout(slot) {
+    const layout = featureLayout(slot, featureSettings[`feature_${slot}`]);
+    const data = await run(
+      () => callAdmin('feature_layout_update', { slot, ...layout }),
+      `${slot.toUpperCase()} joylashuvi saqlandi ✅`
+    );
+    if (data) applyBootstrap(data);
+  }
+
   async function updateGift(giftId, updates) {
     await run(() => callAdmin('gift_update', { giftId, updates }), 'Gift yangilandi ✅');
     await bootstrap();
@@ -632,7 +699,7 @@ export default function AdminClient() {
         ) : null}
 
         {tab === 'features' ? (
-          <section className="browser-admin-grid feature-admin-layout">
+          <section className="feature-admin-layout">
             <form className="browser-admin-form" onSubmit={updateFeatureAnimation}>
               <div className="admin-form-heading">
                 <span>Home animations</span>
@@ -643,12 +710,8 @@ export default function AdminClient() {
               <label><span>Telegram NFT link</span><input type="url" value={featureForm.gift_url} onChange={(event) => setFeatureForm({ ...featureForm, gift_url: event.target.value })} placeholder="https://t.me/nft/InputKey-45302" required /></label>
               <button type="submit" disabled={busy || !featureForm.gift_url}>{busy ? 'Yuklanmoqda...' : 'Animatsiyani qo‘yish'}</button>
             </form>
-            <div className="browser-admin-list feature-admin-list">
-              <h2>Hozirgi animatsiyalar</h2>
-              {['rocket', 'pvp'].map((slot) => {
-                const setting = featureSettings[`feature_${slot}`] || {};
-                return <div className="browser-admin-item" key={slot}><GiftImage gift={{ animation_url: setting.animation_url }} /><div><strong>{slot.toUpperCase()}</strong><p>{setting.title || 'Animatsiya tanlanmagan'}</p><small>{setting.slug || 'Telegram NFT link kiriting'}</small></div></div>;
-              })}
+            <div className="feature-admin-previews">
+              {['rocket', 'pvp'].map((slot) => <FeaturePreviewCard key={slot} slot={slot} setting={featureSettings[`feature_${slot}`] || {}} onLayoutChange={changeFeatureLayout} onSave={saveFeatureLayout} busy={busy} />)}
             </div>
           </section>
         ) : null}
