@@ -540,13 +540,34 @@ export async function POST(request) {
       if (!animationUrl) throw new Error('Gift animatsiyasi olinmadi.');
       const center = clean(gift.backdrop?.centerColor || '#7c3aed');
       const edge = clean(gift.backdrop?.edgeColor || '#111827');
+      const settingKey = `feature_${slot}`;
+      const { data: existingRow } = await supabase.from('app_settings').select('value').eq('key', settingKey).maybeSingle();
       const value = {
+        ...(existingRow?.value || {}),
         slot, source_url: parsed.url, slug: parsed.slug, animation_url: animationUrl,
         title: clean(gift.name), model_name: clean(gift.model?.name),
         background_value: `radial-gradient(circle at 50% 38%, ${center}, ${edge})`,
         updated_at: new Date().toISOString(),
       };
-      const { error } = await supabase.from('app_settings').upsert({ key: `feature_${slot}`, value }, { onConflict: 'key' });
+      const { error } = await supabase.from('app_settings').upsert({ key: settingKey, value }, { onConflict: 'key' });
+      if (error) throw error;
+      return json({ ok: true, setting: value, ...(await bootstrap(supabase)) });
+    }
+
+    if (action === 'feature_layout_update') {
+      const slot = clean(body.slot).toLowerCase();
+      if (!['rocket', 'pvp'].includes(slot)) return json({ ok: false, error: 'Feature turi noto‘g‘ri.' }, 400);
+      const settingKey = `feature_${slot}`;
+      const { data: existingRow, error: selectError } = await supabase.from('app_settings').select('value').eq('key', settingKey).maybeSingle();
+      if (selectError) throw selectError;
+      const value = {
+        ...(existingRow?.value || {}), slot,
+        scale: Math.min(160, Math.max(35, toNumber(body.scale, slot === 'pvp' ? 78 : 80))),
+        offset_x: Math.min(140, Math.max(-140, toNumber(body.offset_x, 0))),
+        offset_y: Math.min(100, Math.max(-100, toNumber(body.offset_y, slot === 'pvp' ? -18 : -16))),
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase.from('app_settings').upsert({ key: settingKey, value }, { onConflict: 'key' });
       if (error) throw error;
       return json({ ok: true, setting: value, ...(await bootstrap(supabase)) });
     }
