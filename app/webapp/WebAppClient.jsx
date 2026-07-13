@@ -1409,13 +1409,20 @@ function PromoImageCard({
   actionText,
   onClick,
   animationUrl,
+  mediaSettings,
 }) {
   const [failed, setFailed] = useState(false);
+  const defaultScale = variant === 'pvp' ? 78 : 80;
+  const defaultY = variant === 'pvp' ? -18 : -16;
+  const scale = Number.isFinite(Number(mediaSettings?.scale)) ? Number(mediaSettings.scale) : defaultScale;
+  const offsetX = Number.isFinite(Number(mediaSettings?.offset_x)) ? Number(mediaSettings.offset_x) : 0;
+  const offsetY = Number.isFinite(Number(mediaSettings?.offset_y)) ? Number(mediaSettings.offset_y) : defaultY;
 
   return (
     <button
       type="button"
       className={`promo-banner promo-image-banner premium-promo ${variant} ${failed ? 'image-failed' : ''}`}
+      style={{ '--feature-scale': String(scale / 100), '--feature-x': `${offsetX}px`, '--feature-y': `${offsetY}px` }}
       onClick={onClick}
       aria-label={title}
     >
@@ -1488,6 +1495,7 @@ function HomeView({
         <PromoImageCard
           variant="rocket"
           animationUrl={featureSettings?.feature_rocket?.animation_url || ''}
+          mediaSettings={featureSettings?.feature_rocket}
           badge="HOT!"
           badgeIcon="rocket"
           title="ROCKET"
@@ -1499,6 +1507,7 @@ function HomeView({
         <PromoImageCard
           variant="pvp"
           animationUrl={featureSettings?.feature_pvp?.animation_url || ''}
+          mediaSettings={featureSettings?.feature_pvp}
           badge="NEW!"
           badgeIcon="spark"
           title="PVP"
