@@ -5740,6 +5740,97 @@ button:disabled {
   }
 }
 
+/* Admin boshqaradigan Rocket/PVP media transformi. */
+.promo-image-banner .promo-feature-animation,
+.home-promo-stack .promo-image-banner.rocket .promo-feature-animation,
+.home-promo-stack .promo-image-banner.pvp .promo-feature-animation,
+.admin-feature-preview.promo-image-banner .promo-feature-animation {
+  transform: translate3d(var(--feature-x, 0px), var(--feature-y, -16px), 0) scale(var(--feature-scale, .8)) !important;
+  transform-origin: center center !important;
+}
+
+.feature-admin-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 520px);
+  gap: 18px;
+  align-items: start;
+}
+
+.feature-admin-previews {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-feature-editor {
+  padding: 14px;
+  border: 1px solid rgba(167,139,250,.18);
+  border-radius: 26px;
+  background: linear-gradient(145deg, rgba(15,23,42,.9), rgba(2,6,23,.94));
+  box-shadow: 0 18px 54px rgba(0,0,0,.24);
+}
+
+.admin-feature-preview.promo-banner {
+  width: 100% !important;
+  height: 152px !important;
+  min-height: 152px !important;
+  margin: 0 !important;
+  cursor: default !important;
+}
+
+.admin-feature-preview .admin-lottie-media {
+  display: block;
+}
+
+.admin-feature-controls {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.admin-feature-controls label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px 12px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-feature-controls output {
+  color: #c4b5fd;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-feature-controls input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: #8b5cf6;
+}
+
+.admin-feature-control-actions {
+  display: grid;
+  grid-template-columns: .8fr 1.4fr;
+  gap: 10px;
+}
+
+.admin-feature-control-actions button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  background: linear-gradient(135deg, #8b5cf6, #06b6d4);
+  font-weight: 900;
+}
+
+.admin-feature-control-actions .admin-secondary-button {
+  background: rgba(255,255,255,.09);
+}
+
+@media (max-width: 880px) {
+  .feature-admin-layout { grid-template-columns: 1fr; }
+  .feature-admin-previews { width: min(100%, 520px); }
+}
+
 
 /* =========================================================
    BALANCE CARD V2 — flush top/sides + old premium color
@@ -12382,3 +12473,14 @@ body {
 @media(prefers-reduced-motion:reduce){.case-page-idle-track{animation:none!important}.case-page-spin-card.target-win-item{animation:none!important}}
 .tgs-static-preview{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;pointer-events:none!important;user-select:none!important;-webkit-user-drag:none!important}
 .promo-feature-animation{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;filter:drop-shadow(0 16px 20px rgba(0,0,0,.3))!important}.promo-feature-animation .tgs-gift-canvas{width:100%!important;height:100%!important}.feature-admin-layout{grid-template-columns:minmax(300px,390px) minmax(0,1fr)!important}
+
+/* FEATURE POSITION ADMIN — final cascade authority */
+.promo-image-banner .promo-feature-animation,
+.home-promo-stack .promo-image-banner.rocket .promo-feature-animation,
+.home-promo-stack .promo-image-banner.pvp .promo-feature-animation,
+.admin-feature-preview.promo-image-banner .promo-feature-animation {
+  transform: translate3d(var(--feature-x, 0px), var(--feature-y, -16px), 0) scale(var(--feature-scale, .8)) !important;
+  transform-origin: center !important;
+}
+.feature-admin-layout{grid-template-columns:minmax(280px,360px) minmax(0,520px)!important}
+@media(max-width:880px){.feature-admin-layout{grid-template-columns:1fr!important}}
