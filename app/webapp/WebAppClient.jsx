@@ -1,6 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import caseOpeningStyles from './CaseOpening.module.css';
+
+const CASE_ROLL_DURATION_MS = 4600;
+const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
 
 const emptyCaseForm = {
   title: '',
@@ -249,10 +253,6 @@ function sortCasesForDisplay(items = []) {
   });
 }
 
-function delay(ms) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
 function buildStartAppLink(botUsername, referralCode) {
   const cleanBot = String(botUsername || 'GiftMystBot').replace('@', '').trim() || 'GiftMystBot';
   const appShortName = String(process.env.NEXT_PUBLIC_TELEGRAM_APP_SHORT_NAME || '').replace('/', '').trim();
@@ -279,8 +279,11 @@ function randomItem(items) {
   return items[Math.floor(Math.random() * items.length)];
 }
 
-function buildOpeningReel(gifts, winningGift) {
-  const safeGifts = gifts.length ? gifts : [winningGift].filter(Boolean);
+function buildOpeningReel(gifts = [], winningGift) {
+  const availableGifts = Array.isArray(gifts) ? gifts.filter(Boolean) : [];
+  const safeGifts = availableGifts.length
+    ? availableGifts
+    : [winningGift].filter(Boolean);
   const reel = [];
   let previousId = '';
 
@@ -514,6 +517,8 @@ export default function WebAppClient() {
   const toastTimerRef = useRef(null);
   const actionLockRef = useRef(false);
   const openingLockRef = useRef(false);
+  const pendingOpeningRef = useRef(null);
+  const openingFallbackTimerRef = useRef(null);
   const hasBootstrappedRef = useRef(false);
   const referralTrackedRef = useRef(false);
   const mountedRef = useRef(false);
@@ -681,6 +686,11 @@ export default function WebAppClient() {
         window.clearTimeout(toastTimerRef.current);
         toastTimerRef.current = null;
       }
+
+      if (openingFallbackTimerRef.current) {
+        window.clearTimeout(openingFallbackTimerRef.current);
+        openingFallbackTimerRef.current = null;
+      }
     };
 
     const initTelegram = () => {
@@ -770,6 +780,62 @@ export default function WebAppClient() {
     }
   }
 
+  const finalizeCaseOpening = useCallback(
+    (spinKey) => {
+      const completed = pendingOpeningRef.current;
+
+      if (
+        !completed ||
+        completed.stage !== 'rolling' ||
+        completed.spinKey !== spinKey
+      ) {
+        return;
+      }
+
+      pendingOpeningRef.current = null;
+
+      if (openingFallbackTimerRef.current) {
+        window.clearTimeout(openingFallbackTimerRef.current);
+        openingFallbackTimerRef.current = null;
+      }
+
+      setProfile((current) =>
+        current
+          ? {
+              ...current,
+              balance: completed.balanceAfter ?? completed.balance,
+            }
+          : current
+      );
+
+      setGifts((current) =>
+        current.map((item) =>
+          String(item.id) === String(completed.gift.id)
+            ? { ...item, ...completed.gift }
+            : item
+        )
+      );
+
+      if (completed.history?.id) {
+        setHistory((current) => [
+          completed.history,
+          ...current.filter(
+            (item) => String(item.id) !== String(completed.history.id)
+          ),
+        ]);
+      }
+
+      setOpening({
+        ...completed,
+        stage: 'result',
+      });
+
+      openingLockRef.current = false;
+      tg?.HapticFeedback?.notificationOccurred?.('success');
+    },
+    [tg]
+  );
+
   async function openCase(caseItem) {
     if (!caseItem || openingLockRef.current) return;
 
@@ -790,36 +856,39 @@ export default function WebAppClient() {
     }
 
     openingLockRef.current = true;
+    pendingOpeningRef.current = null;
     setError('');
     setSelectedCase(caseItem);
-
-    const previewReel = buildOpeningReel(activeGiftPool, null);
 
     setOpening({
       stage: 'preparing',
       caseItem,
       gift: null,
-      reel: previewReel,
+      reel: [],
       spinKey: Date.now(),
     });
 
     try {
       tg?.HapticFeedback?.impactOccurred?.('light');
 
-      const [result] = await Promise.all([
-        apiPost('/api/open-case', { caseId: caseItem.id }),
-        delay(140),
-      ]);
+      const result = await apiPost('/api/open-case', { caseId: caseItem.id });
 
       if (!result?.gift) {
         throw new Error('Server natija qaytarmadi. Qayta urinib ko‘ring.');
       }
 
-      const reel = buildOpeningReel(activeGiftPool, result.gift);
+      const latestGiftPool =
+        Array.isArray(result.reelPool) && result.reelPool.length
+          ? result.reelPool
+          : activeGiftPool;
+
+      warmImageCacheFromData(latestGiftPool, result.gift);
+
+      const reel = buildOpeningReel(latestGiftPool, result.gift);
       const spinKey = Date.now();
       const winningIndex = getWinningIndexFromReel(reel);
 
-      setOpening({
+      const rollingOpening = {
         stage: 'rolling',
         caseItem,
         gift: result.gift,
@@ -829,44 +898,30 @@ export default function WebAppClient() {
         history: result.history || null,
         balanceBefore: result.balanceBefore,
         balanceAfter: result.balanceAfter,
+        balance: result.balance,
         spinKey,
-      });
+      };
+
+      pendingOpeningRef.current = rollingOpening;
+      setOpening(rollingOpening);
 
       tg?.HapticFeedback?.impactOccurred?.('medium');
 
-      // Animatsiya paytida balance/gifts/history state'larini yangilamaslik kerak.
-      // Aks holda Telegram WebView qayta render qilib, reel qotib/stutter bo'lishi mumkin.
-      await delay(5000);
-
-      setProfile((current) => (current ? { ...current, balance: result.balanceAfter ?? result.balance } : current));
-
-      setGifts((current) =>
-        current.map((item) => (String(item.id) === String(result.gift.id) ? { ...item, ...result.gift } : item))
+      openingFallbackTimerRef.current = window.setTimeout(
+        () => finalizeCaseOpening(spinKey),
+        CASE_ROLL_FALLBACK_MS
       );
+    } catch (err) {
+      pendingOpeningRef.current = null;
 
-      if (result.history?.id) {
-        setHistory((current) => [result.history, ...current.filter((item) => String(item.id) !== String(result.history.id))]);
+      if (openingFallbackTimerRef.current) {
+        window.clearTimeout(openingFallbackTimerRef.current);
+        openingFallbackTimerRef.current = null;
       }
 
-      setOpening({
-        stage: 'result',
-        caseItem,
-        gift: result.gift,
-        reel,
-        winningIndex,
-        opening: result.opening,
-        history: result.history || null,
-        balanceBefore: result.balanceBefore,
-        balanceAfter: result.balanceAfter,
-        spinKey,
-      });
-
-      tg?.HapticFeedback?.notificationOccurred?.('success');
-    } catch (err) {
       setOpening(null);
       setError(err.message || 'Case ochishda xatolik yuz berdi');
       tg?.HapticFeedback?.notificationOccurred?.('error');
-    } finally {
       openingLockRef.current = false;
     }
   }
@@ -1155,6 +1210,9 @@ export default function WebAppClient() {
     );
   }
 
+  const isCaseOpening =
+    opening?.stage === 'preparing' || opening?.stage === 'rolling';
+
   return (
     <div className="app-frame">
       <div className="app-shell">
@@ -1192,6 +1250,7 @@ export default function WebAppClient() {
               onOpen={() => openCase(selectedCase)}
               onCloseResult={() => setOpening(null)}
               onSellResult={sellOpeningReward}
+              onRollComplete={finalizeCaseOpening}
             />
           ) : (
             <>
@@ -1253,7 +1312,9 @@ export default function WebAppClient() {
               key={item.id}
               item={item}
               active={!selectedCase && tab === item.id}
+              disabled={isCaseOpening}
               onClick={() => {
+                if (isCaseOpening) return;
                 setOpening(null);
                 setSelectedCase(null);
                 setTab(item.id);
@@ -1365,7 +1426,7 @@ function GlobalBalanceBar({ telegramUser, profile, profilePhotoUrl }) {
   );
 }
 
-function NavButton({ item, active, onClick, mobile = false }) {
+function NavButton({ item, active, onClick, mobile = false, disabled = false }) {
   const preventIconMenu = (event) => {
     event.preventDefault();
     return false;
@@ -1376,6 +1437,7 @@ function NavButton({ item, active, onClick, mobile = false }) {
       type="button"
       className={`nav-button ${active ? 'active' : ''} ${item.center ? 'center-home' : ''} ${mobile ? 'mobile-nav-btn' : ''}`}
       onClick={onClick}
+      disabled={disabled}
       onContextMenu={preventIconMenu}
     >
       <span className="nav-icon-wrap" onContextMenu={preventIconMenu}>
@@ -1593,15 +1655,26 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
   const isFree = Number(caseItem.price || 0) === 0;
   const buttonText = isFree ? 'FREE' : formatPrice(caseItem.price);
 
+  const openDetailsFromKeyboard = (event) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+
+    event.preventDefault();
+    onDetails(caseItem);
+  };
+
   return (
-    <button
-      type="button"
+    <article
       className={`case-card case-showcase-card ${disabled ? 'disabled' : ''}`}
       style={{
         '--case-accent': accent,
         '--case-badge': badgeColor,
       }}
+      role="button"
+      tabIndex={0}
+      aria-label={`${caseItem.title} case tafsilotlari`}
       onClick={() => onDetails(caseItem)}
+      onKeyDown={openDetailsFromKeyboard}
     >
       <div className="case-showcase-media">
         <span className="case-showcase-glow" aria-hidden="true" />
@@ -1636,7 +1709,7 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
           <span>{buttonText}</span>
         </button>
       </div>
-    </button>
+    </article>
   );
 }
 
@@ -2296,54 +2369,61 @@ function AdminList({ title, children }) {
   );
 }
 
-function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targetIndex = 0 }) {
+function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplete }) {
   const trackRef = useRef(null);
+  const finalDistanceRef = useRef(null);
+  const completedSpinRef = useRef(null);
   const [rollerStyle, setRollerStyle] = useState({
     '--raffle-x': '0px',
     '--raffle-transition': 'none',
-    '--raffle-filter': 'blur(0px)',
   });
 
-  const isLive = Boolean(opening);
+  const isLive =
+    opening?.stage === 'rolling' || opening?.stage === 'result';
   const isResult = opening?.stage === 'result';
   const isRolling = opening?.stage === 'rolling';
   const isPreparing = opening?.stage === 'preparing';
   const reel = isLive ? opening.reel : idleGifts;
 
-  const measureWinningDistance = () => {
+  const measureCardDistance = useCallback((index) => {
     const track = trackRef.current;
     const viewport = track?.parentElement;
-    const target = track?.querySelector('[data-winning="true"]');
-    if (!track || !viewport || !target) return Math.max(0, (targetIndex * (itemWidth + gap)) + (itemWidth / 2));
-    return Math.max(0, target.offsetLeft + (target.offsetWidth / 2) - (viewport.clientWidth / 2));
-  };
+    const card = track?.children?.[index];
 
-  useEffect(() => {
-    let startTimer = null;
-    let cleanTimer = null;
+    if (!track || !viewport || !card) return 0;
+
+    return Math.max(
+      0,
+      card.offsetLeft +
+        card.offsetWidth / 2 -
+        viewport.clientWidth / 2
+    );
+  }, []);
+
+  useLayoutEffect(() => {
+    let firstFrame = null;
+    let secondFrame = null;
 
     const resetStyle = {
       '--raffle-x': '0px',
       '--raffle-transition': 'none',
-      '--raffle-filter': 'blur(0px)',
     };
 
-    if (!opening) {
-      setRollerStyle(resetStyle);
-      return undefined;
-    }
-
-    if (opening.stage === 'preparing') {
+    if (!opening || opening.stage === 'preparing') {
+      finalDistanceRef.current = null;
+      completedSpinRef.current = null;
       setRollerStyle(resetStyle);
       return undefined;
     }
 
     if (opening.stage === 'result') {
-      const measuredDistance = measureWinningDistance();
+      const measuredDistance =
+        finalDistanceRef.current ?? measureCardDistance(targetIndex);
+
+      finalDistanceRef.current = measuredDistance;
       setRollerStyle({
         '--raffle-x': `-${measuredDistance}px`,
         '--raffle-transition': 'none',
-        '--raffle-filter': 'blur(0px)',
       });
       return undefined;
     }
@@ -2352,33 +2432,50 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
       return undefined;
     }
 
-    setRollerStyle(resetStyle);
+    const startIndex = Math.min(3, Math.max(0, targetIndex - 1));
+    const startDistance = measureCardDistance(startIndex);
+    const measuredDistance = measureCardDistance(targetIndex);
+    const reduceMotion = window.matchMedia?.(
+      '(prefers-reduced-motion: reduce)'
+    )?.matches;
+    const duration = reduceMotion ? 320 : CASE_ROLL_DURATION_MS;
 
-    startTimer = window.setTimeout(() => {
-      const measuredDistance = measureWinningDistance();
-      if (trackRef.current) {
-        trackRef.current.getBoundingClientRect();
-      }
+    finalDistanceRef.current = measuredDistance;
+    completedSpinRef.current = null;
 
-      setRollerStyle({
-        '--raffle-x': `-${measuredDistance}px`,
-        '--raffle-transition': 'transform 4.85s cubic-bezier(.08,.60,0,1), filter .55s ease',
-        '--raffle-filter': 'blur(.15px)',
+    setRollerStyle({
+      '--raffle-x': `-${startDistance}px`,
+      '--raffle-transition': 'none',
+    });
+
+    firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        setRollerStyle({
+          '--raffle-x': `-${measuredDistance}px`,
+          '--raffle-transition': `transform ${duration}ms cubic-bezier(.10,.68,.08,1)`,
+        });
       });
-
-      cleanTimer = window.setTimeout(() => {
-        setRollerStyle((current) => ({
-          ...current,
-          '--raffle-filter': 'blur(0px)',
-        }));
-      }, 3920);
-    }, 90);
+    });
 
     return () => {
-      if (startTimer) window.clearTimeout(startTimer);
-      if (cleanTimer) window.clearTimeout(cleanTimer);
+      if (firstFrame) window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
     };
-  }, [opening?.spinKey, opening?.stage, targetIndex, itemWidth, gap]);
+  }, [measureCardDistance, opening, targetIndex]);
+
+  const finishRoll = (event) => {
+    if (
+      !isRolling ||
+      event.target !== trackRef.current ||
+      event.propertyName !== 'transform' ||
+      completedSpinRef.current === opening?.spinKey
+    ) {
+      return;
+    }
+
+    completedSpinRef.current = opening.spinKey;
+    onRollComplete?.(opening.spinKey);
+  };
 
   const idleLoopBase = idleGifts.length
     ? Array.from({ length: Math.max(18, idleGifts.length * 5) }, (_, index) => idleGifts[index % idleGifts.length])
@@ -2386,19 +2483,39 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
   const idleLoopGifts = idleLoopBase.length ? [...idleLoopBase, ...idleLoopBase] : [];
 
   return (
-    <div className={`case-page-reel-preview inline-reel-preview ${isLive ? 'is-live' : ''} ${isResult ? 'is-result' : ''}`} aria-label="Case prizes preview">
-      <span className="case-page-marker top" aria-hidden="true" />
-      <span className="case-page-marker bottom" aria-hidden="true" />
+    <div
+      className={[
+        caseOpeningStyles.roller,
+        isLive ? caseOpeningStyles.live : '',
+        isResult ? caseOpeningStyles.result : '',
+        isPreparing ? caseOpeningStyles.preparing : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-label="Case prizes preview"
+      aria-busy={isPreparing || isRolling}
+    >
+      <span className={caseOpeningStyles.centerGuide} aria-hidden="true" />
+      <span
+        className={`${caseOpeningStyles.marker} ${caseOpeningStyles.markerTop}`}
+        aria-hidden="true"
+      />
+      <span
+        className={`${caseOpeningStyles.marker} ${caseOpeningStyles.markerBottom}`}
+        aria-hidden="true"
+      />
 
       {!isLive ? (
-        <div className="case-page-idle-track">
+        <div className={caseOpeningStyles.idleTrack}>
           {idleLoopGifts.map((gift, index) => (
             <div
-              className="case-page-idle-card"
+              className={caseOpeningStyles.card}
               key={`${gift?.id || 'gift'}-idle-${index}`}
               style={{
-                '--spin-gift-bg': solidGiftBackground(gift?.background_value, defaultGiftBackground(gift?.rarity)),
-                '--idle-delay': `${index * 0.11}s`,
+                '--gift-color': solidGiftBackground(
+                  gift?.background_value,
+                  defaultGiftBackground(gift?.rarity)
+                ),
               }}
             >
               <GiftMedia gift={gift} preferStatic />
@@ -2406,7 +2523,7 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
           ))}
 
           {!idleLoopGifts.length ? (
-            <div className="case-page-strip-empty">
+            <div className={caseOpeningStyles.emptyCard}>
               <AppIcon name="box" />
             </div>
           ) : null}
@@ -2414,17 +2531,24 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
       ) : (
         <div
           ref={trackRef}
-          className={`case-page-spin-track js-raffle-track ${isPreparing ? 'is-preparing' : ''} ${isRolling ? 'is-rolling' : ''}`}
+          className={`${caseOpeningStyles.spinTrack} ${
+            isRolling ? caseOpeningStyles.rolling : ''
+          }`}
           style={rollerStyle}
+          onTransitionEnd={finishRoll}
         >
           {reel.map((gift, index) => (
             <div
-              className={`case-page-spin-card ${isRolling && index === targetIndex ? 'target-win-item' : ''}`}
+              className={`${caseOpeningStyles.card} ${
+                index === targetIndex ? caseOpeningStyles.winnerCard : ''
+              }`}
               data-winning={index === targetIndex ? 'true' : undefined}
               key={`${gift?.id || 'gift'}-${index}-${opening?.spinKey || 'idle'}`}
               style={{
-                '--spin-gift-bg': solidGiftBackground(gift?.background_value, defaultGiftBackground(gift?.rarity)),
-                '--spin-delay': `${index * 0.022}s`,
+                '--gift-color': solidGiftBackground(
+                  gift?.background_value,
+                  defaultGiftBackground(gift?.rarity)
+                ),
               }}
             >
               <GiftMedia gift={gift} preferStatic />
@@ -2432,7 +2556,7 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
           ))}
 
           {!reel.length ? (
-            <div className="case-page-strip-empty">
+            <div className={caseOpeningStyles.emptyCard}>
               <AppIcon name="box" />
             </div>
           ) : null}
@@ -2442,7 +2566,17 @@ function InlineRaffleRoller({ opening, idleGifts, itemWidth = 84, gap = 9, targe
   );
 }
 
-function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onCloseResult, onSellResult }) {
+function CaseDetailPage({
+  caseItem,
+  gifts,
+  opening,
+  busy,
+  onBack,
+  onOpen,
+  onCloseResult,
+  onSellResult,
+  onRollComplete,
+}) {
   const readyGifts = gifts.filter(eligibleGift);
   const openableGifts = readyGifts.filter(openableGift);
   const isFree = Number(caseItem.price || 0) === 0;
@@ -2451,8 +2585,6 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
   const inlineOpening = opening && String(opening.caseItem?.id) === String(caseItem.id) ? opening : null;
   const isSpinning = inlineOpening && inlineOpening.stage !== 'result';
   const isResult = inlineOpening?.stage === 'result';
-  const itemWidth = 84;
-  const gap = 9;
   const targetIndex =
     typeof inlineOpening?.winningIndex === 'number'
       ? inlineOpening.winningIndex
@@ -2483,7 +2615,13 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
   return (
     <section className={`case-page-screen ${isSpinning ? 'is-inline-spinning' : ''} ${isResult ? 'has-inline-result' : ''}`}>
       <div className="case-page-top">
-        <button type="button" className="case-page-back" onClick={onBack} aria-label="Back">
+        <button
+          type="button"
+          className="case-page-back"
+          onClick={onBack}
+          disabled={isSpinning}
+          aria-label="Back"
+        >
           ←
         </button>
         <div>
@@ -2511,14 +2649,13 @@ function CaseDetailPage({ caseItem, gifts, opening, busy, onBack, onOpen, onClos
         <InlineRaffleRoller
           opening={inlineOpening}
           idleGifts={stripGifts}
-          itemWidth={itemWidth}
-          gap={gap}
           targetIndex={targetIndex}
+          onRollComplete={onRollComplete}
         />
 
         <button
           type="button"
-          className="case-page-open-btn"
+          className={caseOpeningStyles.openButton}
           disabled={busy || isSpinning || openableGifts.length === 0}
           onClick={onOpen}
           aria-busy={isSpinning}
