@@ -113,6 +113,10 @@
   will-change: transform;
 }
 
+.idleTrackPaused {
+  animation-play-state: paused;
+}
+
 .spinTrack {
   padding-right: calc(50% - var(--card-half));
   padding-left: calc(50% - var(--card-half));
@@ -257,6 +261,280 @@
   filter: saturate(0.72);
 }
 
+.resultPortal {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483646 !important;
+}
+
+.resultPanel {
+  width: min(364px, calc(100vw - 28px)) !important;
+  margin: auto !important;
+}
+
+.caseTile {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 238px;
+  padding: 0;
+  display: grid;
+  grid-template-rows: minmax(166px, 1fr) 72px;
+  overflow: hidden;
+  isolation: isolate;
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--case-accent, #7c5cff) 38%, rgba(255, 255, 255, 0.15));
+  border-radius: 24px;
+  color: #fff;
+  background: #101526;
+  box-shadow:
+    0 16px 34px rgba(1, 4, 15, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.075);
+  cursor: pointer;
+  transform: translateZ(0);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.caseTile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.018);
+  pointer-events: none;
+}
+
+.caseTileDisabled {
+  opacity: 0.62;
+}
+
+.caseTileDetails {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.caseTileDetails:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--case-accent, #7c5cff) 72%, white);
+  outline-offset: -3px;
+}
+
+.caseTileMedia {
+  position: relative;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 50% 44%,
+      color-mix(in srgb, var(--case-accent, #7c5cff) 25%, transparent),
+      transparent 43%
+    ),
+    linear-gradient(155deg, #1a2035 0%, #0c1121 100%);
+}
+
+.caseTileMedia::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(118deg, transparent 26%, rgba(255, 255, 255, 0.045) 48%, transparent 70%),
+    linear-gradient(180deg, transparent 55%, rgba(2, 6, 18, 0.38));
+  pointer-events: none;
+}
+
+.caseTileHalo {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 126px;
+  height: 126px;
+  border: 1px solid color-mix(in srgb, var(--case-accent, #7c5cff) 34%, transparent);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--case-accent, #7c5cff) 10%, transparent);
+  box-shadow:
+    0 0 0 18px color-mix(in srgb, var(--case-accent, #7c5cff) 5%, transparent),
+    0 0 48px color-mix(in srgb, var(--case-accent, #7c5cff) 22%, transparent);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.caseTileImage {
+  position: relative;
+  z-index: 2;
+  width: 92%;
+  height: 92%;
+  max-width: 204px;
+  max-height: 156px;
+  object-fit: contain;
+  object-position: center;
+  filter:
+    drop-shadow(0 16px 20px rgba(0, 0, 0, 0.42))
+    drop-shadow(0 0 14px color-mix(in srgb, var(--case-accent, #7c5cff) 22%, transparent));
+  transform: translateZ(0);
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.caseTileFallback {
+  position: relative;
+  z-index: 2;
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 25px;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.caseTileFallback svg {
+  width: 42px;
+  height: 42px;
+}
+
+.caseTileBadge {
+  position: absolute;
+  z-index: 3;
+  top: 11px;
+  left: 11px;
+  max-width: calc(100% - 22px);
+  min-height: 26px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  color: #fff;
+  background: color-mix(in srgb, var(--case-badge, #7c5cff) 78%, #111827);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.24);
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.045em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.caseTileFooter {
+  position: relative;
+  z-index: 6;
+  min-width: 0;
+  padding: 11px 12px 11px 14px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.065);
+  background: linear-gradient(180deg, #171c2d 0%, #111625 100%);
+  pointer-events: none;
+}
+
+.caseTileCopy {
+  min-width: 0;
+}
+
+.caseTileCopy h3 {
+  margin: 0;
+  overflow: hidden;
+  color: #f8fafc;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caseTileCopy p {
+  margin: 5px 0 0;
+  overflow: hidden;
+  color: rgba(226, 232, 240, 0.55);
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.caseTileOpen {
+  position: relative;
+  z-index: 7;
+  min-width: 70px;
+  min-height: 38px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 13px;
+  color: #fff;
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--case-accent, #7c5cff) 76%, #647cff),
+      color-mix(in srgb, var(--case-accent, #7c5cff) 72%, #4935aa)
+    );
+  box-shadow:
+    0 8px 18px color-mix(in srgb, var(--case-accent, #7c5cff) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  font-size: 11.5px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    transform 140ms ease,
+    filter 140ms ease;
+}
+
+.caseTileOpen svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+.caseTileOpen:active:not(:disabled) {
+  transform: translateY(1px);
+  filter: brightness(0.96);
+}
+
+.caseTileOpen:disabled {
+  cursor: not-allowed;
+  opacity: 0.56;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .caseTile:hover {
+    border-color: color-mix(in srgb, var(--case-accent, #7c5cff) 56%, rgba(255, 255, 255, 0.19));
+    box-shadow:
+      0 20px 42px rgba(1, 4, 15, 0.4),
+      0 0 0 1px color-mix(in srgb, var(--case-accent, #7c5cff) 12%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.085);
+    transform: translateY(-2px);
+  }
+}
+
 @keyframes idleReel {
   from {
     transform: translate3d(0, 0, 0);
@@ -310,6 +588,54 @@
   .openButton {
     font-size: 17px;
   }
+
+  .resultPanel {
+    width: min(334px, calc(100vw - 24px)) !important;
+  }
+
+  .caseTile {
+    min-height: 220px;
+    grid-template-rows: minmax(154px, 1fr) 66px;
+    border-radius: 21px;
+  }
+
+  .caseTileImage {
+    max-width: 180px;
+    max-height: 144px;
+  }
+
+  .caseTileHalo {
+    width: 112px;
+    height: 112px;
+  }
+
+  .caseTileFooter {
+    padding: 9px 9px 9px 11px;
+    gap: 7px;
+  }
+
+  .caseTileCopy h3 {
+    font-size: 13.5px;
+  }
+
+  .caseTileCopy p {
+    margin-top: 4px;
+    font-size: 8.5px;
+  }
+
+  .caseTileOpen {
+    min-width: 62px;
+    min-height: 35px;
+    padding: 0 9px;
+    border-radius: 12px;
+    gap: 5px;
+    font-size: 10.5px;
+  }
+
+  .caseTileOpen svg {
+    width: 13px;
+    height: 13px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -319,6 +645,11 @@
   }
 
   .openButton {
+    transition: none;
+  }
+
+  .caseTile,
+  .caseTileOpen {
     transition: none;
   }
 }
