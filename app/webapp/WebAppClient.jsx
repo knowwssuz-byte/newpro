@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import caseOpeningStyles from './CaseOpening.module.css';
 
 const CASE_ROLL_DURATION_MS = 4600;
@@ -858,6 +859,14 @@ export default function WebAppClient() {
     openingLockRef.current = true;
     pendingOpeningRef.current = null;
     setError('');
+
+    // Home'dagi pastroqda joylashgan case tugmasidan ochilganda eski scroll
+    // pozitsiyasini yangi case sahifasiga olib o'tmaslik kerak. Aks holda reel
+    // tepada qoladi va foydalanuvchi opening paytida faqat gift gridni ko'radi.
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
     setSelectedCase(caseItem);
 
     setOpening({
@@ -1655,50 +1664,53 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
   const isFree = Number(caseItem.price || 0) === 0;
   const buttonText = isFree ? 'FREE' : formatPrice(caseItem.price);
 
-  const openDetailsFromKeyboard = (event) => {
-    if (event.target !== event.currentTarget) return;
-    if (event.key !== 'Enter' && event.key !== ' ') return;
-
-    event.preventDefault();
-    onDetails(caseItem);
-  };
-
   return (
     <article
-      className={`case-card case-showcase-card ${disabled ? 'disabled' : ''}`}
+      className={`${caseOpeningStyles.caseTile} ${
+        disabled ? caseOpeningStyles.caseTileDisabled : ''
+      }`}
       style={{
         '--case-accent': accent,
         '--case-badge': badgeColor,
       }}
-      role="button"
-      tabIndex={0}
-      aria-label={`${caseItem.title} case tafsilotlari`}
-      onClick={() => onDetails(caseItem)}
-      onKeyDown={openDetailsFromKeyboard}
     >
-      <div className="case-showcase-media">
-        <span className="case-showcase-glow" aria-hidden="true" />
+      <button
+        type="button"
+        className={caseOpeningStyles.caseTileDetails}
+        aria-label={`${caseItem.title} case tafsilotlari`}
+        onClick={() => onDetails(caseItem)}
+      />
+
+      <div className={caseOpeningStyles.caseTileMedia}>
+        <span className={caseOpeningStyles.caseTileHalo} aria-hidden="true" />
 
         {caseItem.image_url ? (
-          <img src={caseItem.image_url} alt="" loading="lazy" />
+          <img
+            className={caseOpeningStyles.caseTileImage}
+            src={caseItem.image_url}
+            alt=""
+            loading="lazy"
+          />
         ) : (
-          <span className="case-showcase-fallback">
+          <span className={caseOpeningStyles.caseTileFallback}>
             <AppIcon name="box" />
           </span>
         )}
 
-        {badge ? <span className="case-showcase-badge">{badge}</span> : null}
+        {badge ? (
+          <span className={caseOpeningStyles.caseTileBadge}>{badge}</span>
+        ) : null}
       </div>
 
-      <div className="case-showcase-footer">
-        <div className="case-showcase-copy">
+      <div className={caseOpeningStyles.caseTileFooter}>
+        <div className={caseOpeningStyles.caseTileCopy}>
           <h3>{caseItem.title}</h3>
-          <p>{caseItem.description || `${gifts.length || 0} rewards`}</p>
+          <p>{readyCount || gifts.length || 0} rewards</p>
         </div>
 
         <button
           type="button"
-          className="case-showcase-open"
+          className={caseOpeningStyles.caseTileOpen}
           disabled={disabled}
           onClick={(event) => {
             event.stopPropagation();
@@ -2506,7 +2518,11 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
       />
 
       {!isLive ? (
-        <div className={caseOpeningStyles.idleTrack}>
+        <div
+          className={`${caseOpeningStyles.idleTrack} ${
+            isPreparing ? caseOpeningStyles.idleTrackPaused : ''
+          }`}
+        >
           {idleLoopGifts.map((gift, index) => (
             <div
               className={caseOpeningStyles.card}
@@ -2566,6 +2582,61 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
   );
 }
 
+function CaseWinResult({ opening, onClose, onSell }) {
+  if (!opening?.gift || typeof document === 'undefined') {
+    return null;
+  }
+
+  return createPortal(
+    <div
+      className={`win-screen-layer ${caseOpeningStyles.resultPortal}`}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="case-win-title"
+    >
+      <div
+        className={`win-screen-card ${caseOpeningStyles.resultPanel} ${
+          isBalanceReward(opening.gift) ? 'balance-win' : ''
+        }`}
+        style={{
+          '--win-screen-bg': solidGiftBackground(
+            opening.gift?.background_value,
+            defaultGiftBackground(opening.gift?.rarity)
+          ),
+        }}
+      >
+        <span className="win-screen-shine" aria-hidden="true" />
+        <span className="win-screen-badge">YOU WON</span>
+
+        <div className="win-screen-media">
+          <GiftMedia gift={opening.gift} animate />
+        </div>
+
+        <div className="win-screen-copy">
+          <strong id="case-win-title">{opening.gift?.title || 'Reward'}</strong>
+          <p>{rewardSubtitle(opening.gift)}</p>
+        </div>
+
+        <div className="win-screen-actions">
+          {!isBalanceReward(opening.gift) ? (
+            <button type="button" className="sell-btn" onClick={() => onSell(opening)}>
+              {sellButtonText(opening.gift)}
+            </button>
+          ) : (
+            <button type="button" className="sell-btn" onClick={onClose}>
+              Balansga qo‘shildi
+            </button>
+          )}
+          <button type="button" className="close-win-btn" onClick={onClose}>
+            Yopish
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 function CaseDetailPage({
   caseItem,
   gifts,
@@ -2585,6 +2656,7 @@ function CaseDetailPage({
   const inlineOpening = opening && String(opening.caseItem?.id) === String(caseItem.id) ? opening : null;
   const isSpinning = inlineOpening && inlineOpening.stage !== 'result';
   const isResult = inlineOpening?.stage === 'result';
+  const isOpeningActive = Boolean(inlineOpening);
   const targetIndex =
     typeof inlineOpening?.winningIndex === 'number'
       ? inlineOpening.winningIndex
@@ -2594,23 +2666,61 @@ function CaseDetailPage({
     ? Array.from({ length: Math.min(9, Math.max(7, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
     : [];
 
-  useEffect(() => {
-    if (!isResult) return undefined;
-    const scrollY = window.scrollY;
+  useLayoutEffect(() => {
+    if (!isOpeningActive) return undefined;
+
+    const root = document.documentElement;
     const body = document.body;
-    const previous = { position: body.style.position, top: body.style.top, width: body.style.width, overflow: body.style.overflow };
+    const scrollY =
+      window.scrollY || root.scrollTop || body.scrollTop || 0;
+    const previousBody = {
+      position: body.style.position,
+      top: body.style.top,
+      right: body.style.right,
+      left: body.style.left,
+      width: body.style.width,
+      overflow: body.style.overflow,
+      overscrollBehavior: body.style.overscrollBehavior,
+    };
+    const previousRoot = {
+      overflow: root.style.overflow,
+      overscrollBehavior: root.style.overscrollBehavior,
+    };
+
     body.style.position = 'fixed';
     body.style.top = `-${scrollY}px`;
+    body.style.right = '0';
+    body.style.left = '0';
     body.style.width = '100%';
     body.style.overflow = 'hidden';
-    return () => {
-      body.style.position = previous.position;
-      body.style.top = previous.top;
-      body.style.width = previous.width;
-      body.style.overflow = previous.overflow;
-      window.scrollTo(0, scrollY);
+    body.style.overscrollBehavior = 'none';
+    root.style.overflow = 'hidden';
+    root.style.overscrollBehavior = 'none';
+
+    const preventScroll = (event) => {
+      if (event.cancelable) event.preventDefault();
     };
-  }, [isResult]);
+
+    document.addEventListener('touchmove', preventScroll, { passive: false });
+    document.addEventListener('wheel', preventScroll, { passive: false });
+
+    return () => {
+      document.removeEventListener('touchmove', preventScroll);
+      document.removeEventListener('wheel', preventScroll);
+
+      body.style.position = previousBody.position;
+      body.style.top = previousBody.top;
+      body.style.right = previousBody.right;
+      body.style.left = previousBody.left;
+      body.style.width = previousBody.width;
+      body.style.overflow = previousBody.overflow;
+      body.style.overscrollBehavior = previousBody.overscrollBehavior;
+      root.style.overflow = previousRoot.overflow;
+      root.style.overscrollBehavior = previousRoot.overscrollBehavior;
+
+      window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' });
+    };
+  }, [isOpeningActive]);
 
   return (
     <section className={`case-page-screen ${isSpinning ? 'is-inline-spinning' : ''} ${isResult ? 'has-inline-result' : ''}`}>
@@ -2667,43 +2777,13 @@ function CaseDetailPage({
 
       </div>
 
-        {isResult ? (
-          <div className="win-screen-layer" role="dialog" aria-modal="true">
-            <div
-              className={`win-screen-card ${isBalanceReward(inlineOpening.gift) ? 'balance-win' : ''}`}
-              style={{
-                '--win-screen-bg': solidGiftBackground(inlineOpening.gift?.background_value, defaultGiftBackground(inlineOpening.gift?.rarity)),
-              }}
-            >
-              <span className="win-screen-shine" aria-hidden="true" />
-              <span className="win-screen-badge">YOU WON</span>
-
-              <div className="win-screen-media">
-                <GiftMedia gift={inlineOpening.gift} animate />
-              </div>
-
-              <div className="win-screen-copy">
-                <strong>{inlineOpening.gift?.title || 'Reward'}</strong>
-                <p>{rewardSubtitle(inlineOpening.gift)}</p>
-              </div>
-
-              <div className="win-screen-actions">
-                {!isBalanceReward(inlineOpening.gift) ? (
-                  <button type="button" className="sell-btn" onClick={() => onSellResult(inlineOpening)}>
-                    {sellButtonText(inlineOpening.gift)}
-                  </button>
-                ) : (
-                  <button type="button" className="sell-btn" onClick={onCloseResult}>
-                    Balansga qo‘shildi
-                  </button>
-                )}
-                <button type="button" className="close-win-btn" onClick={onCloseResult}>
-                  Yopish
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : null}
+      {isResult ? (
+        <CaseWinResult
+          opening={inlineOpening}
+          onClose={onCloseResult}
+          onSell={onSellResult}
+        />
+      ) : null}
 
       <div className="case-page-prizes-head">
         <div>
