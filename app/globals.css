@@ -12484,3 +12484,516 @@ body {
 }
 .feature-admin-layout{grid-template-columns:minmax(280px,360px) minmax(0,520px)!important}
 @media(max-width:880px){.feature-admin-layout{grid-template-columns:1fr!important}}
+
+/* ROCKET V8 ADMIN CONSOLE */
+.rocket-admin-console {
+  display: grid;
+  gap: 16px;
+}
+
+.rocket-admin-hero,
+.rocket-admin-panel,
+.rocket-admin-stat,
+.rocket-admin-loading {
+  border: 1px solid rgba(142, 125, 255, .16);
+  background:
+    radial-gradient(circle at 92% 6%, rgba(109, 77, 230, .13), transparent 38%),
+    linear-gradient(155deg, rgba(22, 24, 39, .98), rgba(11, 13, 23, .98));
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .24), inset 0 1px 0 rgba(255, 255, 255, .045);
+}
+
+.rocket-admin-hero {
+  min-height: 138px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 24px;
+  border-radius: 25px;
+}
+
+.rocket-admin-hero > div {
+  min-width: 0;
+}
+
+.rocket-admin-hero > div > span,
+.rocket-admin-panel-head > div > span,
+.rocket-admin-stat > span {
+  color: #8d82db;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+
+.rocket-admin-hero h2 {
+  margin: 7px 0 6px;
+  color: #f7f7fb;
+  font-size: clamp(25px, 4vw, 34px);
+  line-height: 1;
+}
+
+.rocket-admin-hero p {
+  max-width: 660px;
+  margin: 0;
+  color: rgba(231, 232, 241, .5);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.rocket-admin-live,
+.rocket-admin-status,
+.rocket-admin-next-value {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, .09);
+  border-radius: 999px;
+  color: rgba(238, 239, 247, .62);
+  background: rgba(255, 255, 255, .035);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .08em;
+}
+
+.rocket-admin-live {
+  min-height: 37px;
+  gap: 8px;
+  padding: 0 14px;
+}
+
+.rocket-admin-live i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c19a50;
+  box-shadow: 0 0 0 5px rgba(193, 154, 80, .08);
+}
+
+.rocket-admin-live.is-live {
+  color: #78dfb1;
+  border-color: rgba(48, 199, 133, .2);
+  background: rgba(35, 163, 108, .08);
+}
+
+.rocket-admin-live.is-live i {
+  background: #40d89b;
+  box-shadow: 0 0 0 5px rgba(64, 216, 155, .09);
+  animation: rocketAdminLivePulse 1.3s ease-in-out infinite;
+}
+
+.rocket-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.rocket-admin-stat {
+  min-height: 121px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  padding: 17px;
+  border-radius: 20px;
+}
+
+.rocket-admin-stat strong {
+  overflow: hidden;
+  color: #f2f3f8;
+  font-size: clamp(22px, 3.3vw, 31px);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rocket-admin-stat small {
+  color: rgba(224, 226, 237, .4);
+  font-size: 10px;
+}
+
+.rocket-admin-stat-primary {
+  border-color: rgba(72, 213, 165, .2);
+  background:
+    radial-gradient(circle at 90% 0, rgba(45, 198, 142, .15), transparent 48%),
+    linear-gradient(155deg, rgba(19, 39, 36, .98), rgba(11, 20, 23, .98));
+}
+
+.rocket-admin-stat-primary > span,
+.rocket-admin-stat-primary strong {
+  color: #83e7bd;
+}
+
+.rocket-admin-stat-secret {
+  border-color: rgba(255, 99, 111, .2);
+  background:
+    radial-gradient(circle at 90% 0, rgba(235, 72, 89, .15), transparent 48%),
+    linear-gradient(155deg, rgba(43, 23, 33, .98), rgba(21, 13, 22, .98));
+}
+
+.rocket-admin-stat-secret > span,
+.rocket-admin-stat-secret strong {
+  color: #ff929d;
+}
+
+.rocket-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.rocket-admin-panel {
+  min-width: 0;
+  padding: 19px;
+  border-radius: 22px;
+}
+
+.rocket-admin-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.rocket-admin-panel-head h3 {
+  margin: 5px 0 0;
+  color: #f3f3f8;
+  font-size: 19px;
+}
+
+.rocket-admin-status,
+.rocket-admin-next-value {
+  min-height: 32px;
+  padding: 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rocket-admin-status.is-betting {
+  color: #dfb76d;
+  border-color: rgba(225, 176, 86, .22);
+  background: rgba(196, 144, 56, .09);
+}
+
+.rocket-admin-status.is-flying {
+  color: #74e2b4;
+  border-color: rgba(49, 204, 139, .24);
+  background: rgba(40, 175, 119, .09);
+}
+
+.rocket-admin-status.is-crashed {
+  color: #ff8f99;
+  border-color: rgba(235, 72, 89, .24);
+  background: rgba(200, 54, 71, .09);
+}
+
+.rocket-admin-next-value {
+  color: #c2b8ff;
+  border-color: rgba(144, 119, 255, .22);
+  background: rgba(109, 78, 227, .1);
+  font-size: 11px;
+}
+
+.rocket-admin-round-line {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 20px 0;
+}
+
+.rocket-admin-round-line > span {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, .06);
+  border-radius: 14px;
+  color: rgba(225, 227, 237, .35);
+  background: rgba(255, 255, 255, .025);
+  font-size: 9px;
+}
+
+.rocket-admin-round-line b {
+  overflow: hidden;
+  color: rgba(242, 243, 248, .75);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rocket-admin-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.rocket-admin-actions button,
+.rocket-admin-bias-options button {
+  appearance: none;
+  border: 1px solid rgba(143, 118, 255, .24);
+  color: #eeeaff;
+  background: linear-gradient(135deg, #7356e8, #5c43bd);
+  box-shadow: 0 9px 18px rgba(59, 42, 139, .2), inset 0 1px 0 rgba(255, 255, 255, .14);
+  cursor: pointer;
+  transition: transform .16s ease, opacity .16s ease, border-color .16s ease;
+}
+
+.rocket-admin-actions button {
+  min-height: 45px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 820;
+}
+
+.rocket-admin-actions button:hover:not(:disabled),
+.rocket-admin-bias-options button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.rocket-admin-actions button:active:not(:disabled),
+.rocket-admin-bias-options button:active:not(:disabled) {
+  transform: translateY(0) scale(.985);
+}
+
+.rocket-admin-actions button:disabled,
+.rocket-admin-bias-options button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+.rocket-admin-actions .rocket-admin-launch {
+  color: #062b20;
+  border-color: rgba(82, 222, 166, .35);
+  background: linear-gradient(135deg, #5be1ad, #33bd89);
+}
+
+.rocket-admin-actions .rocket-admin-crash {
+  color: #fff0f2;
+  border-color: rgba(255, 105, 119, .34);
+  background: linear-gradient(135deg, #e95466, #b92f49);
+}
+
+.rocket-admin-actions .rocket-admin-secondary {
+  color: rgba(236, 237, 245, .68);
+  border-color: rgba(255, 255, 255, .1);
+  background: rgba(255, 255, 255, .04);
+  box-shadow: none;
+}
+
+.rocket-admin-input {
+  display: grid;
+  gap: 7px;
+  margin: 20px 0 10px;
+}
+
+.rocket-admin-input > span {
+  color: rgba(225, 226, 237, .38);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.rocket-admin-input > div {
+  height: 51px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  border: 1px solid rgba(145, 123, 255, .18);
+  border-radius: 15px;
+  background: rgba(7, 8, 14, .58);
+}
+
+.rocket-admin-input input {
+  width: 100%;
+  min-width: 0;
+  border: 0 !important;
+  outline: 0;
+  color: #f2f1fb;
+  background: transparent !important;
+  font-size: 20px;
+  font-weight: 830;
+  font-variant-numeric: tabular-nums;
+  box-shadow: none !important;
+}
+
+.rocket-admin-input b {
+  color: #9181e4;
+  font-size: 16px;
+}
+
+.rocket-admin-plan-note,
+.rocket-admin-warning {
+  margin: 0 0 16px;
+  color: rgba(224, 226, 236, .4);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.rocket-admin-plan-note strong {
+  color: rgba(235, 232, 255, .7);
+}
+
+.rocket-admin-bias {
+  display: grid;
+  gap: 17px;
+}
+
+.rocket-admin-bias-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rocket-admin-bias-options button {
+  min-height: 106px;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: 7px;
+  padding: 15px;
+  border-color: rgba(255, 255, 255, .075);
+  border-radius: 16px;
+  color: rgba(238, 239, 246, .68);
+  text-align: left;
+  background: rgba(255, 255, 255, .025);
+  box-shadow: none;
+}
+
+.rocket-admin-bias-options button > i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(215, 216, 228, .27);
+}
+
+.rocket-admin-bias-options button strong {
+  color: rgba(244, 245, 249, .78);
+  font-size: 13px;
+}
+
+.rocket-admin-bias-options button span {
+  color: rgba(222, 224, 234, .37);
+  font-size: 9px;
+  line-height: 1.35;
+}
+
+.rocket-admin-bias-options button.is-active {
+  border-color: rgba(117, 224, 180, .28);
+  background:
+    radial-gradient(circle at 90% 0, rgba(62, 211, 151, .12), transparent 48%),
+    rgba(32, 105, 80, .1);
+}
+
+.rocket-admin-bias-options button.is-active > i {
+  background: #55dda7;
+  box-shadow: 0 0 0 5px rgba(85, 221, 167, .09);
+}
+
+.rocket-admin-bias-options button.is-active strong {
+  color: #87e8c0;
+}
+
+.rocket-admin-warning {
+  margin: 0;
+  padding: 11px 13px;
+  border: 1px solid rgba(224, 174, 82, .12);
+  border-radius: 13px;
+  color: rgba(231, 205, 150, .53);
+  background: rgba(165, 115, 35, .055);
+}
+
+.rocket-admin-loading {
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 9px;
+  border-radius: 24px;
+  text-align: center;
+}
+
+.rocket-admin-loading i {
+  width: 31px;
+  height: 31px;
+  border: 3px solid rgba(139, 115, 255, .16);
+  border-top-color: #8c74f0;
+  border-radius: 50%;
+  animation: rocketAdminSpin .8s linear infinite;
+}
+
+.rocket-admin-loading strong {
+  color: rgba(242, 243, 248, .76);
+  font-size: 13px;
+}
+
+.rocket-admin-loading span {
+  color: rgba(224, 225, 235, .38);
+  font-size: 10px;
+}
+
+@keyframes rocketAdminLivePulse {
+  0%, 100% { opacity: .62; transform: scale(.88); }
+  50% { opacity: 1; transform: scale(1.06); }
+}
+
+@keyframes rocketAdminSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+  .rocket-admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .rocket-admin-hero {
+    align-items: flex-start;
+    padding: 18px;
+  }
+
+  .rocket-admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rocket-admin-bias-options {
+    grid-template-columns: 1fr;
+  }
+
+  .rocket-admin-bias-options button {
+    min-height: 88px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rocket-admin-hero {
+    display: grid;
+  }
+
+  .rocket-admin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .rocket-admin-stat {
+    min-height: 103px;
+  }
+
+  .rocket-admin-round-line {
+    grid-template-columns: 1fr;
+  }
+
+  .rocket-admin-actions {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rocket-admin-live.is-live i,
+  .rocket-admin-loading i {
+    animation: none;
+  }
+
+  .rocket-admin-actions button,
+  .rocket-admin-bias-options button {
+    transition: none;
+  }
+}
