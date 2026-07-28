@@ -1265,9 +1265,19 @@ export default function WebAppClient() {
         ) : null}
         {busy ? <div className="busy-indicator">Amal bajarilmoqda...</div> : null}
 
-        <GlobalBalanceBar telegramUser={telegramUser} profile={profile} profilePhotoUrl={profilePhotoUrl} />
+        {tab !== 'rocket' ? (
+          <GlobalBalanceBar
+            telegramUser={telegramUser}
+            profile={profile}
+            profilePhotoUrl={profilePhotoUrl}
+          />
+        ) : null}
 
-        <main className={`app-main ${selectedCase ? 'case-page-main' : ''}`}>
+        <main
+          className={`app-main ${
+            selectedCase ? 'case-page-main' : ''
+          } ${tab === 'rocket' ? 'rocket-game-main' : ''}`}
+        >
           {selectedCase ? (
             <CaseDetailPage
               caseItem={selectedCase}
