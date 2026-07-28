@@ -19,6 +19,7 @@
     sans-serif;
   box-sizing: border-box;
   isolation: isolate;
+  -webkit-font-smoothing: antialiased;
 }
 
 :global(.app-main.rocket-game-main) {
@@ -1286,6 +1287,28 @@
     inset 0 -1px 0 rgba(6, 89, 59, 0.24);
 }
 
+.primary_cashoutPending {
+  color: #d8fff0;
+  background: linear-gradient(105deg, #177f60, #12664f);
+  box-shadow:
+    0 9px 20px rgba(13, 126, 88, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 0 0 1px rgba(93, 224, 172, 0.1);
+}
+
+.primary_cashoutPending strong::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 8px;
+  border-radius: 50%;
+  background: #8ef2c7;
+  box-shadow: 0 0 0 4px rgba(142, 242, 199, 0.08);
+  vertical-align: 2px;
+  animation: connectionPulse 700ms ease-in-out infinite;
+}
+
 .primary_placed {
   color: rgba(242, 245, 246, 0.72);
   background: #2a3436;
@@ -1309,6 +1332,8 @@
 .playersCard {
   padding: 14px;
   border-radius: 23px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 260px;
 }
 
 .playersHeader {
@@ -1932,6 +1957,40 @@
   50% {
     opacity: 1;
   }
+}
+
+.root[data-performance="lite"] .particles i:nth-child(even),
+.root[data-performance="lite"] .orbitField i:nth-child(2),
+.root[data-performance="lite"] .orbitField i:nth-child(3),
+.root[data-performance="lite"] .smokeCloud i:nth-child(n + 5),
+.root[data-performance="lite"] .sparkField i:nth-child(n + 9),
+.root[data-performance="lite"] .debrisField i:nth-child(n + 5) {
+  display: none;
+}
+
+.root[data-performance="lite"] .spaceFog {
+  filter: blur(10px);
+}
+
+.root[data-performance="lite"] .orbitField,
+.root[data-performance="lite"] .launchHalo {
+  animation: none;
+}
+
+.root[data-performance="lite"] .sceneFlying .particles i {
+  animation-duration: 1050ms;
+}
+
+.root[data-performance="lite"] .engineGlow {
+  filter: blur(7px);
+}
+
+.root[data-performance="lite"] .impactSmoke {
+  display: none;
+}
+
+.root[data-performance="lite"] .rocket img {
+  filter: drop-shadow(0 8px 9px rgba(0, 0, 0, 0.38));
 }
 
 @media (max-width: 430px) {
