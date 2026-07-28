@@ -271,32 +271,31 @@
   flex: 0 0 23px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(81, 197, 255, 0.48);
-  border-radius: 50%;
-  color: #dff8ff;
-  background: linear-gradient(145deg, #25baf1, #2672d8);
-  box-shadow:
-    inset 0 0 0 2px rgba(8, 37, 91, 0.34),
-    0 2px 7px rgba(17, 112, 210, 0.2);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.coin svg {
-  width: 13px;
-  height: 13px;
-  fill: currentColor;
+.coin img {
+  display: block;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(58, 35, 0, 0.2));
 }
 
 .coinSmall {
   width: 14px;
   height: 14px;
   flex-basis: 14px;
-  border-width: 1px;
-  box-shadow: inset 0 0 0 1px rgba(8, 37, 91, 0.25);
+  border: 0;
+  box-shadow: none;
 }
 
-.coinSmall svg {
-  width: 8px;
-  height: 8px;
+.coinSmall img {
+  width: 12px;
+  height: 12px;
 }
 
 .arena {
@@ -573,8 +572,15 @@
   pointer-events: none;
 }
 
-.liveMultiplier strong {
+.multiplierValue {
+  --multiplier-tempo: 0.5;
+  --multiplier-scale: 1.004;
+  --multiplier-shift: 0px;
+  --multiplier-roll-duration: 240ms;
   min-width: 4.1ch;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
   color: #f8f9ff;
   font-size: clamp(48px, 14vw, 70px);
   font-weight: 880;
@@ -585,16 +591,60 @@
     0 10px 24px rgba(0, 0, 0, 0.42),
     0 0 28px rgba(113, 91, 219, 0.08);
   font-variant-numeric: tabular-nums;
+  transform:
+    translateZ(0)
+    scale(var(--multiplier-scale));
+  transform-origin: center;
+  transition: transform 110ms linear;
+  will-change: transform;
 }
 
-.liveMultiplier span {
+.multiplierInteger,
+.multiplierFraction,
+.multiplierDot,
+.multiplierX {
+  display: inline-block;
+  font: inherit;
+  line-height: inherit;
+}
+
+.multiplierInteger {
+  min-width: 1ch;
+  animation: multiplierIntegerRoll
+    var(--multiplier-roll-duration)
+    cubic-bezier(0.18, 0.78, 0.2, 1)
+    both;
+}
+
+.multiplierFraction {
+  min-width: 2ch;
+  transform:
+    translate3d(
+      0,
+      var(--multiplier-shift),
+      0
+    );
+  transition: transform 90ms linear;
+}
+
+.multiplierDot {
+  margin-left: -0.02em;
+}
+
+.multiplierX {
+  margin-left: 0.04em;
+  font-size: 0.68em;
+  letter-spacing: -0.02em;
+}
+
+.multiplierCaption {
   color: rgba(227, 229, 240, 0.45);
   font-size: 7.8px;
   font-weight: 800;
   letter-spacing: 0.105em;
 }
 
-.sceneCrashed .liveMultiplier strong {
+.sceneCrashed .multiplierValue {
   color: #ff898d;
   text-shadow:
     0 10px 24px rgba(0, 0, 0, 0.45),
@@ -602,7 +652,7 @@
   animation: crashNumberLock 430ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
-.sceneCrashed .liveMultiplier span {
+.sceneCrashed .multiplierCaption {
   color: rgba(255, 157, 158, 0.68);
 }
 
@@ -1686,6 +1736,13 @@
   background: rgba(177, 57, 61, 0.1);
 }
 
+.fairness summary > span > .fairnessManual {
+  color: #d7b977;
+  border-color: rgba(218, 178, 92, 0.24);
+  background: rgba(177, 132, 57, 0.1);
+  font-size: 9px;
+}
+
 .fairness summary > b {
   max-width: 210px;
   overflow: hidden;
@@ -1728,6 +1785,19 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 7.5px;
   line-height: 1.45;
+}
+
+@keyframes multiplierIntegerRoll {
+  from {
+    opacity: 0.48;
+    filter: blur(0.7px);
+    transform: translate3d(0, -0.28em, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 }
 
 @keyframes particleFloat {
@@ -2092,6 +2162,10 @@
   filter: drop-shadow(0 8px 9px rgba(0, 0, 0, 0.38));
 }
 
+.root[data-performance="lite"] .multiplierInteger {
+  filter: none;
+}
+
 .root[data-performance="lite"] .bootOrbit {
   box-shadow: none;
 }
@@ -2252,7 +2326,7 @@
     height: 122px;
   }
 
-  .liveMultiplier strong {
+  .multiplierValue {
     font-size: 43px;
   }
 
@@ -2318,7 +2392,8 @@
   .smokeCloud i,
   .sparkField i,
   .debrisField i,
-  .sceneCrashed .liveMultiplier strong,
+  .sceneCrashed .multiplierValue,
+  .multiplierInteger,
   .rocketCrashed,
   .connectionWeak > i {
     animation: none;
@@ -2326,6 +2401,8 @@
 
   .rocket,
   .primaryAction,
+  .multiplierValue,
+  .multiplierFraction,
   .autoControl > button > i {
     transition: none;
   }
