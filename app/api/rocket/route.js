@@ -12,7 +12,7 @@ const ROCKET_CONFIG = Object.freeze({
   bettingWindowMs: 7000,
   resultHoldMs: 1400,
   growthRate: 0.22,
-  pollIntervalMs: 300,
+  pollIntervalMs: 240,
   houseEdgePercent: 4,
 });
 
@@ -113,7 +113,7 @@ function mapRocketError(error) {
     return {
       status: 503,
       message:
-        'Rocket V2 SQL oâ€˜rnatilmagan. Supabase SQL Editorâ€™da sql/rocket-game.sql faylini ishga tushiring.',
+        'Rocket V2 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
       reason: 'ROCKET_SQL_MISSING',
     };
   }
@@ -123,14 +123,14 @@ function mapRocketError(error) {
   if (message.includes('INVALID_BET')) {
     return {
       status: 400,
-      message: `Stavka ${ROCKET_CONFIG.minBet}â€“${ROCKET_CONFIG.maxBet} oraligâ€˜ida boâ€˜lishi kerak.`,
+      message: `Stavka ${ROCKET_CONFIG.minBet}–${ROCKET_CONFIG.maxBet} oralig‘ida bo‘lishi kerak.`,
     };
   }
 
   if (message.includes('INVALID_AUTO_CASHOUT')) {
     return {
       status: 400,
-      message: `Auto cashout ${ROCKET_CONFIG.minAutoCashout.toFixed(2)}Ã—â€“${ROCKET_CONFIG.maxAutoCashout.toFixed(2)}Ã— oraligâ€˜ida boâ€˜lishi kerak.`,
+      message: `Auto cashout ${ROCKET_CONFIG.minAutoCashout.toFixed(2)}×–${ROCKET_CONFIG.maxAutoCashout.toFixed(2)}× oralig‘ida bo‘lishi kerak.`,
     };
   }
 
@@ -141,7 +141,7 @@ function mapRocketError(error) {
   if (message.includes('BET_ALREADY_PLACED')) {
     return {
       status: 409,
-      message: 'Bu raund uchun stavka allaqachon qoâ€˜yilgan.',
+      message: 'Bu raund uchun stavka allaqachon qo‘yilgan.',
     };
   }
 
@@ -162,7 +162,7 @@ function mapRocketError(error) {
   if (message.includes('ROUND_CRASHED')) {
     return {
       status: 409,
-      message: 'Kech qoldingiz â€” raketa portladi.',
+      message: 'Kech qoldingiz — raketa portladi.',
     };
   }
 
@@ -268,6 +268,13 @@ async function buildResponse({
   userId,
   includeSocial = true,
 }) {
+  /*
+   * Capture the state timestamp before optional social queries. Previously
+   * players/history latency was included in serverTime even though the
+   * multiplier had already been sampled, which made the client clock appear
+   * ahead of the confirmed multiplier.
+   */
+  const serverTime = new Date().toISOString();
   const round = normalizeRound(state?.round);
   const payload = {
     ok: true,
@@ -287,7 +294,7 @@ async function buildResponse({
     payload.players = players;
   }
 
-  payload.serverTime = new Date().toISOString();
+  payload.serverTime = serverTime;
   return payload;
 }
 
@@ -302,7 +309,14 @@ export async function POST(request) {
     const supabase = getSupabaseAdmin();
     const body = auth.body || {};
     const action = String(body.action || 'state').trim().toLowerCase();
-    const includeSocial = body.includeSocial !== false;
+    /*
+     * Place/cashout responses stay on the shortest possible path. Social
+     * lists are refreshed by the normal state poll and must never delay a
+     * balance-changing action.
+     */
+    const includeSocial =
+      body.includeSocial === true ||
+      (action === 'state' && body.includeSocial !== false);
     const userId = Number(auth.telegramUser.id);
     const callForUser = async (name, params) => {
       try {
@@ -335,7 +349,7 @@ export async function POST(request) {
         bet > ROCKET_CONFIG.maxBet
       ) {
         return jsonError(
-          `Stavka ${ROCKET_CONFIG.minBet}â€“${ROCKET_CONFIG.maxBet} oraligâ€˜ida boâ€˜lishi kerak.`,
+          `Stavka ${ROCKET_CONFIG.minBet}–${ROCKET_CONFIG.maxBet} oralig‘ida bo‘lishi kerak.`,
           400
         );
       }
@@ -347,7 +361,7 @@ export async function POST(request) {
           autoCashout > ROCKET_CONFIG.maxAutoCashout)
       ) {
         return jsonError(
-          `Auto cashout ${ROCKET_CONFIG.minAutoCashout.toFixed(2)}Ã—â€“${ROCKET_CONFIG.maxAutoCashout.toFixed(2)}Ã— oraligâ€˜ida boâ€˜lishi kerak.`,
+          `Auto cashout ${ROCKET_CONFIG.minAutoCashout.toFixed(2)}×–${ROCKET_CONFIG.maxAutoCashout.toFixed(2)}× oralig‘ida bo‘lishi kerak.`,
           400
         );
       }
@@ -362,7 +376,7 @@ export async function POST(request) {
       const roundId = String(body.roundId || '');
 
       if (!isUuid(roundId)) {
-        return jsonError('roundId notoâ€˜gâ€˜ri.', 400);
+        return jsonError('roundId noto‘g‘ri.', 400);
       }
 
       state = await callForUser('rocket_cash_out_v2', {
@@ -370,7 +384,7 @@ export async function POST(request) {
         p_round_id: roundId,
       });
     } else {
-      return jsonError('Rocket action notoâ€˜gâ€˜ri.', 400);
+      return jsonError('Rocket action noto‘g‘ri.', 400);
     }
 
     const payload = await buildResponse({
