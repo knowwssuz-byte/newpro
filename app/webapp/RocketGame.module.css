@@ -10,6 +10,8 @@
   --rocket-red: #e45e61;
   width: 100%;
   min-width: 0;
+  min-height: min(760px, 84vh);
+  position: relative;
   display: grid;
   gap: 11px;
   padding: 7px 10px calc(116px + env(safe-area-inset-bottom));
@@ -22,6 +24,83 @@
   -webkit-font-smoothing: antialiased;
 }
 
+.bootOverlay {
+  position: absolute;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: start center;
+  padding: clamp(118px, 31vh, 220px) 20px 40px;
+  overflow: hidden;
+  color: #f8f9fb;
+  background:
+    radial-gradient(
+      circle at 50% 25%,
+      rgba(71, 104, 193, 0.13),
+      transparent 32%
+    ),
+    linear-gradient(180deg, #0b0c13 0%, #090a11 72%, rgba(9, 10, 17, 0.96));
+  animation: bootOverlayIn 120ms ease-out both;
+}
+
+.bootLoader {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.bootLoader > strong {
+  margin-top: 3px;
+  color: rgba(248, 249, 252, 0.94);
+  font-size: 13px;
+  font-weight: 820;
+  letter-spacing: -0.015em;
+}
+
+.bootLoader > span:last-child {
+  color: rgba(220, 225, 233, 0.46);
+  font-size: 8.5px;
+  font-weight: 680;
+  letter-spacing: 0.025em;
+}
+
+.bootOrbit {
+  position: relative;
+  width: 43px;
+  height: 43px;
+  display: block;
+  border: 1px solid rgba(119, 151, 235, 0.16);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 18px rgba(61, 98, 190, 0.08),
+    0 0 22px rgba(61, 98, 190, 0.08);
+}
+
+.bootOrbit::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1px dashed rgba(154, 132, 238, 0.18);
+  border-radius: 50%;
+}
+
+.bootOrbit i {
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid #d9f5ff;
+  border-radius: 50%;
+  background: #338de9;
+  box-shadow:
+    0 0 0 4px rgba(51, 141, 233, 0.1),
+    0 0 13px rgba(63, 156, 249, 0.48);
+  transform-origin: 0 24.5px;
+  animation: bootOrbitSpin 820ms linear infinite;
+}
+
 :global(.app-main.rocket-game-main) {
   padding-top: 0 !important;
 }
@@ -30,6 +109,11 @@
 .root *::before,
 .root *::after {
   box-sizing: border-box;
+}
+
+.root[aria-busy="true"] {
+  height: max(540px, 100dvh);
+  overflow: hidden;
 }
 
 .root button,
@@ -1959,6 +2043,21 @@
   }
 }
 
+@keyframes bootOverlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes bootOrbitSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .root[data-performance="lite"] .particles i:nth-child(even),
 .root[data-performance="lite"] .orbitField i:nth-child(2),
 .root[data-performance="lite"] .orbitField i:nth-child(3),
@@ -1991,6 +2090,10 @@
 
 .root[data-performance="lite"] .rocket img {
   filter: drop-shadow(0 8px 9px rgba(0, 0, 0, 0.38));
+}
+
+.root[data-performance="lite"] .bootOrbit {
+  box-shadow: none;
 }
 
 @media (max-width: 430px) {
@@ -2225,6 +2328,10 @@
   .primaryAction,
   .autoControl > button > i {
     transition: none;
+  }
+
+  .bootOrbit i {
+    animation-duration: 1.4s;
   }
 
   .sceneCrashed .rocketCrashed {
