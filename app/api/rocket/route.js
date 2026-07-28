@@ -11,9 +11,9 @@ const ROCKET_CONFIG = Object.freeze({
   maxAutoCashout: 100,
   bettingWindowMs: 7000,
   resultHoldMs: 1400,
-  growthRate: 0.22,
-  pollIntervalMs: 240,
-  houseEdgePercent: 4,
+  growthRate: 0.075,
+  pollIntervalMs: 200,
+  houseEdgePercent: 2,
 });
 
 function toNumber(value, fallback = 0) {
@@ -65,6 +65,34 @@ function normalizeRound(value) {
       value.bettingOpensAt || value.betting_opens_at || null,
     startsAt: value.startsAt || value.starts_at || null,
     settledAt: value.settledAt || value.settled_at || null,
+    growthRate: Math.min(
+      1,
+      Math.max(
+        0.01,
+        toNumber(
+          value.growthRate ?? value.growth_rate,
+          ROCKET_CONFIG.growthRate
+        )
+      )
+    ),
+    houseEdgeBps: Math.min(
+      2000,
+      Math.max(
+        0,
+        Math.floor(
+          toNumber(
+            value.houseEdgeBps ?? value.house_edge_bps,
+            ROCKET_CONFIG.houseEdgePercent * 100
+          )
+        )
+      )
+    ),
+    algorithmVersion: Math.max(
+      1,
+      Math.floor(
+        toNumber(value.algorithmVersion ?? value.algorithm_version, 1)
+      )
+    ),
   };
 }
 
@@ -113,7 +141,7 @@ function mapRocketError(error) {
     return {
       status: 503,
       message:
-        'Rocket V2 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
+        'Rocket V5 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
       reason: 'ROCKET_SQL_MISSING',
     };
   }
