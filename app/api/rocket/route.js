@@ -12,7 +12,7 @@ const ROCKET_CONFIG = Object.freeze({
   bettingWindowMs: 7000,
   resultHoldMs: 1400,
   growthRate: 0.075,
-  pollIntervalMs: 200,
+  pollIntervalMs: 180,
   houseEdgePercent: 2,
   algorithmVersion: 3,
 });
@@ -300,14 +300,8 @@ async function buildResponse({
   state,
   userId,
   includeSocial = true,
+  stateSampledAt,
 }) {
-  /*
-   * Capture the state timestamp before optional social queries. Previously
-   * players/history latency was included in serverTime even though the
-   * multiplier had already been sampled, which made the client clock appear
-   * ahead of the confirmed multiplier.
-   */
-  const serverTime = new Date().toISOString();
   const round = normalizeRound(state?.round);
   const payload = {
     ok: true,
@@ -315,6 +309,9 @@ async function buildResponse({
     bet: normalizeBet(state?.bet),
     balance: Math.max(0, toNumber(state?.balance)),
     config: ROCKET_CONFIG,
+    stateSampledAt: new Date(
+      toNumber(stateSampledAt, Date.now())
+    ).toISOString(),
   };
 
   if (includeSocial) {
@@ -327,11 +324,23 @@ async function buildResponse({
     payload.players = players;
   }
 
-  payload.serverTime = serverTime;
   return payload;
 }
 
+function withResponseTiming(payload, requestReceivedAt) {
+  const serverSentAt = Date.now();
+
+  return {
+    ...payload,
+    serverTime: new Date(serverSentAt).toISOString(),
+    serverReceivedAt: new Date(requestReceivedAt).toISOString(),
+    serverSentAt: new Date(serverSentAt).toISOString(),
+  };
+}
+
 export async function POST(request) {
+  const requestReceivedAt = Date.now();
+
   try {
     const auth = await readTelegramRequest(request);
 
@@ -351,6 +360,35 @@ export async function POST(request) {
       body.includeSocial === true ||
       (action === 'state' && body.includeSocial !== false);
     const userId = Number(auth.telegramUser.id);
+
+    if (action === 'social') {
+      const roundId = String(body.roundId || '');
+
+      if (!isUuid(roundId)) {
+        return jsonError('roundId noto‘g‘ri.', 400);
+      }
+
+      const [history, players] = await Promise.all([
+        fetchRecentRounds(supabase),
+        fetchRoundPlayers(supabase, roundId, userId),
+      ]);
+      const payload = withResponseTiming(
+        {
+          ok: true,
+          roundId,
+          history,
+          players,
+        },
+        requestReceivedAt
+      );
+
+      return Response.json(payload, {
+        headers: {
+          'Cache-Control': 'no-store, max-age=0',
+        },
+      });
+    }
+
     const callForUser = async (name, params) => {
       try {
         return await callRocketRpc(supabase, name, params);
@@ -364,11 +402,13 @@ export async function POST(request) {
       }
     };
     let state;
+    let stateSampledAt;
 
     if (action === 'state') {
       state = await callForUser('rocket_get_game_state', {
         p_user_id: userId,
       });
+      stateSampledAt = Date.now();
     } else if (action === 'place' || action === 'start') {
       const bet = Number(body.bet);
       const autoCashout =
@@ -405,6 +445,7 @@ export async function POST(request) {
         p_auto_cashout:
           autoCashout == null ? null : Number(autoCashout.toFixed(2)),
       });
+      stateSampledAt = Date.now();
     } else if (action === 'cashout') {
       const roundId = String(body.roundId || '');
 
@@ -416,6 +457,7 @@ export async function POST(request) {
         p_user_id: userId,
         p_round_id: roundId,
       });
+      stateSampledAt = Date.now();
     } else {
       return jsonError('Rocket action noto‘g‘ri.', 400);
     }
@@ -425,9 +467,14 @@ export async function POST(request) {
       state,
       userId,
       includeSocial,
+      stateSampledAt,
     });
+    const timedPayload = withResponseTiming(
+      payload,
+      requestReceivedAt
+    );
 
-    return Response.json(payload, {
+    return Response.json(timedPayload, {
       headers: {
         'Cache-Control': 'no-store, max-age=0',
       },
