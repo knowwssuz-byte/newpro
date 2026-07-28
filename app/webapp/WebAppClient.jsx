@@ -542,7 +542,12 @@ export default function WebAppClient() {
   );
 
   useEffect(() => {
-    warmImageCacheFromData(activeCases.slice(0, 8), gifts.slice(0, 42), selectedCase ? giftsByCase[selectedCase.id] || [] : []);
+    warmImageCacheFromData(
+      '/feature/rocket.webp',
+      activeCases.slice(0, 8),
+      gifts.slice(0, 42),
+      selectedCase ? giftsByCase[selectedCase.id] || [] : []
+    );
   }, [activeCases, gifts, giftsByCase, selectedCase]);
 
   const showToast = useCallback((message) => {
@@ -558,24 +563,44 @@ export default function WebAppClient() {
   }, []);
 
   const apiPost = useCallback(
-    async (url, payload = {}) => {
+    async (url, payload = {}, options = {}) => {
       if (!initData) {
         throw new Error("Telegram initData topilmadi. Web App'ni bot tugmasidan oching.");
       }
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData, ...payload }),
-      });
+      const timeoutMs = Number(options.timeoutMs || 0);
+      const controller =
+        timeoutMs > 0 && typeof AbortController !== 'undefined'
+          ? new AbortController()
+          : null;
+      const timeout = controller
+        ? window.setTimeout(() => controller.abort(), timeoutMs)
+        : null;
 
-      const data = await response.json().catch(() => null);
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ initData, ...payload }),
+          signal: controller?.signal,
+        });
 
-      if (!response.ok || !data?.ok) {
-        throw new Error(data?.error || `Server xatosi (${response.status})`);
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok || !data?.ok) {
+          throw new Error(data?.error || `Server xatosi (${response.status})`);
+        }
+
+        return data;
+      } catch (error) {
+        if (error?.name === 'AbortError') {
+          throw new Error('Server javobi kechikdi. Qayta ulanmoqda...');
+        }
+
+        throw error;
+      } finally {
+        if (timeout) window.clearTimeout(timeout);
       }
-
-      return data;
     },
     [initData]
   );
