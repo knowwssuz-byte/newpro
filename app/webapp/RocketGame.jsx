@@ -19,11 +19,14 @@ const DEFAULT_CONFIG = {
   bettingWindowMs: 7000,
   resultHoldMs: 1400,
   growthRate: 0.075,
-  pollIntervalMs: 200,
+  pollIntervalMs: 180,
   houseEdgePercent: 2,
   algorithmVersion: 3,
 };
 
+const PRESENTATION_DELAY_MS = 220;
+const MAX_FORWARD_PROJECTION_MS = 520;
+const CLOCK_MODULUS = 2147483647;
 const QUICK_BETS = [10, 25, 50, 100];
 const STAR_FORMATTER = new Intl.NumberFormat('uz-UZ', {
   maximumFractionDigits: 0,
@@ -86,6 +89,12 @@ function toNumber(value, fallback = 0) {
   return Number.isFinite(number) ? number : fallback;
 }
 
+function toTimestamp(value) {
+  if (!value) return NaN;
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : NaN;
+}
+
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
@@ -100,7 +109,7 @@ function formatMultiplier(value) {
   return `${Math.max(1, toNumber(value, 1)).toFixed(2)}x`;
 }
 
-function normalizeRound(value) {
+function normalizeRound(value, sampledAt = null) {
   if (!value?.id) return null;
 
   return {
@@ -123,6 +132,11 @@ function normalizeRound(value) {
       value.bettingOpensAt || value.betting_opens_at || null,
     startsAt: value.startsAt || value.starts_at || null,
     settledAt: value.settledAt || value.settled_at || null,
+    sampledAt:
+      sampledAt ||
+      value.sampledAt ||
+      value.sampled_at ||
+      null,
     growthRate: clamp(
       toNumber(
         value.growthRate ?? value.growth_rate,
@@ -191,99 +205,237 @@ function authoritativeMultiplier(round) {
     : 1;
 }
 
-function useVisualMultiplier(round, config) {
-  const target = authoritativeMultiplier(round);
-  const [visualMultiplier, setVisualMultiplier] = useState(target);
-  const visualRef = useRef(target);
-  const roundIdRef = useRef(round?.id || '');
-  const frameRef = useRef(null);
-  const lastSampleAtRef = useRef(0);
+function positiveModulo(value, modulus) {
+  return ((value % modulus) + modulus) % modulus;
+}
+
+function rhythmPhase(seed, multiplier, increment) {
+  return (
+    (positiveModulo(
+      Math.max(0, Math.floor(toNumber(seed))) * multiplier + increment,
+      CLOCK_MODULUS
+    ) /
+      CLOCK_MODULUS) *
+    2 *
+    Math.PI
+  );
+}
+
+/*
+ * Exact JavaScript mirror of rocket_v3_growth_exponent() in SQL. Every
+ * device therefore derives the same visible multiplier from the same server
+ * timestamp instead of starting an animation when its own response arrives.
+ */
+function growthExponentAt(round, elapsedSeconds) {
+  const elapsed = Math.max(0, toNumber(elapsedSeconds));
+  const growthRate = Math.max(
+    0.01,
+    toNumber(round?.growthRate, DEFAULT_CONFIG.growthRate)
+  );
+
+  if (toNumber(round?.algorithmVersion, 1) < 3) {
+    return growthRate * elapsed;
+  }
+
+  const phaseOne = rhythmPhase(round?.rhythmSeed, 48271, 1);
+  const phaseTwo = rhythmPhase(round?.rhythmSeed, 69621, 7);
+  const phaseThree = rhythmPhase(round?.rhythmSeed, 65539, 11);
+  const shapedElapsed =
+    elapsed +
+    (0.28 / 0.75) *
+      (Math.sin(0.75 * elapsed + phaseOne) - Math.sin(phaseOne)) +
+    (0.16 / 1.55) *
+      (Math.sin(1.55 * elapsed + phaseTwo) - Math.sin(phaseTwo)) +
+    (0.07 / 3.2) *
+      (Math.sin(3.2 * elapsed + phaseThree) - Math.sin(phaseThree));
+
+  return Math.max(0, growthRate * shapedElapsed);
+}
+
+function multiplierAt(round, serverTimestamp) {
+  const startsAt = toTimestamp(round?.startsAt);
+
+  if (!Number.isFinite(startsAt)) return 1;
+
+  const elapsedSeconds = Math.max(
+    0,
+    (toNumber(serverTimestamp, startsAt) - startsAt) / 1000
+  );
+  const exponent = Math.min(
+    Math.log(1000),
+    growthExponentAt(round, elapsedSeconds)
+  );
+  const calculated =
+    Math.floor(Math.exp(exponent) * 100 + Number.EPSILON) / 100;
+
+  return clamp(calculated, 1, 1000);
+}
+
+function presentationSnapshot(round, clockOffset) {
+  const actualServerNow = Date.now() + toNumber(clockOffset);
+  const presentationNow = actualServerNow - PRESENTATION_DELAY_MS;
+
+  if (!round?.id) {
+    return {
+      phase: 'waiting',
+      multiplier: 1,
+      countdownMs: 0,
+      stale: false,
+    };
+  }
+
+  const startsAt = toTimestamp(round.startsAt);
+  const settledAt = toTimestamp(round.settledAt);
+  const sampledAt = toTimestamp(round.sampledAt);
+  const hasStartsAt = Number.isFinite(startsAt);
+  const hasSettledAt = Number.isFinite(settledAt);
+  const hasSample = Number.isFinite(sampledAt);
+  const projectionLimit = hasSample
+    ? sampledAt + MAX_FORWARD_PROJECTION_MS
+    : presentationNow;
+  const visualNow =
+    round.status === 'crashed'
+      ? presentationNow
+      : Math.min(presentationNow, projectionLimit);
+  const stale =
+    round.status !== 'crashed' &&
+    hasSample &&
+    presentationNow > projectionLimit + 20;
+
+  if (
+    round.status !== 'crashed' &&
+    hasStartsAt &&
+    actualServerNow < startsAt
+  ) {
+    return {
+      phase: 'betting',
+      multiplier: 1,
+      countdownMs: Math.max(0, startsAt - actualServerNow),
+      stale,
+    };
+  }
+
+  if (
+    round.status === 'crashed' &&
+    (!hasSettledAt || presentationNow >= settledAt)
+  ) {
+    return {
+      phase: 'crashed',
+      multiplier: Math.max(1, toNumber(round.crashMultiplier, 1)),
+      countdownMs: 0,
+      stale: false,
+    };
+  }
+
+  const calculated = multiplierAt(
+    round,
+    hasStartsAt ? Math.max(startsAt, visualNow) : visualNow
+  );
+  const multiplier =
+    round.crashMultiplier == null
+      ? calculated
+      : Math.min(
+          calculated,
+          Math.max(1, toNumber(round.crashMultiplier, 1))
+        );
+
+  return {
+    phase: 'flying',
+    multiplier,
+    countdownMs: 0,
+    stale,
+  };
+}
+
+function useSynchronizedPresentation(round, clockOffset, performanceMode) {
+  const [snapshot, setSnapshot] = useState(() =>
+    presentationSnapshot(round, clockOffset)
+  );
 
   useEffect(() => {
-    if (frameRef.current) {
-      window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
+    let frame = null;
+    let previousFrameAt = 0;
+    const minimumFrameGap = performanceMode === 'lite' ? 66 : 33;
 
-    const roundId = round?.id || '';
-    const isNewRound = roundIdRef.current !== roundId;
-    roundIdRef.current = roundId;
+    const update = (frameTime) => {
+      if (frameTime - previousFrameAt >= minimumFrameGap) {
+        previousFrameAt = frameTime;
+        const next = presentationSnapshot(round, clockOffset);
 
-    if (isNewRound || !round || round.status === 'betting') {
-      const nextValue = round?.status === 'flying' ? target : 1;
-      visualRef.current = nextValue;
-      lastSampleAtRef.current = window.performance.now();
-      setVisualMultiplier(nextValue);
-      return undefined;
-    }
+        setSnapshot((current) => {
+          const sameCountdown =
+            Math.floor(current.countdownMs / 100) ===
+            Math.floor(next.countdownMs / 100);
 
-    if (round.status === 'crashed') {
-      visualRef.current = target;
-      lastSampleAtRef.current = window.performance.now();
-      setVisualMultiplier(target);
-      return undefined;
-    }
-
-    const from = visualRef.current;
-    const to = Math.max(from, target);
-    const sampledAt = window.performance.now();
-    const measuredInterval = lastSampleAtRef.current
-      ? sampledAt - lastSampleAtRef.current
-      : toNumber(config?.pollIntervalMs, 240);
-    lastSampleAtRef.current = sampledAt;
-
-    if (to - from < 0.005) {
-      return undefined;
-    }
-
-    /*
-     * The server remains authoritative. We interpolate in logarithmic space
-     * between confirmed samples, preserving V6's changing tempo without ever
-     * predicting beyond the newest server-confirmed multiplier.
-     */
-    if (measuredInterval > 900 || to / Math.max(1, from) > 1.35) {
-      visualRef.current = to;
-      setVisualMultiplier(to);
-      return undefined;
-    }
-
-    const startedAt = sampledAt;
-    const duration = clamp(measuredInterval * 0.98, 90, 320);
-    const safeFrom = Math.max(1, from);
-    const logarithmicDistance = Math.log(to / safeFrom);
-
-    const animate = (now) => {
-      const progress = clamp((now - startedAt) / duration, 0, 1);
-      const nextValue = Math.min(
-        to,
-        Math.floor(
-          safeFrom * Math.exp(logarithmicDistance * progress) * 100
-        ) / 100
-      );
-
-      if (nextValue !== visualRef.current) {
-        visualRef.current = nextValue;
-        setVisualMultiplier(nextValue);
+          return current.phase === next.phase &&
+            current.multiplier === next.multiplier &&
+            current.stale === next.stale &&
+            sameCountdown
+            ? current
+            : next;
+        });
       }
 
-      if (progress < 1) {
-        frameRef.current = window.requestAnimationFrame(animate);
-      } else {
-        frameRef.current = null;
-      }
+      frame = window.requestAnimationFrame(update);
     };
 
-    frameRef.current = window.requestAnimationFrame(animate);
+    setSnapshot(presentationSnapshot(round, clockOffset));
+    frame = window.requestAnimationFrame(update);
 
     return () => {
-      if (frameRef.current) {
-        window.cancelAnimationFrame(frameRef.current);
-        frameRef.current = null;
-      }
+      if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [config?.pollIntervalMs, round, target]);
+  }, [clockOffset, performanceMode, round]);
 
-  return round?.status === 'crashed' ? target : visualMultiplier;
+  return snapshot;
+}
+
+function clockSampleFromPayload(data, timing = {}) {
+  const clientSentAt = toNumber(timing.sentAt, NaN);
+  const clientReceivedAt = toNumber(timing.receivedAt, NaN);
+  const serverReceivedAt = toTimestamp(data?.serverReceivedAt);
+  const serverSentAt = toTimestamp(data?.serverSentAt);
+
+  if (
+    Number.isFinite(clientSentAt) &&
+    Number.isFinite(clientReceivedAt) &&
+    Number.isFinite(serverReceivedAt) &&
+    Number.isFinite(serverSentAt) &&
+    serverSentAt >= serverReceivedAt
+  ) {
+    const roundTrip = Math.max(
+      0,
+      clientReceivedAt -
+        clientSentAt -
+        (serverSentAt - serverReceivedAt)
+    );
+
+    return {
+      offset:
+        (serverReceivedAt -
+          clientSentAt +
+          (serverSentAt - clientReceivedAt)) /
+        2,
+      roundTrip,
+    };
+  }
+
+  const legacyServerTime = toTimestamp(data?.serverTime);
+
+  if (
+    Number.isFinite(clientSentAt) &&
+    Number.isFinite(clientReceivedAt) &&
+    Number.isFinite(legacyServerTime)
+  ) {
+    return {
+      offset:
+        legacyServerTime -
+        (clientSentAt + clientReceivedAt) / 2,
+      roundTrip: Math.max(0, clientReceivedAt - clientSentAt),
+    };
+  }
+
+  return null;
 }
 
 function historyTone(multiplier) {
@@ -316,6 +468,17 @@ function shortHash(value) {
   if (!text) return '—';
   if (text.length <= 22) return text;
   return `${text.slice(0, 11)}…${text.slice(-8)}`;
+}
+
+function isUncertainTransportError(error) {
+  const message = String(error?.message || '').toLowerCase();
+
+  return (
+    navigator.onLine === false ||
+    message.includes('javobi kechikdi') ||
+    message.includes('failed to fetch') ||
+    message.includes('network')
+  );
 }
 
 async function verifySettledRound(round) {
@@ -395,17 +558,19 @@ function StarCoin({ small = false }) {
 const FlightScene = memo(function FlightScene({
   round,
   config,
-  serverNow,
+  clockOffset,
+  performanceMode,
+  onAssetReady,
 }) {
-  const startsAt = new Date(round?.startsAt || 0).getTime();
-  const countdownMs = Number.isFinite(startsAt)
-    ? Math.max(0, startsAt - serverNow)
-    : 0;
-  const visuallyFlying =
-    round?.status === 'flying' ||
-    (round?.status === 'betting' && countdownMs <= 0);
-  const crashed = round?.status === 'crashed';
-  const multiplier = useVisualMultiplier(round, config);
+  const presentation = useSynchronizedPresentation(
+    round,
+    clockOffset,
+    performanceMode
+  );
+  const countdownMs = presentation.countdownMs;
+  const visuallyFlying = presentation.phase === 'flying';
+  const crashed = presentation.phase === 'crashed';
+  const multiplier = presentation.multiplier;
   const countdownSeconds = Math.max(0, countdownMs / 1000);
   const countdownProgress = clamp(
     countdownMs /
@@ -451,6 +616,8 @@ const FlightScene = memo(function FlightScene({
           <i />
           {crashed
             ? 'ROUND ENDED'
+            : presentation.stale
+              ? 'SYNCING'
             : visuallyFlying
               ? 'FLYING'
               : 'BETS OPEN'}
@@ -494,6 +661,8 @@ const FlightScene = memo(function FlightScene({
           unoptimized
           priority
           draggable="false"
+          onLoad={onAssetReady}
+          onError={onAssetReady}
         />
       </div>
 
@@ -555,20 +724,12 @@ const FlightScene = memo(function FlightScene({
     </div>
   );
 }, (previous, next) => {
-  if (
-    previous.round?.status === 'betting' ||
-    next.round?.status === 'betting'
-  ) {
-    return (
-      previous.round === next.round &&
-      previous.config === next.config &&
-      previous.serverNow === next.serverNow
-    );
-  }
-
   return (
     previous.round === next.round &&
-    previous.config === next.config
+    previous.config === next.config &&
+    previous.clockOffset === next.clockOffset &&
+    previous.performanceMode === next.performanceMode &&
+    previous.onAssetReady === next.onAssetReady
   );
 });
 
@@ -663,14 +824,19 @@ export default function RocketGame({
   const [clockOffset, setClockOffset] = useState(0);
   const [verification, setVerification] = useState('pending');
   const [performanceMode, setPerformanceMode] = useState('full');
+  const [sceneAssetReady, setSceneAssetReady] = useState(false);
+  const [minimumLoaderElapsed, setMinimumLoaderElapsed] = useState(false);
 
   const mountedRef = useRef(false);
   const actionBusyRef = useRef(false);
   const pollBusyRef = useRef(false);
+  const socialBusyRef = useRef(false);
   const phaseRef = useRef('betting');
   const hasClockSampleRef = useRef(false);
+  const bestClockRoundTripRef = useRef(Number.POSITIVE_INFINITY);
   const requestSequenceRef = useRef(0);
   const appliedSequenceRef = useRef(0);
+  const socialSequenceRef = useRef(0);
   const pollFailuresRef = useRef(0);
   const lastSocialAtRef = useRef(0);
   const lastBetRef = useRef(null);
@@ -679,7 +845,7 @@ export default function RocketGame({
   const primaryPointerAtRef = useRef(0);
 
   const serverNow = uiNow + clockOffset;
-  const startsAt = new Date(round?.startsAt || 0).getTime();
+  const startsAt = toTimestamp(round?.startsAt);
   const countdownMs = Number.isFinite(startsAt)
     ? Math.max(0, startsAt - serverNow)
     : 0;
@@ -700,6 +866,12 @@ export default function RocketGame({
     ? Math.floor(myBet.bet * liveMultiplier)
     : Math.floor(numericBet * liveMultiplier);
   const canEditBet = phase === 'betting' && !myBet && !submitting;
+  const booting =
+    initializing || !sceneAssetReady || !minimumLoaderElapsed;
+
+  const markSceneAssetReady = useCallback(() => {
+    setSceneAssetReady(true);
+  }, []);
 
   useEffect(() => {
     setBalance(Math.max(0, toNumber(profile?.balance)));
@@ -708,6 +880,22 @@ export default function RocketGame({
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
+
+  useEffect(() => {
+    const minimumTimer = window.setTimeout(
+      () => setMinimumLoaderElapsed(true),
+      220
+    );
+    const assetFallbackTimer = window.setTimeout(
+      () => setSceneAssetReady(true),
+      1800
+    );
+
+    return () => {
+      window.clearTimeout(minimumTimer);
+      window.clearTimeout(assetFallbackTimer);
+    };
+  }, []);
 
   useEffect(() => {
     let timer = null;
@@ -766,21 +954,31 @@ export default function RocketGame({
     (data, timing = {}) => {
       if (!mountedRef.current || !data) return;
 
-      if (data.serverTime) {
-        const serverTimestamp = new Date(data.serverTime).getTime();
-        const midpoint =
-          (toNumber(timing.sentAt, Date.now()) +
-            toNumber(timing.receivedAt, Date.now())) /
-          2;
+      const clockSample = clockSampleFromPayload(data, timing);
 
-        if (Number.isFinite(serverTimestamp)) {
-          const sample = serverTimestamp - midpoint;
-          setClockOffset((current) =>
-            hasClockSampleRef.current
-              ? current * 0.72 + sample * 0.28
-              : sample
-          );
+      if (clockSample) {
+        const previousBest = bestClockRoundTripRef.current;
+        const firstSample = !hasClockSampleRef.current;
+        const trusted =
+          firstSample ||
+          clockSample.roundTrip <=
+            Math.max(350, previousBest + 180);
+
+        if (trusted) {
+          setClockOffset((current) => {
+            if (firstSample) return clockSample.offset;
+
+            const alpha =
+              clockSample.roundTrip <= previousBest + 30 ? 0.24 : 0.08;
+            return current + (clockSample.offset - current) * alpha;
+          });
           hasClockSampleRef.current = true;
+          bestClockRoundTripRef.current = Math.min(
+            clockSample.roundTrip,
+            Number.isFinite(previousBest)
+              ? previousBest * 1.025
+              : clockSample.roundTrip
+          );
         }
       }
 
@@ -788,7 +986,10 @@ export default function RocketGame({
         setConfig((current) => ({ ...current, ...data.config }));
       }
 
-      const nextRound = normalizeRound(data.round);
+      const nextRound = normalizeRound(
+        data.round,
+        data.stateSampledAt || data.serverSentAt || data.serverTime
+      );
       const nextBet = normalizeBet(data.bet);
       const previousRoundId = lastBetRef.current?.roundId || null;
       const previousBetStatus = lastBetRef.current?.status || null;
@@ -893,7 +1094,9 @@ export default function RocketGame({
       }
 
       const sentAt = Date.now();
-      const data = await apiPost('/api/rocket', body);
+      const data = await apiPost('/api/rocket', body, {
+        timeoutMs: body?.action === 'state' ? 4500 : 6500,
+      });
       const receivedAt = Date.now();
 
       if (
@@ -909,6 +1112,55 @@ export default function RocketGame({
     },
     [apiPost, applyPayload]
   );
+
+  const refreshSocial = useCallback(async () => {
+    const roundId = currentRoundIdRef.current;
+
+    if (
+      !mountedRef.current ||
+      !roundId ||
+      socialBusyRef.current ||
+      document.visibilityState === 'hidden'
+    ) {
+      return;
+    }
+
+    const sequence = ++socialSequenceRef.current;
+    socialBusyRef.current = true;
+
+    try {
+      const data = await apiPost(
+        '/api/rocket',
+        {
+          action: 'social',
+          roundId,
+        },
+        { timeoutMs: 4500 }
+      );
+
+      if (
+        !mountedRef.current ||
+        sequence !== socialSequenceRef.current ||
+        String(data?.roundId || '') !==
+          String(currentRoundIdRef.current || '')
+      ) {
+        return;
+      }
+
+      if (Array.isArray(data.history)) setHistory(data.history);
+      if (Array.isArray(data.players)) setPlayers(data.players);
+      lastSocialAtRef.current = Date.now();
+    } catch {
+      /*
+       * Social data is deliberately non-blocking. Core round/balance polling
+       * continues even if this secondary request times out.
+       */
+    } finally {
+      if (sequence === socialSequenceRef.current) {
+        socialBusyRef.current = false;
+      }
+    }
+  }, [apiPost]);
 
   useEffect(() => {
     if (
@@ -965,21 +1217,34 @@ export default function RocketGame({
     const poll = async () => {
       if (stopped) return;
       const cycleStartedAt = window.performance.now();
+      const hidden = document.visibilityState === 'hidden';
 
-      if (!pollBusyRef.current && !actionBusyRef.current) {
+      if (
+        !hidden &&
+        !pollBusyRef.current &&
+        !actionBusyRef.current
+      ) {
         pollBusyRef.current = true;
-        const currentPhase = phaseRef.current;
-        const includeSocial =
-          currentPhase !== 'flying' &&
-          currentPhase !== 'launching' &&
-          Date.now() - lastSocialAtRef.current >= 1200;
 
         try {
           await callRocket({
             action: 'state',
-            includeSocial,
+            includeSocial: false,
           });
           pollFailuresRef.current = 0;
+
+          const currentPhase = phaseRef.current;
+          const socialInterval =
+            currentPhase === 'flying' ||
+            currentPhase === 'launching'
+              ? 900
+              : 1300;
+
+          if (
+            Date.now() - lastSocialAtRef.current >= socialInterval
+          ) {
+            void refreshSocial();
+          }
         } catch (error) {
           pollFailuresRef.current += 1;
           setConnection(
@@ -1001,11 +1266,14 @@ export default function RocketGame({
       if (!stopped) {
         const currentPhase = phaseRef.current;
         const baseDelay =
-          currentPhase === 'flying' || currentPhase === 'launching'
-            ? 200
-            : currentPhase === 'betting'
-              ? 360
-              : 520;
+          hidden
+            ? 1200
+            : currentPhase === 'flying' ||
+                currentPhase === 'launching'
+              ? 180
+              : currentPhase === 'betting'
+                ? 320
+                : 460;
         const failureDelay = Math.min(
           2400,
           baseDelay * 2 ** Math.min(pollFailuresRef.current, 3)
@@ -1051,12 +1319,14 @@ export default function RocketGame({
     return () => {
       stopped = true;
       mountedRef.current = false;
+      socialSequenceRef.current += 1;
+      socialBusyRef.current = false;
       onRoundStateChange?.(false);
       if (timer) window.clearTimeout(timer);
       window.removeEventListener('online', refresh);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [callRocket, onRoundStateChange]);
+  }, [callRocket, onRoundStateChange, refreshSocial]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1185,6 +1455,18 @@ export default function RocketGame({
       lastSocialAtRef.current = 0;
       onToast?.('Stavka qabul qilindi');
     } catch (error) {
+      if (optimisticBet && isUncertainTransportError(error)) {
+        setConnection(
+          navigator.onLine === false ? 'offline' : 'reconnecting'
+        );
+        errorUntilRef.current = Date.now() + 1800;
+        setLocalError(
+          'Stavka serverda tekshirilmoqda. Qayta bosmang — holat avtomatik tiklanadi.'
+        );
+        lastSocialAtRef.current = 0;
+        return;
+      }
+
       if (
         optimisticBet &&
         lastBetRef.current?.id === optimisticBet.id
@@ -1248,6 +1530,18 @@ export default function RocketGame({
       );
       lastSocialAtRef.current = 0;
     } catch (error) {
+      if (isUncertainTransportError(error)) {
+        setConnection(
+          navigator.onLine === false ? 'offline' : 'reconnecting'
+        );
+        errorUntilRef.current = Date.now() + 1800;
+        setLocalError(
+          'Cash out serverda tekshirilmoqda. Natija avtomatik tiklanadi.'
+        );
+        lastSocialAtRef.current = 0;
+        return;
+      }
+
       setMyBet((current) =>
         current?.id === betBeforeCashout?.id &&
         current?.status === 'cashout_pending'
@@ -1276,8 +1570,10 @@ export default function RocketGame({
     errorUntilRef.current = 0;
 
     try {
-      await callRocket({ action: 'state', includeSocial: true });
+      await callRocket({ action: 'state', includeSocial: false });
       pollFailuresRef.current = 0;
+      lastSocialAtRef.current = 0;
+      void refreshSocial();
     } catch (error) {
       setLocalError(error?.message || 'Qayta ulanish amalga oshmadi.');
       setConnection('reconnecting');
@@ -1451,7 +1747,20 @@ export default function RocketGame({
     <section
       className={styles.root}
       data-performance={performanceMode}
+      aria-busy={booting}
     >
+      {booting ? (
+        <div className={styles.bootOverlay} role="status" aria-live="polite">
+          <div className={styles.bootLoader}>
+            <span className={styles.bootOrbit} aria-hidden="true">
+              <i />
+            </span>
+            <strong>Rocket yuklanmoqda</strong>
+            <span>Jonli raund sinxronlanmoqda</span>
+          </div>
+        </div>
+      ) : null}
+
       <header className={styles.header}>
         <div className={styles.headerTitle}>
           <button
@@ -1489,7 +1798,9 @@ export default function RocketGame({
         <FlightScene
           round={round}
           config={config}
-          serverNow={serverNow}
+          clockOffset={clockOffset}
+          performanceMode={performanceMode}
+          onAssetReady={markSceneAssetReady}
         />
 
         <div className={styles.historyStrip}>
