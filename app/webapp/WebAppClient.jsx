@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import caseOpeningStyles from './CaseOpening.module.css';
+import RocketGame from './RocketGame';
 
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
@@ -495,6 +496,7 @@ export default function WebAppClient() {
   const [toast, setToast] = useState('');
   const [selectedCase, setSelectedCase] = useState(null);
   const [opening, setOpening] = useState(null);
+  const [rocketRoundActive, setRocketRoundActive] = useState(false);
 
   const [profile, setProfile] = useState(null);
   const [telegramUser, setTelegramUser] = useState(null);
@@ -520,6 +522,7 @@ export default function WebAppClient() {
   const openingLockRef = useRef(false);
   const pendingOpeningRef = useRef(null);
   const openingFallbackTimerRef = useRef(null);
+  const rocketReturnTabRef = useRef('home');
   const hasBootstrappedRef = useRef(false);
   const referralTrackedRef = useRef(false);
   const mountedRef = useRef(false);
@@ -1206,6 +1209,29 @@ export default function WebAppClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminTab, isAdmin, tab]);
 
+  const openRocketGame = useCallback((returnTab = 'home') => {
+    rocketReturnTabRef.current = returnTab === 'games' ? 'games' : 'home';
+    setError('');
+    setOpening(null);
+    setSelectedCase(null);
+    setTab('rocket');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
+  const closeRocketGame = useCallback(() => {
+    setRocketRoundActive(false);
+    setTab(rocketReturnTabRef.current || 'home');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
+  const updateRocketBalance = useCallback((nextBalance) => {
+    const value = Number(nextBalance);
+
+    if (!Number.isFinite(value)) return;
+
+    setProfile((current) => (current ? { ...current, balance: value } : current));
+  }, []);
+
   if (loading) {
     return (
       <div className="minimal-loader-screen">
@@ -1273,6 +1299,7 @@ export default function WebAppClient() {
                   onGoInventory={() => setTab('inventory')}
                   onOpenCase={openCase}
                   onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
+                  onOpenRocket={() => openRocketGame('home')}
                   onComingSoon={() => showToast('Tez orada 🚀')}
                   busy={busy}
                   featureSettings={featureSettings}
@@ -1281,12 +1308,22 @@ export default function WebAppClient() {
 
               {tab === 'games' ? (
                 <CasesView
-                  cases={activeCases}
-                  giftsByCase={giftsByCase}
-                  busy={busy}
-                  onOpenCase={openCase}
-                  onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
                   onGoHome={() => setTab('home')}
+                  onOpenRocket={() => openRocketGame('games')}
+                  onComingSoon={() => showToast('Tez orada 🚀')}
+                  featureSettings={featureSettings}
+                />
+              ) : null}
+
+              {tab === 'rocket' ? (
+                <RocketGame
+                  apiPost={apiPost}
+                  profile={profile}
+                  tg={tg}
+                  onBack={closeRocketGame}
+                  onBalanceChange={updateRocketBalance}
+                  onRoundStateChange={setRocketRoundActive}
+                  onToast={showToast}
                 />
               ) : null}
 
@@ -1320,10 +1357,13 @@ export default function WebAppClient() {
             <NavButton
               key={item.id}
               item={item}
-              active={!selectedCase && tab === item.id}
-              disabled={isCaseOpening}
+              active={
+                !selectedCase &&
+                (tab === item.id || (item.id === 'games' && tab === 'rocket'))
+              }
+              disabled={isCaseOpening || rocketRoundActive}
               onClick={() => {
-                if (isCaseOpening) return;
+                if (isCaseOpening || rocketRoundActive) return;
                 setOpening(null);
                 setSelectedCase(null);
                 setTab(item.id);
@@ -1548,6 +1588,7 @@ function HomeView({
   onGoInventory,
   onOpenCase,
   onSelectCase,
+  onOpenRocket,
   onComingSoon,
   busy,
   featureSettings,
@@ -1570,9 +1611,9 @@ function HomeView({
           badge="HOT!"
           badgeIcon="rocket"
           title="ROCKET"
-          subtitle="Mini game · Tez orada"
-          actionText="Tez orada"
-          onClick={showComingSoon}
+          subtitle="Crash game · Live"
+          actionText="Play"
+          onClick={onOpenRocket}
         />
 
         <PromoImageCard
@@ -1639,7 +1680,7 @@ function HomeView({
   );
 }
 
-function CasesView({ onGoHome }) {
+function CasesView({ onGoHome, onOpenRocket, onComingSoon, featureSettings }) {
   return (
     <section className="screen-stack">
       <div className="page-header premium-card games-page-header">
@@ -1647,10 +1688,34 @@ function CasesView({ onGoHome }) {
           ‹ Home
         </button>
         <h1>Games</h1>
-        <p>Bu bo‘lim hozircha tayyorlanmoqda.</p>
+        <p>Stavkani tanlang va raketa portlashidan oldin yutuqni oling.</p>
       </div>
 
-      <EmptyState icon="games" title="Hozircha bo‘sh" text="Rocket va PVP Home’da turadi, bosilganda “Tez orada” chiqadi." />
+      <div className="home-promo-stack games-promo-stack">
+        <PromoImageCard
+          variant="rocket"
+          animationUrl={featureSettings?.feature_rocket?.animation_url || ''}
+          mediaSettings={featureSettings?.feature_rocket}
+          badge="LIVE"
+          badgeIcon="rocket"
+          title="ROCKET"
+          subtitle="Multiplier crash game"
+          actionText="Play"
+          onClick={onOpenRocket}
+        />
+
+        <PromoImageCard
+          variant="pvp"
+          animationUrl={featureSettings?.feature_pvp?.animation_url || ''}
+          mediaSettings={featureSettings?.feature_pvp}
+          badge="NEW!"
+          badgeIcon="spark"
+          title="PVP"
+          subtitle="Battle mode · Tez orada"
+          actionText="Tez orada"
+          onClick={onComingSoon}
+        />
+      </div>
     </section>
   );
 }
