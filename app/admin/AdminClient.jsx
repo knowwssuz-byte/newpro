@@ -51,6 +51,24 @@ function money(value) {
   return new Intl.NumberFormat('uz-UZ').format(Number(value || 0));
 }
 
+function rocketMultiplier(value) {
+  const number = Number(value);
+  return `${Number.isFinite(number) ? Math.max(1, number).toFixed(2) : '1.00'}x`;
+}
+
+function rocketStatusLabel(status) {
+  if (status === 'betting') return 'STAVKA OCHIQ';
+  if (status === 'flying') return 'UCHMOQDA';
+  if (status === 'crashed') return 'PORTLADI';
+  return 'SINXRONLANMOQDA';
+}
+
+function rocketSourceLabel(source) {
+  if (source === 'manual') return 'Admin belgilagan';
+  if (source === 'forced') return 'Admin to‘xtatgan';
+  return 'Avtomatik';
+}
+
 function smallId(value = '') {
   const text = String(value || '');
   if (text.length <= 14) return text;
@@ -193,6 +211,10 @@ export default function AdminClient() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [featureSettings, setFeatureSettings] = useState({});
   const [featureForm, setFeatureForm] = useState(emptyFeatureForm);
+  const [rocketControl, setRocketControl] = useState(null);
+  const [rocketConnection, setRocketConnection] = useState('idle');
+  const [rocketActionBusy, setRocketActionBusy] = useState('');
+  const [rocketNextMultiplier, setRocketNextMultiplier] = useState('');
 
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
   const [caseFile, setCaseFile] = useState(null);
@@ -310,6 +332,161 @@ export default function AdminClient() {
     applyBootstrap(data);
   }
 
+  function applyRocketControl(data) {
+    const next = data?.rocket || data;
+
+    if (!next?.currentRound) return;
+
+    setRocketControl(next);
+    setRocketConnection('live');
+    setRocketNextMultiplier((current) => {
+      if (document.activeElement?.id === 'rocket-next-multiplier') {
+        return current;
+      }
+
+      return Number(next.nextRound?.crashMultiplier || 1).toFixed(2);
+    });
+  }
+
+  useEffect(() => {
+    if (!saved || tab !== 'rocket' || !adminKey) return undefined;
+
+    let cancelled = false;
+    let timer = null;
+    let inFlight = false;
+
+    const poll = async () => {
+      if (cancelled || inFlight || document.visibilityState === 'hidden') {
+        if (!cancelled) timer = window.setTimeout(poll, 650);
+        return;
+      }
+
+      inFlight = true;
+
+      try {
+        const data = await callAdmin('rocket_state');
+        if (!cancelled) applyRocketControl(data);
+      } catch (err) {
+        if (!cancelled) {
+          setRocketConnection('reconnecting');
+          setError(err.message || 'Rocket holatini olishda xatolik.');
+        }
+      } finally {
+        inFlight = false;
+        if (!cancelled) timer = window.setTimeout(poll, 500);
+      }
+    };
+
+    setRocketConnection('connecting');
+    poll();
+
+    const wake = () => {
+      if (document.visibilityState !== 'visible' || cancelled || inFlight) {
+        return;
+      }
+
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(poll, 0);
+    };
+
+    document.addEventListener('visibilitychange', wake);
+
+    return () => {
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', wake);
+    };
+    // callAdmin/applyRocketControl intentionally use the current admin key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminKey, saved, tab]);
+
+  async function runRocketAction(action, payload, successText) {
+    if (rocketActionBusy) return null;
+
+    setRocketActionBusy(action);
+    setError('');
+
+    try {
+      const data = await callAdmin(action, payload);
+      applyRocketControl(data);
+      if (successText) showToast(successText);
+      return data;
+    } catch (err) {
+      setError(err.message || 'Rocket boshqaruvida xatolik.');
+      return null;
+    } finally {
+      setRocketActionBusy('');
+    }
+  }
+
+  async function setRocketBias(biasMode) {
+    await runRocketAction(
+      'rocket_set_bias',
+      { biasMode },
+      'Rocket avtomatik rejimi yangilandi ✅'
+    );
+  }
+
+  async function saveNextRocketMultiplier(event) {
+    event.preventDefault();
+    const multiplier = Number(rocketNextMultiplier);
+
+    if (
+      !Number.isFinite(multiplier) ||
+      multiplier < 1 ||
+      multiplier > 1000
+    ) {
+      setError('Koeffitsiyent 1.00x–1000.00x oralig‘ida bo‘lishi kerak.');
+      return;
+    }
+
+    await runRocketAction(
+      'rocket_set_next',
+      { multiplier: Number(multiplier.toFixed(2)) },
+      `Keyingi raund ${rocketMultiplier(multiplier)} qilib saqlandi ✅`
+    );
+  }
+
+  async function resetNextRocketMultiplier() {
+    await runRocketAction(
+      'rocket_reset_next',
+      {},
+      'Keyingi raund avtomatik rejimga qaytdi ✅'
+    );
+  }
+
+  async function launchRocketNow() {
+    if (
+      !window.confirm(
+        'Stavka vaqtini hozir yakunlab, raketani darhol uchirasizmi?'
+      )
+    ) {
+      return;
+    }
+
+    await runRocketAction(
+      'rocket_launch_now',
+      {},
+      'Rocket hozir uchirildi 🚀'
+    );
+  }
+
+  async function forceRocketCrash() {
+    if (
+      !window.confirm(
+        'Aktiv Rocket raundini aynan hozirgi koeffitsiyentda portlatasizmi? Bu barcha ochiq stavkalarga ta’sir qiladi.'
+      )
+    ) {
+      return;
+    }
+
+    await runRocketAction(
+      'rocket_force_crash',
+      {},
+      'Aktiv Rocket raundi portlatildi 💥'
+    );
+  }
+
   async function login(event) {
     event.preventDefault();
 
@@ -331,6 +508,8 @@ export default function AdminClient() {
     setUsers([]);
     setWithdrawals([]);
     setGiftLibrary([]);
+    setRocketControl(null);
+    setRocketConnection('idle');
   }
 
   async function createCase(event) {
@@ -571,6 +750,10 @@ export default function AdminClient() {
     await bootstrap();
   }
 
+  const currentRocketRound = rocketControl?.currentRound || null;
+  const nextRocketRound = rocketControl?.nextRound || null;
+  const rocketBiasMode = rocketControl?.biasMode || 'standard';
+
   if (!saved) {
     return (
       <main className="browser-admin-page">
@@ -610,6 +793,7 @@ export default function AdminClient() {
             ['library', 'Gift baza'],
             ['gifts', 'Casega gift'],
             ['features', 'PVP / Rocket'],
+            ['rocket', 'Rocket control'],
             ['users', 'Users'],
             ['withdrawals', 'Withdrawals'],
           ].map(([id, label]) => (
@@ -713,6 +897,277 @@ export default function AdminClient() {
             <div className="feature-admin-previews">
               {['rocket', 'pvp'].map((slot) => <FeaturePreviewCard key={slot} slot={slot} setting={featureSettings[`feature_${slot}`] || {}} onLayoutChange={changeFeatureLayout} onSave={saveFeatureLayout} busy={busy} />)}
             </div>
+          </section>
+        ) : null}
+
+        {tab === 'rocket' ? (
+          <section className="rocket-admin-console">
+            <div className="rocket-admin-hero">
+              <div>
+                <span>LIVE OPERATOR CONSOLE</span>
+                <h2>Rocket boshqaruvi</h2>
+                <p>
+                  Aktiv va keyingi koeffitsiyent admin uchun oldindan
+                  ko‘rinadi. O‘yinchilar natijani faqat portlagandan keyin
+                  ko‘radi.
+                </p>
+              </div>
+              <span
+                className={`rocket-admin-live ${
+                  rocketConnection === 'live' ? 'is-live' : ''
+                }`}
+              >
+                <i />
+                {rocketConnection === 'live'
+                  ? 'REAL-TIME'
+                  : 'SYNCING'}
+              </span>
+            </div>
+
+            {currentRocketRound ? (
+              <>
+                <div className="rocket-admin-stats">
+                  <article className="rocket-admin-stat rocket-admin-stat-primary">
+                    <span>HOZIRGI KOEFFITSIYENT</span>
+                    <strong>
+                      {rocketMultiplier(
+                        currentRocketRound.currentMultiplier
+                      )}
+                    </strong>
+                    <small>
+                      Round #{currentRocketRound.number || '—'}
+                    </small>
+                  </article>
+
+                  <article className="rocket-admin-stat rocket-admin-stat-secret">
+                    <span>PORTLASH NUQTASI</span>
+                    <strong>
+                      {rocketMultiplier(
+                        currentRocketRound.crashMultiplier
+                      )}
+                    </strong>
+                    <small>
+                      {rocketSourceLabel(
+                        currentRocketRound.outcomeSource
+                      )}
+                    </small>
+                  </article>
+
+                  <article className="rocket-admin-stat">
+                    <span>ANIQ QATNASHCHILAR</span>
+                    <strong>
+                      {money(rocketControl.participantCount)}
+                    </strong>
+                    <small>Database exact count</small>
+                  </article>
+
+                  <article className="rocket-admin-stat">
+                    <span>JAMI STAVKA</span>
+                    <strong>{money(rocketControl.totalBet)} ⭐</strong>
+                    <small>
+                      {money(rocketControl.activeBetCount)} aktiv ·{' '}
+                      {money(rocketControl.cashedOutCount)} cash
+                    </small>
+                  </article>
+                </div>
+
+                <div className="rocket-admin-grid">
+                  <section className="rocket-admin-panel">
+                    <div className="rocket-admin-panel-head">
+                      <div>
+                        <span>ACTIVE ROUND</span>
+                        <h3>Jonli raund</h3>
+                      </div>
+                      <span
+                        className={`rocket-admin-status is-${
+                          currentRocketRound.status || 'syncing'
+                        }`}
+                      >
+                        {rocketStatusLabel(
+                          currentRocketRound.status
+                        )}
+                      </span>
+                    </div>
+
+                    <div className="rocket-admin-round-line">
+                      <span>
+                        Natija
+                        <b>
+                          {rocketMultiplier(
+                            currentRocketRound.crashMultiplier
+                          )}
+                        </b>
+                      </span>
+                      <span>
+                        Rejim
+                        <b>{currentRocketRound.biasMode || 'standard'}</b>
+                      </span>
+                      <span>
+                        Manba
+                        <b>
+                          {rocketSourceLabel(
+                            currentRocketRound.outcomeSource
+                          )}
+                        </b>
+                      </span>
+                    </div>
+
+                    <div className="rocket-admin-actions">
+                      <button
+                        type="button"
+                        className="rocket-admin-launch"
+                        onClick={launchRocketNow}
+                        disabled={
+                          currentRocketRound.status !== 'betting' ||
+                          Boolean(rocketActionBusy)
+                        }
+                      >
+                        {rocketActionBusy === 'rocket_launch_now'
+                          ? 'Uchirilmoqda...'
+                          : 'Hozir uchirish'}
+                      </button>
+                      <button
+                        type="button"
+                        className="rocket-admin-crash"
+                        onClick={forceRocketCrash}
+                        disabled={
+                          currentRocketRound.status !== 'flying' ||
+                          Boolean(rocketActionBusy)
+                        }
+                      >
+                        {rocketActionBusy === 'rocket_force_crash'
+                          ? 'Portlatilmoqda...'
+                          : 'Hozir portlatish'}
+                      </button>
+                    </div>
+                  </section>
+
+                  <form
+                    className="rocket-admin-panel"
+                    onSubmit={saveNextRocketMultiplier}
+                  >
+                    <div className="rocket-admin-panel-head">
+                      <div>
+                        <span>NEXT ROUND</span>
+                        <h3>Keyingi koeffitsiyent</h3>
+                      </div>
+                      <span className="rocket-admin-next-value">
+                        {rocketMultiplier(
+                          nextRocketRound?.crashMultiplier
+                        )}
+                      </span>
+                    </div>
+
+                    <label className="rocket-admin-input">
+                      <span>1.00x–1000.00x</span>
+                      <div>
+                        <input
+                          id="rocket-next-multiplier"
+                          type="number"
+                          min="1"
+                          max="1000"
+                          step="0.01"
+                          inputMode="decimal"
+                          value={rocketNextMultiplier}
+                          onChange={(event) =>
+                            setRocketNextMultiplier(event.target.value)
+                          }
+                          required
+                        />
+                        <b>x</b>
+                      </div>
+                    </label>
+
+                    <p className="rocket-admin-plan-note">
+                      Hozirgi reja:{' '}
+                      <strong>
+                        {rocketSourceLabel(
+                          nextRocketRound?.outcomeSource
+                        )}
+                      </strong>{' '}
+                      · {nextRocketRound?.biasMode || rocketBiasMode}
+                    </p>
+
+                    <div className="rocket-admin-actions">
+                      <button
+                        type="submit"
+                        disabled={Boolean(rocketActionBusy)}
+                      >
+                        {rocketActionBusy === 'rocket_set_next'
+                          ? 'Saqlanmoqda...'
+                          : 'Keyingi natijani saqlash'}
+                      </button>
+                      <button
+                        type="button"
+                        className="rocket-admin-secondary"
+                        onClick={resetNextRocketMultiplier}
+                        disabled={Boolean(rocketActionBusy)}
+                      >
+                        Avtomatik qilish
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <section className="rocket-admin-panel rocket-admin-bias">
+                  <div className="rocket-admin-panel-head">
+                    <div>
+                      <span>AUTOMATIC DISTRIBUTION</span>
+                      <h3>Koeffitsiyentlar yo‘nalishi</h3>
+                    </div>
+                    <span className="rocket-admin-next-value">
+                      {rocketBiasMode.toUpperCase()}
+                    </span>
+                  </div>
+
+                  <div className="rocket-admin-bias-options">
+                    {[
+                      [
+                        'low',
+                        'Pastroq',
+                        'Past koeffitsiyentlar ko‘proq chiqadi.',
+                      ],
+                      [
+                        'standard',
+                        'Standart',
+                        '2% edge bilan tabiiy inverse taqsimot.',
+                      ],
+                      [
+                        'high',
+                        'Yuqoriroq',
+                        'Yuqori koeffitsiyentlar ko‘proq chiqadi.',
+                      ],
+                    ].map(([id, title, description]) => (
+                      <button
+                        type="button"
+                        key={id}
+                        className={
+                          rocketBiasMode === id ? 'is-active' : ''
+                        }
+                        onClick={() => setRocketBias(id)}
+                        disabled={Boolean(rocketActionBusy)}
+                      >
+                        <i />
+                        <strong>{title}</strong>
+                        <span>{description}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  <p className="rocket-admin-warning">
+                    Rejim o‘zgarsa, faqat avtomatik keyingi reja qayta
+                    hisoblanadi. Qo‘lda belgilangan keyingi koeffitsiyent
+                    o‘zgarmaydi.
+                  </p>
+                </section>
+              </>
+            ) : (
+              <div className="rocket-admin-loading">
+                <i />
+                <strong>Rocket server holati olinmoqda</strong>
+                <span>Jonli raund va keyingi reja sinxronlanmoqda.</span>
+              </div>
+            )}
           </section>
         ) : null}
 
