@@ -156,6 +156,35 @@ async function bootstrap(supabase) {
   };
 }
 
+function rocketSqlError(error) {
+  const text =
+    `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+
+  return (
+    error?.code === 'PGRST202' ||
+    error?.code === '42P01' ||
+    text.includes('could not find the function') ||
+    text.includes('rocket_game_round_plans') ||
+    text.includes('rocket_game_control')
+  );
+}
+
+async function callRocketAdminRpc(supabase, functionName, params = {}) {
+  const { data, error } = await supabase.rpc(functionName, params);
+
+  if (error) {
+    if (rocketSqlError(error)) {
+      throw new Error(
+        'Rocket V8 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini to‘liq Run qiling.'
+      );
+    }
+
+    throw error;
+  }
+
+  return data;
+}
+
 async function uploadPublicAsset(supabase, { buffer, contentType, folder, ext, prefix }) {
   if (!buffer || !Buffer.byteLength(buffer)) return null;
 
@@ -406,6 +435,87 @@ export async function POST(request) {
     if (action === 'bootstrap') {
       const data = await bootstrap(supabase);
       return json({ ok: true, ...data });
+    }
+
+    if (action === 'rocket_state') {
+      const rocket = await callRocketAdminRpc(
+        supabase,
+        'rocket_v8_admin_state'
+      );
+
+      return json({ ok: true, rocket });
+    }
+
+    if (action === 'rocket_set_bias') {
+      const biasMode = clean(body.biasMode).toLowerCase();
+
+      if (!['low', 'standard', 'high'].includes(biasMode)) {
+        return json(
+          { ok: false, error: 'Rocket rejimi noto‘g‘ri.' },
+          400
+        );
+      }
+
+      const rocket = await callRocketAdminRpc(
+        supabase,
+        'rocket_v8_set_bias',
+        { p_bias_mode: biasMode }
+      );
+
+      return json({ ok: true, rocket });
+    }
+
+    if (action === 'rocket_set_next') {
+      const multiplier = Number(body.multiplier);
+
+      if (
+        !Number.isFinite(multiplier) ||
+        multiplier < 1 ||
+        multiplier > 1000
+      ) {
+        return json(
+          {
+            ok: false,
+            error: 'Koeffitsiyent 1.00x–1000.00x oralig‘ida bo‘lishi kerak.',
+          },
+          400
+        );
+      }
+
+      const rocket = await callRocketAdminRpc(
+        supabase,
+        'rocket_v8_set_next_multiplier',
+        { p_multiplier: Number(multiplier.toFixed(2)) }
+      );
+
+      return json({ ok: true, rocket });
+    }
+
+    if (action === 'rocket_reset_next') {
+      const rocket = await callRocketAdminRpc(
+        supabase,
+        'rocket_v8_reset_next_multiplier'
+      );
+
+      return json({ ok: true, rocket });
+    }
+
+    if (action === 'rocket_launch_now') {
+      const rocket = await callRocketAdminRpc(
+        supabase,
+        'rocket_v8_launch_now'
+      );
+
+      return json({ ok: true, rocket });
+    }
+
+    if (action === 'rocket_force_crash') {
+      const rocket = await callRocketAdminRpc(
+        supabase,
+        'rocket_v8_force_crash'
+      );
+
+      return json({ ok: true, rocket });
     }
 
     if (action === 'case_create') {
