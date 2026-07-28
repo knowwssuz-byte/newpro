@@ -14,6 +14,7 @@ const ROCKET_CONFIG = Object.freeze({
   growthRate: 0.075,
   pollIntervalMs: 200,
   houseEdgePercent: 2,
+  algorithmVersion: 3,
 });
 
 function toNumber(value, fallback = 0) {
@@ -74,6 +75,10 @@ function normalizeRound(value) {
           ROCKET_CONFIG.growthRate
         )
       )
+    ),
+    rhythmSeed: Math.max(
+      0,
+      Math.floor(toNumber(value.rhythmSeed ?? value.rhythm_seed, 0))
     ),
     houseEdgeBps: Math.min(
       2000,
@@ -141,7 +146,7 @@ function mapRocketError(error) {
     return {
       status: 503,
       message:
-        'Rocket V5 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
+        'Rocket V6 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
       reason: 'ROCKET_SQL_MISSING',
     };
   }
