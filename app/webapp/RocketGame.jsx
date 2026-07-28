@@ -21,7 +21,7 @@ const DEFAULT_CONFIG = {
   growthRate: 0.075,
   pollIntervalMs: 180,
   houseEdgePercent: 2,
-  algorithmVersion: 3,
+  algorithmVersion: 4,
 };
 
 const PRESENTATION_DELAY_MS = 220;
@@ -167,6 +167,12 @@ function normalizeRound(value, sampledAt = null) {
         toNumber(value.algorithmVersion ?? value.algorithm_version, 1)
       )
     ),
+    outcomeSource: String(
+      value.outcomeSource || value.outcome_source || 'automatic'
+    ),
+    biasMode: String(
+      value.biasMode || value.bias_mode || 'standard'
+    ),
   };
 }
 
@@ -240,16 +246,58 @@ function growthExponentAt(round, elapsedSeconds) {
   const phaseOne = rhythmPhase(round?.rhythmSeed, 48271, 1);
   const phaseTwo = rhythmPhase(round?.rhythmSeed, 69621, 7);
   const phaseThree = rhythmPhase(round?.rhythmSeed, 65539, 11);
+  const algorithmVersion = toNumber(round?.algorithmVersion, 1);
   const shapedElapsed =
-    elapsed +
-    (0.28 / 0.75) *
-      (Math.sin(0.75 * elapsed + phaseOne) - Math.sin(phaseOne)) +
-    (0.16 / 1.55) *
-      (Math.sin(1.55 * elapsed + phaseTwo) - Math.sin(phaseTwo)) +
-    (0.07 / 3.2) *
-      (Math.sin(3.2 * elapsed + phaseThree) - Math.sin(phaseThree));
+    algorithmVersion >= 4
+      ? elapsed +
+        (0.34 / 0.38) *
+          (Math.sin(0.38 * elapsed + phaseOne) -
+            Math.sin(phaseOne)) +
+        (0.17 / 1.05) *
+          (Math.sin(1.05 * elapsed + phaseTwo) -
+            Math.sin(phaseTwo)) +
+        (0.07 / 2.6) *
+          (Math.sin(2.6 * elapsed + phaseThree) -
+            Math.sin(phaseThree))
+      : elapsed +
+        (0.28 / 0.75) *
+          (Math.sin(0.75 * elapsed + phaseOne) -
+            Math.sin(phaseOne)) +
+        (0.16 / 1.55) *
+          (Math.sin(1.55 * elapsed + phaseTwo) -
+            Math.sin(phaseTwo)) +
+        (0.07 / 3.2) *
+          (Math.sin(3.2 * elapsed + phaseThree) -
+            Math.sin(phaseThree));
 
   return Math.max(0, growthRate * shapedElapsed);
+}
+
+function growthTempoAt(round, elapsedSeconds) {
+  const elapsed = Math.max(0, toNumber(elapsedSeconds));
+
+  if (toNumber(round?.algorithmVersion, 1) < 3) {
+    return 0.5;
+  }
+
+  const phaseOne = rhythmPhase(round?.rhythmSeed, 48271, 1);
+  const phaseTwo = rhythmPhase(round?.rhythmSeed, 69621, 7);
+  const phaseThree = rhythmPhase(round?.rhythmSeed, 65539, 11);
+  const algorithmVersion = toNumber(round?.algorithmVersion, 1);
+  const speedRatio =
+    algorithmVersion >= 4
+      ? 1 +
+        0.34 * Math.cos(0.38 * elapsed + phaseOne) +
+        0.17 * Math.cos(1.05 * elapsed + phaseTwo) +
+        0.07 * Math.cos(2.6 * elapsed + phaseThree)
+      : 1 +
+        0.28 * Math.cos(0.75 * elapsed + phaseOne) +
+        0.16 * Math.cos(1.55 * elapsed + phaseTwo) +
+        0.07 * Math.cos(3.2 * elapsed + phaseThree);
+  const minimumSpeed = algorithmVersion >= 4 ? 0.42 : 0.49;
+  const speedRange = algorithmVersion >= 4 ? 1.16 : 1.02;
+
+  return clamp((speedRatio - minimumSpeed) / speedRange, 0, 1);
 }
 
 function multiplierAt(round, serverTimestamp) {
@@ -281,6 +329,7 @@ function presentationSnapshot(round, clockOffset) {
       multiplier: 1,
       countdownMs: 0,
       stale: false,
+      tempo: 0,
     };
   }
 
@@ -312,6 +361,7 @@ function presentationSnapshot(round, clockOffset) {
       multiplier: 1,
       countdownMs: Math.max(0, startsAt - actualServerNow),
       stale,
+      tempo: 0,
     };
   }
 
@@ -324,9 +374,13 @@ function presentationSnapshot(round, clockOffset) {
       multiplier: Math.max(1, toNumber(round.crashMultiplier, 1)),
       countdownMs: 0,
       stale: false,
+      tempo: 0,
     };
   }
 
+  const elapsedSeconds = hasStartsAt
+    ? Math.max(0, (visualNow - startsAt) / 1000)
+    : 0;
   const calculated = multiplierAt(
     round,
     hasStartsAt ? Math.max(startsAt, visualNow) : visualNow
@@ -344,6 +398,7 @@ function presentationSnapshot(round, clockOffset) {
     multiplier,
     countdownMs: 0,
     stale,
+    tempo: growthTempoAt(round, elapsedSeconds),
   };
 }
 
@@ -370,6 +425,7 @@ function useSynchronizedPresentation(round, clockOffset, performanceMode) {
           return current.phase === next.phase &&
             current.multiplier === next.multiplier &&
             current.stale === next.stale &&
+            Math.abs(current.tempo - next.tempo) < 0.015 &&
             sameCountdown
             ? current
             : next;
@@ -491,6 +547,9 @@ async function verifySettledRound(round) {
     return 'unavailable';
   }
 
+  if (round.outcomeSource === 'manual') return 'manual';
+  if (round.outcomeSource === 'forced') return 'forced';
+
   try {
     const bytes = new TextEncoder().encode(round.serverSeed);
     const digest = await window.crypto.subtle.digest('SHA-256', bytes);
@@ -502,7 +561,7 @@ async function verifySettledRound(round) {
     const denominator = 4503599627370497n;
     const houseEdgeBps = BigInt(
       clamp(
-        Math.floor(toNumber(round.houseEdgeBps, 400)),
+        Math.floor(toNumber(round.houseEdgeBps, 200)),
         0,
         2000
       )
@@ -511,12 +570,25 @@ async function verifySettledRound(round) {
     const rawCrashCents =
       (payoutFactorBps * denominator) /
       (100n * (randomInt + 1n));
-    const crashCents =
+    const baseCrashCents =
       rawCrashCents < 100n
         ? 100n
         : rawCrashCents > 100000n
           ? 100000n
           : rawCrashCents;
+    const biasMode = String(round.biasMode || 'standard');
+    let crashCents = baseCrashCents;
+
+    if (biasMode === 'low') {
+      crashCents =
+        100n + ((baseCrashCents - 100n) * 55n) / 100n;
+    } else if (biasMode === 'high') {
+      const highCrashCents =
+        100n + ((baseCrashCents - 100n) * 180n) / 100n;
+      crashCents =
+        highCrashCents > 100000n ? 100000n : highCrashCents;
+    }
+
     const calculatedCrash = Number(crashCents) / 100;
 
     return digestHex === round.serverSeedHash &&
@@ -548,10 +620,57 @@ function SignalIcon() {
 function StarCoin({ small = false }) {
   return (
     <span className={`${styles.coin} ${small ? styles.coinSmall : ''}`}>
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="m12 4.2 2.2 4.5 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5-3.6-3.5 5-.7L12 4.2Z" />
-      </svg>
+      <Image
+        src="/currency/stars.svg"
+        alt=""
+        width={24}
+        height={24}
+        unoptimized
+        draggable="false"
+      />
     </span>
+  );
+}
+
+function KineticMultiplier({ value, tempo, roundId }) {
+  const [integerPart, fractionPart] = Math.max(
+    1,
+    toNumber(value, 1)
+  )
+    .toFixed(2)
+    .split('.');
+  const safeTempo = clamp(toNumber(tempo), 0, 1);
+
+  return (
+    <strong
+      className={styles.multiplierValue}
+      style={{
+        '--multiplier-tempo': safeTempo.toFixed(3),
+        '--multiplier-scale': (1 + safeTempo * 0.008).toFixed(4),
+        '--multiplier-shift': `${((0.5 - safeTempo) * 1.4).toFixed(2)}px`,
+        '--multiplier-roll-duration': `${Math.round(
+          300 - safeTempo * 120
+        )}ms`,
+      }}
+      aria-label={`${integerPart}.${fractionPart}x`}
+    >
+      <span
+        className={styles.multiplierInteger}
+        key={`${roundId || 'round'}-${integerPart}`}
+        aria-hidden="true"
+      >
+        {integerPart}
+      </span>
+      <span className={styles.multiplierDot} aria-hidden="true">
+        .
+      </span>
+      <span className={styles.multiplierFraction} aria-hidden="true">
+        {fractionPart}
+      </span>
+      <span className={styles.multiplierX} aria-hidden="true">
+        x
+      </span>
+    </strong>
   );
 }
 
@@ -635,8 +754,12 @@ const FlightScene = memo(function FlightScene({
         </div>
       ) : (
         <div className={styles.liveMultiplier}>
-          <strong>{formatMultiplier(multiplier)}</strong>
-          <span>
+          <KineticMultiplier
+            value={multiplier}
+            tempo={presentation.tempo}
+            roundId={round?.id}
+          />
+          <span className={styles.multiplierCaption}>
             {crashed
               ? 'FINAL MULTIPLIER • CRASHED'
               : 'CASH OUT BEFORE THE BLAST'}
@@ -809,6 +932,7 @@ export default function RocketGame({
   const [myBet, setMyBet] = useState(null);
   const [history, setHistory] = useState([]);
   const [players, setPlayers] = useState([]);
+  const [participantCount, setParticipantCount] = useState(0);
   const [balance, setBalance] = useState(() =>
     Math.max(0, toNumber(profile?.balance))
   );
@@ -1001,6 +1125,7 @@ export default function RocketGame({
           !Array.isArray(data.players)
         ) {
           setPlayers([]);
+          setParticipantCount(0);
           lastSocialAtRef.current = 0;
         }
 
@@ -1060,6 +1185,12 @@ export default function RocketGame({
       if (Array.isArray(data.players)) {
         setPlayers(data.players);
         lastSocialAtRef.current = Date.now();
+      }
+
+      if (data.participantCount != null) {
+        setParticipantCount(
+          Math.max(0, Math.floor(toNumber(data.participantCount)))
+        );
       }
 
       if (data.balance != null) {
@@ -1149,6 +1280,11 @@ export default function RocketGame({
 
       if (Array.isArray(data.history)) setHistory(data.history);
       if (Array.isArray(data.players)) setPlayers(data.players);
+      if (data.participantCount != null) {
+        setParticipantCount(
+          Math.max(0, Math.floor(toNumber(data.participantCount)))
+        );
+      }
       lastSocialAtRef.current = Date.now();
     } catch {
       /*
@@ -1409,6 +1545,7 @@ export default function RocketGame({
     setLocalError('');
     let optimisticBet = null;
     const balanceBefore = balance;
+    const participantCountBefore = participantCount;
 
     try {
       validateBet();
@@ -1439,6 +1576,7 @@ export default function RocketGame({
       lastBetRef.current = optimisticBet;
       const optimisticBalance = Math.max(0, balanceBefore - numericBet);
       setBalance(optimisticBalance);
+      setParticipantCount((current) => current + 1);
       onBalanceChange?.(optimisticBalance);
       onRoundStateChange?.(true);
 
@@ -1476,6 +1614,9 @@ export default function RocketGame({
           current?.id === optimisticBet.id ? null : current
         );
         setBalance(balanceBefore);
+        setParticipantCount((current) =>
+          Math.max(participantCountBefore, current - 1)
+        );
         onBalanceChange?.(balanceBefore);
         onRoundStateChange?.(false);
       }
@@ -1742,6 +1883,23 @@ export default function RocketGame({
         : connection === 'reconnecting'
           ? 'RECONNECTING'
           : 'SYNCING';
+  const outcomeSource = String(round?.outcomeSource || 'automatic');
+  const operatorControlled =
+    outcomeSource === 'manual' || outcomeSource === 'forced';
+  const fairnessTitle =
+    outcomeSource === 'forced'
+      ? 'Operator stopped'
+      : outcomeSource === 'manual'
+        ? 'Operator planned'
+        : 'Provably fair';
+  const fairnessStatus =
+    verification === 'verified'
+      ? 'Verified'
+      : verification === 'manual'
+        ? 'Planned'
+        : verification === 'forced'
+          ? 'Stopped live'
+          : shortHash(round?.serverSeedHash);
 
   return (
     <section
@@ -1965,7 +2123,7 @@ export default function RocketGame({
           </div>
           <span className={styles.playerCount}>
             <i />
-            {players.length}
+            {participantCount}
           </span>
         </div>
 
@@ -2002,32 +2160,43 @@ export default function RocketGame({
           <span>
             <i
               className={
-                verification === 'failed' ? styles.fairnessFailed : ''
+                verification === 'failed'
+                  ? styles.fairnessFailed
+                  : operatorControlled
+                    ? styles.fairnessManual
+                    : ''
               }
             >
-              {verification === 'failed' ? '!' : '✓'}
+              {verification === 'failed'
+                ? '!'
+                : operatorControlled
+                  ? '⚙'
+                  : '✓'}
             </i>
-            Provably fair
+            {fairnessTitle}
           </span>
-          <b>
-            {verification === 'verified'
-              ? 'Verified'
-              : shortHash(round?.serverSeedHash)}
-          </b>
+          <b>{fairnessStatus}</b>
         </summary>
 
         <div className={styles.fairnessBody}>
           <p>
-            Crash point serverda oldindan yaratiladi va parvoz
-            tugamaguncha yashirin qoladi.
+            {outcomeSource === 'forced'
+              ? 'Raund operator tomonidan jonli koeffitsiyentda yakunlangan. Bu holat tarixda alohida qayd etiladi.'
+              : outcomeSource === 'manual'
+                ? 'Crash point operator rejasidan olingan va parvoz tugamaguncha o‘yinchilarga yashirin saqlangan.'
+                : 'Crash point server seed’dan oldindan yaratiladi va parvoz tugamaguncha yashirin qoladi.'}
           </p>
           <span>Round rules</span>
           <code>
-            Algorithm v{round?.algorithmVersion || 1} •{' '}
-            {(100 - toNumber(round?.houseEdgeBps, 400) / 100).toFixed(
-              2
-            )}
-            % theoretical RTP • independent rounds
+            Algorithm v{round?.algorithmVersion || 1} • source{' '}
+            {outcomeSource} • distribution {round?.biasMode || 'standard'}
+            {outcomeSource === 'automatic' &&
+            (round?.biasMode || 'standard') === 'standard'
+              ? ` • ${(
+                  100 -
+                  toNumber(round?.houseEdgeBps, 200) / 100
+                ).toFixed(2)}% theoretical RTP`
+              : ''}
           </code>
           {round?.status === 'crashed' ? (
             <>
