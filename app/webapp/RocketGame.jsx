@@ -21,6 +21,7 @@ const DEFAULT_CONFIG = {
   growthRate: 0.075,
   pollIntervalMs: 200,
   houseEdgePercent: 2,
+  algorithmVersion: 3,
 };
 
 const QUICK_BETS = [10, 25, 50, 100];
@@ -130,6 +131,12 @@ function normalizeRound(value) {
       0.01,
       1
     ),
+    rhythmSeed: Math.max(
+      0,
+      Math.floor(
+        toNumber(value.rhythmSeed ?? value.rhythm_seed, 0)
+      )
+    ),
     houseEdgeBps: clamp(
       Math.floor(
         toNumber(
@@ -231,8 +238,8 @@ function useVisualMultiplier(round, config) {
 
     /*
      * The server remains authoritative. We interpolate in logarithmic space
-     * between two confirmed samples, which matches the exponential flight
-     * curve without predicting beyond the newest server-confirmed value.
+     * between confirmed samples, preserving V6's changing tempo without ever
+     * predicting beyond the newest server-confirmed multiplier.
      */
     if (measuredInterval > 900 || to / Math.max(1, from) > 1.35) {
       visualRef.current = to;
