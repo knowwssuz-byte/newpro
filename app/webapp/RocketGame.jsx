@@ -12,7 +12,7 @@ const DEFAULT_CONFIG = {
   bettingWindowMs: 7000,
   resultHoldMs: 1400,
   growthRate: 0.22,
-  pollIntervalMs: 300,
+  pollIntervalMs: 240,
   houseEdgePercent: 4,
 };
 
@@ -150,12 +150,13 @@ function authoritativeMultiplier(round) {
     : 1;
 }
 
-function useVisualMultiplier(round) {
+function useVisualMultiplier(round, config) {
   const target = authoritativeMultiplier(round);
   const [visualMultiplier, setVisualMultiplier] = useState(target);
   const visualRef = useRef(target);
   const roundIdRef = useRef(round?.id || '');
   const frameRef = useRef(null);
+  const lastSampleAtRef = useRef(0);
 
   useEffect(() => {
     if (frameRef.current) {
@@ -170,32 +171,44 @@ function useVisualMultiplier(round) {
     if (isNewRound || !round || round.status === 'betting') {
       const nextValue = round?.status === 'flying' ? target : 1;
       visualRef.current = nextValue;
+      lastSampleAtRef.current = window.performance.now();
       setVisualMultiplier(nextValue);
       return undefined;
     }
 
     if (round.status === 'crashed') {
       visualRef.current = target;
+      lastSampleAtRef.current = window.performance.now();
       setVisualMultiplier(target);
       return undefined;
     }
 
     const from = visualRef.current;
     const to = Math.max(from, target);
+    const sampledAt = window.performance.now();
+    const measuredInterval = lastSampleAtRef.current
+      ? sampledAt - lastSampleAtRef.current
+      : toNumber(config?.pollIntervalMs, 240);
+    lastSampleAtRef.current = sampledAt;
 
     if (to - from < 0.005) {
       return undefined;
     }
 
-    const startedAt = window.performance.now();
-    const duration = 150;
+    /*
+     * The server remains authoritative. We only draw a linear bridge between
+     * two confirmed samples instead of predicting a hidden crash point.
+     * Matching the tween to the measured polling interval removes the old
+     * jump-pause-jump motion without ever displaying an invented multiplier.
+     */
+    const startedAt = sampledAt;
+    const duration = clamp(measuredInterval * 1.04, 120, 360);
 
     const animate = (now) => {
       const progress = clamp((now - startedAt) / duration, 0, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
       const nextValue = Math.min(
         to,
-        Math.floor((from + (to - from) * eased) * 100) / 100
+        Math.floor((from + (to - from) * progress) * 100) / 100
       );
 
       if (nextValue !== visualRef.current) {
@@ -218,7 +231,7 @@ function useVisualMultiplier(round) {
         frameRef.current = null;
       }
     };
-  }, [round, target]);
+  }, [config?.pollIntervalMs, round, target]);
 
   return round?.status === 'crashed' ? target : visualMultiplier;
 }
@@ -328,7 +341,7 @@ function FlightScene({ round, config, serverNow }) {
     round?.status === 'flying' ||
     (round?.status === 'betting' && countdownMs <= 0);
   const crashed = round?.status === 'crashed';
-  const multiplier = useVisualMultiplier(round);
+  const multiplier = useVisualMultiplier(round, config);
   const countdownSeconds = Math.max(0, countdownMs / 1000);
   const countdownProgress = clamp(
     countdownMs /
@@ -403,7 +416,7 @@ function FlightScene({ round, config, serverNow }) {
       <div className={styles.launchHalo} aria-hidden="true" />
       <div
         className={`${styles.rocket} ${
-          crashed ? styles.rocketGone : ''
+          crashed ? styles.rocketCrashed : ''
         }`}
         aria-hidden="true"
       >
@@ -429,6 +442,8 @@ function FlightScene({ round, config, serverNow }) {
           <span className={styles.explosionFlash} />
           <span className={styles.explosionFireball} />
           <span className={styles.explosionCore} />
+          <span className={styles.explosionAfterglow} />
+          <span className={styles.impactSmoke} />
           <span className={styles.shockwave} />
           <span className={`${styles.shockwave} ${styles.shockwaveOuter}`} />
           <span className={styles.smokeCloud}>
@@ -668,6 +683,18 @@ export default function RocketGame({
         previousBetStatus === 'placed' &&
         nextBet.status === 'cashed_out'
       ) {
+        setPlayers((current) =>
+          current.map((player) =>
+            player.isYou
+              ? {
+                  ...player,
+                  status: 'cashed_out',
+                  payout: nextBet.payout,
+                  cashoutMultiplier: nextBet.cashoutMultiplier,
+                }
+              : player
+          )
+        );
         tg?.HapticFeedback?.notificationOccurred?.('success');
         onToast?.(`Yutuq: ${formatStars(nextBet.payout)} ⭐`);
       }
@@ -678,6 +705,13 @@ export default function RocketGame({
         previousBetStatus === 'placed' &&
         nextBet.status === 'lost'
       ) {
+        setPlayers((current) =>
+          current.map((player) =>
+            player.isYou
+              ? { ...player, status: 'lost', payout: 0 }
+              : player
+          )
+        );
         tg?.HapticFeedback?.notificationOccurred?.('error');
         onToast?.(
           `Raketa ${formatMultiplier(nextRound?.crashMultiplier)} da portladi`
@@ -742,8 +776,11 @@ export default function RocketGame({
 
       if (!pollBusyRef.current && !actionBusyRef.current) {
         pollBusyRef.current = true;
+        const currentPhase = phaseRef.current;
         const includeSocial =
-          Date.now() - lastSocialAtRef.current >= 1100;
+          currentPhase !== 'flying' &&
+          currentPhase !== 'launching' &&
+          Date.now() - lastSocialAtRef.current >= 900;
 
         try {
           await callRocket({
@@ -915,9 +952,10 @@ export default function RocketGame({
         autoCashout: autoEnabled
           ? Number(toNumber(autoCashout).toFixed(2))
           : null,
-        includeSocial: true,
+        includeSocial: false,
       });
 
+      lastSocialAtRef.current = 0;
       onToast?.('Stavka qabul qilindi');
     } catch (error) {
       errorUntilRef.current = Date.now() + 2500;
@@ -951,8 +989,9 @@ export default function RocketGame({
       await callRocket({
         action: 'cashout',
         roundId: round.id,
-        includeSocial: true,
+        includeSocial: false,
       });
+      lastSocialAtRef.current = 0;
     } catch (error) {
       errorUntilRef.current = Date.now() + 2500;
       setLocalError(error?.message || 'Cash out bajarilmadi.');
