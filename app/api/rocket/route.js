@@ -14,7 +14,7 @@ const ROCKET_CONFIG = Object.freeze({
   growthRate: 0.075,
   pollIntervalMs: 180,
   houseEdgePercent: 2,
-  algorithmVersion: 3,
+  algorithmVersion: 4,
 });
 
 function toNumber(value, fallback = 0) {
@@ -98,6 +98,12 @@ function normalizeRound(value) {
         toNumber(value.algorithmVersion ?? value.algorithm_version, 1)
       )
     ),
+    outcomeSource: String(
+      value.outcomeSource || value.outcome_source || 'automatic'
+    ),
+    biasMode: String(
+      value.biasMode || value.bias_mode || 'standard'
+    ),
   };
 }
 
@@ -146,7 +152,7 @@ function mapRocketError(error) {
     return {
       status: 503,
       message:
-        'Rocket V6 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
+        'Rocket V8 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini to‘liq ishga tushiring.',
       reason: 'ROCKET_SQL_MISSING',
     };
   }
@@ -241,20 +247,35 @@ async function fetchRecentRounds(supabase) {
 }
 
 async function fetchRoundPlayers(supabase, roundId, currentUserId) {
-  if (!roundId) return [];
+  if (!roundId) {
+    return {
+      players: [],
+      participantCount: 0,
+    };
+  }
 
-  const { data: bets, error: betsError } = await supabase
+  const {
+    data: bets,
+    count,
+    error: betsError,
+  } = await supabase
     .from('rocket_game_bets')
     .select(
-      'id,user_id,bet,payout,status,auto_cashout,cashout_multiplier,created_at'
+      'id,user_id,bet,payout,status,auto_cashout,cashout_multiplier,created_at',
+      { count: 'exact' }
     )
     .eq('round_id', roundId)
     .order('bet', { ascending: false })
     .order('created_at', { ascending: true })
-    .limit(40);
+    .range(0, 39);
 
   if (betsError) throw betsError;
-  if (!bets?.length) return [];
+  if (!bets?.length) {
+    return {
+      players: [],
+      participantCount: Math.max(0, Math.floor(toNumber(count))),
+    };
+  }
 
   const userIds = [...new Set(bets.map((item) => item.user_id))];
   const { data: users, error: usersError } = await supabase
@@ -268,7 +289,7 @@ async function fetchRoundPlayers(supabase, roundId, currentUserId) {
     (users || []).map((item) => [String(item.id), item])
   );
 
-  return bets.map((item) => {
+  const players = bets.map((item) => {
     const user = userMap.get(String(item.user_id)) || {};
     const fallback = user.username
       ? `@${String(user.username).replace(/^@/, '')}`
@@ -293,6 +314,14 @@ async function fetchRoundPlayers(supabase, roundId, currentUserId) {
       createdAt: item.created_at || null,
     };
   });
+
+  return {
+    players,
+    participantCount: Math.max(
+      players.length,
+      Math.floor(toNumber(count, players.length))
+    ),
+  };
 }
 
 async function buildResponse({
@@ -313,15 +342,25 @@ async function buildResponse({
       toNumber(stateSampledAt, Date.now())
     ).toISOString(),
   };
+  const participantCount =
+    state?.participantCount ?? state?.participant_count;
+
+  if (participantCount != null) {
+    payload.participantCount = Math.max(
+      0,
+      Math.floor(toNumber(participantCount))
+    );
+  }
 
   if (includeSocial) {
-    const [history, players] = await Promise.all([
+    const [history, social] = await Promise.all([
       fetchRecentRounds(supabase),
       fetchRoundPlayers(supabase, round?.id, userId),
     ]);
 
     payload.history = history;
-    payload.players = players;
+    payload.players = social.players;
+    payload.participantCount = social.participantCount;
   }
 
   return payload;
@@ -368,7 +407,7 @@ export async function POST(request) {
         return jsonError('roundId noto‘g‘ri.', 400);
       }
 
-      const [history, players] = await Promise.all([
+      const [history, social] = await Promise.all([
         fetchRecentRounds(supabase),
         fetchRoundPlayers(supabase, roundId, userId),
       ]);
@@ -377,7 +416,8 @@ export async function POST(request) {
           ok: true,
           roundId,
           history,
-          players,
+          players: social.players,
+          participantCount: social.participantCount,
         },
         requestReceivedAt
       );
@@ -453,7 +493,7 @@ export async function POST(request) {
         return jsonError('roundId noto‘g‘ri.', 400);
       }
 
-      state = await callForUser('rocket_cash_out_v2', {
+      state = await callForUser('rocket_cash_out_v3', {
         p_user_id: userId,
         p_round_id: roundId,
       });
