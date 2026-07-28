@@ -228,7 +228,7 @@
 
 .flightScene {
   --rocket-x: 50%;
-  --rocket-y: 69%;
+  --rocket-y: 70%;
   position: relative;
   width: 100%;
   height: clamp(282px, 70vw, 344px);
@@ -252,6 +252,15 @@
     ),
     linear-gradient(180deg, #0c0d15 0%, #08090e 100%);
   contain: layout paint;
+}
+
+.sceneWaiting {
+  --rocket-y: 81%;
+}
+
+.sceneFlying,
+.sceneCrashed {
+  --rocket-y: 70%;
 }
 
 .sceneShade {
@@ -404,8 +413,8 @@
 .countdown {
   --countdown-progress: 360deg;
   position: absolute;
-  z-index: 5;
-  top: 47%;
+  z-index: 11;
+  top: 37%;
   left: 50%;
   width: 142px;
   height: 142px;
@@ -469,7 +478,7 @@
 
 .liveMultiplier {
   position: absolute;
-  z-index: 12;
+  z-index: 14;
   top: 54px;
   left: 0;
   right: 0;
@@ -547,7 +556,7 @@
 
 .rocket {
   position: absolute;
-  z-index: 9;
+  z-index: 12;
   left: var(--rocket-x);
   top: var(--rocket-y);
   width: clamp(102px, 28vw, 132px);
@@ -563,8 +572,9 @@
 }
 
 .sceneWaiting .rocket {
-  opacity: 0.76;
-  filter: saturate(0.78) brightness(0.82);
+  opacity: 0.9;
+  filter: saturate(0.9) brightness(0.9);
+  transform: translate(-50%, -50%) rotate(7deg) scale(0.8);
 }
 
 .rocket img {
@@ -627,15 +637,20 @@
   animation: engineTrailPulse 130ms ease-in-out infinite alternate;
 }
 
-.rocketGone {
+.rocketCrashed {
+  animation: rocketDisintegrate 760ms cubic-bezier(0.18, 0.72, 0.22, 1)
+    both;
+}
+
+.rocketCrashed .engineGlow,
+.rocketCrashed .rocketTrail {
+  animation: none;
   opacity: 0;
-  filter: blur(3px) brightness(1.8);
-  transform: translate(-50%, -50%) rotate(7deg) scale(0.72);
 }
 
 .explosion {
   position: absolute;
-  z-index: 11;
+  z-index: 13;
   left: var(--rocket-x);
   top: var(--rocket-y);
   width: 1px;
@@ -647,6 +662,8 @@
 .explosionFlash,
 .explosionFireball,
 .explosionCore,
+.explosionAfterglow,
+.impactSmoke,
 .shockwave,
 .smokeCloud,
 .sparkField,
@@ -710,6 +727,46 @@
   animation: explosionCore 660ms ease-out both;
 }
 
+.explosionAfterglow {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 247, 193, 0.95) 0 4%,
+      rgba(255, 186, 65, 0.78) 12%,
+      rgba(239, 76, 40, 0.45) 32%,
+      rgba(109, 27, 35, 0.18) 55%,
+      transparent 70%
+    );
+  box-shadow:
+    0 0 28px rgba(255, 142, 49, 0.44),
+    0 0 62px rgba(222, 53, 43, 0.2);
+  filter: blur(1px);
+  transform: translate(-50%, -50%) scale(0.25);
+  animation: explosionAfterglow 1380ms ease-out both;
+}
+
+.impactSmoke {
+  width: 154px;
+  height: 116px;
+  border-radius: 50%;
+  opacity: 0;
+  background:
+    radial-gradient(
+      ellipse,
+      rgba(88, 75, 83, 0.52) 0,
+      rgba(43, 38, 49, 0.4) 42%,
+      rgba(22, 21, 28, 0.08) 68%,
+      transparent 74%
+    );
+  filter: blur(12px);
+  transform: translate(-50%, -42%) scale(0.25);
+  animation: impactSmokeHold 1380ms ease-out 100ms both;
+}
+
 .shockwave {
   width: 82px;
   height: 82px;
@@ -756,7 +813,7 @@
       transparent 74%
     );
   transform: translate(-50%, -50%) scale(0.15);
-  animation: smokeBloom 980ms ease-out var(--smoke-delay) both;
+  animation: smokeBloom 1260ms ease-out var(--smoke-delay) both;
 }
 
 .sparkField i {
@@ -1186,12 +1243,22 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     inset 0 -1px 0 rgba(14, 51, 136, 0.28);
   cursor: pointer;
-  transition: transform 130ms ease, filter 130ms ease;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  transform: translateZ(0);
+  transition:
+    transform 65ms ease-out,
+    opacity 65ms linear,
+    box-shadow 100ms ease-out;
+  will-change: transform;
 }
 
 .primaryAction:active:not(:disabled) {
-  transform: translateY(1px);
-  filter: brightness(0.97);
+  transform: translate3d(0, 1px, 0) scale(0.993);
+  box-shadow:
+    0 6px 13px rgba(24, 111, 219, 0.18),
+    inset 0 2px 5px rgba(8, 37, 103, 0.28);
 }
 
 .primaryAction:disabled {
@@ -1217,7 +1284,6 @@
     0 12px 24px rgba(21, 177, 116, 0.22),
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(6, 89, 59, 0.24);
-  animation: cashoutBreath 1.15s ease-in-out infinite;
 }
 
 .primary_placed {
@@ -1630,6 +1696,35 @@
   }
 }
 
+@keyframes rocketDisintegrate {
+  0%,
+  10% {
+    opacity: 1;
+    filter: brightness(1) saturate(1);
+    transform: translate(-50%, -50%) rotate(7deg) scale(1);
+  }
+  18% {
+    opacity: 1;
+    filter: brightness(3.2) saturate(0.72);
+    transform: translate(-50%, -50%) rotate(8deg) scale(1.055);
+  }
+  34% {
+    opacity: 0.86;
+    filter: brightness(1.8) saturate(1.35) blur(0.4px);
+    transform: translate(-50%, -50%) rotate(12deg) scale(0.96);
+  }
+  58% {
+    opacity: 0.28;
+    filter: brightness(1.35) saturate(0.55) blur(2px);
+    transform: translate(-49%, -49%) rotate(20deg) scale(0.8);
+  }
+  100% {
+    opacity: 0;
+    filter: brightness(0.55) saturate(0.2) blur(5px);
+    transform: translate(-47%, -47%) rotate(30deg) scale(0.58);
+  }
+}
+
 @keyframes crashNumberLock {
   0% {
     opacity: 0.35;
@@ -1702,6 +1797,46 @@
   100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1.46);
+  }
+}
+
+@keyframes explosionAfterglow {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.18);
+  }
+  9% {
+    opacity: 1;
+  }
+  32% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+  70% {
+    opacity: 0.42;
+    transform: translate(-50%, -50%) scale(0.86);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.72);
+  }
+}
+
+@keyframes impactSmokeHold {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -42%) scale(0.24);
+  }
+  20% {
+    opacity: 0.52;
+  }
+  68% {
+    opacity: 0.38;
+    transform: translate(-50%, -51%) scale(0.96);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -62%) scale(1.18);
   }
 }
 
@@ -1786,16 +1921,6 @@
       translateX(var(--debris-distance))
       rotate(var(--debris-spin))
       scale(0.78);
-  }
-}
-
-@keyframes cashoutBreath {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.06);
   }
 }
 
@@ -2025,12 +2150,14 @@
   .explosionFlash,
   .explosionFireball,
   .explosionCore,
+  .explosionAfterglow,
+  .impactSmoke,
   .shockwave,
   .smokeCloud i,
   .sparkField i,
   .debrisField i,
   .sceneCrashed .liveMultiplier strong,
-  .primary_cashout,
+  .rocketCrashed,
   .connectionWeak > i {
     animation: none;
   }
@@ -2039,5 +2166,9 @@
   .primaryAction,
   .autoControl > button > i {
     transition: none;
+  }
+
+  .sceneCrashed .rocketCrashed {
+    opacity: 0;
   }
 }
