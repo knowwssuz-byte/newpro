@@ -1,6 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import Image from 'next/image';
 import styles from './RocketGame.module.css';
 
@@ -11,12 +18,15 @@ const DEFAULT_CONFIG = {
   maxAutoCashout: 100,
   bettingWindowMs: 7000,
   resultHoldMs: 1400,
-  growthRate: 0.22,
-  pollIntervalMs: 240,
-  houseEdgePercent: 4,
+  growthRate: 0.075,
+  pollIntervalMs: 200,
+  houseEdgePercent: 2,
 };
 
 const QUICK_BETS = [10, 25, 50, 100];
+const STAR_FORMATTER = new Intl.NumberFormat('uz-UZ', {
+  maximumFractionDigits: 0,
+});
 const PARTICLES = [
   [7, 18, 5],
   [17, 43, 3],
@@ -80,9 +90,9 @@ function clamp(value, min, max) {
 }
 
 function formatStars(value) {
-  return new Intl.NumberFormat('uz-UZ', {
-    maximumFractionDigits: 0,
-  }).format(Math.max(0, Math.floor(toNumber(value))));
+  return STAR_FORMATTER.format(
+    Math.max(0, Math.floor(toNumber(value)))
+  );
 }
 
 function formatMultiplier(value) {
@@ -112,6 +122,30 @@ function normalizeRound(value) {
       value.bettingOpensAt || value.betting_opens_at || null,
     startsAt: value.startsAt || value.starts_at || null,
     settledAt: value.settledAt || value.settled_at || null,
+    growthRate: clamp(
+      toNumber(
+        value.growthRate ?? value.growth_rate,
+        DEFAULT_CONFIG.growthRate
+      ),
+      0.01,
+      1
+    ),
+    houseEdgeBps: clamp(
+      Math.floor(
+        toNumber(
+          value.houseEdgeBps ?? value.house_edge_bps,
+          DEFAULT_CONFIG.houseEdgePercent * 100
+        )
+      ),
+      0,
+      2000
+    ),
+    algorithmVersion: Math.max(
+      1,
+      Math.floor(
+        toNumber(value.algorithmVersion ?? value.algorithm_version, 1)
+      )
+    ),
   };
 }
 
@@ -196,19 +230,28 @@ function useVisualMultiplier(round, config) {
     }
 
     /*
-     * The server remains authoritative. We only draw a linear bridge between
-     * two confirmed samples instead of predicting a hidden crash point.
-     * Matching the tween to the measured polling interval removes the old
-     * jump-pause-jump motion without ever displaying an invented multiplier.
+     * The server remains authoritative. We interpolate in logarithmic space
+     * between two confirmed samples, which matches the exponential flight
+     * curve without predicting beyond the newest server-confirmed value.
      */
+    if (measuredInterval > 900 || to / Math.max(1, from) > 1.35) {
+      visualRef.current = to;
+      setVisualMultiplier(to);
+      return undefined;
+    }
+
     const startedAt = sampledAt;
-    const duration = clamp(measuredInterval * 1.04, 120, 360);
+    const duration = clamp(measuredInterval * 0.98, 90, 320);
+    const safeFrom = Math.max(1, from);
+    const logarithmicDistance = Math.log(to / safeFrom);
 
     const animate = (now) => {
       const progress = clamp((now - startedAt) / duration, 0, 1);
       const nextValue = Math.min(
         to,
-        Math.floor((from + (to - from) * progress) * 100) / 100
+        Math.floor(
+          safeFrom * Math.exp(logarithmicDistance * progress) * 100
+        ) / 100
       );
 
       if (nextValue !== visualRef.current) {
@@ -287,7 +330,17 @@ async function verifySettledRound(round) {
 
     const randomInt = BigInt(`0x${round.serverSeed.slice(0, 13)}`);
     const denominator = 4503599627370497n;
-    const rawCrashCents = (96n * denominator) / (randomInt + 1n);
+    const houseEdgeBps = BigInt(
+      clamp(
+        Math.floor(toNumber(round.houseEdgeBps, 400)),
+        0,
+        2000
+      )
+    );
+    const payoutFactorBps = 10000n - houseEdgeBps;
+    const rawCrashCents =
+      (payoutFactorBps * denominator) /
+      (100n * (randomInt + 1n));
     const crashCents =
       rawCrashCents < 100n
         ? 100n
@@ -332,7 +385,11 @@ function StarCoin({ small = false }) {
   );
 }
 
-function FlightScene({ round, config, serverNow }) {
+const FlightScene = memo(function FlightScene({
+  round,
+  config,
+  serverNow,
+}) {
   const startsAt = new Date(round?.startsAt || 0).getTime();
   const countdownMs = Number.isFinite(startsAt)
     ? Math.max(0, startsAt - serverNow)
@@ -490,9 +547,25 @@ function FlightScene({ round, config, serverNow }) {
       <div className={styles.floorGlow} aria-hidden="true" />
     </div>
   );
-}
+}, (previous, next) => {
+  if (
+    previous.round?.status === 'betting' ||
+    next.round?.status === 'betting'
+  ) {
+    return (
+      previous.round === next.round &&
+      previous.config === next.config &&
+      previous.serverNow === next.serverNow
+    );
+  }
 
-function PlayerRow({ player, liveMultiplier }) {
+  return (
+    previous.round === next.round &&
+    previous.config === next.config
+  );
+});
+
+const PlayerRow = memo(function PlayerRow({ player, liveMultiplier }) {
   const hue = avatarHue(player.name);
   const won = player.status === 'cashed_out';
   const lost = player.status === 'lost';
@@ -552,7 +625,7 @@ function PlayerRow({ player, liveMultiplier }) {
       </div>
     </div>
   );
-}
+});
 
 export default function RocketGame({
   apiPost,
@@ -576,11 +649,13 @@ export default function RocketGame({
   const [autoCashout, setAutoCashout] = useState('2.00');
   const [initializing, setInitializing] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [pendingAction, setPendingAction] = useState('');
   const [localError, setLocalError] = useState('');
   const [connection, setConnection] = useState('connecting');
   const [uiNow, setUiNow] = useState(() => Date.now());
   const [clockOffset, setClockOffset] = useState(0);
   const [verification, setVerification] = useState('pending');
+  const [performanceMode, setPerformanceMode] = useState('full');
 
   const mountedRef = useRef(false);
   const actionBusyRef = useRef(false);
@@ -594,6 +669,7 @@ export default function RocketGame({
   const lastBetRef = useRef(null);
   const currentRoundIdRef = useRef(null);
   const errorUntilRef = useRef(0);
+  const primaryPointerAtRef = useRef(0);
 
   const serverNow = uiNow + clockOffset;
   const startsAt = new Date(round?.startsAt || 0).getTime();
@@ -606,8 +682,13 @@ export default function RocketGame({
       : round?.status || 'betting';
   const liveMultiplier = authoritativeMultiplier(round);
   const numericBet = Math.max(0, Math.floor(toNumber(bet)));
+  const betBelongsToRound = myBet?.roundId === round?.id;
   const activeBet =
-    myBet?.roundId === round?.id && myBet?.status === 'placed';
+    betBelongsToRound &&
+    (myBet?.status === 'placed' || myBet?.status === 'cashout_pending');
+  const cashableBet = betBelongsToRound && myBet?.status === 'placed';
+  const cashWindowOpen =
+    cashableBet && (phase === 'launching' || phase === 'flying');
   const possiblePayout = activeBet
     ? Math.floor(myBet.bet * liveMultiplier)
     : Math.floor(numericBet * liveMultiplier);
@@ -622,11 +703,56 @@ export default function RocketGame({
   }, [phase]);
 
   useEffect(() => {
-    const timer = window.setInterval(() => {
-      setUiNow(Date.now());
-    }, 100);
+    let timer = null;
 
-    return () => window.clearInterval(timer);
+    const tick = () => {
+      setUiNow(Date.now());
+      const currentPhase = phaseRef.current;
+      timer = window.setTimeout(
+        tick,
+        currentPhase === 'betting' || currentPhase === 'launching'
+          ? 100
+          : 1000
+      );
+    };
+
+    timer = window.setTimeout(tick, 100);
+
+    return () => {
+      if (timer) window.clearTimeout(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    );
+
+    const detectPerformanceMode = () => {
+      const memory = toNumber(navigator.deviceMemory, 8);
+      const cores = toNumber(navigator.hardwareConcurrency, 8);
+      const saveData = Boolean(navigator.connection?.saveData);
+      const narrowScreen = window.innerWidth <= 360;
+
+      setPerformanceMode(
+        reducedMotion.matches ||
+          saveData ||
+          memory <= 4 ||
+          cores <= 4 ||
+          narrowScreen
+          ? 'lite'
+          : 'full'
+      );
+    };
+
+    detectPerformanceMode();
+    reducedMotion.addEventListener?.('change', detectPerformanceMode);
+    window.addEventListener('resize', detectPerformanceMode);
+
+    return () => {
+      reducedMotion.removeEventListener?.('change', detectPerformanceMode);
+      window.removeEventListener('resize', detectPerformanceMode);
+    };
   }, []);
 
   const applyPayload = useCallback(
@@ -734,7 +860,10 @@ export default function RocketGame({
         onBalanceChange?.(nextBalance);
       }
 
-      onRoundStateChange?.(nextBet?.status === 'placed');
+      onRoundStateChange?.(
+        nextBet?.status === 'placed' ||
+          nextBet?.status === 'cashout_pending'
+      );
       setConnection('live');
       if (Date.now() >= errorUntilRef.current) {
         setLocalError('');
@@ -745,8 +874,17 @@ export default function RocketGame({
   );
 
   const callRocket = useCallback(
-    async (body) => {
+    async (body, { supersede = false } = {}) => {
       const sequence = ++requestSequenceRef.current;
+
+      if (supersede) {
+        /*
+         * Ignore a slower state poll that started before a balance-changing
+         * action. Otherwise that old payload can briefly undo optimistic UI.
+         */
+        appliedSequenceRef.current = sequence;
+      }
+
       const sentAt = Date.now();
       const data = await apiPost('/api/rocket', body);
       const receivedAt = Date.now();
@@ -766,6 +904,53 @@ export default function RocketGame({
   );
 
   useEffect(() => {
+    if (
+      !round?.id ||
+      round.status !== 'betting' ||
+      !Number.isFinite(startsAt)
+    ) {
+      return undefined;
+    }
+
+    /*
+     * Wake the UI on the exact server-synchronised launch boundary. The cash
+     * button therefore opens immediately at 0.0s instead of waiting for the
+     * next regular poll. A lightweight state sync follows when the connection
+     * is free so the server phase catches up just as quickly.
+     */
+    const remaining = startsAt - (Date.now() + clockOffset);
+    const timer = window.setTimeout(() => {
+      setUiNow(Date.now());
+
+      if (
+        mountedRef.current &&
+        !pollBusyRef.current &&
+        !actionBusyRef.current
+      ) {
+        pollBusyRef.current = true;
+        callRocket({ action: 'state', includeSocial: false })
+          .catch(() => {
+            setConnection(
+              navigator.onLine === false ? 'offline' : 'reconnecting'
+            );
+          })
+          .finally(() => {
+            pollBusyRef.current = false;
+          });
+      }
+    }, Math.max(0, remaining) + 4);
+
+    return () => window.clearTimeout(timer);
+  }, [
+    callRocket,
+    clockOffset,
+    round?.id,
+    round?.status,
+    round?.startsAt,
+    startsAt,
+  ]);
+
+  useEffect(() => {
     mountedRef.current = true;
     let stopped = false;
     let timer = null;
@@ -780,7 +965,7 @@ export default function RocketGame({
         const includeSocial =
           currentPhase !== 'flying' &&
           currentPhase !== 'launching' &&
-          Date.now() - lastSocialAtRef.current >= 900;
+          Date.now() - lastSocialAtRef.current >= 1200;
 
         try {
           await callRocket({
@@ -808,14 +993,20 @@ export default function RocketGame({
 
       if (!stopped) {
         const currentPhase = phaseRef.current;
-        const delay =
+        const baseDelay =
           currentPhase === 'flying' || currentPhase === 'launching'
-            ? 240
+            ? 200
             : currentPhase === 'betting'
               ? 360
-              : 480;
+              : 520;
+        const failureDelay = Math.min(
+          2400,
+          baseDelay * 2 ** Math.min(pollFailuresRef.current, 3)
+        );
+        const delay =
+          pollFailuresRef.current > 0 ? failureDelay : baseDelay;
         const elapsed = window.performance.now() - cycleStartedAt;
-        const nextDelay = Math.max(80, delay - elapsed);
+        const nextDelay = Math.max(16, delay - elapsed);
         if (timer) window.clearTimeout(timer);
         timer = window.setTimeout(() => {
           timer = null;
@@ -939,32 +1130,77 @@ export default function RocketGame({
     }
 
     setLocalError('');
+    let optimisticBet = null;
+    const balanceBefore = balance;
 
     try {
       validateBet();
       actionBusyRef.current = true;
       setSubmitting(true);
+      setPendingAction('place');
       tg?.HapticFeedback?.impactOccurred?.('medium');
 
-      await callRocket({
-        action: 'place',
+      const cleanAutoCashout = autoEnabled
+        ? Number(toNumber(autoCashout).toFixed(2))
+        : null;
+      optimisticBet = {
+        id: `optimistic-${round?.id || 'round'}-${Date.now()}`,
+        roundId: round?.id || '',
+        status: 'placed',
         bet: numericBet,
-        autoCashout: autoEnabled
-          ? Number(toNumber(autoCashout).toFixed(2))
-          : null,
-        includeSocial: false,
-      });
+        payout: 0,
+        autoCashout: cleanAutoCashout,
+        cashoutMultiplier: null,
+        optimistic: true,
+      };
+
+      /*
+       * Give touch feedback immediately. The server remains authoritative;
+       * this local state is replaced by the RPC response or rolled back.
+       */
+      setMyBet(optimisticBet);
+      lastBetRef.current = optimisticBet;
+      const optimisticBalance = Math.max(0, balanceBefore - numericBet);
+      setBalance(optimisticBalance);
+      onBalanceChange?.(optimisticBalance);
+      onRoundStateChange?.(true);
+
+      await callRocket(
+        {
+          action: 'place',
+          bet: numericBet,
+          autoCashout: cleanAutoCashout,
+          includeSocial: false,
+        },
+        { supersede: true }
+      );
 
       lastSocialAtRef.current = 0;
       onToast?.('Stavka qabul qilindi');
     } catch (error) {
+      if (
+        optimisticBet &&
+        lastBetRef.current?.id === optimisticBet.id
+      ) {
+        lastBetRef.current = null;
+        setMyBet((current) =>
+          current?.id === optimisticBet.id ? null : current
+        );
+        setBalance(balanceBefore);
+        onBalanceChange?.(balanceBefore);
+        onRoundStateChange?.(false);
+      }
+
       errorUntilRef.current = Date.now() + 2500;
       setLocalError(error?.message || 'Stavka qo‘yishda xatolik.');
       tg?.HapticFeedback?.notificationOccurred?.('error');
       lastSocialAtRef.current = 0;
     } finally {
       actionBusyRef.current = false;
-      if (mountedRef.current) setSubmitting(false);
+      if (mountedRef.current) {
+        setSubmitting(false);
+        setPendingAction('');
+      }
     }
   };
 
@@ -972,34 +1208,57 @@ export default function RocketGame({
     if (
       actionBusyRef.current ||
       submitting ||
-      !activeBet ||
-      phase !== 'flying' ||
+      !cashableBet ||
+      (phase !== 'flying' && phase !== 'launching') ||
       !round?.id
     ) {
       return;
     }
 
     setLocalError('');
+    const betBeforeCashout = myBet;
 
     try {
       actionBusyRef.current = true;
       setSubmitting(true);
+      setPendingAction('cashout');
       tg?.HapticFeedback?.impactOccurred?.('heavy');
 
-      await callRocket({
-        action: 'cashout',
-        roundId: round.id,
-        includeSocial: false,
-      });
+      setMyBet((current) =>
+        current?.id === betBeforeCashout?.id
+          ? { ...current, status: 'cashout_pending' }
+          : current
+      );
+      onRoundStateChange?.(true);
+
+      await callRocket(
+        {
+          action: 'cashout',
+          roundId: round.id,
+          includeSocial: false,
+        },
+        { supersede: true }
+      );
       lastSocialAtRef.current = 0;
     } catch (error) {
+      setMyBet((current) =>
+        current?.id === betBeforeCashout?.id &&
+        current?.status === 'cashout_pending'
+          ? betBeforeCashout
+          : current
+      );
+      lastBetRef.current = betBeforeCashout;
+      onRoundStateChange?.(true);
       errorUntilRef.current = Date.now() + 2500;
       setLocalError(error?.message || 'Cash out bajarilmadi.');
       tg?.HapticFeedback?.notificationOccurred?.('error');
       lastSocialAtRef.current = 0;
     } finally {
       actionBusyRef.current = false;
-      if (mountedRef.current) setSubmitting(false);
+      if (mountedRef.current) {
+        setSubmitting(false);
+        setPendingAction('');
+      }
     }
   };
 
@@ -1040,12 +1299,23 @@ export default function RocketGame({
       };
     }
 
-    if (submitting) {
+    if (pendingAction === 'place') {
       return {
-        label: phase === 'flying' ? 'Cashing out…' : 'Placing bet…',
-        sublabel: 'Server tasdig‘i kutilmoqda',
+        label: 'Bet placed',
+        sublabel: `Take off in ${(countdownMs / 1000).toFixed(1)}s • confirming`,
         disabled: true,
-        kind: phase === 'flying' ? 'cashout' : 'bet',
+        kind: 'placed',
+      };
+    }
+
+    if (pendingAction === 'cashout') {
+      return {
+        label: 'Cash out sent',
+        sublabel: `Locked at server time • ${formatMultiplier(
+          liveMultiplier
+        )}`,
+        disabled: true,
+        kind: 'cashoutPending',
       };
     }
 
@@ -1068,6 +1338,15 @@ export default function RocketGame({
     }
 
     if (phase === 'launching') {
+      if (cashWindowOpen) {
+        return {
+          label: `Cash out ${formatStars(possiblePayout)} ⭐`,
+          sublabel: 'Launch started • tap now',
+          disabled: false,
+          kind: 'cashout',
+        };
+      }
+
       return {
         label: 'Launching…',
         sublabel: myBet ? 'Your bet is active' : 'Next round soon',
@@ -1077,7 +1356,7 @@ export default function RocketGame({
     }
 
     if (phase === 'flying') {
-      if (activeBet) {
+      if (cashableBet) {
         return {
           label: `Cash out ${formatStars(possiblePayout)} ⭐`,
           sublabel: `Current ${formatMultiplier(liveMultiplier)}`,
@@ -1128,8 +1407,9 @@ export default function RocketGame({
       kind: 'placed',
     };
   }, [
-    activeBet,
     balance,
+    cashableBet,
+    cashWindowOpen,
     countdownMs,
     initializing,
     liveMultiplier,
@@ -1137,12 +1417,20 @@ export default function RocketGame({
     numericBet,
     phase,
     possiblePayout,
+    pendingAction,
     round?.crashMultiplier,
-    submitting,
   ]);
 
-  const primaryAction =
-    phase === 'flying' && activeBet ? cashOut : placeBet;
+  const primaryAction = cashWindowOpen ? cashOut : placeBet;
+  const handlePrimaryPointerUp = (event) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+    primaryPointerAtRef.current = Date.now();
+    primaryAction();
+  };
+  const handlePrimaryClick = () => {
+    if (Date.now() - primaryPointerAtRef.current < 450) return;
+    primaryAction();
+  };
   const connectionLabel =
     connection === 'live'
       ? 'LIVE'
@@ -1153,7 +1441,10 @@ export default function RocketGame({
           : 'SYNCING';
 
   return (
-    <section className={styles.root}>
+    <section
+      className={styles.root}
+      data-performance={performanceMode}
+    >
       <header className={styles.header}>
         <div className={styles.headerTitle}>
           <button
@@ -1339,7 +1630,9 @@ export default function RocketGame({
             styles[`primary_${actionState.kind}`] || ''
           }`}
           disabled={actionState.disabled}
-          onClick={primaryAction}
+          aria-busy={submitting}
+          onPointerUp={handlePrimaryPointerUp}
+          onClick={handlePrimaryClick}
         >
           <strong>{actionState.label}</strong>
           <span>{actionState.sublabel}</span>
@@ -1364,7 +1657,7 @@ export default function RocketGame({
               <PlayerRow
                 key={player.id}
                 player={player}
-                liveMultiplier={liveMultiplier}
+                liveMultiplier={player.isYou ? liveMultiplier : 1}
               />
             ))
           ) : (
@@ -1410,6 +1703,14 @@ export default function RocketGame({
             Crash point serverda oldindan yaratiladi va parvoz
             tugamaguncha yashirin qoladi.
           </p>
+          <span>Round rules</span>
+          <code>
+            Algorithm v{round?.algorithmVersion || 1} •{' '}
+            {(100 - toNumber(round?.houseEdgeBps, 400) / 100).toFixed(
+              2
+            )}
+            % theoretical RTP • independent rounds
+          </code>
           {round?.status === 'crashed' ? (
             <>
               <span>Server seed</span>
