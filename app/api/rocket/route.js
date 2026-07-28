@@ -9,8 +9,10 @@ const ROCKET_CONFIG = Object.freeze({
   maxBet: 10000,
   minAutoCashout: 1.1,
   maxAutoCashout: 100,
-  growthRate: 0.1,
-  pollIntervalMs: 350,
+  bettingWindowMs: 7000,
+  resultHoldMs: 1400,
+  growthRate: 0.22,
+  pollIntervalMs: 300,
   houseEdgePercent: 4,
 });
 
@@ -25,52 +27,84 @@ function isUuid(value) {
   );
 }
 
+function cleanName(value, fallback = 'Player') {
+  const text = String(value || '')
+    .replace(/[\u0000-\u001f\u007f]/g, '')
+    .trim()
+    .slice(0, 40);
+
+  return text || fallback;
+}
+
 function normalizeRound(value) {
   if (!value?.id) return null;
 
-  const status = String(value.status || '');
-  const isRunning = status === 'running';
+  const status = String(value.status || 'betting');
+  const reveal = status === 'crashed';
 
   return {
     id: String(value.id),
+    number: Math.max(0, Math.floor(toNumber(value.number ?? value.round_no))),
     status,
+    currentMultiplier: Math.max(
+      1,
+      toNumber(value.currentMultiplier ?? value.current_multiplier, 1)
+    ),
+    crashMultiplier:
+      reveal &&
+      (value.crashMultiplier != null || value.crash_multiplier != null)
+        ? toNumber(value.crashMultiplier ?? value.crash_multiplier)
+        : null,
+    serverSeedHash: String(
+      value.serverSeedHash || value.server_seed_hash || ''
+    ),
+    serverSeed: reveal
+      ? String(value.serverSeed || value.server_seed || '')
+      : '',
+    bettingOpensAt:
+      value.bettingOpensAt || value.betting_opens_at || null,
+    startsAt: value.startsAt || value.starts_at || null,
+    settledAt: value.settledAt || value.settled_at || null,
+  };
+}
+
+function normalizeBet(value) {
+  if (!value?.id) return null;
+
+  return {
+    id: String(value.id),
+    roundId: String(value.roundId || value.round_id || ''),
+    status: String(value.status || 'placed'),
     bet: Math.max(0, Math.floor(toNumber(value.bet))),
     payout: Math.max(0, Math.floor(toNumber(value.payout))),
     autoCashout:
       value.autoCashout == null && value.auto_cashout == null
         ? null
         : toNumber(value.autoCashout ?? value.auto_cashout),
-    currentMultiplier: Math.max(
-      1,
-      toNumber(value.currentMultiplier ?? value.current_multiplier, 1)
-    ),
     cashoutMultiplier:
-      value.cashoutMultiplier == null && value.cashout_multiplier == null
+      value.cashoutMultiplier == null &&
+      value.cashout_multiplier == null
         ? null
-        : toNumber(value.cashoutMultiplier ?? value.cashout_multiplier),
-    crashMultiplier:
-      isRunning ||
-      (value.crashMultiplier == null && value.crash_multiplier == null)
-        ? null
-        : toNumber(value.crashMultiplier ?? value.crash_multiplier),
-    serverSeedHash:
-      String(value.serverSeedHash || value.server_seed_hash || ''),
-    serverSeed: isRunning
-      ? ''
-      : String(value.serverSeed || value.server_seed || ''),
-    startedAt: value.startedAt || value.started_at || null,
+        : toNumber(
+            value.cashoutMultiplier ?? value.cashout_multiplier
+          ),
+    createdAt: value.createdAt || value.created_at || null,
     settledAt: value.settledAt || value.settled_at || null,
   };
 }
 
 function rpcMissing(error) {
-  const text = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+  const text =
+    `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
 
   return (
     error?.code === 'PGRST202' ||
+    error?.code === '42P01' ||
     text.includes('could not find the function') ||
     text.includes('does not exist in the schema cache') ||
-    text.includes('relation "public.rocket_rounds" does not exist')
+    (text.includes('does not exist') &&
+      (text.includes('rocket_game_rounds') ||
+        text.includes('rocket_game_bets')))
   );
 }
 
@@ -79,7 +113,7 @@ function mapRocketError(error) {
     return {
       status: 503,
       message:
-        'Rocket SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
+        'Rocket V2 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
       reason: 'ROCKET_SQL_MISSING',
     };
   }
@@ -104,22 +138,36 @@ function mapRocketError(error) {
     return { status: 400, message: 'Balans yetarli emas.' };
   }
 
-  if (message.includes('ROUND_ALREADY_RUNNING')) {
+  if (message.includes('BET_ALREADY_PLACED')) {
     return {
       status: 409,
-      message: 'Avvalgi Rocket raundi hali tugamagan.',
+      message: 'Bu raund uchun stavka allaqachon qo‘yilgan.',
     };
   }
 
-  if (message.includes('ROUND_NOT_FOUND')) {
-    return { status: 404, message: 'Rocket raundi topilmadi.' };
-  }
-
-  if (message.includes('ROUND_ALREADY_SETTLED')) {
+  if (message.includes('ROUND_CLOSED')) {
     return {
       status: 409,
-      message: 'Bu raund allaqachon yakunlangan.',
+      message: 'Stavka vaqti tugadi. Keyingi raundni kuting.',
     };
+  }
+
+  if (message.includes('ROUND_NOT_FLYING')) {
+    return {
+      status: 409,
+      message: 'Cash out faqat raketa uchayotgan paytda ishlaydi.',
+    };
+  }
+
+  if (message.includes('ROUND_CRASHED')) {
+    return {
+      status: 409,
+      message: 'Kech qoldingiz — raketa portladi.',
+    };
+  }
+
+  if (message.includes('BET_NOT_FOUND')) {
+    return { status: 404, message: 'Bu raunddagi stavka topilmadi.' };
   }
 
   if (message.includes('USER_BANNED')) {
@@ -133,30 +181,6 @@ function mapRocketError(error) {
   return { status: 500, message };
 }
 
-async function fetchHistory(supabase, userId) {
-  const { data, error } = await supabase
-    .from('rocket_rounds')
-    .select(
-      'id,status,bet,payout,auto_cashout,cashout_multiplier,crash_multiplier,server_seed_hash,server_seed,started_at,settled_at'
-    )
-    .eq('user_id', userId)
-    .neq('status', 'running')
-    .order('created_at', { ascending: false })
-    .limit(12);
-
-  if (error) {
-    if (error.code === '42P01' || String(error.message || '').includes('rocket_rounds')) {
-      const missing = new Error('Rocket SQL o‘rnatilmagan');
-      missing.code = 'PGRST202';
-      throw missing;
-    }
-
-    throw error;
-  }
-
-  return (data || []).map(normalizeRound).filter(Boolean);
-}
-
 async function callRocketRpc(supabase, name, params) {
   const { data, error } = await supabase.rpc(name, params);
 
@@ -164,20 +188,107 @@ async function callRocketRpc(supabase, name, params) {
   return data;
 }
 
-function responsePayload({ round, history, balance }) {
-  return {
-    ok: true,
-    round: normalizeRound(round),
-    ...(Array.isArray(history) ? { history } : {}),
-    balance:
-      balance == null
-        ? round?.balance == null
+async function fetchRecentRounds(supabase) {
+  const { data, error } = await supabase
+    .from('rocket_game_rounds')
+    .select('id,round_no,crash_multiplier,started_at,settled_at')
+    .eq('status', 'crashed')
+    .order('round_no', { ascending: false })
+    .limit(14);
+
+  if (error) throw error;
+
+  return (data || []).map((item) => ({
+    id: String(item.id),
+    number: Math.max(0, Math.floor(toNumber(item.round_no))),
+    crashMultiplier: Math.max(1, toNumber(item.crash_multiplier, 1)),
+    startedAt: item.started_at || null,
+    settledAt: item.settled_at || null,
+  }));
+}
+
+async function fetchRoundPlayers(supabase, roundId, currentUserId) {
+  if (!roundId) return [];
+
+  const { data: bets, error: betsError } = await supabase
+    .from('rocket_game_bets')
+    .select(
+      'id,user_id,bet,payout,status,auto_cashout,cashout_multiplier,created_at'
+    )
+    .eq('round_id', roundId)
+    .order('bet', { ascending: false })
+    .order('created_at', { ascending: true })
+    .limit(40);
+
+  if (betsError) throw betsError;
+  if (!bets?.length) return [];
+
+  const userIds = [...new Set(bets.map((item) => item.user_id))];
+  const { data: users, error: usersError } = await supabase
+    .from('users')
+    .select('id,first_name,username')
+    .in('id', userIds);
+
+  if (usersError) throw usersError;
+
+  const userMap = new Map(
+    (users || []).map((item) => [String(item.id), item])
+  );
+
+  return bets.map((item) => {
+    const user = userMap.get(String(item.user_id)) || {};
+    const fallback = user.username
+      ? `@${String(user.username).replace(/^@/, '')}`
+      : 'Player';
+
+    return {
+      id: String(item.id),
+      name: cleanName(user.first_name, fallback),
+      username: user.username
+        ? cleanName(`@${String(user.username).replace(/^@/, '')}`, '')
+        : '',
+      bet: Math.max(0, Math.floor(toNumber(item.bet))),
+      payout: Math.max(0, Math.floor(toNumber(item.payout))),
+      status: String(item.status || 'placed'),
+      autoCashout:
+        item.auto_cashout == null ? null : toNumber(item.auto_cashout),
+      cashoutMultiplier:
+        item.cashout_multiplier == null
           ? null
-          : toNumber(round.balance)
-        : toNumber(balance),
+          : toNumber(item.cashout_multiplier),
+      isYou: String(item.user_id) === String(currentUserId),
+      createdAt: item.created_at || null,
+    };
+  });
+}
+
+async function buildResponse({
+  supabase,
+  state,
+  userId,
+  includeSocial = true,
+}) {
+  const round = normalizeRound(state?.round);
+  const payload = {
+    ok: true,
+    round,
+    bet: normalizeBet(state?.bet),
+    balance: Math.max(0, toNumber(state?.balance)),
     config: ROCKET_CONFIG,
-    serverTime: new Date().toISOString(),
   };
+
+  if (includeSocial) {
+    const [history, players] = await Promise.all([
+      fetchRecentRounds(supabase),
+      fetchRoundPlayers(supabase, round?.id, userId),
+    ]);
+
+    payload.history = history;
+    payload.players = players;
+  }
+
+  payload.serverTime = new Date().toISOString();
+  return payload;
 }
 
 export async function POST(request) {
@@ -189,42 +300,29 @@ export async function POST(request) {
     }
 
     const supabase = getSupabaseAdmin();
-    const dbUser = await ensureUser(auth.telegramUser);
-
-    if (dbUser.is_banned) {
-      return jsonError('Siz bloklangansiz.', 403);
-    }
-
     const body = auth.body || {};
     const action = String(body.action || 'state').trim().toLowerCase();
+    const includeSocial = body.includeSocial !== false;
     const userId = Number(auth.telegramUser.id);
+    const callForUser = async (name, params) => {
+      try {
+        return await callRocketRpc(supabase, name, params);
+      } catch (error) {
+        if (!String(error?.message || '').includes('USER_NOT_FOUND')) {
+          throw error;
+        }
+
+        await ensureUser(auth.telegramUser);
+        return callRocketRpc(supabase, name, params);
+      }
+    };
+    let state;
 
     if (action === 'state') {
-      const roundId = body.roundId ? String(body.roundId) : null;
-
-      if (roundId && !isUuid(roundId)) {
-        return jsonError('roundId noto‘g‘ri.', 400);
-      }
-
-      const round = await callRocketRpc(supabase, 'rocket_get_state', {
+      state = await callForUser('rocket_get_game_state', {
         p_user_id: userId,
-        p_round_id: roundId,
       });
-      const history =
-        !roundId || round?.status !== 'running'
-          ? await fetchHistory(supabase, userId)
-          : undefined;
-
-      return Response.json(
-        responsePayload({
-          round,
-          history,
-          balance: round?.balance ?? dbUser.balance,
-        })
-      );
-    }
-
-    if (action === 'start') {
+    } else if (action === 'place' || action === 'start') {
       const bet = Number(body.bet);
       const autoCashout =
         body.autoCashout == null || body.autoCashout === ''
@@ -254,33 +352,39 @@ export async function POST(request) {
         );
       }
 
-      const round = await callRocketRpc(supabase, 'rocket_start_round', {
+      state = await callForUser('rocket_place_bet', {
         p_user_id: userId,
         p_bet: bet,
         p_auto_cashout:
           autoCashout == null ? null : Number(autoCashout.toFixed(2)),
       });
-
-      return Response.json(responsePayload({ round }));
-    }
-
-    if (action === 'cashout') {
+    } else if (action === 'cashout') {
       const roundId = String(body.roundId || '');
 
       if (!isUuid(roundId)) {
         return jsonError('roundId noto‘g‘ri.', 400);
       }
 
-      const round = await callRocketRpc(supabase, 'rocket_cash_out', {
+      state = await callForUser('rocket_cash_out_v2', {
         p_user_id: userId,
         p_round_id: roundId,
       });
-      const history = await fetchHistory(supabase, userId);
-
-      return Response.json(responsePayload({ round, history }));
+    } else {
+      return jsonError('Rocket action noto‘g‘ri.', 400);
     }
 
-    return jsonError('Rocket action noto‘g‘ri.', 400);
+    const payload = await buildResponse({
+      supabase,
+      state,
+      userId,
+      includeSocial,
+    });
+
+    return Response.json(payload, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    });
   } catch (error) {
     const mapped = mapRocketError(error);
     return jsonError(mapped.message, mapped.status, {
