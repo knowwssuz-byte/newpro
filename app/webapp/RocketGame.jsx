@@ -34,6 +34,41 @@ const PARTICLES = [
   [78, 70, 5],
   [91, 82, 3],
 ];
+const EXPLOSION_SPARKS = [
+  [4, 92, 0],
+  [28, 74, 35],
+  [51, 98, 12],
+  [78, 70, 48],
+  [106, 89, 22],
+  [133, 76, 55],
+  [158, 101, 8],
+  [184, 82, 42],
+  [211, 94, 18],
+  [238, 73, 62],
+  [264, 102, 28],
+  [291, 79, 50],
+  [316, 91, 15],
+  [341, 72, 38],
+];
+const EXPLOSION_DEBRIS = [
+  [19, 62, 0],
+  [67, 51, 55],
+  [112, 68, 20],
+  [154, 55, 80],
+  [202, 66, 35],
+  [247, 52, 70],
+  [293, 64, 15],
+  [334, 50, 48],
+];
+const EXPLOSION_SMOKE = [
+  [-35, -28, 0],
+  [5, -40, 45],
+  [38, -24, 80],
+  [-44, 8, 95],
+  [43, 12, 120],
+  [-24, 38, 150],
+  [22, 42, 175],
+];
 
 function toNumber(value, fallback = 0) {
   const number = Number(value);
@@ -103,21 +138,89 @@ function normalizeBet(value) {
   };
 }
 
-function calculateMultiplier(round, serverNow, growthRate) {
+function authoritativeMultiplier(round) {
   if (!round) return 1;
+
   if (round.status === 'crashed') {
     return Math.max(1, toNumber(round.crashMultiplier, 1));
   }
 
-  const startsAt = new Date(round.startsAt || 0).getTime();
-  if (!Number.isFinite(startsAt) || serverNow < startsAt) return 1;
+  return round.status === 'flying'
+    ? clamp(toNumber(round.currentMultiplier, 1), 1, 999.99)
+    : 1;
+}
 
-  const elapsedSeconds = Math.max(0, (serverNow - startsAt) / 1000);
-  return clamp(
-    Math.floor(Math.exp(elapsedSeconds * growthRate) * 100) / 100,
-    1,
-    999.99
-  );
+function useVisualMultiplier(round) {
+  const target = authoritativeMultiplier(round);
+  const [visualMultiplier, setVisualMultiplier] = useState(target);
+  const visualRef = useRef(target);
+  const roundIdRef = useRef(round?.id || '');
+  const frameRef = useRef(null);
+
+  useEffect(() => {
+    if (frameRef.current) {
+      window.cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
+
+    const roundId = round?.id || '';
+    const isNewRound = roundIdRef.current !== roundId;
+    roundIdRef.current = roundId;
+
+    if (isNewRound || !round || round.status === 'betting') {
+      const nextValue = round?.status === 'flying' ? target : 1;
+      visualRef.current = nextValue;
+      setVisualMultiplier(nextValue);
+      return undefined;
+    }
+
+    if (round.status === 'crashed') {
+      visualRef.current = target;
+      setVisualMultiplier(target);
+      return undefined;
+    }
+
+    const from = visualRef.current;
+    const to = Math.max(from, target);
+
+    if (to - from < 0.005) {
+      return undefined;
+    }
+
+    const startedAt = window.performance.now();
+    const duration = 150;
+
+    const animate = (now) => {
+      const progress = clamp((now - startedAt) / duration, 0, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const nextValue = Math.min(
+        to,
+        Math.floor((from + (to - from) * eased) * 100) / 100
+      );
+
+      if (nextValue !== visualRef.current) {
+        visualRef.current = nextValue;
+        setVisualMultiplier(nextValue);
+      }
+
+      if (progress < 1) {
+        frameRef.current = window.requestAnimationFrame(animate);
+      } else {
+        frameRef.current = null;
+      }
+    };
+
+    frameRef.current = window.requestAnimationFrame(animate);
+
+    return () => {
+      if (frameRef.current) {
+        window.cancelAnimationFrame(frameRef.current);
+        frameRef.current = null;
+      }
+    };
+  }, [round, target]);
+
+  return round?.status === 'crashed' ? target : visualMultiplier;
 }
 
 function historyTone(multiplier) {
@@ -216,30 +319,7 @@ function StarCoin({ small = false }) {
   );
 }
 
-function FlightScene({ round, config, clockOffset }) {
-  const [paintNow, setPaintNow] = useState(() => Date.now());
-  const frameRef = useRef(null);
-  const lastPaintRef = useRef(0);
-
-  useEffect(() => {
-    const animate = (timestamp) => {
-      if (timestamp - lastPaintRef.current >= 34) {
-        setPaintNow(Date.now());
-        lastPaintRef.current = timestamp;
-      }
-      frameRef.current = window.requestAnimationFrame(animate);
-    };
-
-    frameRef.current = window.requestAnimationFrame(animate);
-
-    return () => {
-      if (frameRef.current) {
-        window.cancelAnimationFrame(frameRef.current);
-      }
-    };
-  }, []);
-
-  const serverNow = paintNow + clockOffset;
+function FlightScene({ round, config, serverNow }) {
   const startsAt = new Date(round?.startsAt || 0).getTime();
   const countdownMs = Number.isFinite(startsAt)
     ? Math.max(0, startsAt - serverNow)
@@ -248,21 +328,7 @@ function FlightScene({ round, config, clockOffset }) {
     round?.status === 'flying' ||
     (round?.status === 'betting' && countdownMs <= 0);
   const crashed = round?.status === 'crashed';
-  const growthRate = clamp(
-    toNumber(config.growthRate, DEFAULT_CONFIG.growthRate),
-    0.02,
-    0.5
-  );
-  const multiplier = crashed
-    ? Math.max(1, toNumber(round?.crashMultiplier, 1))
-    : visuallyFlying
-      ? calculateMultiplier(round, serverNow, growthRate)
-      : 1;
-  const progress = clamp(
-    Math.log(Math.max(1, multiplier)) / Math.log(8),
-    0,
-    1
-  );
+  const multiplier = useVisualMultiplier(round);
   const countdownSeconds = Math.max(0, countdownMs / 1000);
   const countdownProgress = clamp(
     countdownMs /
@@ -270,12 +336,6 @@ function FlightScene({ round, config, clockOffset }) {
     0,
     1
   );
-
-  const rocketStyle = {
-    '--flight-x': `${22 + progress * 56}%`,
-    '--flight-y': `${67 - progress * 47}%`,
-    '--flight-scale': `${0.94 + progress * 0.16}`,
-  };
 
   const countdownStyle = {
     '--countdown-progress': `${countdownProgress * 360}deg`,
@@ -288,6 +348,12 @@ function FlightScene({ round, config, clockOffset }) {
       } ${visuallyFlying ? styles.sceneFlying : styles.sceneWaiting}`}
     >
       <div className={styles.sceneShade} aria-hidden="true" />
+      <div className={styles.spaceFog} aria-hidden="true" />
+      <div className={styles.orbitField} aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </div>
       <div className={styles.particles} aria-hidden="true">
         {PARTICLES.map(([left, top, size], index) => (
           <i
@@ -326,17 +392,22 @@ function FlightScene({ round, config, clockOffset }) {
       ) : (
         <div className={styles.liveMultiplier}>
           <strong>{formatMultiplier(multiplier)}</strong>
-          <span>{crashed ? 'FLEW AWAY' : 'CASH OUT BEFORE IT FLIES AWAY'}</span>
+          <span>
+            {crashed
+              ? 'FINAL MULTIPLIER • CRASHED'
+              : 'CASH OUT BEFORE THE BLAST'}
+          </span>
         </div>
       )}
 
+      <div className={styles.launchHalo} aria-hidden="true" />
       <div
         className={`${styles.rocket} ${
           crashed ? styles.rocketGone : ''
         }`}
-        style={rocketStyle}
         aria-hidden="true"
       >
+        <span className={styles.engineGlow} />
         <span className={styles.rocketTrail} />
         <Image
           src="/feature/rocket.webp"
@@ -350,10 +421,54 @@ function FlightScene({ round, config, clockOffset }) {
       </div>
 
       {crashed ? (
-        <div className={styles.burst} aria-hidden="true">
-          <i />
-          <i />
-          <i />
+        <div
+          className={styles.explosion}
+          key={`explosion-${round?.id || 'round'}`}
+          aria-hidden="true"
+        >
+          <span className={styles.explosionFlash} />
+          <span className={styles.explosionFireball} />
+          <span className={styles.explosionCore} />
+          <span className={styles.shockwave} />
+          <span className={`${styles.shockwave} ${styles.shockwaveOuter}`} />
+          <span className={styles.smokeCloud}>
+            {EXPLOSION_SMOKE.map(([x, y, delay], index) => (
+              <i
+                key={`${x}-${y}`}
+                style={{
+                  '--smoke-x': `${x}px`,
+                  '--smoke-y': `${y}px`,
+                  '--smoke-delay': `${delay}ms`,
+                  '--smoke-scale': `${0.82 + (index % 3) * 0.12}`,
+                }}
+              />
+            ))}
+          </span>
+          <span className={styles.sparkField}>
+            {EXPLOSION_SPARKS.map(([angle, distance, delay]) => (
+              <i
+                key={`${angle}-${distance}`}
+                style={{
+                  '--spark-angle': `${angle}deg`,
+                  '--spark-distance': `${distance}px`,
+                  '--spark-delay': `${delay}ms`,
+                }}
+              />
+            ))}
+          </span>
+          <span className={styles.debrisField}>
+            {EXPLOSION_DEBRIS.map(([angle, distance, delay], index) => (
+              <i
+                key={`${angle}-${distance}`}
+                style={{
+                  '--debris-angle': `${angle}deg`,
+                  '--debris-distance': `${distance}px`,
+                  '--debris-delay': `${delay}ms`,
+                  '--debris-spin': `${index % 2 ? -310 : 350}deg`,
+                }}
+              />
+            ))}
+          </span>
         </div>
       ) : null}
 
@@ -474,16 +589,7 @@ export default function RocketGame({
     round?.status === 'betting' && countdownMs <= 0
       ? 'launching'
       : round?.status || 'betting';
-  const growthRate = clamp(
-    toNumber(config.growthRate, DEFAULT_CONFIG.growthRate),
-    0.02,
-    0.5
-  );
-  const liveMultiplier = calculateMultiplier(
-    round,
-    serverNow,
-    growthRate
-  );
+  const liveMultiplier = authoritativeMultiplier(round);
   const numericBet = Math.max(0, Math.floor(toNumber(bet)));
   const activeBet =
     myBet?.roundId === round?.id && myBet?.status === 'placed';
@@ -503,7 +609,7 @@ export default function RocketGame({
   useEffect(() => {
     const timer = window.setInterval(() => {
       setUiNow(Date.now());
-    }, 200);
+    }, 100);
 
     return () => window.clearInterval(timer);
   }, []);
@@ -574,7 +680,7 @@ export default function RocketGame({
       ) {
         tg?.HapticFeedback?.notificationOccurred?.('error');
         onToast?.(
-          `Raketa ${formatMultiplier(nextRound?.crashMultiplier)} da uchib ketdi`
+          `Raketa ${formatMultiplier(nextRound?.crashMultiplier)} da portladi`
         );
       }
 
@@ -632,6 +738,7 @@ export default function RocketGame({
 
     const poll = async () => {
       if (stopped) return;
+      const cycleStartedAt = window.performance.now();
 
       if (!pollBusyRef.current && !actionBusyRef.current) {
         pollBusyRef.current = true;
@@ -670,11 +777,13 @@ export default function RocketGame({
             : currentPhase === 'betting'
               ? 360
               : 480;
+        const elapsed = window.performance.now() - cycleStartedAt;
+        const nextDelay = Math.max(80, delay - elapsed);
         if (timer) window.clearTimeout(timer);
         timer = window.setTimeout(() => {
           timer = null;
           poll();
-        }, delay);
+        }, nextDelay);
       }
     };
 
@@ -966,7 +1075,7 @@ export default function RocketGame({
 
     if (myBet?.status === 'lost') {
       return {
-        label: 'Rocket flew away',
+          label: 'Rocket crashed',
         sublabel: `Crashed at ${formatMultiplier(round?.crashMultiplier)}`,
         disabled: true,
         kind: 'lost',
@@ -1043,7 +1152,7 @@ export default function RocketGame({
         <FlightScene
           round={round}
           config={config}
-          clockOffset={clockOffset}
+          serverNow={serverNow}
         />
 
         <div className={styles.historyStrip}>
