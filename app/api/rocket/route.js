@@ -113,7 +113,7 @@ function mapRocketError(error) {
     return {
       status: 503,
       message:
-        'Rocket V2 SQL o‘rnatilmagan. Supabase SQL Editor’da sql/rocket-game.sql faylini ishga tushiring.',
+        'Rocket V2 SQL oâ€˜rnatilmagan. Supabase SQL Editorâ€™da sql/rocket-game.sql faylini ishga tushiring.',
       reason: 'ROCKET_SQL_MISSING',
     };
   }
@@ -123,14 +123,14 @@ function mapRocketError(error) {
   if (message.includes('INVALID_BET')) {
     return {
       status: 400,
-      message: `Stavka ${ROCKET_CONFIG.minBet}–${ROCKET_CONFIG.maxBet} oralig‘ida bo‘lishi kerak.`,
+      message: `Stavka ${ROCKET_CONFIG.minBet}â€“${ROCKET_CONFIG.maxBet} oraligâ€˜ida boâ€˜lishi kerak.`,
     };
   }
 
   if (message.includes('INVALID_AUTO_CASHOUT')) {
     return {
       status: 400,
-      message: `Auto cashout ${ROCKET_CONFIG.minAutoCashout.toFixed(2)}×–${ROCKET_CONFIG.maxAutoCashout.toFixed(2)}× oralig‘ida bo‘lishi kerak.`,
+      message: `Auto cashout ${ROCKET_CONFIG.minAutoCashout.toFixed(2)}Ã—â€“${ROCKET_CONFIG.maxAutoCashout.toFixed(2)}Ã— oraligâ€˜ida boâ€˜lishi kerak.`,
     };
   }
 
@@ -141,7 +141,7 @@ function mapRocketError(error) {
   if (message.includes('BET_ALREADY_PLACED')) {
     return {
       status: 409,
-      message: 'Bu raund uchun stavka allaqachon qo‘yilgan.',
+      message: 'Bu raund uchun stavka allaqachon qoâ€˜yilgan.',
     };
   }
 
@@ -162,7 +162,7 @@ function mapRocketError(error) {
   if (message.includes('ROUND_CRASHED')) {
     return {
       status: 409,
-      message: 'Kech qoldingiz — raketa portladi.',
+      message: 'Kech qoldingiz â€” raketa portladi.',
     };
   }
 
@@ -191,7 +191,7 @@ async function callRocketRpc(supabase, name, params) {
 async function fetchRecentRounds(supabase) {
   const { data, error } = await supabase
     .from('rocket_game_rounds')
-    .select('id,round_no,crash_multiplier,started_at,settled_at')
+    .select('id,round_no,crash_multiplier,starts_at,settled_at')
     .eq('status', 'crashed')
     .order('round_no', { ascending: false })
     .limit(14);
@@ -202,7 +202,7 @@ async function fetchRecentRounds(supabase) {
     id: String(item.id),
     number: Math.max(0, Math.floor(toNumber(item.round_no))),
     crashMultiplier: Math.max(1, toNumber(item.crash_multiplier, 1)),
-    startedAt: item.started_at || null,
+    startsAt: item.starts_at || null,
     settledAt: item.settled_at || null,
   }));
 }
@@ -335,7 +335,7 @@ export async function POST(request) {
         bet > ROCKET_CONFIG.maxBet
       ) {
         return jsonError(
-          `Stavka ${ROCKET_CONFIG.minBet}–${ROCKET_CONFIG.maxBet} oralig‘ida bo‘lishi kerak.`,
+          `Stavka ${ROCKET_CONFIG.minBet}â€“${ROCKET_CONFIG.maxBet} oraligâ€˜ida boâ€˜lishi kerak.`,
           400
         );
       }
@@ -347,7 +347,7 @@ export async function POST(request) {
           autoCashout > ROCKET_CONFIG.maxAutoCashout)
       ) {
         return jsonError(
-          `Auto cashout ${ROCKET_CONFIG.minAutoCashout.toFixed(2)}×–${ROCKET_CONFIG.maxAutoCashout.toFixed(2)}× oralig‘ida bo‘lishi kerak.`,
+          `Auto cashout ${ROCKET_CONFIG.minAutoCashout.toFixed(2)}Ã—â€“${ROCKET_CONFIG.maxAutoCashout.toFixed(2)}Ã— oraligâ€˜ida boâ€˜lishi kerak.`,
           400
         );
       }
@@ -362,7 +362,7 @@ export async function POST(request) {
       const roundId = String(body.roundId || '');
 
       if (!isUuid(roundId)) {
-        return jsonError('roundId noto‘g‘ri.', 400);
+        return jsonError('roundId notoâ€˜gâ€˜ri.', 400);
       }
 
       state = await callForUser('rocket_cash_out_v2', {
@@ -370,7 +370,7 @@ export async function POST(request) {
         p_round_id: roundId,
       });
     } else {
-      return jsonError('Rocket action noto‘g‘ri.', 400);
+      return jsonError('Rocket action notoâ€˜gâ€˜ri.', 400);
     }
 
     const payload = await buildResponse({
