@@ -2,6 +2,26 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Image from 'next/image';
+import {
+  ArrowDownToLine,
+  Boxes,
+  Circle,
+  Gamepad2,
+  Gem,
+  Gift,
+  History,
+  House,
+  PackageOpen,
+  Rocket,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Swords,
+  UserRound,
+  UsersRound,
+  WalletCards,
+} from 'lucide-react';
 import caseOpeningStyles from './CaseOpening.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
@@ -333,154 +353,49 @@ function getWinningIndexFromReel(reel = []) {
 function coinIcon() {
   return (
     <span className="coin-icon stars-currency-icon" aria-hidden="true">
-      <img src="/currency/stars.svg" alt="" draggable="false" />
+      <Image
+        src="/currency/stars.png"
+        alt=""
+        width={31}
+        height={31}
+        unoptimized
+        draggable={false}
+      />
     </span>
   );
 }
 
-function AppIcon({ name, className = '' }) {
-  const common = {
-    className: `app-icon ${className}`.trim(),
-    viewBox: '0 0 24 24',
-    fill: 'none',
-    xmlns: 'http://www.w3.org/2000/svg',
-    'aria-hidden': 'true',
-  };
+const APP_ICONS = {
+  admin: ShieldCheck,
+  box: PackageOpen,
+  cases: Boxes,
+  coin: Sparkles,
+  deposit: WalletCards,
+  games: Gamepad2,
+  gem: Gem,
+  gift: Gift,
+  history: History,
+  home: House,
+  inventory: PackageOpen,
+  profile: UserRound,
+  referral: UsersRound,
+  rocket: Rocket,
+  settings: Settings,
+  spark: Sparkles,
+  swords: Swords,
+  withdraw: ArrowDownToLine,
+};
 
-  switch (name) {
-    case 'home':
-      return (
-        <svg {...common}>
-          <path d="M3.5 11.3 12 4l8.5 7.3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M5.8 10.4v8.3h4.1v-4.9h4.2v4.9h4.1v-8.3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    case 'games':
-      return (
-        <svg {...common}>
-          <path d="M7.8 10.4h8.4a4.2 4.2 0 0 1 4.1 3.4l.5 2.6a2.1 2.1 0 0 1-3.4 2l-1.7-1.5H8.3l-1.7 1.5a2.1 2.1 0 0 1-3.4-2l.5-2.6a4.2 4.2 0 0 1 4.1-3.4Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M8.3 13.2v3M6.8 14.7h3M15.8 14.2h.1M18 16h.1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          <path d="M9 10.4V7.8h6v2.6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      );
-    case 'inventory':
-    case 'box':
-    case 'cases':
-      return (
-        <svg {...common}>
-          <path d="m12 3.5 7.2 4.1v8.8L12 20.5l-7.2-4.1V7.6L12 3.5Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M4.9 7.7 12 11.9l7.1-4.2M12 20.2v-8.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      );
-    case 'history':
-      return (
-        <svg {...common}>
-          <path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3L4.5 8.9" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M4.5 5.5v3.4h3.4M12 7.9v4.4l3 1.8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    case 'profile':
-      return (
-        <svg {...common}>
-          <path d="M12 12.2a4.2 4.2 0 1 0 0-8.4 4.2 4.2 0 0 0 0 8.4Z" stroke="currentColor" strokeWidth="2.2" />
-          <path d="M4.8 20.2a7.2 7.2 0 0 1 14.4 0" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-        </svg>
-      );
-    case 'referral':
-      return (
-        <svg {...common}>
-          <path d="M9.4 11.3a3.4 3.4 0 1 0 0-6.8 3.4 3.4 0 0 0 0 6.8Z" stroke="currentColor" strokeWidth="2.1" />
-          <path d="M3.9 19.4a5.8 5.8 0 0 1 10.8-2.9" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
-          <path d="M16.6 9.5a2.6 2.6 0 1 0 0-5.2" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
-          <path d="M16.4 14.3h2.2a2.7 2.7 0 0 1 0 5.4h-2.2" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
-          <path d="M17.6 17h-4.7" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" />
-        </svg>
-      );
-    case 'coin':
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="9" fill="url(#coinGradient)" stroke="currentColor" strokeWidth="1.2" />
-          <path d="m12 6.8 4.2 2.4-4.2 8-4.2-8 4.2-2.4Z" fill="white" opacity=".96" />
-          <path d="m12 9.2 1.8 1-1.8 3.5-1.8-3.5 1.8-1Z" fill="#10bdf7" />
-          <defs>
-            <linearGradient id="coinGradient" x1="4" y1="4" x2="20" y2="20">
-              <stop stopColor="#36e3ff" />
-              <stop offset="1" stopColor="#2772ff" />
-            </linearGradient>
-          </defs>
-        </svg>
-      );
-    case 'deposit':
-      return (
-        <svg {...common}>
-          <path d="M4.5 7.7h15v11h-15v-11Z" stroke="currentColor" strokeWidth="2.1" strokeLinejoin="round" />
-          <path d="M7 7.7V5.3h8.4v2.4M15 13h4.5M16.9 11.2l2 1.8-2 1.8" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    case 'rocket':
-      return (
-        <svg {...common}>
-          <path d="M14.2 4.2c2.7-1 5.5-.6 5.5-.6s.4 2.8-.6 5.5c-.8 2.1-2.7 4.5-5.5 6.9l-5.6-5.6c2.4-2.8 4.8-4.7 6.2-6.2Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M9 15.3 6.2 18l-.7-3.5-2.8-.8 2.8-2.8M13.5 18.5l-2.8 2.8-.8-2.8-3.5-.7 2.7-2.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="15.8" cy="7.5" r="1.7" stroke="currentColor" strokeWidth="2" />
-        </svg>
-      );
-    case 'swords':
-      return (
-        <svg {...common}>
-          <path d="m4.8 19.2 5.7-5.7M13.5 10.5l5.7-5.7M18.5 3.8l1.7 1.7-5.8 5.8-1.7-1.7 5.8-5.8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="m19.2 19.2-5.7-5.7M10.5 10.5 4.8 4.8M5.5 3.8 3.8 5.5l5.8 5.8 1.7-1.7-5.8-5.8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    case 'gift':
-      return (
-        <svg {...common}>
-          <path d="M4.2 10h15.6v10H4.2V10Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M3.5 7.2h17v3h-17v-3ZM12 7.2V20M12 7.1s-3.8.1-4.8-1.1c-1-1.1-.3-3 1.3-3 2 0 3.5 4.1 3.5 4.1Zm0 0s3.8.1 4.8-1.1c1-1.1.3-3-1.3-3-2 0-3.5 4.1-3.5 4.1Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-        </svg>
-      );
-    case 'gem':
-      return (
-        <svg {...common}>
-          <path d="M6.5 4h11L21 9l-9 11L3 9l3.5-5Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          <path d="m8.2 9 3.8 11 3.8-11M3 9h18M8 4l-1.5 5M16 4l1.5 5" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-        </svg>
-      );
-    case 'withdraw':
-      return (
-        <svg {...common}>
-          <path d="M5 5h14v7.5H5V5Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          <path d="M12 8v10M8.5 14.5 12 18l3.5-3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    case 'spark':
-      return (
-        <svg {...common}>
-          <path d="M12 2.8 14.2 9l6.4 2.2-6.4 2.2L12 19.6l-2.2-6.2-6.4-2.2L9.8 9 12 2.8Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          <path d="m18.5 16.2.8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8.8-2.1Z" fill="currentColor" />
-        </svg>
-      );
-    case 'admin':
-      return (
-        <svg {...common}>
-          <path d="M12 3.2 19 6v5.2c0 4.4-2.8 7.6-7 9.6-4.2-2-7-5.2-7-9.6V6l7-2.8Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          <path d="m8.8 12 2 2 4.5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    case 'settings':
-      return (
-        <svg {...common}>
-          <path d="M12 15.3a3.3 3.3 0 1 0 0-6.6 3.3 3.3 0 0 0 0 6.6Z" stroke="currentColor" strokeWidth="2" />
-          <path d="M19.4 13.6a7.9 7.9 0 0 0 0-3.2l2-1.5-2-3.4-2.4 1a8.2 8.2 0 0 0-2.8-1.6L13.8 2h-3.6l-.4 2.9A8.2 8.2 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.5a7.9 7.9 0 0 0 0 3.2l-2 1.5 2 3.4 2.4-1a8.2 8.2 0 0 0 2.8 1.6l.4 2.9h3.6l.4-2.9a8.2 8.2 0 0 0 2.8-1.6l2.4 1 2-3.4-2-1.5Z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      );
-    default:
-      return (
-        <svg {...common}>
-          <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2" />
-        </svg>
-      );
-  }
+function AppIcon({ name, className = '' }) {
+  const Icon = APP_ICONS[name] || Circle;
+
+  return (
+    <Icon
+      className={`app-icon ${className}`.trim()}
+      aria-hidden="true"
+      strokeWidth={2.15}
+    />
+  );
 }
 
 export default function WebAppClient() {
@@ -534,11 +449,11 @@ export default function WebAppClient() {
 
   const navItems = useMemo(
     () => [
-      { id: 'games', icon: 'games', image: '/nav/games.svg', label: 'Games' },
-      { id: 'inventory', icon: 'inventory', image: '/nav/cases.svg', label: 'Inventory' },
-      { id: 'home', icon: 'home', image: '/nav/home.svg', label: 'Home', center: true },
-      { id: 'history', icon: 'history', image: '/nav/history.svg', label: 'History' },
-      { id: 'referral', icon: 'referral', image: '/nav/referral.svg', label: 'Referal' },
+      { id: 'games', icon: 'games', label: 'Games' },
+      { id: 'inventory', icon: 'inventory', label: 'Inventory' },
+      { id: 'home', icon: 'home', label: 'Home', center: true },
+      { id: 'history', icon: 'history', label: 'History' },
+      { id: 'referral', icon: 'referral', label: 'Referal' },
     ],
     []
   );
