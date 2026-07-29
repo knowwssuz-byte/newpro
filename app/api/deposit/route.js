@@ -5,6 +5,7 @@ import {
   getDepositSettings,
 } from '@/lib/depositSettings';
 import {
+  buildTonConnectTransaction,
   buildTonTransferLink,
   decimalToNano,
   findTonDepositPayment,
@@ -73,7 +74,7 @@ function publicDeposit(deposit) {
       ? deposit.metadata
       : {};
 
-  return {
+  const result = {
     id: deposit.id,
     method: deposit.method,
     status: deposit.status,
@@ -94,6 +95,26 @@ function publicDeposit(deposit) {
     expiresAt: deposit.expires_at,
     completedAt: deposit.completed_at,
   };
+
+  if (
+    deposit.method === 'ton' &&
+    ['pending', 'confirming'].includes(deposit.status) &&
+    deposit.ton_wallet &&
+    deposit.ton_memo
+  ) {
+    try {
+      result.tonConnectTransaction = buildTonConnectTransaction({
+        wallet: deposit.ton_wallet,
+        amount: deposit.pay_amount,
+        memo: deposit.ton_memo,
+        expiresAt: deposit.expires_at,
+      });
+    } catch {
+      // Eski yoki vaqti tugagan invoice tarixda ko‘rinadi, ammo yuborilmaydi.
+    }
+  }
+
+  return result;
 }
 
 async function fetchUserState(supabase, userId, settings = null) {
@@ -140,6 +161,44 @@ function uniqueTonMemo(userId) {
   const randomPart = crypto.randomBytes(5).toString('hex').toUpperCase();
 
   return `GM-${userPart}-${randomPart}`;
+}
+
+function tonConnectIntent(body = {}) {
+  if (clean(body.flow).toLowerCase() !== 'ton_connect') return null;
+
+  const senderAddress = normalizeTonAddress(body.senderAddress);
+  const network = clean(body.network || '-239');
+
+  if (network !== '-239') {
+    throw new Error('TON Connect uchun mainnet walletni ulang.');
+  }
+
+  return {
+    senderAddress,
+    walletApp: clean(body.walletApp || 'TON Wallet').slice(0, 80),
+    requestedAt: new Date().toISOString(),
+  };
+}
+
+function mergeTonConnectMetadata(metadata, patch) {
+  const current =
+    metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? metadata
+      : {};
+  const tonConnect =
+    current.tonConnect &&
+    typeof current.tonConnect === 'object' &&
+    !Array.isArray(current.tonConnect)
+      ? current.tonConnect
+      : {};
+
+  return {
+    ...current,
+    tonConnect: {
+      ...tonConnect,
+      ...patch,
+    },
+  };
 }
 
 function normalizeTonAmount(value, settings) {
@@ -252,16 +311,17 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
 
 async function createTonDeposit({ supabase, userId, body, settings }) {
   if (!settings.tonEnabled) {
-    throw new Error('TON orqali depozit vaqtincha o‘chirilgan.');
+    throw new Error('TON / GRAM orqali depozit vaqtincha o‘chirilgan.');
   }
 
   if (!settings.tonWallet || settings.tonStarsRate <= 0) {
     throw new Error(
-      'TON depozit hali sozlanmagan. Admin wallet va kursni kiritishi kerak.'
+      'TON / GRAM depozit hali sozlanmagan. Admin wallet va kursni kiritishi kerak.'
     );
   }
 
   normalizeTonAddress(settings.tonWallet);
+  const connectIntent = tonConnectIntent(body);
 
   const { data: activeDeposit, error: activeError } = await supabase
     .from('deposit_transactions')
@@ -281,15 +341,42 @@ async function createTonDeposit({ supabase, userId, body, settings }) {
     ).getTime();
 
     if (activeExpiresAt <= 0 || activeExpiresAt > Date.now()) {
+      let resolvedDeposit = activeDeposit;
+      let tonConnectReady = false;
+
+      if (connectIntent && activeDeposit.status === 'pending') {
+        const { data: started, error: startError } = await supabase
+          .from('deposit_transactions')
+          .update({
+            status: 'confirming',
+            metadata: mergeTonConnectMetadata(activeDeposit.metadata, {
+              ...connectIntent,
+              state: 'requested',
+            }),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', activeDeposit.id)
+          .eq('user_id', userId)
+          .eq('method', 'ton')
+          .eq('status', 'pending')
+          .select('*')
+          .single();
+
+        if (startError) throwDepositError(startError);
+        resolvedDeposit = started;
+        tonConnectReady = true;
+      }
+
       return {
-        deposit: publicDeposit(activeDeposit),
+        deposit: publicDeposit(resolvedDeposit),
         transferLink: buildTonTransferLink({
-          wallet: activeDeposit.ton_wallet,
-          amount: activeDeposit.pay_amount,
-          memo: activeDeposit.ton_memo,
-          expiresAt: activeDeposit.expires_at,
+          wallet: resolvedDeposit.ton_wallet,
+          amount: resolvedDeposit.pay_amount,
+          memo: resolvedDeposit.ton_memo,
+          expiresAt: resolvedDeposit.expires_at,
         }),
         reused: true,
+        tonConnectReady,
       };
     }
 
@@ -320,7 +407,7 @@ async function createTonDeposit({ supabase, userId, body, settings }) {
   const row = {
     user_id: userId,
     method: 'ton',
-    status: 'pending',
+    status: connectIntent ? 'confirming' : 'pending',
     pay_currency: 'TON',
     pay_amount: amount,
     credit_amount: creditAmount,
@@ -332,6 +419,14 @@ async function createTonDeposit({ supabase, userId, body, settings }) {
       source: 'webapp',
       amountNano: nano.toString(),
       starsRate: settings.tonStarsRate,
+      ...(connectIntent
+        ? {
+            tonConnect: {
+              ...connectIntent,
+              state: 'requested',
+            },
+          }
+        : {}),
     },
   };
   const { data: deposit, error } = await supabase
@@ -350,6 +445,92 @@ async function createTonDeposit({ supabase, userId, body, settings }) {
       memo,
       expiresAt,
     }),
+    tonConnectReady: Boolean(connectIntent),
+  };
+}
+
+async function updateTonConnectAttempt({
+  supabase,
+  userId,
+  depositId,
+  body,
+  state,
+}) {
+  const { data: deposit, error } = await supabase
+    .from('deposit_transactions')
+    .select('*')
+    .eq('id', depositId)
+    .eq('user_id', userId)
+    .eq('method', 'ton')
+    .maybeSingle();
+
+  if (error) throwDepositError(error);
+  if (!deposit) throw new Error('TON / GRAM depozit topilmadi.');
+
+  if (deposit.status === 'completed') {
+    return { deposit: publicDeposit(deposit), completed: true };
+  }
+
+  if (!['pending', 'confirming'].includes(deposit.status)) {
+    throw new Error('Bu TON / GRAM invoice endi aktiv emas.');
+  }
+
+  const senderAddress = normalizeTonAddress(body.senderAddress);
+  const currentTonConnect =
+    deposit.metadata?.tonConnect &&
+    typeof deposit.metadata.tonConnect === 'object'
+      ? deposit.metadata.tonConnect
+      : {};
+
+  if (
+    currentTonConnect.senderAddress &&
+    normalizeTonAddress(currentTonConnect.senderAddress) !== senderAddress
+  ) {
+    throw new Error('Ulangan wallet invoice walletiga mos kelmadi.');
+  }
+
+  const timestamp = new Date().toISOString();
+  const nextPatch = {
+    senderAddress,
+    walletApp: clean(body.walletApp || currentTonConnect.walletApp || 'TON Wallet').slice(0, 80),
+    state,
+  };
+
+  if (state === 'submitted') {
+    const boc = clean(body.boc);
+
+    nextPatch.submittedAt = timestamp;
+    nextPatch.bocSha256 = boc
+      ? crypto.createHash('sha256').update(boc).digest('hex')
+      : '';
+  } else if (state === 'cancelled') {
+    if (currentTonConnect.state === 'submitted') {
+      return { deposit: publicDeposit(deposit), ignored: true };
+    }
+
+    nextPatch.cancelledAt = timestamp;
+  }
+
+  const { data: updated, error: updateError } = await supabase
+    .from('deposit_transactions')
+    .update({
+      status: state === 'cancelled' ? 'pending' : 'confirming',
+      metadata: mergeTonConnectMetadata(deposit.metadata, nextPatch),
+      last_checked_at: state === 'submitted' ? null : deposit.last_checked_at,
+      updated_at: timestamp,
+    })
+    .eq('id', deposit.id)
+    .eq('user_id', userId)
+    .in('status', ['pending', 'confirming'])
+    .select('*')
+    .single();
+
+  if (updateError) throwDepositError(updateError);
+
+  return {
+    deposit: publicDeposit(updated),
+    submitted: state === 'submitted',
+    cancelled: state === 'cancelled',
   };
 }
 
@@ -408,7 +589,7 @@ async function syncTonDeposit({ supabase, userId, depositId }) {
     .maybeSingle();
 
   if (error) throwDepositError(error);
-  if (!deposit) throw new Error('TON depozit topilmadi.');
+  if (!deposit) throw new Error('TON / GRAM depozit topilmadi.');
 
   if (deposit.status === 'completed') {
     return { deposit, completed: true };
@@ -436,10 +617,21 @@ async function syncTonDeposit({ supabase, userId, depositId }) {
 
   if (checkUpdateError) throwDepositError(checkUpdateError);
 
+  const tonConnectMetadata =
+    deposit.metadata?.tonConnect &&
+    typeof deposit.metadata.tonConnect === 'object'
+      ? deposit.metadata.tonConnect
+      : {};
+  const expectedTonConnectSender = ['requested', 'submitted'].includes(
+    tonConnectMetadata.state
+  )
+    ? tonConnectMetadata.senderAddress || ''
+    : '';
   const payment = await findTonDepositPayment({
     wallet: deposit.ton_wallet,
     amount: deposit.pay_amount,
     memo: deposit.ton_memo,
+    sender: expectedTonConnectSender,
     createdAt: deposit.created_at,
     expiresAt: deposit.expires_at,
   });
@@ -581,6 +773,24 @@ export async function POST(request) {
         supabase,
         userId,
         depositId,
+      });
+    } else if (
+      action === 'ton_connect_submitted' ||
+      action === 'ton_connect_cancelled'
+    ) {
+      const depositId = clean(body.depositId);
+
+      if (!/^[0-9a-f-]{36}$/i.test(depositId)) {
+        return jsonError('Deposit ID noto‘g‘ri.', 400);
+      }
+
+      result = await updateTonConnectAttempt({
+        supabase,
+        userId,
+        depositId,
+        body,
+        state:
+          action === 'ton_connect_submitted' ? 'submitted' : 'cancelled',
       });
     } else if (action === 'cancel_stars') {
       const depositId = clean(body.depositId);
