@@ -80,37 +80,65 @@ function warmImageCacheFromData(...groups) {
   if (typeof window === 'undefined') return;
 
   const urls = [];
-  groups.flat().filter(Boolean).forEach((item) => {
-    const url = typeof item === 'string' ? item : imageUrlOf(item);
-    if (!url || WARMED_IMAGE_URLS.has(url)) return;
 
-    WARMED_IMAGE_URLS.add(url);
-    urls.push(url);
-  });
+  groups
+    .flat()
+    .filter(Boolean)
+    .forEach((item) => {
+      const url =
+        typeof item === 'string'
+          ? item
+          : imageUrlOf(item);
+
+      if (!url || WARMED_IMAGE_URLS.has(url)) return;
+
+      WARMED_IMAGE_URLS.add(url);
+      urls.push(url);
+    });
 
   if (!urls.length) return;
 
   const loadOne = (url, eager = false) => {
-    const img = new Image();
-    img.decoding = 'async';
-    img.loading = eager ? 'eager' : 'lazy';
-    img.src = url;
+    try {
+      // MUHIM:
+      // next/image dagi Image emas,
+      // brauzerning native Image constructoridan foydalanamiz.
+      const img = new window.Image();
 
-    if (typeof img.decode === 'function') {
-      img.decode().catch(() => {});
+      img.decoding = 'async';
+      img.loading = eager ? 'eager' : 'lazy';
+      img.src = url;
+
+      if (typeof img.decode === 'function') {
+        img.decode().catch(() => {
+          // Rasm decode bo‘lmasa ham sahifa ishlashda davom etadi.
+        });
+      }
+    } catch (error) {
+      console.warn('Image preload failed:', url, error);
     }
   };
 
-  // Birinchi ko'rinadigan rasmlar darhol qizdiriladi.
-  urls.slice(0, 18).forEach((url) => loadOne(url, true));
+  // Dastlab ekranda ko‘rinishi mumkin bo‘lgan rasmlarni tez yuklaymiz.
+  urls.slice(0, 18).forEach((url) => {
+    loadOne(url, true);
+  });
 
+  // Qolgan rasmlarni brauzer bo‘sh vaqtida yuklaymiz.
   const rest = urls.slice(18, 72);
+
   if (!rest.length) return;
 
-  const warmRest = () => rest.forEach((url) => loadOne(url, false));
+  const warmRest = () => {
+    rest.forEach((url) => {
+      loadOne(url, false);
+    });
+  };
 
   if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(warmRest, { timeout: 1200 });
+    window.requestIdleCallback(warmRest, {
+      timeout: 1200,
+    });
   } else {
     window.setTimeout(warmRest, 160);
   }
