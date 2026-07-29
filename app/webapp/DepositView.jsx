@@ -6,6 +6,7 @@ import {
   useTonConnectUI,
   useTonWallet,
 } from '@tonconnect/ui-react';
+import Image from 'next/image';
 import {
   useCallback,
   useEffect,
@@ -13,6 +14,11 @@ import {
   useRef,
   useState,
 } from 'react';
+import {
+  ChevronLeft,
+  Copy,
+  ShieldCheck,
+} from 'lucide-react';
 import styles from './DepositView.module.css';
 
 const STAR_PRESETS = [50, 100, 250, 500, 1000];
@@ -107,21 +113,30 @@ function StarsMark({ small = false }) {
     <span
       className={`${styles.starsMark} ${small ? styles.smallMark : ''}`}
       aria-hidden="true"
-    />
+    >
+      <Image
+        src="/currency/stars.png"
+        alt=""
+        width={46}
+        height={46}
+        unoptimized
+        draggable={false}
+      />
+    </span>
   );
 }
 
 function TonMark({ small = false }) {
   return (
     <span className={`${styles.tonMark} ${small ? styles.smallMark : ''}`} aria-hidden="true">
-      <svg viewBox="0 0 48 48" fill="none">
-        <path
-          d="M9.3 13.2c1.1-2 3.2-3.2 5.5-3.2h18.4c4.9 0 8 5.2 5.5 9.4L27.5 38.2a4.1 4.1 0 0 1-7 0L9.4 19.4a6 6 0 0 1-.1-6.2Z"
-          fill="currentColor"
-        />
-        <path d="M15.2 16.3h17.6L24 32.2l-8.8-15.9Z" stroke="white" strokeWidth="2.5" strokeLinejoin="round" />
-        <path d="M24 16.4v15.2" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-      </svg>
+      <Image
+        src="/currency/ton.png"
+        alt=""
+        width={46}
+        height={46}
+        unoptimized
+        draggable={false}
+      />
     </span>
   );
 }
@@ -129,39 +144,28 @@ function TonMark({ small = false }) {
 function GiftMark({ small = false }) {
   return (
     <span className={`${styles.giftMark} ${small ? styles.smallMark : ''}`} aria-hidden="true">
-      <svg viewBox="0 0 48 48" fill="none">
-        <rect x="7" y="18" width="34" height="24" rx="7" fill="currentColor" />
-        <rect x="5" y="14" width="38" height="10" rx="5" fill="white" fillOpacity=".92" />
-        <path d="M24 15v27M13.3 13.5c-2.8-3.1-.3-7.2 3.4-6.2 3.8 1 7.3 7.7 7.3 7.7s-7.9 1.6-10.7-1.5Zm21.4 0c2.8-3.1.3-7.2-3.4-6.2C27.5 8.3 24 15 24 15s7.9 1.6 10.7-1.5Z" stroke="currentColor" strokeWidth="3.3" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
+      <Image
+        src="/currency/gift.png"
+        alt=""
+        width={46}
+        height={46}
+        unoptimized
+        draggable={false}
+      />
     </span>
   );
 }
 
 function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m14.5 5-7 7 7 7" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <ChevronLeft aria-hidden="true" strokeWidth={2.15} />;
 }
 
 function CopyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <rect x="8" y="8" width="11" height="11" rx="3" stroke="currentColor" strokeWidth="2" />
-      <path d="M16 8V6a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v7a3 3 0 0 0 3 3h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  );
+  return <Copy aria-hidden="true" strokeWidth={2.15} />;
 }
 
 function ShieldIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M12 3 19 6v5c0 4.2-2.6 7.2-7 9.5C7.6 18.2 5 15.2 5 11V6l7-3Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="m8.8 12 2.1 2.1 4.5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
+  return <ShieldCheck aria-hidden="true" strokeWidth={2.15} />;
 }
 
 function openInvoice(tg, invoiceLink) {
