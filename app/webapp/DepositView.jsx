@@ -213,6 +213,37 @@ function tonConnectRejected(error) {
   );
 }
 
+function tonConnectErrorMessage(error) {
+  const code = Number(
+    error?.code ??
+    error?.statusCode ??
+    error?.errorCode
+  );
+  const message = String(error?.message || '').toLowerCase();
+
+  if (
+    code === 2 ||
+    message.includes('manifest_not_found') ||
+    message.includes('manifest not found')
+  ) {
+    return 'TON Connect manifest topilmadi. Ilovaning yangi versiyasini deploy qiling.';
+  }
+
+  if (
+    code === 3 ||
+    message.includes('manifest_content') ||
+    message.includes('manifest content')
+  ) {
+    return 'TON Connect manifest formati noto‘g‘ri. Deploy sozlamalarini tekshiring.';
+  }
+
+  if (tonConnectRejected(error)) {
+    return 'Wallet ulanishi foydalanuvchi tomonidan bekor qilindi.';
+  }
+
+  return error?.message || 'Walletni ulab bo‘lmadi. Qayta urinib ko‘ring.';
+}
+
 function MethodIcon({ method, small = false }) {
   if (method === 'stars') return <StarsMark small={small} />;
   if (method === 'ton') return <TonMark small={small} />;
@@ -247,6 +278,7 @@ export default function DepositView({
   const [notice, setNotice] = useState('');
   const mountedRef = useRef(false);
   const pollBusyRef = useRef(false);
+  const manifestCheckRef = useRef(null);
 
   const applyState = useCallback(
     (data) => {
@@ -300,6 +332,56 @@ export default function DepositView({
     const nextBalance = Math.max(0, number(profile?.balance));
     setBalance(nextBalance);
   }, [profile?.balance]);
+
+  useEffect(() => {
+    const unsubscribe = tonConnectUI.onStatusChange(
+      (wallet) => {
+        if (wallet && mountedRef.current) {
+          setError('');
+          setNotice('TON Connect wallet muvaffaqiyatli ulandi.');
+        }
+      },
+      (connectionError) => {
+        if (mountedRef.current) {
+          setError(tonConnectErrorMessage(connectionError));
+        }
+      }
+    );
+
+    return unsubscribe;
+  }, [tonConnectUI]);
+
+  const ensureTonConnectManifest = useCallback(async () => {
+    if (!manifestCheckRef.current) {
+      manifestCheckRef.current = fetch('/api/tonconnect-manifest?v=3', {
+        cache: 'no-store',
+        headers: {
+          Accept: 'application/json',
+        },
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error(
+              `TON Connect manifest ochilmadi (HTTP ${response.status}).`
+            );
+          }
+
+          const manifest = await response.json();
+
+          if (!manifest?.url || !manifest?.name || !manifest?.iconUrl) {
+            throw new Error('TON Connect manifest to‘liq emas.');
+          }
+
+          return manifest;
+        })
+        .catch((manifestError) => {
+          manifestCheckRef.current = null;
+          throw manifestError;
+        });
+    }
+
+    return manifestCheckRef.current;
+  }, []);
 
   const pendingDeposit = useMemo(
     () =>
@@ -438,6 +520,7 @@ export default function DepositView({
         return;
       }
 
+      await ensureTonConnectManifest();
       await tonConnectUI.openModal();
     });
   }
@@ -459,6 +542,7 @@ export default function DepositView({
       }
 
       if (!tonAddress || !tonWallet) {
+        await ensureTonConnectManifest();
         await tonConnectUI.openModal();
         return;
       }
