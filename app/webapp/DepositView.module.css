@@ -384,7 +384,7 @@
 .starsMark {
   display: inline-block;
   background:
-    url('/currency/stars.svg') center / 82% no-repeat,
+    url('/currency/stars.png') center / 82% no-repeat,
     radial-gradient(circle, rgba(129, 101, 255, 0.32), transparent 68%);
   filter: drop-shadow(0 8px 15px rgba(102, 70, 255, 0.3));
 }
@@ -1370,5 +1370,594 @@
 
   .methodCard {
     transition: none;
+  }
+}
+
+/* =========================================================
+   PROFESSIONAL FLAT THEME
+   Shared system font, solid surfaces and PNG payment marks.
+========================================================= */
+
+.page {
+  --deposit-text: #f5f5f7;
+  --deposit-muted: #90929a;
+  --deposit-surface: #191a1e;
+  --deposit-surface-soft: #222329;
+  --deposit-line: #2b2c32;
+  --deposit-line-strong: #3a3b43;
+  width: min(100%, 580px);
+  min-height: 100dvh;
+  padding: 10px 11px calc(96px + env(safe-area-inset-bottom, 0px));
+  color: var(--deposit-text);
+  background: #111214;
+  font-family:
+    "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.012em;
+}
+
+.header {
+  min-height: 54px;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.backButton {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--deposit-line);
+  border-radius: 13px;
+  color: #d8d9dd;
+  background: var(--deposit-surface);
+  box-shadow: none;
+}
+
+.backButton:active {
+  background: var(--deposit-surface-soft);
+  transform: scale(0.97);
+}
+
+.headerTitle {
+  gap: 2px;
+}
+
+.headerTitle span,
+.eyebrow,
+.panelHeading > div > span,
+.historyHeading > div > span {
+  color: #a98cff;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.headerTitle h1 {
+  font-size: 23px;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.balancePill {
+  min-height: 40px;
+  gap: 5px;
+  padding: 5px 10px 5px 7px;
+  border: 1px solid var(--deposit-line);
+  background: var(--deposit-surface);
+  box-shadow: none;
+}
+
+.balancePill strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.secureStrip {
+  min-height: 50px;
+  margin-bottom: 9px;
+  padding: 8px 10px;
+  border: 1px solid #294239;
+  border-radius: 15px;
+  background: #171c1a;
+}
+
+.secureIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  color: #5bd9a4;
+  background: #20352d;
+}
+
+.secureStrip strong {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.secureStrip > div span {
+  color: #747b78;
+  font-size: 8px;
+  font-weight: 500;
+}
+
+.secureStrip em {
+  color: #65dbaa;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.secureStrip em::before {
+  box-shadow: none;
+  animation: none;
+}
+
+.hero {
+  min-height: 132px;
+  padding: 19px 17px;
+  border: 1px solid var(--deposit-line);
+  border-radius: 21px;
+  background: var(--deposit-surface);
+  box-shadow: none;
+}
+
+.hero::before,
+.heroOrbOne,
+.heroOrbTwo {
+  display: none;
+}
+
+.hero h2 {
+  max-width: 280px;
+  margin: 5px 0 7px;
+  font-size: clamp(24px, 7vw, 31px);
+  font-weight: 750;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.hero p {
+  max-width: 325px;
+  color: var(--deposit-muted);
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.heroMarks {
+  width: 96px;
+  height: 100px;
+}
+
+.heroMarks > span {
+  box-shadow: none;
+}
+
+.methodGrid {
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.methodCard {
+  min-height: 104px;
+  gap: 4px;
+  padding: 11px 6px;
+  border: 1px solid var(--deposit-line);
+  border-radius: 18px;
+  color: #b6b7bc;
+  background: var(--deposit-surface);
+  box-shadow: none;
+}
+
+.methodCard::after,
+.methodGlow {
+  display: none;
+}
+
+.methodCard:active {
+  transform: scale(0.97);
+}
+
+.methodCard strong {
+  margin-top: 1px;
+  color: #f0f0f2;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.methodCard small {
+  color: #74767e;
+  font-size: 8px;
+  font-weight: 550;
+}
+
+.methodCard em {
+  top: 7px;
+  right: 7px;
+  padding: 3px 5px;
+  border: 1px solid #315243;
+  border-radius: 6px;
+  color: #67dca9;
+  background: #1d3028;
+  font-size: 7px;
+  font-weight: 700;
+}
+
+.activeMethod {
+  border-color: #535560;
+  background: var(--deposit-surface-soft);
+  transform: none;
+}
+
+.stars,
+.ton,
+.gift {
+  color: #f5f5f7;
+}
+
+.starsMark,
+.tonMark,
+.giftMark {
+  width: 46px;
+  height: 46px;
+  display: inline-grid;
+  place-items: center;
+  overflow: visible;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+}
+
+.starsMark img,
+.tonMark img,
+.giftMark img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.starsMark img {
+  width: 88%;
+  height: 88%;
+}
+
+.smallMark {
+  width: 23px;
+  height: 23px;
+  border-radius: 0;
+}
+
+.panel,
+.history {
+  padding: 17px;
+  border: 1px solid var(--deposit-line);
+  border-radius: 21px;
+  background: var(--deposit-surface);
+  box-shadow: none;
+}
+
+.panel::before {
+  display: none;
+}
+
+.panelHeading,
+.historyHeading {
+  margin-bottom: 16px;
+}
+
+.panelHeading h3,
+.historyHeading h3 {
+  font-size: 19px;
+  font-weight: 750;
+  letter-spacing: -0.025em;
+}
+
+.autoBadge,
+.chainBadge,
+.reviewBadge {
+  min-height: 26px;
+  border-radius: 8px;
+  font-size: 7px;
+  font-weight: 700;
+}
+
+.autoBadge {
+  border-color: #315243;
+  color: #67dca9;
+  background: #1d3028;
+}
+
+.chainBadge {
+  border-color: #24485b;
+  color: #73cfff;
+  background: #192d37;
+}
+
+.reviewBadge {
+  border-color: #4b3155;
+  color: #d99af0;
+  background: #2d2032;
+}
+
+.walletConnect,
+.walletConnected {
+  min-height: 64px;
+  padding: 8px;
+  border: 1px solid var(--deposit-line);
+  border-radius: 16px;
+  background: #151619;
+}
+
+.walletConnected {
+  border-color: #315243;
+}
+
+.walletConnect > div span {
+  color: #74767e;
+  font-weight: 500;
+}
+
+.walletConnect > div strong {
+  font-weight: 700;
+}
+
+.walletConnect > button {
+  min-height: 34px;
+  border: 1px solid #2d5063;
+  border-radius: 10px;
+  color: #82d4ff;
+  background: #19303b;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.amountLabel,
+.rateLine {
+  color: #9a9ca3;
+  font-weight: 600;
+}
+
+.rateLine {
+  background: #18272f;
+}
+
+.amountInput {
+  min-height: 64px;
+  border: 1px solid var(--deposit-line-strong);
+  border-radius: 16px;
+  background: #141519;
+  box-shadow: none;
+}
+
+.amountInput:focus-within {
+  border-color: #6d5a9c;
+}
+
+.amountInput input {
+  font-size: clamp(25px, 8vw, 35px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.amountInput > span:last-child {
+  color: #777981;
+  font-weight: 600;
+}
+
+.presetRow {
+  gap: 6px;
+  margin: 9px 0 12px;
+}
+
+.presetRow button {
+  min-height: 34px;
+  border: 1px solid var(--deposit-line);
+  border-radius: 10px;
+  color: #9b9da4;
+  background: #202126;
+  font-size: 9px;
+  font-weight: 650;
+}
+
+.presetRow button.selectedPreset {
+  border-color: #69569b;
+  color: #d8ccff;
+  background: #2a2439;
+  box-shadow: none;
+}
+
+.summary {
+  border-color: var(--deposit-line);
+}
+
+.summary > span {
+  color: #8d8f96;
+  font-weight: 550;
+}
+
+.summary strong {
+  font-weight: 700;
+}
+
+.primaryButton,
+.walletButton {
+  min-height: 52px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.starsButton {
+  background: #8b5cf6;
+}
+
+.tonButton,
+.walletButton {
+  background: #208fda;
+}
+
+.giftButton {
+  background: #a64ec3;
+}
+
+.primaryButton:active:not(:disabled),
+.walletButton:active:not(:disabled) {
+  filter: brightness(0.92);
+  transform: scale(0.985);
+}
+
+.manualToggle {
+  border: 1px solid #294552;
+  color: #83cce9;
+  background: #18252b;
+  font-weight: 650;
+}
+
+.panelFootnote,
+.tonInvoice > p {
+  color: #72747b;
+  font-weight: 500;
+}
+
+.tonInvoice {
+  border: 1px solid #294552;
+  border-radius: 17px;
+  background: #151c20;
+}
+
+.invoiceRow,
+.giftRecipient,
+.textField input,
+.textField textarea {
+  border-color: var(--deposit-line-strong);
+  background: #141519;
+}
+
+.invoiceRow strong,
+.giftRecipient strong {
+  font-weight: 700;
+}
+
+.invoiceRow button,
+.giftRecipient button {
+  border-color: var(--deposit-line-strong);
+  background: var(--deposit-surface-soft);
+  box-shadow: none;
+}
+
+.textField span,
+.invoiceTop span,
+.giftRecipient span {
+  color: #85878f;
+  font-weight: 550;
+}
+
+.textField input,
+.textField textarea {
+  font-weight: 600;
+}
+
+.steps li {
+  color: #a6a8ae;
+  font-weight: 550;
+}
+
+.history {
+  margin-top: 10px;
+}
+
+.historyHeading button {
+  color: #b7a7eb;
+  background: transparent;
+  font-weight: 650;
+}
+
+.historyList {
+  gap: 7px;
+}
+
+.historyItem,
+.emptyHistory,
+.loadingCard {
+  border: 1px solid var(--deposit-line);
+  background: #151619;
+  box-shadow: none;
+}
+
+.historyItem {
+  border-radius: 15px;
+}
+
+.historyCopy strong,
+.historyValue strong {
+  font-weight: 700;
+}
+
+.historyCopy span,
+.historyValue span,
+.emptyHistory,
+.loadingCard p,
+.setupMessage {
+  color: #7e8088;
+  font-weight: 500;
+}
+
+.alert,
+.notice {
+  border-radius: 15px;
+  box-shadow: none;
+}
+
+.alert {
+  border-color: #5e3235;
+  background: #2b1a1c;
+}
+
+.notice {
+  border-color: #315243;
+  background: #182820;
+}
+
+@media (max-width: 430px) {
+  .page {
+    padding: 8px 9px calc(92px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .hero {
+    min-height: 124px;
+    padding: 17px 15px;
+  }
+
+  .hero h2 {
+    font-size: clamp(23px, 7vw, 29px);
+  }
+
+  .methodCard {
+    min-height: 98px;
+    border-radius: 16px;
+  }
+
+  .starsMark,
+  .tonMark,
+  .giftMark {
+    width: 42px;
+    height: 42px;
+  }
+
+  .smallMark {
+    width: 22px;
+    height: 22px;
+  }
+
+  .panel,
+  .history {
+    padding: 15px;
+    border-radius: 19px;
   }
 }
