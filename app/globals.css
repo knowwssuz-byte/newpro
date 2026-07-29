@@ -12114,6 +12114,11 @@ body {
   overflow-x: hidden !important;
 }
 
+/* Deposit sahifasida global balance bar yashiriladi; uning 74px spacer'i qolmasin. */
+.app-main.deposit-page-main {
+  padding-top: 0 !important;
+}
+
 .app-frame,
 .app-shell,
 .app-main,
@@ -12994,6 +12999,637 @@ body {
 
   .rocket-admin-actions button,
   .rocket-admin-bias-options button {
+    transition: none;
+  }
+}
+
+/* Deposit V1 — browser admin */
+.deposit-admin-console {
+  display: grid;
+  gap: 18px;
+}
+
+.deposit-admin-hero {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 168px;
+  padding: 27px 30px;
+  overflow: hidden;
+  border: 1px solid rgba(115, 155, 255, .16);
+  border-radius: 25px;
+  background:
+    radial-gradient(circle at 79% 18%, rgba(76, 201, 255, .16), transparent 31%),
+    radial-gradient(circle at 12% 100%, rgba(132, 82, 255, .18), transparent 40%),
+    linear-gradient(135deg, rgba(20, 26, 49, .96), rgba(10, 14, 29, .98));
+  box-shadow: inset 0 1px rgba(255, 255, 255, .04), 0 18px 50px rgba(2, 6, 20, .28);
+}
+
+.deposit-admin-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -62px;
+  bottom: -106px;
+  width: 280px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(100, 194, 255, .14);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 34px rgba(112, 104, 255, .035),
+    0 0 0 72px rgba(112, 104, 255, .025);
+}
+
+.deposit-admin-hero > div:first-child {
+  max-width: 650px;
+}
+
+.deposit-admin-hero span,
+.deposit-admin-ledger-head span {
+  color: rgba(128, 170, 255, .72);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .15em;
+}
+
+.deposit-admin-hero h2 {
+  margin: 8px 0;
+  color: #f3f6ff;
+  font-size: clamp(22px, 3vw, 33px);
+  line-height: 1.08;
+}
+
+.deposit-admin-hero p {
+  max-width: 590px;
+  margin: 0;
+  color: rgba(225, 231, 247, .55);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.deposit-admin-hero-status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 13px;
+  border: 1px solid rgba(76, 226, 170, .18);
+  border-radius: 999px;
+  color: rgba(116, 235, 188, .76);
+  background: rgba(33, 135, 94, .09);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .12em;
+}
+
+.deposit-admin-hero-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #52dfa6;
+  box-shadow: 0 0 0 5px rgba(82, 223, 166, .09);
+  animation: depositAdminPulse 1.8s ease-in-out infinite;
+}
+
+.deposit-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+}
+
+.deposit-admin-stats article {
+  display: grid;
+  align-content: center;
+  min-height: 112px;
+  padding: 17px 18px;
+  border: 1px solid rgba(141, 155, 196, .11);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(96, 104, 255, .08), transparent 48%),
+    rgba(14, 19, 35, .84);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .025);
+}
+
+.deposit-admin-stats span {
+  color: rgba(184, 193, 219, .4);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .1em;
+}
+
+.deposit-admin-stats strong {
+  margin: 7px 0 4px;
+  overflow: hidden;
+  color: #f1f4ff;
+  font-size: clamp(19px, 2vw, 27px);
+  line-height: 1;
+  text-overflow: ellipsis;
+}
+
+.deposit-admin-stats small {
+  overflow: hidden;
+  color: rgba(188, 199, 225, .36);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deposit-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(300px, .78fr) minmax(430px, 1.22fr);
+  align-items: start;
+  gap: 16px;
+}
+
+.deposit-admin-settings,
+.deposit-admin-ledger {
+  border: 1px solid rgba(139, 152, 191, .12);
+  border-radius: 23px;
+  background:
+    radial-gradient(circle at 100% 0, rgba(91, 75, 188, .07), transparent 35%),
+    rgba(12, 16, 30, .92);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .025);
+}
+
+.deposit-admin-settings {
+  gap: 12px;
+  padding: 18px;
+}
+
+.deposit-setting-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(148, 159, 194, .1);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, .018);
+}
+
+.deposit-setting-card.is-stars {
+  background: linear-gradient(145deg, rgba(62, 128, 255, .065), rgba(255, 255, 255, .012));
+}
+
+.deposit-setting-card.is-ton {
+  background: linear-gradient(145deg, rgba(44, 166, 255, .06), rgba(255, 255, 255, .012));
+}
+
+.deposit-setting-card.is-gift {
+  background: linear-gradient(145deg, rgba(168, 74, 255, .06), rgba(255, 255, 255, .012));
+}
+
+.deposit-admin-toggle {
+  position: relative;
+  display: grid !important;
+  grid-template-columns: 1fr 41px;
+  align-items: center;
+  gap: 12px;
+  min-height: 33px;
+  cursor: pointer;
+}
+
+.deposit-admin-toggle > span {
+  display: grid;
+  gap: 3px;
+}
+
+.deposit-admin-toggle b {
+  color: rgba(239, 243, 255, .88);
+  font-size: 12px;
+}
+
+.deposit-admin-toggle small {
+  color: rgba(193, 202, 226, .38);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.deposit-admin-toggle input {
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.deposit-admin-toggle > i {
+  position: relative;
+  width: 41px;
+  height: 23px;
+  border: 1px solid rgba(157, 170, 205, .17);
+  border-radius: 999px;
+  background: rgba(112, 123, 151, .14);
+  transition: background .18s ease, border-color .18s ease;
+}
+
+.deposit-admin-toggle > i::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: rgba(222, 228, 243, .58);
+  box-shadow: 0 2px 7px rgba(0, 0, 0, .28);
+  transition: transform .18s ease, background .18s ease;
+}
+
+.deposit-admin-toggle input:checked + i {
+  border-color: rgba(80, 216, 166, .35);
+  background: rgba(45, 190, 135, .3);
+}
+
+.deposit-admin-toggle input:checked + i::after {
+  transform: translateX(18px);
+  background: #6ee2b5;
+}
+
+.deposit-admin-toggle input:focus-visible + i {
+  outline: 2px solid rgba(117, 150, 255, .55);
+  outline-offset: 3px;
+}
+
+.deposit-admin-ledger {
+  min-width: 0;
+  padding: 18px;
+}
+
+.deposit-admin-ledger-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.deposit-admin-ledger-head h2 {
+  margin: 4px 0 0;
+  color: rgba(244, 246, 255, .91);
+  font-size: 19px;
+}
+
+.deposit-admin-ledger-head button {
+  padding: 9px 12px;
+  border: 1px solid rgba(127, 148, 210, .15);
+  border-radius: 11px;
+  color: rgba(211, 218, 238, .62);
+  background: rgba(104, 119, 165, .08);
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.deposit-admin-ledger-note {
+  margin: 14px 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(233, 173, 67, .1);
+  border-radius: 12px;
+  color: rgba(227, 199, 144, .48);
+  background: rgba(183, 125, 33, .045);
+  font-size: 9px;
+  line-height: 1.55;
+}
+
+.deposit-admin-list {
+  display: grid;
+  gap: 10px;
+  max-height: 820px;
+  padding-right: 3px;
+  overflow: auto;
+  scrollbar-color: rgba(124, 139, 189, .22) transparent;
+  scrollbar-width: thin;
+}
+
+.deposit-admin-item {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(139, 151, 187, .1);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, .018);
+}
+
+.deposit-admin-item.is-stars {
+  box-shadow: inset 2px 0 #5396ff;
+}
+
+.deposit-admin-item.is-ton {
+  box-shadow: inset 2px 0 #3ac2f3;
+}
+
+.deposit-admin-item.is-gift {
+  box-shadow: inset 2px 0 #a96df6;
+}
+
+.deposit-admin-item-top,
+.deposit-admin-method,
+.deposit-admin-item-values,
+.deposit-admin-details,
+.deposit-admin-resolve-actions {
+  display: flex;
+  align-items: center;
+}
+
+.deposit-admin-item-top {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.deposit-admin-method {
+  min-width: 0;
+  gap: 10px;
+}
+
+.deposit-admin-method > i {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(134, 161, 242, .12);
+  border-radius: 11px;
+  color: #98baff;
+  background: rgba(69, 108, 214, .08);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.is-ton .deposit-admin-method > i {
+  color: #71d3f7;
+  background: rgba(50, 166, 211, .08);
+}
+
+.is-gift .deposit-admin-method > i {
+  color: #c39bff;
+  background: rgba(149, 88, 224, .09);
+}
+
+.deposit-admin-method > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.deposit-admin-method strong {
+  color: rgba(240, 243, 253, .83);
+  font-size: 12px;
+}
+
+.deposit-admin-method span {
+  overflow: hidden;
+  color: rgba(190, 200, 224, .38);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deposit-admin-state {
+  flex: 0 0 auto;
+  padding: 6px 8px;
+  border: 1px solid rgba(227, 179, 79, .14);
+  border-radius: 999px;
+  color: rgba(236, 190, 95, .7);
+  background: rgba(193, 129, 37, .07);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: .07em;
+}
+
+.deposit-admin-state.is-completed {
+  border-color: rgba(72, 220, 160, .14);
+  color: rgba(99, 230, 176, .76);
+  background: rgba(41, 169, 117, .07);
+}
+
+.deposit-admin-state.is-confirming {
+  border-color: rgba(90, 169, 255, .17);
+  color: rgba(111, 183, 255, .8);
+  background: rgba(52, 127, 203, .08);
+}
+
+.deposit-admin-state.is-rejected,
+.deposit-admin-state.is-cancelled,
+.deposit-admin-state.is-expired {
+  border-color: rgba(216, 102, 111, .12);
+  color: rgba(223, 133, 139, .58);
+  background: rgba(161, 59, 71, .055);
+}
+
+.deposit-admin-item-values {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.15fr;
+  gap: 7px;
+}
+
+.deposit-admin-item-values > span,
+.deposit-admin-details > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+  padding: 8px 9px;
+  border-radius: 10px;
+  color: rgba(179, 190, 217, .34);
+  background: rgba(255, 255, 255, .018);
+  font-size: 8px;
+}
+
+.deposit-admin-item-values b,
+.deposit-admin-details b,
+.deposit-admin-details a {
+  overflow: hidden;
+  color: rgba(229, 233, 246, .66);
+  font-size: 10px;
+  font-weight: 700;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.deposit-admin-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+
+.deposit-admin-details a {
+  color: #8eb2ff;
+}
+
+.deposit-admin-note {
+  margin: 0;
+  padding: 9px 10px;
+  border-left: 2px solid rgba(121, 143, 209, .22);
+  border-radius: 0 9px 9px 0;
+  color: rgba(199, 206, 227, .44);
+  background: rgba(86, 104, 156, .045);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.deposit-admin-resolve {
+  display: grid;
+  grid-template-columns: minmax(110px, .7fr) minmax(150px, 1fr);
+  gap: 9px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(147, 159, 193, .075);
+}
+
+.deposit-admin-resolve label {
+  display: grid;
+  gap: 5px;
+}
+
+.deposit-admin-resolve label span {
+  color: rgba(186, 196, 219, .38);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.deposit-admin-resolve input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid rgba(132, 147, 191, .12);
+  border-radius: 10px;
+  color: rgba(239, 242, 252, .8);
+  outline: 0;
+  background: rgba(4, 8, 18, .35);
+  font-size: 10px;
+}
+
+.deposit-admin-resolve input:focus {
+  border-color: rgba(100, 142, 255, .38);
+}
+
+.deposit-admin-auto-wait {
+  display: flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 9px 10px;
+  border: 1px solid rgba(82, 151, 238, .1);
+  border-radius: 10px;
+  color: rgba(121, 182, 247, .5);
+  background: rgba(52, 119, 197, .04);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.deposit-admin-resolve-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.deposit-admin-resolve-actions button {
+  padding: 9px 11px;
+  border: 1px solid rgba(70, 213, 156, .18);
+  border-radius: 10px;
+  color: rgba(117, 230, 184, .78);
+  background: rgba(38, 166, 116, .08);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.deposit-admin-resolve-actions button.admin-danger-light {
+  border-color: rgba(222, 89, 103, .15);
+  color: rgba(230, 127, 137, .65);
+  background: rgba(168, 51, 65, .06);
+}
+
+.deposit-admin-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  min-height: 230px;
+  color: rgba(197, 204, 224, .38);
+  text-align: center;
+}
+
+.deposit-admin-empty span {
+  font-size: 30px;
+}
+
+.deposit-admin-empty strong {
+  margin-top: 8px;
+  color: rgba(229, 233, 245, .6);
+  font-size: 12px;
+}
+
+.deposit-admin-empty p {
+  margin: 5px 0 0;
+  font-size: 9px;
+}
+
+@keyframes depositAdminPulse {
+  0%, 100% { opacity: .55; transform: scale(.82); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+
+@media (max-width: 1050px) {
+  .deposit-admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .deposit-admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .deposit-admin-list {
+    max-height: none;
+  }
+}
+
+@media (max-width: 620px) {
+  .deposit-admin-hero {
+    display: grid;
+    min-height: 0;
+    padding: 20px;
+  }
+
+  .deposit-admin-hero-status {
+    justify-self: start;
+  }
+
+  .deposit-admin-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .deposit-admin-stats article {
+    min-height: 94px;
+  }
+
+  .deposit-admin-settings,
+  .deposit-admin-ledger {
+    padding: 14px;
+    border-radius: 19px;
+  }
+
+  .deposit-admin-item-values,
+  .deposit-admin-details,
+  .deposit-admin-resolve {
+    grid-template-columns: 1fr;
+  }
+
+  .deposit-admin-resolve-actions {
+    grid-column: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .deposit-admin-item-top {
+    align-items: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deposit-admin-hero-status i {
+    animation: none;
+  }
+
+  .deposit-admin-toggle > i,
+  .deposit-admin-toggle > i::after {
     transition: none;
   }
 }
