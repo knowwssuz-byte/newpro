@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import caseOpeningStyles from './CaseOpening.module.css';
+import DepositView from './DepositView';
 import RocketGame from './RocketGame';
 
 const CASE_ROLL_DURATION_MS = 4600;
@@ -523,6 +524,7 @@ export default function WebAppClient() {
   const pendingOpeningRef = useRef(null);
   const openingFallbackTimerRef = useRef(null);
   const rocketReturnTabRef = useRef('home');
+  const depositReturnTabRef = useRef('home');
   const hasBootstrappedRef = useRef(false);
   const referralTrackedRef = useRef(false);
   const mountedRef = useRef(false);
@@ -1257,6 +1259,28 @@ export default function WebAppClient() {
     setProfile((current) => (current ? { ...current, balance: value } : current));
   }, []);
 
+  const openDeposit = useCallback((returnTab = 'home') => {
+    depositReturnTabRef.current = [
+      'home',
+      'games',
+      'inventory',
+      'history',
+      'referral',
+    ].includes(returnTab)
+      ? returnTab
+      : 'home';
+    setError('');
+    setOpening(null);
+    setSelectedCase(null);
+    setTab('deposit');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
+  const closeDeposit = useCallback(() => {
+    setTab(depositReturnTabRef.current || 'home');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
   if (loading) {
     return (
       <div className="minimal-loader-screen">
@@ -1290,18 +1314,21 @@ export default function WebAppClient() {
         ) : null}
         {busy ? <div className="busy-indicator">Amal bajarilmoqda...</div> : null}
 
-        {tab !== 'rocket' ? (
+        {tab !== 'rocket' && tab !== 'deposit' ? (
           <GlobalBalanceBar
             telegramUser={telegramUser}
             profile={profile}
             profilePhotoUrl={profilePhotoUrl}
+            onDeposit={() => openDeposit(tab)}
           />
         ) : null}
 
         <main
           className={`app-main ${
             selectedCase ? 'case-page-main' : ''
-          } ${tab === 'rocket' ? 'rocket-game-main' : ''}`}
+          } ${tab === 'rocket' ? 'rocket-game-main' : ''} ${
+            tab === 'deposit' ? 'deposit-page-main' : ''
+          }`}
         >
           {selectedCase ? (
             <CaseDetailPage
@@ -1358,6 +1385,17 @@ export default function WebAppClient() {
                   onBack={closeRocketGame}
                   onBalanceChange={updateRocketBalance}
                   onRoundStateChange={setRocketRoundActive}
+                  onToast={showToast}
+                />
+              ) : null}
+
+              {tab === 'deposit' ? (
+                <DepositView
+                  apiPost={apiPost}
+                  profile={profile}
+                  tg={tg}
+                  onBack={closeDeposit}
+                  onBalanceChange={updateRocketBalance}
                   onToast={showToast}
                 />
               ) : null}
@@ -1432,7 +1470,12 @@ function BalancePill({ balance }) {
 }
 
 
-function GlobalBalanceBar({ telegramUser, profile, profilePhotoUrl }) {
+function GlobalBalanceBar({
+  telegramUser,
+  profile,
+  profilePhotoUrl,
+  onDeposit,
+}) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const avatarUrl = profilePhotoUrl || telegramUser?.photo_url || '';
 
@@ -1483,10 +1526,16 @@ function GlobalBalanceBar({ telegramUser, profile, profilePhotoUrl }) {
                   <em>soon</em>
                 </button>
 
-                <button type="button" onClick={closeSettings}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    closeSettings();
+                    onDeposit?.();
+                  }}
+                >
                   <AppIcon name="deposit" />
                   <span>Payment settings</span>
-                  <em>soon</em>
+                  <em>open</em>
                 </button>
               </div>
             ) : null}
@@ -1501,7 +1550,7 @@ function GlobalBalanceBar({ telegramUser, profile, profilePhotoUrl }) {
           </div>
         </div>
 
-        <button type="button" className="deposit-button">
+        <button type="button" className="deposit-button" onClick={onDeposit}>
           <AppIcon name="deposit" />
           <span>Deposit</span>
         </button>
