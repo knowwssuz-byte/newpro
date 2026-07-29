@@ -3,6 +3,13 @@ import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { fetchUniqueTelegramGift } from '@/lib/telegramGiftsImporter';
+import {
+  depositSettingsForClient,
+  getDepositSettings,
+  normalizeDepositSettings,
+  settingsRow,
+} from '@/lib/depositSettings';
+import { normalizeTonAddress } from '@/lib/tonDeposits';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -125,7 +132,16 @@ async function normalizeCaseOrder(supabase, cases = []) {
 }
 
 async function bootstrap(supabase) {
-  const [cases, gifts, users, withdrawals, giftLibrary, featureRows] = await Promise.all([
+  const [
+    cases,
+    gifts,
+    users,
+    withdrawals,
+    giftLibrary,
+    featureRows,
+    deposits,
+    depositSettings,
+  ] = await Promise.all([
     fetchCasesForAdmin(supabase),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').order('created_at', { ascending: false })),
     safeSelect(supabase, 'users', supabase.from('users').select('*').order('created_at', { ascending: false }).limit(250)),
@@ -144,6 +160,16 @@ async function bootstrap(supabase) {
       supabase.from('gift_library').select('*').order('created_at', { ascending: false })
     ),
     safeSelect(supabase, 'app_settings', supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp'])),
+    safeSelect(
+      supabase,
+      'deposit_transactions',
+      supabase
+        .from('deposit_transactions')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(250)
+    ),
+    getDepositSettings(supabase),
   ]);
 
   return {
@@ -153,7 +179,21 @@ async function bootstrap(supabase) {
     withdrawals,
     giftLibrary,
     featureSettings: Object.fromEntries((featureRows || []).map((item) => [item.key, item.value || {}])),
+    deposits,
+    depositSettings: depositSettingsForClient(depositSettings),
   };
+}
+
+function depositSqlError(error) {
+  const text =
+    `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
+
+  return (
+    error?.code === 'PGRST202' ||
+    error?.code === '42P01' ||
+    text.includes('deposit_transactions') ||
+    text.includes('deposit_admin_resolve')
+  );
 }
 
 function rocketSqlError(error) {
@@ -435,6 +475,70 @@ export async function POST(request) {
     if (action === 'bootstrap') {
       const data = await bootstrap(supabase);
       return json({ ok: true, ...data });
+    }
+
+    if (action === 'deposit_settings_update') {
+      const settings = normalizeDepositSettings(body.settings || {});
+
+      if (settings.tonWallet) {
+        normalizeTonAddress(settings.tonWallet);
+      }
+
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert(settingsRow(settings), { onConflict: 'key' });
+
+      if (error) throw error;
+
+      return json({
+        ok: true,
+        depositSettings: depositSettingsForClient(settings),
+      });
+    }
+
+    if (action === 'deposit_resolve') {
+      const depositId = clean(body.depositId);
+      const status = clean(body.status).toLowerCase();
+
+      if (!/^[0-9a-f-]{36}$/i.test(depositId)) {
+        return json({ ok: false, error: 'Deposit ID noto‘g‘ri.' }, 400);
+      }
+
+      if (!['approved', 'rejected'].includes(status)) {
+        return json({ ok: false, error: 'Deposit statusi noto‘g‘ri.' }, 400);
+      }
+
+      const creditAmount = Number(body.creditAmount);
+
+      if (
+        status === 'approved' &&
+        (!Number.isFinite(creditAmount) || creditAmount <= 0)
+      ) {
+        return json(
+          { ok: false, error: 'Tasdiqlash uchun Stars miqdorini kiriting.' },
+          400
+        );
+      }
+
+      const { data, error } = await supabase.rpc('deposit_admin_resolve', {
+        p_deposit_id: depositId,
+        p_approve: status === 'approved',
+        p_credit_amount:
+          status === 'approved' ? Math.floor(creditAmount) : null,
+        p_admin_note: clean(body.note).slice(0, 500) || null,
+      });
+
+      if (error) {
+        if (depositSqlError(error)) {
+          throw new Error(
+            'Deposit SQL o‘rnatilmagan. Supabase’da sql/deposit-system.sql faylini to‘liq Run qiling.'
+          );
+        }
+
+        throw error;
+      }
+
+      return json({ ok: true, deposit: data });
     }
 
     if (action === 'rocket_state') {
