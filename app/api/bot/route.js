@@ -26,19 +26,31 @@ export async function POST(request) {
     }
   }
 
+  let update = null;
+
   try {
-    const update = await request.json();
+    update = await request.json();
     await handleTelegramUpdate(update);
 
     return json({ ok: true });
   } catch (error) {
     console.error('[bot:webhook]', error);
 
-    // Telegram qayta-qayta yuborib spam qilmasligi uchun 200 qaytaramiz.
+    const criticalPaymentUpdate = Boolean(
+      update?.pre_checkout_query ||
+        update?.message?.successful_payment ||
+        update?.message?.gift ||
+        update?.message?.unique_gift ||
+        update?.business_message?.gift ||
+        update?.business_message?.unique_gift
+    );
+
+    // Moliyaviy update muvaffaqiyatsiz bo'lsa Telegram uni qayta yuborishi
+    // kerak. Oddiy command xatosida esa takroriy spamning oldini olamiz.
     return json({
-      ok: true,
+      ok: !criticalPaymentUpdate,
       handled: false,
       error: error?.message || 'Bot webhook xatosi',
-    });
+    }, criticalPaymentUpdate ? 500 : 200);
   }
 }
