@@ -15,6 +15,7 @@
     "@tonconnect/ui-react": "^3.0.0",
     "input": "^1.0.1",
     "lottie-web": "latest",
+    "lucide-react": "^1.27.0",
     "next": "latest",
     "pako": "latest",
     "react": "latest",
