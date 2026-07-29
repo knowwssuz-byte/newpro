@@ -1,6 +1,12 @@
 'use client';
 
 import {
+  useIsConnectionRestored,
+  useTonAddress,
+  useTonConnectUI,
+  useTonWallet,
+} from '@tonconnect/ui-react';
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -41,7 +47,7 @@ function shortAddress(value = '') {
 
 function methodName(method) {
   if (method === 'stars') return 'Telegram Stars';
-  if (method === 'ton') return 'TON';
+  if (method === 'ton') return 'TON / GRAM';
   if (method === 'gift') return 'Telegram Gift';
   return 'Deposit';
 }
@@ -193,6 +199,20 @@ function openInvoice(tg, invoiceLink) {
   });
 }
 
+function tonConnectRejected(error) {
+  const code = Number(error?.code ?? error?.statusCode ?? error?.errorCode);
+  const name = String(error?.name || '').toLowerCase();
+  const message = String(error?.message || '').toLowerCase();
+
+  return (
+    code === 300 ||
+    name.includes('userreject') ||
+    name.includes('user_reject') ||
+    message.includes('user reject') ||
+    message.includes('user declined')
+  );
+}
+
 function MethodIcon({ method, small = false }) {
   if (method === 'stars') return <StarsMark small={small} />;
   if (method === 'ton') return <TonMark small={small} />;
@@ -207,6 +227,10 @@ export default function DepositView({
   onBalanceChange,
   onToast,
 }) {
+  const [tonConnectUI] = useTonConnectUI();
+  const tonWallet = useTonWallet();
+  const tonAddress = useTonAddress(true);
+  const tonConnectionRestored = useIsConnectionRestored();
   const [method, setMethod] = useState('stars');
   const [settings, setSettings] = useState(null);
   const [deposits, setDeposits] = useState([]);
@@ -216,6 +240,7 @@ export default function DepositView({
   const [giftUrl, setGiftUrl] = useState('');
   const [giftNote, setGiftNote] = useState('');
   const [tonTransferLink, setTonTransferLink] = useState('');
+  const [tonFallbackOpen, setTonFallbackOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
@@ -324,8 +349,8 @@ export default function DepositView({
           applyState(data);
 
           if (data.completed && pendingTon) {
-            setNotice('TON to‘lovi tasdiqlandi va balansga tushdi.');
-            onToast?.('TON deposit balansga tushdi ✅');
+            setNotice('TON / GRAM to‘lovi tasdiqlandi va balansga tushdi.');
+            onToast?.('TON / GRAM deposit balansga tushdi ✅');
           }
         }
       } catch {
@@ -406,25 +431,172 @@ export default function DepositView({
     });
   }
 
-  async function createTonInvoice(event) {
+  async function connectTonWallet() {
+    await runAction('ton-connect', async () => {
+      if (!tonConnectionRestored) {
+        setNotice('Wallet ulanishi tiklanmoqda. Bir soniya kuting.');
+        return;
+      }
+
+      await tonConnectUI.openModal();
+    });
+  }
+
+  async function disconnectTonWallet() {
+    await runAction('ton-disconnect', async () => {
+      await tonConnectUI.disconnect();
+      setNotice('TON Connect wallet uzildi.');
+    });
+  }
+
+  async function payWithTonConnect(event) {
     event.preventDefault();
 
     await runAction('ton', async () => {
+      if (!tonConnectionRestored) {
+        setNotice('Wallet ulanishi tiklanmoqda. Bir soniya kuting.');
+        return;
+      }
+
+      if (!tonAddress || !tonWallet) {
+        await tonConnectUI.openModal();
+        return;
+      }
+
+      if (String(tonWallet.account?.chain || '') !== '-239') {
+        throw new Error('Mainnet TON / GRAM walletni ulang.');
+      }
+
+      if (pendingTon?.status === 'confirming') {
+        setNotice(
+          'Oldingi to‘lov blockchain’da tekshirilmoqda. Qayta yubormang.'
+        );
+        return;
+      }
+
       const data = await apiPost(
         '/api/deposit',
         {
           action: 'create_ton',
           amount: tonAmount,
+          flow: 'ton_connect',
+          senderAddress: tonAddress,
+          network: tonWallet.account?.chain,
+          walletApp:
+            tonWallet.device?.appName ||
+            tonWallet.name ||
+            'TON Wallet',
         },
         { timeoutMs: 15_000 }
       );
 
       applyState(data);
       setTonTransferLink(data.transferLink || tonLinkFromDeposit(data.deposit));
+      setTonFallbackOpen(false);
+
+      const deposit = data.deposit;
+      const transaction = deposit?.tonConnectTransaction;
+
+      if (!data.tonConnectReady) {
+        setNotice(
+          'Bu invoice boshqa qurilmada yoki oldingi so‘rovda tekshirilmoqda. Qayta yubormang.'
+        );
+        return;
+      }
+
+      if (!deposit?.id || !transaction?.messages?.length) {
+        throw new Error('TON Connect transaction tayyorlanmadi.');
+      }
+
+      let result;
+
+      try {
+        result = await tonConnectUI.sendTransaction({
+          ...transaction,
+          from: tonAddress,
+        });
+      } catch (sendError) {
+        if (tonConnectRejected(sendError)) {
+          const cancelled = await apiPost(
+            '/api/deposit',
+            {
+              action: 'ton_connect_cancelled',
+              depositId: deposit.id,
+              senderAddress: tonAddress,
+              walletApp:
+                tonWallet.device?.appName ||
+                tonWallet.name ||
+                'TON Wallet',
+            },
+            { timeoutMs: 10_000 }
+          );
+
+          applyState(cancelled);
+          setNotice('To‘lov walletda bekor qilindi. Pul yechilmadi.');
+          return;
+        }
+
+        setNotice(
+          'Wallet javobi uzildi. Qayta to‘lamang — blockchain avtomatik tekshirilmoqda.'
+        );
+        return;
+      }
+
+      try {
+        const submitted = await apiPost(
+          '/api/deposit',
+          {
+            action: 'ton_connect_submitted',
+            depositId: deposit.id,
+            senderAddress: tonAddress,
+            walletApp:
+              tonWallet.device?.appName ||
+              tonWallet.name ||
+              'TON Wallet',
+            boc: result?.boc || result?.response?.boc || '',
+          },
+          { timeoutMs: 10_000 }
+        );
+
+        applyState(submitted);
+      } catch {
+        // Invoice create paytidayoq confirming bo‘ladi. Polling on-chain
+        // natijani tiklaydi, shuning uchun foydalanuvchiga qayta yubortirmaymiz.
+      }
+
+      setNotice(
+        'So‘rov walletda tasdiqlandi. Blockchain tasdig‘idan keyin balans avtomatik tushadi.'
+      );
+      onToast?.('TON / GRAM to‘lovi yuborildi 💎');
+    });
+  }
+
+  async function createManualTonInvoice() {
+    await runAction('ton-manual', async () => {
+      if (pendingTon?.status === 'confirming') {
+        setNotice(
+          'TON Connect to‘lovi tekshirilmoqda. Takroriy transfer yubormang.'
+        );
+        return;
+      }
+
+      const data = await apiPost(
+        '/api/deposit',
+        {
+          action: 'create_ton',
+          amount: tonAmount,
+          flow: 'manual',
+        },
+        { timeoutMs: 15_000 }
+      );
+
+      applyState(data);
+      setTonTransferLink(data.transferLink || tonLinkFromDeposit(data.deposit));
+      setTonFallbackOpen(true);
       setNotice(
         data.reused
-          ? 'Oldingi TON invoice hali aktiv. Avval shu to‘lovni yakunlang.'
-          : 'TON invoice tayyor. Wallet, summa va commentni o‘zgartirmang.'
+          ? 'Oldingi TON / GRAM invoice ochildi.'
+          : 'Manual invoice tayyor. Summa va commentni o‘zgartirmang.'
       );
     });
   }
@@ -492,6 +664,10 @@ export default function DepositView({
   const liveTonDeposit = pendingTon;
   const liveTonLink =
     tonTransferLink || tonLinkFromDeposit(liveTonDeposit);
+  const tonWalletName =
+    tonWallet?.device?.appName ||
+    tonWallet?.name ||
+    'TON Wallet';
   const expectedTonCredit = Math.max(
     0,
     Math.floor(number(tonAmount) * number(settings?.tonStarsRate))
@@ -530,7 +706,7 @@ export default function DepositView({
         <div>
           <span className={styles.eyebrow}>BALANCE TOP UP</span>
           <h2>Qulay usulni tanlang</h2>
-          <p>Stars — darhol, TON — blockchain tasdig‘idan keyin, Gift — tekshiruvdan keyin tushadi.</p>
+          <p>Stars — darhol, TON / GRAM — wallet va blockchain tasdig‘idan keyin, Gift — tekshiruvdan keyin tushadi.</p>
         </div>
         <div className={styles.heroMarks} aria-hidden="true">
           <StarsMark />
@@ -564,8 +740,8 @@ export default function DepositView({
           },
           {
             id: 'ton',
-            title: 'TON',
-            caption: 'Blockchain',
+            title: 'TON/GRAM',
+            caption: 'TON Connect',
             ready: settings?.tonConfigured,
           },
           {
@@ -591,7 +767,7 @@ export default function DepositView({
             <MethodIcon method={item.id} />
             <strong>{item.title}</strong>
             <small>{loading ? '...' : item.ready ? item.caption : 'Sozlanmagan'}</small>
-            {item.id === 'stars' ? <em>AUTO</em> : null}
+            {item.id === 'stars' || item.id === 'ton' ? <em>AUTO</em> : null}
           </button>
         ))}
       </div>
@@ -673,24 +849,63 @@ export default function DepositView({
 
       {!loading && method === 'ton' ? (
         <div className={`${styles.panel} ${styles.tonPanel}`}>
-          <form onSubmit={createTonInvoice}>
+          <form onSubmit={payWithTonConnect}>
             <div className={styles.panelHeading}>
               <div>
-                <span>TON NETWORK</span>
-                <h3>TON orqali to‘ldirish</h3>
+                <span>TON / GRAM NETWORK</span>
+                <h3>TON Connect orqali</h3>
               </div>
-              <span className={styles.chainBadge}>ON-CHAIN</span>
+              <span className={styles.chainBadge}>AUTO</span>
             </div>
 
             {!settings?.tonConfigured ? (
               <div className={styles.setupMessage}>
-                Admin panelda TON wallet va 1 TON uchun Stars kursini kiriting.
+                Admin panelda TON / GRAM wallet va kursni kiriting.
               </div>
             ) : (
               <>
+                <div className={`${styles.walletConnect} ${
+                  tonAddress ? styles.walletConnected : ''
+                }`}>
+                  <TonMark />
+                  <div>
+                    <span>
+                      {!tonConnectionRestored
+                        ? 'Wallet tiklanmoqda...'
+                        : tonAddress
+                          ? tonWalletName
+                          : 'TON Connect wallet'}
+                    </span>
+                    <strong>
+                      {!tonConnectionRestored
+                        ? 'Ulanish tekshirilmoqda'
+                        : tonAddress
+                          ? shortAddress(tonAddress)
+                          : 'Tonkeeper, Wallet yoki boshqa wallet'}
+                    </strong>
+                  </div>
+                  {tonAddress ? (
+                    <button
+                      type="button"
+                      onClick={disconnectTonWallet}
+                      disabled={Boolean(busy) || pendingTon?.status === 'confirming'}
+                    >
+                      Uzish
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={connectTonWallet}
+                      disabled={Boolean(busy) || !tonConnectionRestored}
+                    >
+                      Ulanish
+                    </button>
+                  )}
+                </div>
+
                 <div className={styles.rateLine}>
                   <span>Joriy ichki kurs</span>
-                  <strong>1 TON = {formatBalance(settings.tonStarsRate)} <StarsMark small /></strong>
+                  <strong>1 TON / GRAM = {formatBalance(settings.tonStarsRate)} <StarsMark small /></strong>
                 </div>
 
                 <div className={styles.amountInput}>
@@ -706,7 +921,7 @@ export default function DepositView({
                     aria-label="TON amount"
                     required
                   />
-                  <span>TON</span>
+                  <span>TON/GRAM</span>
                 </div>
 
                 <div className={styles.presetRow}>
@@ -734,32 +949,64 @@ export default function DepositView({
                 <button
                   type="submit"
                   className={`${styles.primaryButton} ${styles.tonButton}`}
-                  disabled={Boolean(busy) || Boolean(liveTonDeposit)}
+                  disabled={
+                    Boolean(busy) ||
+                    !tonConnectionRestored ||
+                    pendingTon?.status === 'confirming'
+                  }
                 >
                   {busy === 'ton' ? <span className={styles.buttonSpinner} /> : <TonMark small />}
                   <span>
                     {busy === 'ton'
-                      ? 'Invoice tayyorlanmoqda...'
-                      : liveTonDeposit
-                        ? 'Aktiv invoice mavjud'
-                        : 'TON invoice yaratish'}
+                      ? 'Walletga yuborilmoqda...'
+                      : pendingTon?.status === 'confirming'
+                        ? 'Blockchain tasdig‘i kutilmoqda'
+                        : tonAddress
+                          ? 'TON / GRAM bilan to‘lash'
+                          : 'Avval walletni ulang'}
                   </span>
+                </button>
+
+                <button
+                  type="button"
+                  className={styles.manualToggle}
+                  onClick={() => {
+                    if (liveTonDeposit) {
+                      setTonFallbackOpen((current) => !current);
+                    } else {
+                      createManualTonInvoice();
+                    }
+                  }}
+                  disabled={Boolean(busy) || pendingTon?.status === 'confirming'}
+                >
+                  {busy === 'ton-manual'
+                    ? 'Manual invoice tayyorlanmoqda...'
+                    : tonFallbackOpen
+                      ? 'Manual usulni yopish'
+                      : 'Wallet ulanmasa — manual transfer'}
                 </button>
               </>
             )}
           </form>
 
-          {liveTonDeposit ? (
+          {liveTonDeposit && (
+            tonFallbackOpen || liveTonDeposit.status === 'confirming'
+          ) ? (
             <div className={styles.tonInvoice}>
               <div className={styles.invoiceTop}>
-                <span><i /> TO‘LOV KUTILMOQDA</span>
+                <span>
+                  <i />
+                  {liveTonDeposit.status === 'confirming'
+                    ? ' BLOCKCHAIN TEKSHIRUVI'
+                    : ' TO‘LOV KUTILMOQDA'}
+                </span>
                 <small>{dateTime(liveTonDeposit.expiresAt)} gacha</small>
               </div>
 
               <div className={styles.invoiceAmount}>
                 <TonMark />
                 <strong>{formatTon(liveTonDeposit.payAmount)}</strong>
-                <span>TON</span>
+                <span>TON / GRAM</span>
               </div>
 
               <div className={styles.invoiceRow}>
@@ -782,14 +1029,25 @@ export default function DepositView({
                 </button>
               </div>
 
-              {liveTonLink ? (
-                <a className={styles.walletButton} href={liveTonLink}>
+              {liveTonLink && liveTonDeposit.status !== 'confirming' ? (
+                <a
+                  className={styles.walletButton}
+                  href={liveTonLink}
+                  onClick={() => {
+                    setNotice(
+                      'Wallet ochildi. To‘lovdan keyin blockchain avtomatik tekshiriladi.'
+                    );
+                  }}
+                >
                   <TonMark small />
-                  <span>TON Walletda ochish</span>
+                  <span>Manual walletda ochish</span>
                 </a>
               ) : null}
 
-              <p>Summa yoki comment o‘zgarsa avtomatik tekshiruv topa olmaydi.</p>
+              <p>
+                TON Connect ishlatilsa summa va comment avtomatik yuboriladi.
+                Manual usulda ularni o‘zgartirmang.
+              </p>
             </div>
           ) : null}
         </div>
