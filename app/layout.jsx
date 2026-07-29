@@ -1,4 +1,5 @@
 import './globals.css';
+import './webapp/professional-theme.css';
 import Script from 'next/script';
 
 export const metadata = {
