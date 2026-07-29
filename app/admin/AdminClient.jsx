@@ -92,14 +92,14 @@ function smallId(value = '') {
 
 function depositMethodLabel(method) {
   if (method === 'stars') return 'Telegram Stars';
-  if (method === 'ton') return 'TON';
+  if (method === 'ton') return 'TON / GRAM';
   if (method === 'gift') return 'Telegram Gift';
   return 'Deposit';
 }
 
 function depositStatusLabel(status) {
   if (status === 'completed') return 'TUSHDI';
-  if (status === 'confirming') return 'KELDI / CHECK';
+  if (status === 'confirming') return 'CHAIN CHECK';
   if (status === 'rejected') return 'RAD ETILDI';
   if (status === 'expired') return 'VAQTI TUGADI';
   if (status === 'cancelled') return 'BEKOR';
@@ -1497,9 +1497,9 @@ export default function AdminClient() {
                 <span>PAYMENT CONTROL CENTER</span>
                 <h2>Deposit boshqaruvi</h2>
                 <p>
-                  Telegram Stars avtomatik tushadi, TON noyob memo orqali
-                  tekshiriladi, Gift esa qiymati tasdiqlangandan keyin
-                  balansga qo‘shiladi.
+                  Telegram Stars avtomatik tushadi, TON / GRAM TON Connect
+                  va noyob memo orqali tekshiriladi, Gift esa qiymati
+                  tasdiqlangandan keyin balansga qo‘shiladi.
                 </p>
               </div>
 
@@ -1529,7 +1529,7 @@ export default function AdminClient() {
                 </small>
               </article>
               <article>
-                <span>TON AUTO</span>
+                <span>TON / GRAM AUTO</span>
                 <strong>
                   {depositSettings.tonEnabled &&
                   depositSettings.tonWallet &&
@@ -1538,7 +1538,7 @@ export default function AdminClient() {
                     : 'SETUP'}
                 </strong>
                 <small>
-                  1 TON = {money(depositSettings.tonStarsRate)} Stars
+                  1 TON / GRAM = {money(depositSettings.tonStarsRate)} Stars
                 </small>
               </article>
             </div>
@@ -1615,8 +1615,8 @@ export default function AdminClient() {
                 <section className="deposit-setting-card is-ton">
                   <label className="deposit-admin-toggle">
                     <span>
-                      <b>TON Auto</b>
-                      <small>Wallet tranzaksiyasi va memo bo‘yicha</small>
+                      <b>TON / GRAM Auto</b>
+                      <small>TON Connect, tranzaksiya va memo bo‘yicha</small>
                     </span>
                     <input
                       type="checkbox"
@@ -1632,7 +1632,7 @@ export default function AdminClient() {
                   </label>
 
                   <label>
-                    <span>Qabul qiluvchi TON wallet</span>
+                    <span>Qabul qiluvchi TON / GRAM wallet</span>
                     <input
                       value={depositSettings.tonWallet}
                       onChange={(event) =>
@@ -1647,7 +1647,7 @@ export default function AdminClient() {
 
                   <div className="browser-admin-two">
                     <label>
-                      <span>1 TON uchun Stars</span>
+                      <span>1 TON / GRAM uchun Stars</span>
                       <input
                         type="number"
                         min="0"
@@ -1683,7 +1683,7 @@ export default function AdminClient() {
 
                   <div className="browser-admin-two">
                     <label>
-                      <span>Minimum TON</span>
+                      <span>Minimum TON / GRAM</span>
                       <input
                         type="number"
                         min="0.000000001"
@@ -1699,7 +1699,7 @@ export default function AdminClient() {
                       />
                     </label>
                     <label>
-                      <span>Maksimum TON</span>
+                      <span>Maksimum TON / GRAM</span>
                       <input
                         type="number"
                         min="0.000000001"
@@ -1791,9 +1791,9 @@ export default function AdminClient() {
                 </div>
 
                 <p className="deposit-admin-ledger-note">
-                  TON’ni qo‘lda tasdiqlashdan oldin walletda aynan summa va
-                  memo kelganini tekshiring. Stars faqat Telegram webhook
-                  orqali avtomatik tasdiqlanadi.
+                  TON / GRAM’ni qo‘lda tasdiqlashdan oldin walletda aynan
+                  summa va memo kelganini tekshiring. Stars faqat Telegram
+                  webhook orqali avtomatik tasdiqlanadi.
                 </p>
 
                 <div className="deposit-admin-list">
