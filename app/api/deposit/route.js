@@ -12,6 +12,7 @@ import {
   normalizeTonAddress,
 } from '@/lib/tonDeposits';
 import { telegramApi } from '@/lib/telegramBot';
+import { createStarsInvoicePayload } from '@/lib/starsInvoices';
 import {
   ensureUser,
   jsonError,
@@ -251,7 +252,15 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
 
   const amount = validateStarsAmount(body.amount, settings);
   const depositId = crypto.randomUUID();
-  const payload = `deposit:${depositId}`;
+  const expiresAt = new Date(
+    Date.now() + STARS_INVOICE_TTL_MS
+  ).toISOString();
+  const payload = createStarsInvoicePayload({
+    depositId,
+    userId,
+    amount,
+    expiresAt,
+  });
   const row = {
     id: depositId,
     user_id: userId,
@@ -261,23 +270,24 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
     pay_amount: amount,
     credit_amount: amount,
     invoice_payload: payload,
-    expires_at: new Date(Date.now() + STARS_INVOICE_TTL_MS).toISOString(),
+    expires_at: expiresAt,
     metadata: {
-      version: 1,
+      version: 2,
       source: 'webapp',
       invoiceCreatedAt: new Date().toISOString(),
+      fastPreCheckout: true,
     },
   };
-  const { data: deposit, error: insertError } = await supabase
-    .from('deposit_transactions')
-    .insert(row)
-    .select('*')
-    .single();
 
-  if (insertError) throwDepositError(insertError);
-
-  try {
-    const invoiceLink = await telegramApi('createInvoiceLink', {
+  // DB insert va Telegram invoice link bir-biridan mustaqil. Ikkalasini
+  // parallel kutish tugma bosilgandagi ortiqcha ketma-ket kechikishni oladi.
+  const [insertOutcome, invoiceOutcome] = await Promise.allSettled([
+    supabase
+      .from('deposit_transactions')
+      .insert(row)
+      .select('*')
+      .single(),
+    telegramApi('createInvoiceLink', {
       title: 'Gift Myst balance',
       description: `${amount} Stars balansga avtomatik qo‘shiladi`,
       payload,
@@ -288,13 +298,24 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
           amount,
         },
       ],
-    });
+    }, { timeoutMs: 8_000 }),
+  ]);
 
-    return {
-      deposit: publicDeposit(deposit),
-      invoiceLink,
-    };
-  } catch (error) {
+  const insertResult =
+    insertOutcome.status === 'fulfilled'
+      ? insertOutcome.value
+      : { data: null, error: insertOutcome.reason };
+  const deposit = insertResult.data;
+  const insertError = insertResult.error;
+
+  if (insertError) throwDepositError(insertError);
+  if (!deposit) {
+    throw new Error('Stars deposit bazada yaratilmadi.');
+  }
+
+  if (invoiceOutcome.status === 'rejected') {
+    const error = invoiceOutcome.reason;
+
     await supabase
       .from('deposit_transactions')
       .update({
@@ -307,6 +328,11 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
 
     throw error;
   }
+
+  return {
+    deposit: publicDeposit(deposit),
+    invoiceLink: invoiceOutcome.value,
+  };
 }
 
 async function createTonDeposit({ supabase, userId, body, settings }) {
@@ -694,14 +720,13 @@ async function cancelStarsDeposit({ supabase, userId, depositId }) {
   const { data, error } = await supabase
     .from('deposit_transactions')
     .update({
-      status: 'cancelled',
       admin_note: 'Telegram invoice foydalanuvchi tomonidan yopildi.',
       updated_at: new Date().toISOString(),
     })
     .eq('id', depositId)
     .eq('user_id', userId)
     .eq('method', 'stars')
-    .eq('status', 'pending')
+    .in('status', ['pending', 'confirming'])
     .select('*')
     .maybeSingle();
 
@@ -722,7 +747,10 @@ export async function POST(request) {
     }
 
     const supabase = getSupabaseAdmin();
-    const dbUser = await ensureUser(auth.telegramUser);
+    const [dbUser, settings] = await Promise.all([
+      ensureUser(auth.telegramUser),
+      getDepositSettings(supabase),
+    ]);
 
     if (dbUser.is_banned) {
       return jsonError('Siz bloklangansiz.', 403);
@@ -731,7 +759,6 @@ export async function POST(request) {
     const body = auth.body || {};
     const action = clean(body.action || 'state');
     const userId = Number(auth.telegramUser.id);
-    const settings = await getDepositSettings(supabase);
     let result = {};
 
     if (action === 'state') {
@@ -747,6 +774,13 @@ export async function POST(request) {
         userId,
         body,
         settings,
+      });
+
+      // Invoice oynasi uchun kerakli linkni darhol qaytaramiz. To‘liq
+      // history/balance qayta so‘rovi invoice ochilishini sekinlashtirmaydi.
+      return Response.json({
+        ok: true,
+        ...result,
       });
     } else if (action === 'create_ton') {
       result = await createTonDeposit({
