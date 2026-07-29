@@ -39,7 +39,7 @@ export default async function WebAppPage() {
 
   return (
     <TonConnectProvider
-      manifestUrl={`${origin}/tonconnect-manifest.json`}
+      manifestUrl={`${origin}/api/tonconnect-manifest?v=3`}
       twaReturnUrl={configuredReturnUrl}
     >
       <WebAppClient />
