@@ -9,6 +9,7 @@ import {
   useState,
 } from 'react';
 import Image from 'next/image';
+import { ChevronLeft, Wifi } from 'lucide-react';
 import styles from './RocketGame.module.css';
 
 const DEFAULT_CONFIG = {
@@ -601,27 +602,18 @@ async function verifySettledRound(round) {
 }
 
 function BackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M15 5 8 12l7 7" />
-    </svg>
-  );
+  return <ChevronLeft aria-hidden="true" strokeWidth={2.15} />;
 }
 
 function SignalIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5 9.5a10 10 0 0 1 14 0M8 13a5.8 5.8 0 0 1 8 0" />
-      <circle cx="12" cy="17" r="1.2" />
-    </svg>
-  );
+  return <Wifi aria-hidden="true" strokeWidth={2.15} />;
 }
 
 function StarCoin({ small = false }) {
   return (
     <span className={`${styles.coin} ${small ? styles.coinSmall : ''}`}>
       <Image
-        src="/currency/stars.svg"
+        src="/currency/stars.png"
         alt=""
         width={24}
         height={24}
