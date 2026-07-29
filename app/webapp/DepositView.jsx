@@ -37,6 +37,12 @@ function formatTon(value) {
   });
 }
 
+function wait(milliseconds) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
 function shortAddress(value = '') {
   const text = String(value || '');
 
@@ -385,8 +391,10 @@ export default function DepositView({
 
   const pendingDeposit = useMemo(
     () =>
-      deposits.find((item) =>
-        ['pending', 'confirming'].includes(item.status)
+      deposits.find(
+        (item) =>
+          item.status === 'confirming' ||
+          (item.status === 'pending' && item.method !== 'stars')
       ) || null,
     [deposits]
   );
@@ -451,6 +459,47 @@ export default function DepositView({
     };
   }, [apiPost, applyState, onToast, pendingDeposit, pendingTon]);
 
+  const syncStarsPayment = useCallback(
+    async (depositId) => {
+      if (!depositId) return;
+
+      const delays = [0, 600, 1_200, 2_000, 3_200];
+
+      for (const delay of delays) {
+        if (delay > 0) await wait(delay);
+        if (!mountedRef.current) return;
+
+        try {
+          const data = await apiPost(
+            '/api/deposit',
+            { action: 'state' },
+            { timeoutMs: 8_000 }
+          );
+
+          applyState(data);
+          const current = data.deposits?.find(
+            (item) => item.id === depositId
+          );
+
+          if (current?.status === 'completed') {
+            setNotice('Stars balansga muvaffaqiyatli tushdi.');
+            return;
+          }
+
+          if (
+            current &&
+            ['rejected', 'expired', 'cancelled'].includes(current.status)
+          ) {
+            return;
+          }
+        } catch {
+          // Webhook va keyingi urinish balansni tiklaydi.
+        }
+      }
+    },
+    [apiPost, applyState]
+  );
+
   async function runAction(actionName, callback) {
     if (busy) return null;
 
@@ -481,7 +530,7 @@ export default function DepositView({
           action: 'create_stars',
           amount: Number(starsAmount),
         },
-        { timeoutMs: 15_000 }
+        { timeoutMs: 10_000 }
       );
 
       applyState(data);
@@ -495,20 +544,24 @@ export default function DepositView({
       if (status === 'paid') {
         setNotice('To‘lov qabul qilindi. Balans tasdiqlanmoqda...');
         onToast?.('Stars to‘lovi qabul qilindi ⭐');
-        await loadState({ silent: true });
+        // Tugmani webhook/balance refresh kutib spinnerda ushlab turmaymiz.
+        // successful_payment ledgerga tushishi bilan fon so‘rovi UI'ni yangilaydi.
+        void syncStarsPayment(data.deposit?.id);
       } else if (status === 'cancelled' || status === 'failed') {
-        const cancelled = await apiPost(
+        void apiPost(
           '/api/deposit',
           {
             action: 'cancel_stars',
             depositId: data.deposit?.id,
           },
           { timeoutMs: 10_000 }
-        );
-        applyState(cancelled);
+        )
+          .then(applyState)
+          .catch(() => {});
         setNotice('To‘lov yakunlanmadi. Xohlasangiz qayta urinishingiz mumkin.');
       } else {
         setNotice('Invoice ochildi. To‘lovdan keyin balans avtomatik yangilanadi.');
+        void syncStarsPayment(data.deposit?.id);
       }
     });
   }
