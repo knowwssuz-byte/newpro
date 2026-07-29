@@ -38,6 +38,21 @@ const featureDefaults = {
   pvp: { scale: 78, offset_x: 0, offset_y: -18 },
 };
 
+const emptyDepositSettings = {
+  starsEnabled: true,
+  starsMin: 10,
+  starsMax: 10000,
+  tonEnabled: true,
+  tonWallet: '',
+  tonStarsRate: 0,
+  tonMin: 0.1,
+  tonMax: 100,
+  tonExpiryMinutes: 45,
+  giftEnabled: true,
+  giftRecipient: '',
+  giftCreditPercent: 85,
+};
+
 function featureLayout(slot, setting = {}) {
   const defaults = featureDefaults[slot] || featureDefaults.rocket;
   return {
@@ -73,6 +88,38 @@ function smallId(value = '') {
   const text = String(value || '');
   if (text.length <= 14) return text;
   return `${text.slice(0, 7)}...${text.slice(-5)}`;
+}
+
+function depositMethodLabel(method) {
+  if (method === 'stars') return 'Telegram Stars';
+  if (method === 'ton') return 'TON';
+  if (method === 'gift') return 'Telegram Gift';
+  return 'Deposit';
+}
+
+function depositStatusLabel(status) {
+  if (status === 'completed') return 'TUSHDI';
+  if (status === 'confirming') return 'KELDI / CHECK';
+  if (status === 'rejected') return 'RAD ETILDI';
+  if (status === 'expired') return 'VAQTI TUGADI';
+  if (status === 'cancelled') return 'BEKOR';
+  return 'KUTILMOQDA';
+}
+
+function adminDate(value) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return new Intl.DateTimeFormat('uz-UZ', {
+    day: '2-digit',
+    month: '2-digit',
+    year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(date);
 }
 
 function sortCasesForDisplay(items = []) {
@@ -215,6 +262,11 @@ export default function AdminClient() {
   const [rocketConnection, setRocketConnection] = useState('idle');
   const [rocketActionBusy, setRocketActionBusy] = useState('');
   const [rocketNextMultiplier, setRocketNextMultiplier] = useState('');
+  const [deposits, setDeposits] = useState([]);
+  const [depositSettings, setDepositSettings] = useState(
+    emptyDepositSettings
+  );
+  const [depositDrafts, setDepositDrafts] = useState({});
 
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
   const [caseFile, setCaseFile] = useState(null);
@@ -267,6 +319,25 @@ export default function AdminClient() {
     setWithdrawals(data.withdrawals || []);
     setGiftLibrary(data.giftLibrary || []);
     setFeatureSettings(data.featureSettings || {});
+    setDeposits(data.deposits || []);
+    setDepositSettings({
+      ...emptyDepositSettings,
+      ...(data.depositSettings || {}),
+    });
+    setDepositDrafts((current) =>
+      Object.fromEntries(
+        (data.deposits || []).map((deposit) => [
+          deposit.id,
+          current[deposit.id] || {
+            credit:
+              Number(deposit.credit_amount || 0) > 0
+                ? String(Math.floor(Number(deposit.credit_amount)))
+                : '',
+            note: deposit.admin_note || '',
+          },
+        ])
+      )
+    );
 
     const sortedCases = sortCasesForDisplay(data.cases || []);
     const firstCaseId = sortedCases?.[0]?.id || '';
@@ -510,6 +581,9 @@ export default function AdminClient() {
     setGiftLibrary([]);
     setRocketControl(null);
     setRocketConnection('idle');
+    setDeposits([]);
+    setDepositSettings(emptyDepositSettings);
+    setDepositDrafts({});
   }
 
   async function createCase(event) {
@@ -750,9 +824,91 @@ export default function AdminClient() {
     await bootstrap();
   }
 
+  async function saveDepositSettings(event) {
+    event.preventDefault();
+
+    const data = await run(
+      () =>
+        callAdmin('deposit_settings_update', {
+          settings: {
+            ...depositSettings,
+            starsMin: Number(depositSettings.starsMin),
+            starsMax: Number(depositSettings.starsMax),
+            tonStarsRate: Number(depositSettings.tonStarsRate),
+            tonMin: Number(depositSettings.tonMin),
+            tonMax: Number(depositSettings.tonMax),
+            tonExpiryMinutes: Number(depositSettings.tonExpiryMinutes),
+            giftCreditPercent: Number(depositSettings.giftCreditPercent),
+          },
+        }),
+      'Deposit sozlamalari saqlandi ✅'
+    );
+
+    if (data?.depositSettings) {
+      setDepositSettings({
+        ...emptyDepositSettings,
+        ...data.depositSettings,
+      });
+    }
+  }
+
+  function changeDepositDraft(depositId, key, value) {
+    setDepositDrafts((current) => ({
+      ...current,
+      [depositId]: {
+        credit: current[depositId]?.credit || '',
+        note: current[depositId]?.note || '',
+        [key]: value,
+      },
+    }));
+  }
+
+  async function resolveDeposit(deposit, status) {
+    const draft = depositDrafts[deposit.id] || {};
+    const creditAmount = Number(draft.credit);
+    const verb = status === 'approved' ? 'tasdiqlansinmi' : 'rad etilsinmi';
+
+    if (
+      status === 'approved' &&
+      (!Number.isFinite(creditAmount) || creditAmount <= 0)
+    ) {
+      setError('Tasdiqlashdan oldin tushadigan Stars miqdorini kiriting.');
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `${depositMethodLabel(deposit.method)} deposit ${verb}`
+      )
+    ) {
+      return;
+    }
+
+    const data = await run(
+      () =>
+        callAdmin('deposit_resolve', {
+          depositId: deposit.id,
+          status,
+          creditAmount: status === 'approved' ? creditAmount : null,
+          note: draft.note || '',
+        }),
+      status === 'approved'
+        ? 'Deposit balansga tushirildi ✅'
+        : 'Deposit rad etildi'
+    );
+
+    if (data) await bootstrap();
+  }
+
   const currentRocketRound = rocketControl?.currentRound || null;
   const nextRocketRound = rocketControl?.nextRound || null;
   const rocketBiasMode = rocketControl?.biasMode || 'standard';
+  const pendingDepositCount = deposits.filter((deposit) =>
+    ['pending', 'confirming'].includes(deposit.status)
+  ).length;
+  const completedDepositTotal = deposits
+    .filter((deposit) => deposit.status === 'completed')
+    .reduce((sum, deposit) => sum + Number(deposit.credit_amount || 0), 0);
 
   if (!saved) {
     return (
@@ -794,6 +950,12 @@ export default function AdminClient() {
             ['gifts', 'Casega gift'],
             ['features', 'PVP / Rocket'],
             ['rocket', 'Rocket control'],
+            [
+              'deposits',
+              pendingDepositCount
+                ? `Deposits (${pendingDepositCount})`
+                : 'Deposits',
+            ],
             ['users', 'Users'],
             ['withdrawals', 'Withdrawals'],
           ].map(([id, label]) => (
@@ -1324,6 +1486,513 @@ export default function AdminClient() {
                   <button type="button" className="admin-danger-light" onClick={() => deleteGift(gift.id)}>Delete</button>
                 </div>
               ))}
+            </div>
+          </section>
+        ) : null}
+
+        {tab === 'deposits' ? (
+          <section className="deposit-admin-console">
+            <div className="deposit-admin-hero">
+              <div>
+                <span>PAYMENT CONTROL CENTER</span>
+                <h2>Deposit boshqaruvi</h2>
+                <p>
+                  Telegram Stars avtomatik tushadi, TON noyob memo orqali
+                  tekshiriladi, Gift esa qiymati tasdiqlangandan keyin
+                  balansga qo‘shiladi.
+                </p>
+              </div>
+
+              <div className="deposit-admin-hero-status">
+                <i />
+                LIVE LEDGER
+              </div>
+            </div>
+
+            <div className="deposit-admin-stats">
+              <article>
+                <span>KUTILAYOTGAN</span>
+                <strong>{money(pendingDepositCount)}</strong>
+                <small>Admin e’tibori kerak bo‘lishi mumkin</small>
+              </article>
+              <article>
+                <span>TUSHGAN BALANS</span>
+                <strong>{money(completedDepositTotal)} ⭐</strong>
+                <small>Oxirgi {deposits.length} tranzaksiya bo‘yicha</small>
+              </article>
+              <article>
+                <span>STARS AUTO</span>
+                <strong>{depositSettings.starsEnabled ? 'ON' : 'OFF'}</strong>
+                <small>
+                  {money(depositSettings.starsMin)}–
+                  {money(depositSettings.starsMax)} Stars
+                </small>
+              </article>
+              <article>
+                <span>TON AUTO</span>
+                <strong>
+                  {depositSettings.tonEnabled &&
+                  depositSettings.tonWallet &&
+                  Number(depositSettings.tonStarsRate) > 0
+                    ? 'READY'
+                    : 'SETUP'}
+                </strong>
+                <small>
+                  1 TON = {money(depositSettings.tonStarsRate)} Stars
+                </small>
+              </article>
+            </div>
+
+            <div className="deposit-admin-grid">
+              <form
+                className="browser-admin-form deposit-admin-settings"
+                onSubmit={saveDepositSettings}
+              >
+                <div className="admin-form-heading">
+                  <span>METHOD SETTINGS</span>
+                  <h2>To‘ldirish usullari</h2>
+                  <p>
+                    O‘zgartirishlar yangi depositlarga darhol qo‘llanadi.
+                    Aktiv invoice’lar o‘z eski summa va kursida tugaydi.
+                  </p>
+                </div>
+
+                <section className="deposit-setting-card is-stars">
+                  <label className="deposit-admin-toggle">
+                    <span>
+                      <b>Telegram Stars</b>
+                      <small>Invoice to‘langanda avtomatik balans</small>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(depositSettings.starsEnabled)}
+                      onChange={(event) =>
+                        setDepositSettings({
+                          ...depositSettings,
+                          starsEnabled: event.target.checked,
+                        })
+                      }
+                    />
+                    <i />
+                  </label>
+
+                  <div className="browser-admin-two">
+                    <label>
+                      <span>Minimum Stars</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={depositSettings.starsMin}
+                        onChange={(event) =>
+                          setDepositSettings({
+                            ...depositSettings,
+                            starsMin: event.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </label>
+                    <label>
+                      <span>Maksimum Stars</span>
+                      <input
+                        type="number"
+                        min="1"
+                        step="1"
+                        value={depositSettings.starsMax}
+                        onChange={(event) =>
+                          setDepositSettings({
+                            ...depositSettings,
+                            starsMax: event.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </label>
+                  </div>
+                </section>
+
+                <section className="deposit-setting-card is-ton">
+                  <label className="deposit-admin-toggle">
+                    <span>
+                      <b>TON Auto</b>
+                      <small>Wallet tranzaksiyasi va memo bo‘yicha</small>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(depositSettings.tonEnabled)}
+                      onChange={(event) =>
+                        setDepositSettings({
+                          ...depositSettings,
+                          tonEnabled: event.target.checked,
+                        })
+                      }
+                    />
+                    <i />
+                  </label>
+
+                  <label>
+                    <span>Qabul qiluvchi TON wallet</span>
+                    <input
+                      value={depositSettings.tonWallet}
+                      onChange={(event) =>
+                        setDepositSettings({
+                          ...depositSettings,
+                          tonWallet: event.target.value.trim(),
+                        })
+                      }
+                      placeholder="UQ... yoki EQ..."
+                    />
+                  </label>
+
+                  <div className="browser-admin-two">
+                    <label>
+                      <span>1 TON uchun Stars</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={depositSettings.tonStarsRate}
+                        onChange={(event) =>
+                          setDepositSettings({
+                            ...depositSettings,
+                            tonStarsRate: event.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </label>
+                    <label>
+                      <span>Invoice vaqti, daqiqa</span>
+                      <input
+                        type="number"
+                        min="5"
+                        max="240"
+                        step="1"
+                        value={depositSettings.tonExpiryMinutes}
+                        onChange={(event) =>
+                          setDepositSettings({
+                            ...depositSettings,
+                            tonExpiryMinutes: event.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </label>
+                  </div>
+
+                  <div className="browser-admin-two">
+                    <label>
+                      <span>Minimum TON</span>
+                      <input
+                        type="number"
+                        min="0.000000001"
+                        step="0.000000001"
+                        value={depositSettings.tonMin}
+                        onChange={(event) =>
+                          setDepositSettings({
+                            ...depositSettings,
+                            tonMin: event.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </label>
+                    <label>
+                      <span>Maksimum TON</span>
+                      <input
+                        type="number"
+                        min="0.000000001"
+                        step="0.000000001"
+                        value={depositSettings.tonMax}
+                        onChange={(event) =>
+                          setDepositSettings({
+                            ...depositSettings,
+                            tonMax: event.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </label>
+                  </div>
+                </section>
+
+                <section className="deposit-setting-card is-gift">
+                  <label className="deposit-admin-toggle">
+                    <span>
+                      <b>Telegram Gift</b>
+                      <small>Kelgan giftni tekshirib balansga o‘tkazish</small>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(depositSettings.giftEnabled)}
+                      onChange={(event) =>
+                        setDepositSettings({
+                          ...depositSettings,
+                          giftEnabled: event.target.checked,
+                        })
+                      }
+                    />
+                    <i />
+                  </label>
+
+                  <div className="browser-admin-two">
+                    <label>
+                      <span>Qabul qiluvchi username</span>
+                      <input
+                        value={depositSettings.giftRecipient}
+                        onChange={(event) =>
+                          setDepositSettings({
+                            ...depositSettings,
+                            giftRecipient: event.target.value,
+                          })
+                        }
+                        placeholder="@GiftMystBot"
+                      />
+                    </label>
+                    <label>
+                      <span>Taklif qiymati, %</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        step="1"
+                        value={depositSettings.giftCreditPercent}
+                        onChange={(event) =>
+                          setDepositSettings({
+                            ...depositSettings,
+                            giftCreditPercent: event.target.value,
+                          })
+                        }
+                        required
+                      />
+                    </label>
+                  </div>
+                </section>
+
+                <button type="submit" disabled={busy}>
+                  {busy ? 'Saqlanmoqda...' : 'Deposit sozlamalarini saqlash'}
+                </button>
+              </form>
+
+              <section className="deposit-admin-ledger">
+                <div className="deposit-admin-ledger-head">
+                  <div>
+                    <span>TRANSACTION LEDGER</span>
+                    <h2>Depositlar</h2>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => bootstrap()}
+                    disabled={busy}
+                  >
+                    Yangilash
+                  </button>
+                </div>
+
+                <p className="deposit-admin-ledger-note">
+                  TON’ni qo‘lda tasdiqlashdan oldin walletda aynan summa va
+                  memo kelganini tekshiring. Stars faqat Telegram webhook
+                  orqali avtomatik tasdiqlanadi.
+                </p>
+
+                <div className="deposit-admin-list">
+                  {deposits.length ? (
+                    deposits.map((deposit) => {
+                      const user = users.find(
+                        (item) => Number(item.id) === Number(deposit.user_id)
+                      );
+                      const draft = depositDrafts[deposit.id] || {};
+                      const isPending = ['pending', 'confirming'].includes(
+                        deposit.status
+                      );
+                      const canApprove =
+                        isPending && deposit.method !== 'stars';
+
+                      return (
+                        <article
+                          className={`deposit-admin-item is-${deposit.method}`}
+                          key={deposit.id}
+                        >
+                          <div className="deposit-admin-item-top">
+                            <div className="deposit-admin-method">
+                              <i>{deposit.method === 'ton' ? 'T' : deposit.method === 'gift' ? 'G' : '★'}</i>
+                              <div>
+                                <strong>
+                                  {depositMethodLabel(deposit.method)}
+                                </strong>
+                                <span>
+                                  {user?.first_name ||
+                                    user?.username ||
+                                    `User ${deposit.user_id}`}
+                                  {' · '}
+                                  {smallId(deposit.id)}
+                                </span>
+                              </div>
+                            </div>
+                            <span
+                              className={`deposit-admin-state is-${deposit.status}`}
+                            >
+                              {depositStatusLabel(deposit.status)}
+                            </span>
+                          </div>
+
+                          <div className="deposit-admin-item-values">
+                            <span>
+                              To‘lov
+                              <b>
+                                {deposit.method === 'ton'
+                                  ? Number(deposit.pay_amount || 0).toLocaleString(
+                                      'en-US',
+                                      { maximumFractionDigits: 9 }
+                                    )
+                                  : money(deposit.pay_amount)}
+                                {' '}
+                                {deposit.pay_currency}
+                              </b>
+                            </span>
+                            <span>
+                              Balans
+                              <b>{money(deposit.credit_amount)} ⭐</b>
+                            </span>
+                            <span>
+                              Sana
+                              <b>{adminDate(deposit.created_at)}</b>
+                            </span>
+                          </div>
+
+                          {deposit.method === 'ton' ? (
+                            <div className="deposit-admin-details">
+                              <span>
+                                Wallet
+                                <b title={deposit.ton_wallet}>
+                                  {smallId(deposit.ton_wallet)}
+                                </b>
+                              </span>
+                              <span>
+                                Memo
+                                <b>{deposit.ton_memo || '—'}</b>
+                              </span>
+                            </div>
+                          ) : null}
+
+                          {deposit.method === 'gift' ? (
+                            <div className="deposit-admin-details">
+                              <span>
+                                Gift
+                                {deposit.gift_url ? (
+                                  <a
+                                    href={deposit.gift_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    Telegramda ochish ↗
+                                  </a>
+                                ) : (
+                                  <b>Webhookdan kelgan gift</b>
+                                )}
+                              </span>
+                              <span>
+                                Tavsiya
+                                <b>
+                                  {money(
+                                    deposit.metadata?.suggestedCredit ||
+                                      deposit.credit_amount
+                                  )}{' '}
+                                  ⭐
+                                </b>
+                              </span>
+                            </div>
+                          ) : null}
+
+                          {deposit.admin_note ? (
+                            <p className="deposit-admin-note">
+                              {deposit.admin_note}
+                            </p>
+                          ) : null}
+
+                          {isPending ? (
+                            <div className="deposit-admin-resolve">
+                              {canApprove ? (
+                                <label>
+                                  <span>Tushadigan Stars</span>
+                                  <input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value={draft.credit || ''}
+                                    onChange={(event) =>
+                                      changeDepositDraft(
+                                        deposit.id,
+                                        'credit',
+                                        event.target.value
+                                      )
+                                    }
+                                    placeholder="Masalan: 500"
+                                  />
+                                </label>
+                              ) : (
+                                <div className="deposit-admin-auto-wait">
+                                  Telegram to‘lov tasdig‘i kutilmoqda
+                                </div>
+                              )}
+
+                              {deposit.method !== 'stars' ? (
+                                <>
+                                  <label className="deposit-admin-note-input">
+                                    <span>Izoh — userga ko‘rinadi</span>
+                                    <input
+                                      value={draft.note || ''}
+                                      onChange={(event) =>
+                                        changeDepositDraft(
+                                          deposit.id,
+                                          'note',
+                                          event.target.value
+                                        )
+                                      }
+                                      placeholder="Ixtiyoriy izoh"
+                                    />
+                                  </label>
+
+                                  <div className="deposit-admin-resolve-actions">
+                                    {canApprove ? (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          resolveDeposit(deposit, 'approved')
+                                        }
+                                        disabled={busy}
+                                      >
+                                        Balansga tushirish
+                                      </button>
+                                    ) : null}
+                                    <button
+                                      type="button"
+                                      className="admin-danger-light"
+                                      onClick={() =>
+                                        resolveDeposit(deposit, 'rejected')
+                                      }
+                                      disabled={busy}
+                                    >
+                                      Rad etish
+                                    </button>
+                                  </div>
+                                </>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </article>
+                      );
+                    })
+                  ) : (
+                    <div className="deposit-admin-empty">
+                      <span>◌</span>
+                      <strong>Hali deposit yo‘q</strong>
+                      <p>Birinchi tranzaksiya shu yerda ko‘rinadi.</p>
+                    </div>
+                  )}
+                </div>
+              </section>
             </div>
           </section>
         ) : null}
