@@ -2076,3 +2076,172 @@ body {
     transition: none !important;
   }
 }
+
+/* =========================================================
+   PREMIUM BALANCE CAPSULE V3
+   Compact wallet-style treatment for the fixed header balance.
+========================================================= */
+
+.global-balance-bar .home-balance-copy {
+  position: relative !important;
+  isolation: isolate !important;
+  flex: 0 1 auto !important;
+  min-width: 138px !important;
+  min-height: 52px !important;
+  padding: 7px 12px 7px 9px !important;
+  display: grid !important;
+  align-content: center !important;
+  gap: 3px !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(194, 163, 255, 0.2) !important;
+  border-radius: 16px !important;
+  background:
+    radial-gradient(circle at 15% 12%, rgba(251, 191, 36, 0.1), transparent 34%),
+    linear-gradient(135deg, rgba(106, 67, 160, 0.3), rgba(35, 22, 55, 0.72)) !important;
+  box-shadow:
+    0 8px 22px rgba(4, 2, 12, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.global-balance-bar .home-balance-copy::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 0;
+  left: 14px;
+  width: 58%;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), transparent);
+  pointer-events: none;
+}
+
+.global-balance-bar .home-balance-copy > span {
+  position: relative !important;
+  z-index: 1 !important;
+  padding-left: 10px !important;
+  color: rgba(225, 215, 244, 0.72) !important;
+  font-family: var(--font-ui) !important;
+  font-size: 9px !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.075em !important;
+  text-transform: uppercase !important;
+  white-space: nowrap !important;
+}
+
+.global-balance-bar .home-balance-copy > span::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f8c84e;
+  box-shadow: 0 0 8px rgba(248, 200, 78, 0.66);
+  transform: translateY(-50%);
+}
+
+.global-balance-bar .home-balance-copy strong {
+  position: relative !important;
+  z-index: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  color: #fffdf8 !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(19px, 5vw, 22px) !important;
+  font-weight: 800 !important;
+  font-variant-numeric: tabular-nums lining-nums !important;
+  line-height: 1 !important;
+  letter-spacing: -0.035em !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.28) !important;
+  white-space: nowrap !important;
+}
+
+.global-balance-bar .coin-icon.stars-currency-icon {
+  width: 27px !important;
+  min-width: 27px !important;
+  height: 27px !important;
+  margin: 0 !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  overflow: visible !important;
+  border: 1px solid rgba(255, 213, 94, 0.2) !important;
+  border-radius: 9px !important;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 255, 255, 0.2), transparent 32%),
+    linear-gradient(145deg, rgba(245, 188, 45, 0.2), rgba(123, 78, 190, 0.2)) !important;
+  box-shadow:
+    0 5px 12px rgba(4, 2, 12, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  filter: none !important;
+}
+
+.global-balance-bar .coin-icon.stars-currency-icon img {
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  object-fit: contain !important;
+  transform: none !important;
+  filter:
+    drop-shadow(0 0 6px rgba(255, 194, 42, 0.3))
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.24)) !important;
+}
+
+@media (max-width: 430px) {
+  .global-balance-bar .home-balance-copy {
+    min-width: 128px !important;
+    min-height: 50px !important;
+    padding: 6px 10px 6px 8px !important;
+    border-radius: 15px !important;
+  }
+
+  .global-balance-bar .home-balance-copy strong {
+    gap: 6px !important;
+    font-size: clamp(18px, 5vw, 21px) !important;
+  }
+
+  .global-balance-bar .coin-icon.stars-currency-icon {
+    width: 26px !important;
+    min-width: 26px !important;
+    height: 26px !important;
+  }
+
+  .global-balance-bar .coin-icon.stars-currency-icon img {
+    width: 19px !important;
+    min-width: 19px !important;
+    height: 19px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .global-balance-bar .home-balance-copy {
+    min-width: 112px !important;
+    min-height: 46px !important;
+    padding-right: 8px !important;
+  }
+
+  .global-balance-bar .home-balance-copy > span {
+    font-size: 8px !important;
+  }
+
+  .global-balance-bar .home-balance-copy strong {
+    gap: 5px !important;
+    font-size: 17px !important;
+  }
+
+  .global-balance-bar .coin-icon.stars-currency-icon {
+    width: 24px !important;
+    min-width: 24px !important;
+    height: 24px !important;
+    border-radius: 8px !important;
+  }
+
+  .global-balance-bar .coin-icon.stars-currency-icon img {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+  }
+}
