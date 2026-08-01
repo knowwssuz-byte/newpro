@@ -769,3 +769,54 @@
     transform: translateY(-1px);
   }
 }
+
+/* Gift Myst UI V2 — case rangini saqlaydigan purple-black cards */
+.caseTile {
+  border-color: color-mix(in srgb, var(--case-accent, #8b5cf6) 48%, #3b2a54);
+  background: color-mix(in srgb, var(--case-accent, #8b5cf6) 10%, #181027);
+  box-shadow:
+    0 14px 30px rgba(3, 1, 10, 0.24),
+    inset 0 1px rgba(255, 255, 255, 0.055);
+}
+
+.caseTileMedia {
+  background: color-mix(in srgb, var(--case-accent, #8b5cf6) 16%, #17112a);
+}
+
+.caseTileHalo {
+  border-color: color-mix(in srgb, var(--case-accent, #8b5cf6) 48%, transparent);
+  background: color-mix(in srgb, var(--case-accent, #8b5cf6) 12%, transparent);
+  box-shadow:
+    0 0 0 16px color-mix(in srgb, var(--case-accent, #8b5cf6) 5%, transparent),
+    0 0 42px color-mix(in srgb, var(--case-accent, #8b5cf6) 19%, transparent);
+}
+
+.caseTileBadge {
+  border-color: color-mix(in srgb, var(--case-badge, #8b5cf6) 58%, rgba(255, 255, 255, 0.2));
+  background: color-mix(in srgb, var(--case-badge, #8b5cf6) 58%, #20142f);
+  box-shadow: 0 7px 16px rgba(3, 1, 10, 0.2);
+}
+
+.caseTileFooter {
+  border-color: color-mix(in srgb, var(--case-accent, #8b5cf6) 24%, #332342);
+  background: color-mix(in srgb, var(--case-accent, #8b5cf6) 8%, #1b122b);
+}
+
+.caseTileOpen {
+  border-color: color-mix(in srgb, var(--case-accent, #8b5cf6) 62%, rgba(255, 255, 255, 0.2));
+  background: color-mix(in srgb, var(--case-accent, #8b5cf6) 76%, #7558d6);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--case-accent, #8b5cf6) 22%, transparent);
+}
+
+.caseTileOpen:active:not(:disabled) {
+  background: color-mix(in srgb, var(--case-accent, #8b5cf6) 70%, #5940ad);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .caseTile:hover {
+    border-color: color-mix(in srgb, var(--case-accent, #8b5cf6) 66%, rgba(255, 255, 255, 0.22));
+    box-shadow:
+      0 18px 36px rgba(3, 1, 10, 0.3),
+      0 0 0 1px color-mix(in srgb, var(--case-accent, #8b5cf6) 13%, transparent);
+  }
+}
