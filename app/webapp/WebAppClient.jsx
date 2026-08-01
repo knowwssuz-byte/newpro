@@ -491,6 +491,7 @@ export default function WebAppClient() {
   useEffect(() => {
     warmImageCacheFromData(
       '/feature/rocket.webp',
+      '/feature/pvp.webp',
       activeCases.slice(0, 8),
       gifts.slice(0, 42),
       selectedCase ? giftsByCase[selectedCase.id] || [] : []
@@ -1644,6 +1645,7 @@ function HomeView({
       <div className="home-promo-stack">
         <PromoImageCard
           variant="rocket"
+          image="/feature/rocket.webp"
           animationUrl={featureSettings?.feature_rocket?.animation_url || ''}
           mediaSettings={featureSettings?.feature_rocket}
           badge="HOT!"
@@ -1656,6 +1658,7 @@ function HomeView({
 
         <PromoImageCard
           variant="pvp"
+          image="/feature/pvp.webp"
           animationUrl={featureSettings?.feature_pvp?.animation_url || ''}
           mediaSettings={featureSettings?.feature_pvp}
           badge="NEW!"
@@ -1732,6 +1735,7 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon, featureSettings }) {
       <div className="home-promo-stack games-promo-stack">
         <PromoImageCard
           variant="rocket"
+          image="/feature/rocket.webp"
           animationUrl={featureSettings?.feature_rocket?.animation_url || ''}
           mediaSettings={featureSettings?.feature_rocket}
           badge="LIVE"
@@ -1744,6 +1748,7 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon, featureSettings }) {
 
         <PromoImageCard
           variant="pvp"
+          image="/feature/pvp.webp"
           animationUrl={featureSettings?.feature_pvp?.animation_url || ''}
           mediaSettings={featureSettings?.feature_pvp}
           badge="NEW!"
