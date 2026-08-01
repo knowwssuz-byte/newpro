@@ -5,20 +5,29 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import {
   ArrowDownToLine,
+  Award,
   Boxes,
+  Check,
   Circle,
+  Clock3,
+  Copy,
   Gamepad2,
   Gem,
   Gift,
   History,
   House,
   PackageOpen,
+  RefreshCw,
   Rocket,
+  Send,
   Settings,
   ShieldCheck,
   Sparkles,
   Swords,
+  TrendingUp,
   UserRound,
+  UserCheck,
+  UserPlus,
   UsersRound,
   WalletCards,
 } from 'lucide-react';
@@ -85,10 +94,7 @@ function warmImageCacheFromData(...groups) {
     .flat()
     .filter(Boolean)
     .forEach((item) => {
-      const url =
-        typeof item === 'string'
-          ? item
-          : imageUrlOf(item);
+      const url = typeof item === 'string' ? item : imageUrlOf(item);
 
       if (!url || WARMED_IMAGE_URLS.has(url)) return;
 
@@ -100,9 +106,8 @@ function warmImageCacheFromData(...groups) {
 
   const loadOne = (url, eager = false) => {
     try {
-      // MUHIM:
-      // next/image dagi Image emas,
-      // brauzerning native Image constructoridan foydalanamiz.
+      // `Image` yuqorida next/image komponenti sifatida import qilingan.
+      // Preload uchun esa native browser konstruktori kerak.
       const img = new window.Image();
 
       img.decoding = 'async';
@@ -110,35 +115,23 @@ function warmImageCacheFromData(...groups) {
       img.src = url;
 
       if (typeof img.decode === 'function') {
-        img.decode().catch(() => {
-          // Rasm decode bo‘lmasa ham sahifa ishlashda davom etadi.
-        });
+        img.decode().catch(() => {});
       }
     } catch (error) {
       console.warn('Image preload failed:', url, error);
     }
   };
 
-  // Dastlab ekranda ko‘rinishi mumkin bo‘lgan rasmlarni tez yuklaymiz.
-  urls.slice(0, 18).forEach((url) => {
-    loadOne(url, true);
-  });
+  // Birinchi ko'rinadigan rasmlar darhol qizdiriladi.
+  urls.slice(0, 18).forEach((url) => loadOne(url, true));
 
-  // Qolgan rasmlarni brauzer bo‘sh vaqtida yuklaymiz.
   const rest = urls.slice(18, 72);
-
   if (!rest.length) return;
 
-  const warmRest = () => {
-    rest.forEach((url) => {
-      loadOne(url, false);
-    });
-  };
+  const warmRest = () => rest.forEach((url) => loadOne(url, false));
 
   if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(warmRest, {
-      timeout: 1200,
-    });
+    window.requestIdleCallback(warmRest, { timeout: 1200 });
   } else {
     window.setTimeout(warmRest, 160);
   }
@@ -395,9 +388,13 @@ function coinIcon() {
 
 const APP_ICONS = {
   admin: ShieldCheck,
+  award: Award,
   box: PackageOpen,
   cases: Boxes,
+  check: Check,
+  clock: Clock3,
   coin: Sparkles,
+  copy: Copy,
   deposit: WalletCards,
   games: Gamepad2,
   gem: Gem,
@@ -406,11 +403,16 @@ const APP_ICONS = {
   home: House,
   inventory: PackageOpen,
   profile: UserRound,
+  refresh: RefreshCw,
   referral: UsersRound,
   rocket: Rocket,
+  send: Send,
   settings: Settings,
   spark: Sparkles,
   swords: Swords,
+  trend: TrendingUp,
+  userCheck: UserCheck,
+  userPlus: UserPlus,
   withdraw: ArrowDownToLine,
 };
 
@@ -477,11 +479,11 @@ export default function WebAppClient() {
 
   const navItems = useMemo(
     () => [
-      { id: 'games', icon: 'games', label: 'Games' },
-      { id: 'inventory', icon: 'inventory', label: 'Inventory' },
-      { id: 'home', icon: 'home', label: 'Home', center: true },
-      { id: 'history', icon: 'history', label: 'History' },
-      { id: 'referral', icon: 'referral', label: 'Referal' },
+      { id: 'games', icon: 'games', image: '/nav/games.svg', label: 'Games' },
+      { id: 'inventory', icon: 'inventory', image: '/nav/cases.svg', label: 'Inventory' },
+      { id: 'home', icon: 'home', image: '/nav/home.svg', label: 'Home', center: true },
+      { id: 'history', icon: 'history', image: '/nav/history.svg', label: 'History' },
+      { id: 'referral', icon: 'referral', image: '/nav/referral.svg', label: 'Referal' },
     ],
     []
   );
@@ -1362,6 +1364,10 @@ export default function WebAppClient() {
                 <ReferralView
                   telegramUser={telegramUser}
                   profile={profile}
+                  apiPost={apiPost}
+                  tg={tg}
+                  onToast={showToast}
+                  onBalanceChange={updateRocketBalance}
                 />
               ) : null}
             </>
@@ -1515,15 +1521,20 @@ function NavButton({ item, active, onClick, mobile = false, disabled = false }) 
       onClick={onClick}
       disabled={disabled}
       onContextMenu={preventIconMenu}
+      data-nav={item.id}
+      aria-current={active ? 'page' : undefined}
     >
       <span className="nav-icon-wrap" onContextMenu={preventIconMenu}>
         {item.image ? (
-          <img
+          <Image
             className="nav-icon-img"
             src={item.image}
             alt=""
-            loading="eager"
-            draggable="false"
+            width={32}
+            height={32}
+            priority
+            unoptimized
+            draggable={false}
             aria-hidden="true"
             onContextMenu={preventIconMenu}
           />
@@ -2082,14 +2093,110 @@ function HistoryView({ history, gifts, cases, withdrawals }) {
   );
 }
 
-function ReferralView({ telegramUser, profile }) {
+function referralDate(value) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return '—';
+
+  return new Intl.DateTimeFormat('uz-UZ', {
+    day: '2-digit',
+    month: 'short',
+  }).format(date);
+}
+
+function referralStatus(status) {
+  const value = String(status || 'joined').toLowerCase();
+
+  if (value === 'rewarded') {
+    return { label: 'Bonus berildi', icon: 'check', className: 'is-rewarded' };
+  }
+
+  if (value === 'active') {
+    return { label: 'Faol', icon: 'userCheck', className: 'is-active' };
+  }
+
+  return { label: 'Faollashishi kutilmoqda', icon: 'clock', className: 'is-pending' };
+}
+
+function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceChange }) {
   const [copied, setCopied] = useState(false);
+  const [overview, setOverview] = useState(null);
+  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [refreshingOverview, setRefreshingOverview] = useState(false);
+  const [overviewError, setOverviewError] = useState('');
 
   const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'GiftMystBot').replace('@', '');
   const userId = telegramUser?.id || profile?.id || '';
   const referralCode = userId ? `ref_${userId}` : 'ref';
   const referralLink = buildStartAppLink(botUsername, referralCode);
-  const shareLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent('Gift Mystga qo‘shiling va bonus oling 🎁')}`;
+  const inviterReward = Number(overview?.settings?.inviterReward || 0);
+  const inviteeReward = Number(overview?.settings?.inviteeReward || 0);
+  const shareText = inviteeReward > 0
+    ? `Gift Mystga qo‘shiling — faol bo‘lsangiz ${formatPrice(inviteeReward)} Stars bonus olasiz 🎁`
+    : 'Gift Mystga qo‘shiling va sovg‘alar yuting 🎁';
+  const shareLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
+  const stats = overview?.stats || {
+    total: 0,
+    active: 0,
+    pending: 0,
+    earned: 0,
+    conversionRate: 0,
+  };
+  const friends = overview?.friends || [];
+
+  const loadOverview = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!apiPost) return;
+
+      if (silent) {
+        setRefreshingOverview(true);
+      } else {
+        setLoadingOverview(true);
+      }
+
+      try {
+        const data = await apiPost('/api/referral/overview', {}, { timeoutMs: 8_000 });
+        setOverview(data.referral || null);
+        onBalanceChange?.(data.referral?.balance);
+        setOverviewError('');
+      } catch (error) {
+        setOverviewError(error?.message || 'Referal statistikasi yuklanmadi.');
+      } finally {
+        setLoadingOverview(false);
+        setRefreshingOverview(false);
+      }
+    },
+    [apiPost, onBalanceChange]
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const initialLoad = async () => {
+      if (cancelled) return;
+      await loadOverview();
+    };
+
+    initialLoad();
+
+    const refreshTimer = window.setInterval(() => {
+      if (!document.hidden) loadOverview({ silent: true });
+    }, 30_000);
+
+    const handleVisibility = () => {
+      if (!document.hidden) loadOverview({ silent: true });
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(refreshTimer);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [loadOverview]);
 
   const copyReferral = async () => {
     try {
@@ -2108,15 +2215,33 @@ function ReferralView({ telegramUser, profile }) {
       }
 
       setCopied(true);
+      onToast?.('Referal link nusxalandi ✅');
+      tg?.HapticFeedback?.notificationOccurred?.('success');
       window.setTimeout(() => setCopied(false), 1700);
-    } catch (err) {
+    } catch {
       setCopied(false);
-      window.open(shareLink, '_blank', 'noopener,noreferrer');
+
+      if (typeof tg?.openTelegramLink === 'function') {
+        tg.openTelegramLink(shareLink);
+      } else {
+        window.open(shareLink, '_blank', 'noopener,noreferrer');
+      }
     }
   };
 
+  const shareReferral = () => {
+    tg?.HapticFeedback?.impactOccurred?.('light');
+
+    if (typeof tg?.openTelegramLink === 'function') {
+      tg.openTelegramLink(shareLink);
+      return;
+    }
+
+    window.open(shareLink, '_blank', 'noopener,noreferrer');
+  };
+
   return (
-    <section className="screen-stack referral-view">
+    <section className="screen-stack referral-view" aria-busy={loadingOverview}>
       <div className="referral-hero premium-card">
         <span className="referral-orb one" aria-hidden="true" />
         <span className="referral-orb two" aria-hidden="true" />
@@ -2126,51 +2251,165 @@ function ReferralView({ telegramUser, profile }) {
         </div>
 
         <div className="referral-hero-copy">
-          <span>Referal dasturi</span>
-          <h1>Do‘stlaringizni taklif qiling</h1>
-          <p>Linkingizni yuboring. Do‘stingiz shu link orqali Web App’ga kirganda referal kodingiz ulanadi.</p>
+          <span>REFERAL DASTURI</span>
+          <h1>Do‘stlarni taklif qiling, bonus oling</h1>
+          <p>
+            Do‘stingiz linkingiz orqali qo‘shilib, birinchi pullik case yoki depositni
+            bajarganda bonuslar avtomatik tushadi.
+          </p>
         </div>
+
+        <div className="referral-reward-pill">
+          {coinIcon()}
+          <span>
+            Sizga <strong>+{formatPrice(inviterReward)}</strong>
+          </span>
+        </div>
+      </div>
+
+      <div className="referral-stats-grid" aria-label="Referal statistikasi">
+        <article className="referral-stat-card is-total">
+          <span><AppIcon name="userPlus" /></span>
+          <div>
+            <small>Takliflar</small>
+            <strong>{loadingOverview ? '—' : money(stats.total)}</strong>
+          </div>
+        </article>
+
+        <article className="referral-stat-card is-active">
+          <span><AppIcon name="userCheck" /></span>
+          <div>
+            <small>Faol</small>
+            <strong>{loadingOverview ? '—' : money(stats.active)}</strong>
+          </div>
+        </article>
+
+        <article className="referral-stat-card is-earned">
+          <span><AppIcon name="award" /></span>
+          <div>
+            <small>Yig‘ilgan</small>
+            <strong>{loadingOverview ? '—' : `${formatPrice(stats.earned)} ★`}</strong>
+          </div>
+        </article>
+
+        <article className="referral-stat-card is-rate">
+          <span><AppIcon name="trend" /></span>
+          <div>
+            <small>Faollik</small>
+            <strong>{loadingOverview ? '—' : `${Number(stats.conversionRate || 0).toFixed(0)}%`}</strong>
+          </div>
+        </article>
       </div>
 
       <div className="referral-code-card premium-card">
         <div className="referral-code-head">
-          <span>Sizning referal linkingiz</span>
+          <div>
+            <span>Sizning shaxsiy linkingiz</span>
+            <small>Har bir do‘st faqat bir marta biriktiriladi</small>
+          </div>
           <strong>{referralCode}</strong>
         </div>
 
-        <div className="referral-link-box">
+        <button type="button" className="referral-link-box" onClick={copyReferral}>
           <span>{referralLink}</span>
-        </div>
+          <AppIcon name="copy" />
+        </button>
 
         <div className="referral-actions">
           <button type="button" className="referral-copy-btn" onClick={copyReferral}>
-            <AppIcon name={copied ? 'spark' : 'box'} />
-            <span>{copied ? 'Copied' : 'Copy link'}</span>
+            <AppIcon name={copied ? 'check' : 'copy'} />
+            <span>{copied ? 'Nusxalandi' : 'Linkni nusxalash'}</span>
           </button>
 
-          <button
-            type="button"
-            className="referral-share-btn"
-            onClick={() => window.open(shareLink, '_blank', 'noopener,noreferrer')}
-          >
-            <AppIcon name="gift" />
-            <span>Share</span>
+          <button type="button" className="referral-share-btn" onClick={shareReferral}>
+            <AppIcon name="send" />
+            <span>Telegramda ulashish</span>
           </button>
         </div>
       </div>
 
-      <div className="referral-info-grid">
-        <div className="referral-info-card premium-card">
-          <AppIcon name="gem" />
-          <strong>Bonus</strong>
-          <span>Do‘stingiz faol bo‘lganda mukofot berish tizimi uchun tayyor menyu.</span>
+      <div className="referral-rules-card premium-card">
+        <div className="referral-section-head">
+          <div>
+            <span>QANDAY ISHLAYDI</span>
+            <h2>3 ta oddiy qadam</h2>
+          </div>
+          <span className="referral-friend-bonus">Do‘stga +{formatPrice(inviteeReward)} ★</span>
         </div>
 
-        <div className="referral-info-card premium-card">
-          <AppIcon name="history" />
-          <strong>Statistika</strong>
-          <span>Takliflar statistikasi keyingi backend update’da ulanadi.</span>
+        <div className="referral-steps">
+          <article>
+            <b>1</b>
+            <div><strong>Linkni yuboring</strong><span>Shaxsiy linkingizni do‘stingizga ulashing.</span></div>
+          </article>
+          <article>
+            <b>2</b>
+            <div><strong>Do‘stingiz qo‘shiladi</strong><span>Telegram ID bo‘yicha xavfsiz biriktiriladi.</span></div>
+          </article>
+          <article>
+            <b>3</b>
+            <div><strong>Bonus avtomatik tushadi</strong><span>Birinchi pullik faollikdan keyin bir marta beriladi.</span></div>
+          </article>
         </div>
+      </div>
+
+      <div className="referral-friends-card premium-card">
+        <div className="referral-section-head">
+          <div>
+            <span>SO‘NGGI TAKLIFLAR</span>
+            <h2>Do‘stlaringiz</h2>
+          </div>
+          <button
+            type="button"
+            className="referral-refresh-btn"
+            onClick={() => loadOverview({ silent: true })}
+            disabled={refreshingOverview}
+            aria-label="Statistikani yangilash"
+          >
+            <AppIcon name="refresh" className={refreshingOverview ? 'is-spinning' : ''} />
+          </button>
+        </div>
+
+        {overviewError ? (
+          <div className="referral-load-error">
+            <AppIcon name="clock" />
+            <div><strong>Statistika yuklanmadi</strong><span>{overviewError}</span></div>
+            <button type="button" onClick={() => loadOverview()}>Qayta urinish</button>
+          </div>
+        ) : loadingOverview ? (
+          <div className="referral-skeleton-list" aria-label="Statistika yuklanmoqda">
+            {[0, 1, 2].map((item) => <span key={item} />)}
+          </div>
+        ) : friends.length ? (
+          <div className="referral-friends-list">
+            {friends.map((friend) => {
+              const status = referralStatus(friend.status);
+              const displayName = friend.firstName || (friend.username ? `@${friend.username}` : `User ${friend.userId}`);
+              const initial = String(displayName || '?').replace('@', '').slice(0, 1).toUpperCase();
+
+              return (
+                <article className="referral-friend-row" key={friend.id || friend.userId}>
+                  <span className="referral-friend-avatar">{initial}</span>
+                  <div className="referral-friend-copy">
+                    <strong>{displayName}</strong>
+                    <span>{friend.username && friend.firstName ? `@${friend.username} · ` : ''}{referralDate(friend.joinedAt)}</span>
+                  </div>
+                  <div className={`referral-friend-status ${status.className}`}>
+                    <span><AppIcon name={status.icon} /> {status.label}</span>
+                    {Number(friend.rewardAmount || 0) > 0 ? <strong>+{formatPrice(friend.rewardAmount)} ★</strong> : null}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="referral-empty-friends">
+            <span><AppIcon name="userPlus" /></span>
+            <strong>Hali taklif yo‘q</strong>
+            <p>Linkni yuboring — birinchi do‘stingiz shu yerda ko‘rinadi.</p>
+            <button type="button" onClick={shareReferral}><AppIcon name="send" /> Linkni ulashish</button>
+          </div>
+        )}
       </div>
     </section>
   );
