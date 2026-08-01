@@ -1466,6 +1466,7 @@ function GlobalBalanceBar({
           onClick={onDeposit}
         >
           <AppIcon name="deposit" />
+          <span>Deposit</span>
         </button>
       </div>
     </div>
