@@ -2089,10 +2089,10 @@ body {
   overflow: visible !important;
   isolation: isolate !important;
   border: 0 !important;
-  background: rgba(24, 13, 38, 0.34) !important;
-  box-shadow: 0 10px 28px rgba(7, 3, 14, 0.12) !important;
-  backdrop-filter: blur(28px) saturate(165%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(165%) !important;
+  background: #21152f !important;
+  box-shadow: 0 10px 28px rgba(7, 3, 14, 0.2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .global-balance-stabilizer::before {
@@ -2100,9 +2100,7 @@ body {
   position: absolute !important;
   z-index: 0 !important;
   inset: 0 !important;
-  background:
-    radial-gradient(circle at 12% -28%, rgba(205, 172, 255, 0.16), transparent 42%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.035), transparent 58%) !important;
+  background: rgba(255, 255, 255, 0.018) !important;
   pointer-events: none !important;
 }
 
@@ -2296,27 +2294,28 @@ body {
 .global-balance-bar .deposit-button {
   position: relative !important;
   isolation: isolate !important;
-  width: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
+  width: 96px !important;
+  min-width: 96px !important;
+  max-width: 96px !important;
   min-height: 40px !important;
   height: 40px !important;
-  flex: 0 0 40px !important;
-  padding: 0 !important;
-  display: inline-grid !important;
-  place-items: center !important;
+  flex: 0 0 96px !important;
+  padding: 0 13px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
   overflow: hidden !important;
-  border: 1px solid rgba(228, 210, 255, 0.2) !important;
+  border: 1px solid rgba(231, 218, 255, 0.26) !important;
   border-radius: 15px !important;
   color: rgba(255, 255, 255, 0.96) !important;
-  background:
-    linear-gradient(145deg, rgba(174, 116, 255, 0.34), rgba(121, 76, 190, 0.18)) !important;
+  background: linear-gradient(145deg, #8259dc, #6840bd) !important;
   box-shadow:
-    0 7px 18px rgba(41, 17, 71, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    inset 0 -1px 0 rgba(77, 43, 126, 0.16) !important;
-  backdrop-filter: blur(20px) saturate(165%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(165%) !important;
+    0 7px 18px rgba(73, 39, 132, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(48, 24, 91, 0.2) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   transition:
     transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1),
     background-color 160ms ease,
@@ -2330,7 +2329,7 @@ body {
   z-index: 0 !important;
   top: -17px !important;
   left: 5px !important;
-  width: 30px !important;
+  width: 72px !important;
   height: 24px !important;
   border-radius: 50% !important;
   background: rgba(255, 255, 255, 0.15) !important;
@@ -2339,7 +2338,15 @@ body {
 }
 
 .global-balance-bar .deposit-button > span {
-  display: none !important;
+  position: relative !important;
+  z-index: 1 !important;
+  display: inline-block !important;
+  color: #ffffff !important;
+  font-size: 13px !important;
+  font-weight: 740 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.015em !important;
+  white-space: nowrap !important;
 }
 
 .global-balance-bar .deposit-button svg {
@@ -2353,15 +2360,13 @@ body {
 
 .global-balance-bar .deposit-button:hover {
   border-color: rgba(235, 221, 255, 0.28) !important;
-  background:
-    linear-gradient(145deg, rgba(185, 134, 255, 0.4), rgba(128, 82, 198, 0.22)) !important;
+  background: linear-gradient(145deg, #8c63e5, #7248c8) !important;
 }
 
 .global-balance-bar .deposit-button:active {
   transform: scale(0.93) !important;
   border-color: rgba(235, 221, 255, 0.24) !important;
-  background:
-    linear-gradient(145deg, rgba(150, 97, 225, 0.34), rgba(101, 62, 163, 0.2)) !important;
+  background: linear-gradient(145deg, #744bc8, #5d36aa) !important;
 }
 
 .global-balance-bar .deposit-button:focus-visible {
@@ -2445,12 +2450,13 @@ body {
   }
 
   .global-balance-bar .deposit-button {
-    width: 38px !important;
-    min-width: 38px !important;
-    max-width: 38px !important;
+    width: 92px !important;
+    min-width: 92px !important;
+    max-width: 92px !important;
     min-height: 38px !important;
     height: 38px !important;
-    flex-basis: 38px !important;
+    flex-basis: 92px !important;
+    padding: 0 11px !important;
     border-radius: 14px !important;
   }
 }
@@ -2511,18 +2517,24 @@ body {
   }
 
   .global-balance-bar .deposit-button {
-    width: 36px !important;
-    min-width: 36px !important;
-    max-width: 36px !important;
+    width: 84px !important;
+    min-width: 84px !important;
+    max-width: 84px !important;
     min-height: 36px !important;
     height: 36px !important;
-    flex-basis: 36px !important;
+    flex-basis: 84px !important;
+    padding: 0 9px !important;
+    gap: 5px !important;
     border-radius: 13px !important;
   }
 
   .global-balance-bar .deposit-button svg {
     width: 17px !important;
     height: 17px !important;
+  }
+
+  .global-balance-bar .deposit-button > span {
+    font-size: 12px !important;
   }
 }
 
