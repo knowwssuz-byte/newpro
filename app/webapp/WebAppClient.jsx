@@ -1426,16 +1426,7 @@ function GlobalBalanceBar({
   profilePhotoUrl,
   onDeposit,
 }) {
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const avatarUrl = profilePhotoUrl || telegramUser?.photo_url || '';
-
-  const toggleSettings = () => {
-    setSettingsOpen((value) => !value);
-  };
-
-  const closeSettings = () => {
-    setSettingsOpen(false);
-  };
 
   return (
     <div className="global-balance-stabilizer">
@@ -1446,53 +1437,21 @@ function GlobalBalanceBar({
           <div className="home-avatar-wrap">
             <div className={`home-avatar ${avatarUrl ? 'has-photo' : ''}`}>
               {avatarUrl ? (
-                <img src={avatarUrl} alt="" draggable="false" />
+                <Image
+                  src={avatarUrl}
+                  alt=""
+                  width={40}
+                  height={40}
+                  unoptimized
+                  draggable={false}
+                />
               ) : (
                 telegramUser?.first_name?.[0] || 'U'
               )}
             </div>
-
-            <button
-              type="button"
-              className="avatar-shield settings-badge"
-              aria-label="Settings"
-              aria-expanded={settingsOpen ? 'true' : 'false'}
-              onClick={toggleSettings}
-            >
-              <AppIcon name="settings" />
-            </button>
-
-            {settingsOpen ? (
-              <div className="quick-settings-menu">
-                <button type="button" onClick={closeSettings}>
-                  <AppIcon name="gift" />
-                  <span>Bonus settings</span>
-                  <em>soon</em>
-                </button>
-
-                <button type="button" onClick={closeSettings}>
-                  <AppIcon name="history" />
-                  <span>Activity</span>
-                  <em>soon</em>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    closeSettings();
-                    onDeposit?.();
-                  }}
-                >
-                  <AppIcon name="deposit" />
-                  <span>Payment settings</span>
-                  <em>open</em>
-                </button>
-              </div>
-            ) : null}
           </div>
 
-          <div className="home-balance-copy">
-            <span>Your balance</span>
+          <div className="home-balance-copy" aria-label="Balance">
             <strong>
               {coinIcon()}
               {formatPrice(profile?.balance)}
@@ -1500,9 +1459,13 @@ function GlobalBalanceBar({
           </div>
         </div>
 
-        <button type="button" className="deposit-button" onClick={onDeposit}>
+        <button
+          type="button"
+          className="deposit-button"
+          aria-label="Deposit"
+          onClick={onDeposit}
+        >
           <AppIcon name="deposit" />
-          <span>Deposit</span>
         </button>
       </div>
     </div>
