@@ -157,7 +157,21 @@ async function openCaseWithRpc(supabase, userId, caseId) {
 
   if (error) throw error;
 
-  return formatRpcResponse(data);
+  const response = formatRpcResponse(data);
+  const { data: currentUser } = await supabase
+    .from('users')
+    .select('balance')
+    .eq('id', userId)
+    .maybeSingle();
+
+  // Referral activation is triggered by the history insert inside the RPC.
+  // Return the final persisted balance, including a possible one-time bonus.
+  if (Number.isFinite(Number(currentUser?.balance))) {
+    response.balance = Number(currentUser.balance);
+    response.balanceAfter = Number(currentUser.balance);
+  }
+
+  return response;
 }
 
 async function decrementGiftStock(supabase, gift) {
