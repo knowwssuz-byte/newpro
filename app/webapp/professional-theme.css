@@ -4213,3 +4213,79 @@ body {
     transition: none !important;
   }
 }
+
+/* =========================================================
+   PREMIUM OBSIDIAN ATMOSPHERE V18
+   A fixed, app-width background layer keeps the generated
+   artwork stable in Telegram WebView while content scrolls.
+========================================================= */
+
+html,
+body {
+  background: #0a0611 !important;
+}
+
+.app-frame {
+  position: relative !important;
+  isolation: isolate !important;
+  background: #0a0611 !important;
+}
+
+.app-frame::before,
+.app-frame::after {
+  content: "" !important;
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: 50% !important;
+  width: min(100vw, 590px) !important;
+  display: block !important;
+  pointer-events: none !important;
+  transform: translate3d(-50%, 0, 0) !important;
+}
+
+.app-frame::before {
+  z-index: 0 !important;
+  background:
+    #0a0611
+    url('/background/premium-obsidian-atmosphere-v18.webp')
+    center top / cover no-repeat !important;
+  opacity: 0.9 !important;
+  filter: saturate(0.9) contrast(1.035) brightness(0.92) !important;
+}
+
+.app-frame::after {
+  z-index: 0 !important;
+  background:
+    radial-gradient(ellipse at 50% 44%, transparent 30%, rgba(3, 1, 8, 0.24) 100%),
+    linear-gradient(
+      180deg,
+      rgba(8, 3, 15, 0.2) 0%,
+      rgba(7, 3, 14, 0.06) 24%,
+      rgba(5, 2, 10, 0.22) 62%,
+      rgba(10, 4, 18, 0.02) 100%
+    ) !important;
+  box-shadow:
+    inset 1px 0 0 rgba(220, 190, 255, 0.025),
+    inset -1px 0 0 rgba(220, 190, 255, 0.025) !important;
+}
+
+.app-shell {
+  position: relative !important;
+  z-index: 1 !important;
+  background: transparent !important;
+}
+
+.app-main {
+  background: transparent !important;
+}
+
+@media (min-width: 591px) {
+  .app-frame::before,
+  .app-frame::after {
+    box-shadow:
+      0 0 90px rgba(85, 35, 125, 0.11),
+      inset 1px 0 0 rgba(220, 190, 255, 0.035),
+      inset -1px 0 0 rgba(220, 190, 255, 0.035) !important;
+  }
+}
