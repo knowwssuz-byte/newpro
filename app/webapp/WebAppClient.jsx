@@ -490,8 +490,10 @@ export default function WebAppClient() {
 
   useEffect(() => {
     warmImageCacheFromData(
-      '/feature/premium-arcade/rocket-premium-static-v15.png',
-      '/feature/premium-arcade/pvp-premium-static-v15.png',
+      '/feature/premium-arcade/rocket-premium-static-v16.png',
+      '/feature/premium-arcade/pvp-premium-static-v16.png',
+      '/feature/premium-arcade/rocket-launch-deck-bg-v16.webp',
+      '/feature/premium-arcade/pvp-golden-arena-bg-v16.webp',
       activeCases.slice(0, 8),
       gifts.slice(0, 42),
       selectedCase ? giftsByCase[selectedCase.id] || [] : []
@@ -1603,22 +1605,22 @@ function HomeView({
       <div className="home-promo-stack">
         <PromoImageCard
           variant="rocket"
-          image="/feature/premium-arcade/rocket-premium-static-v15.png"
+          image="/feature/premium-arcade/rocket-premium-static-v16.png"
           badge="HOT!"
           badgeIcon="rocket"
           title="ROCKET"
-          subtitle="Crash game · Live"
+          subtitle="Crash game • Live"
           actionText="Play"
           onClick={onOpenRocket}
         />
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/premium-arcade/pvp-premium-static-v15.png"
+          image="/feature/premium-arcade/pvp-premium-static-v16.png"
           badge="NEW!"
           badgeIcon="spark"
           title="PVP"
-          subtitle="Battle mode · Tez orada"
+          subtitle="Battle mode • Tez orada"
           actionText="Tez orada"
           onClick={showComingSoon}
         />
@@ -1689,7 +1691,7 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
       <div className="home-promo-stack games-promo-stack">
         <PromoImageCard
           variant="rocket"
-          image="/feature/premium-arcade/rocket-premium-static-v15.png"
+          image="/feature/premium-arcade/rocket-premium-static-v16.png"
           badge="LIVE"
           badgeIcon="rocket"
           title="ROCKET"
@@ -1700,11 +1702,11 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/premium-arcade/pvp-premium-static-v15.png"
+          image="/feature/premium-arcade/pvp-premium-static-v16.png"
           badge="NEW!"
           badgeIcon="spark"
           title="PVP"
-          subtitle="Battle mode · Tez orada"
+          subtitle="Battle mode • Tez orada"
           actionText="Tez orada"
           onClick={onComingSoon}
         />
