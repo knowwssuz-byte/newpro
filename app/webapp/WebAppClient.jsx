@@ -481,7 +481,7 @@ export default function WebAppClient() {
     () => [
       { id: 'games', icon: 'games', image: '/nav/games.svg', label: 'Games' },
       { id: 'inventory', icon: 'inventory', image: '/nav/cases.svg', label: 'Inventory' },
-      { id: 'home', icon: 'home', image: '/nav/home.svg', label: 'Home', center: true },
+      { id: 'home', icon: 'home', image: '/nav/home.svg', label: 'Home' },
       { id: 'history', icon: 'history', image: '/nav/history.svg', label: 'History' },
       { id: 'referral', icon: 'referral', image: '/nav/referral.svg', label: 'Referal' },
     ],
