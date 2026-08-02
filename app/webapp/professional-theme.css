@@ -2596,39 +2596,42 @@ body {
 }
 
 /* =========================================================
-   PURPLE LIQUID BLUR NAVBAR V11
-   One continuous high-blur glass dock. Icon artwork stays
-   completely unframed, including the active Home icon.
+   FROSTED LIQUID GLASS NAVBAR V12
+   A dense translucent material keeps the content behind the
+   dock softly diffused instead of visibly transparent.
 ========================================================= */
 
 .mobile-nav.premium-card,
 .mobile-nav {
   --nav-accent: #c2a7ff;
-  background-color: rgba(20, 11, 36, 0.38) !important;
+  isolation: auto !important;
+  opacity: 1 !important;
+  background-color: rgba(28, 18, 43, 0.82) !important;
   background-image:
-    radial-gradient(86% 155% at 91% -45%, rgba(176, 126, 255, 0.42) 0%, rgba(116, 70, 201, 0.15) 44%, transparent 70%),
-    radial-gradient(72% 135% at 4% -38%, rgba(217, 190, 255, 0.3) 0%, rgba(111, 72, 178, 0.1) 48%, transparent 74%),
-    linear-gradient(180deg, rgba(83, 55, 119, 0.34) 0%, rgba(29, 17, 48, 0.48) 45%, rgba(10, 6, 18, 0.58) 100%) !important;
-  border-color: rgba(211, 190, 255, 0.34) !important;
+    radial-gradient(92% 175% at 92% -52%, rgba(190, 151, 255, 0.34) 0%, rgba(126, 83, 198, 0.12) 45%, transparent 72%),
+    radial-gradient(78% 145% at 4% -40%, rgba(236, 220, 255, 0.24) 0%, rgba(134, 94, 193, 0.08) 52%, transparent 76%),
+    linear-gradient(180deg, rgba(112, 84, 140, 0.42) 0%, rgba(54, 36, 75, 0.52) 44%, rgba(22, 13, 35, 0.66) 100%) !important;
+  background-blend-mode: screen, soft-light, normal !important;
+  border-color: rgba(222, 207, 247, 0.4) !important;
   box-shadow:
-    0 14px 36px rgba(5, 1, 13, 0.4),
-    0 -3px 20px rgba(139, 92, 246, 0.16),
-    inset 0 1px 0 rgba(245, 238, 255, 0.36),
-    inset 0 -1px 0 rgba(11, 4, 22, 0.42),
-    inset 0 0 26px rgba(178, 137, 255, 0.09) !important;
-  backdrop-filter: blur(52px) saturate(190%) brightness(1.03) !important;
-  -webkit-backdrop-filter: blur(52px) saturate(190%) brightness(1.03) !important;
+    0 16px 38px rgba(5, 2, 12, 0.44),
+    0 -3px 22px rgba(147, 103, 222, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(10, 5, 18, 0.52),
+    inset 0 0 34px rgba(219, 194, 255, 0.08) !important;
+  backdrop-filter: blur(72px) saturate(145%) brightness(0.92) contrast(88%) !important;
+  -webkit-backdrop-filter: blur(72px) saturate(145%) brightness(0.92) contrast(88%) !important;
 }
 
 .mobile-nav::before {
   inset: 1px 2px auto !important;
-  height: 46% !important;
+  height: 52% !important;
   border-radius: 33px 33px 20px 20px !important;
   background:
-    radial-gradient(58% 105% at 22% -10%, rgba(255, 255, 255, 0.22), transparent 72%),
-    linear-gradient(180deg, rgba(246, 238, 255, 0.18), rgba(190, 157, 255, 0.045) 58%, transparent) !important;
+    radial-gradient(60% 110% at 20% -12%, rgba(255, 255, 255, 0.26), transparent 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(220, 199, 247, 0.055) 60%, transparent) !important;
   box-shadow: none !important;
-  opacity: 0.92 !important;
+  opacity: 0.96 !important;
 }
 
 .mobile-nav::after {
@@ -2709,6 +2712,6 @@ body {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .mobile-nav.premium-card,
   .mobile-nav {
-    background-color: rgba(24, 14, 40, 0.94) !important;
+    background-color: rgba(31, 20, 47, 0.97) !important;
   }
 }
