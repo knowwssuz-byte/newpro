@@ -2086,7 +2086,7 @@ function referralStatus(status) {
     return { label: 'Faol', icon: 'userCheck', className: 'is-active' };
   }
 
-  return { label: 'Faollashishi kutilmoqda', icon: 'clock', className: 'is-pending' };
+  return { label: 'Kutilmoqda', icon: 'clock', className: 'is-pending' };
 }
 
 function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceChange }) {
@@ -2114,6 +2114,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
     conversionRate: 0,
   };
   const friends = overview?.friends || [];
+  const conversionRate = Math.min(100, Math.max(0, Number(stats.conversionRate || 0)));
 
   const loadOverview = useCallback(
     async ({ silent = false } = {}) => {
@@ -2211,123 +2212,86 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
 
   return (
     <section className="screen-stack referral-view" aria-busy={loadingOverview}>
-      <div className="referral-hero premium-card">
-        <span className="referral-orb one" aria-hidden="true" />
-        <span className="referral-orb two" aria-hidden="true" />
+      <header className="referral-page-head">
+        <h1>Referal</h1>
+      </header>
 
-        <div className="referral-hero-icon">
-          <AppIcon name="referral" />
+      <article className="referral-reward-card premium-card">
+        <div className="referral-reward-top">
+          <div className="referral-reward-copy">
+            <h2>Do‘stlaringiz bilan yuting</h2>
+            <strong className="referral-reward-amount">
+              {loadingOverview ? '—' : `+${formatPrice(inviterReward)}`}
+              <span>Stars</span>
+            </strong>
+            <span className="referral-invitee-chip">
+              {coinIcon()}
+              <span>
+                Do‘stingizga <strong>{loadingOverview ? '—' : `+${formatPrice(inviteeReward)} Stars`}</strong>
+              </span>
+            </span>
+          </div>
+
+          <div className="referral-reward-art" aria-hidden="true">
+            <Image
+              src="/referral/referral-reward-hero.png"
+              alt=""
+              width={1024}
+              height={1024}
+              priority
+              draggable={false}
+            />
+          </div>
         </div>
 
-        <div className="referral-hero-copy">
-          <span>REFERAL DASTURI</span>
-          <h1>Do‘stlarni taklif qiling, bonus oling</h1>
-          <p>
-            Do‘stingiz linkingiz orqali qo‘shilib, birinchi pullik case yoki depositni
-            bajarganda bonuslar avtomatik tushadi.
-          </p>
-        </div>
-
-        <div className="referral-reward-pill">
-          {coinIcon()}
-          <span>
-            Sizga <strong>+{formatPrice(inviterReward)}</strong>
-          </span>
-        </div>
-      </div>
-
-      <div className="referral-stats-grid" aria-label="Referal statistikasi">
-        <article className="referral-stat-card is-total">
-          <span><AppIcon name="userPlus" /></span>
-          <div>
-            <small>Takliflar</small>
-            <strong>{loadingOverview ? '—' : money(stats.total)}</strong>
-          </div>
-        </article>
-
-        <article className="referral-stat-card is-active">
-          <span><AppIcon name="userCheck" /></span>
-          <div>
-            <small>Faol</small>
-            <strong>{loadingOverview ? '—' : money(stats.active)}</strong>
-          </div>
-        </article>
-
-        <article className="referral-stat-card is-earned">
-          <span><AppIcon name="award" /></span>
-          <div>
-            <small>Yig‘ilgan</small>
-            <strong>{loadingOverview ? '—' : `${formatPrice(stats.earned)} ★`}</strong>
-          </div>
-        </article>
-
-        <article className="referral-stat-card is-rate">
-          <span><AppIcon name="trend" /></span>
-          <div>
-            <small>Faollik</small>
-            <strong>{loadingOverview ? '—' : `${Number(stats.conversionRate || 0).toFixed(0)}%`}</strong>
-          </div>
-        </article>
-      </div>
-
-      <div className="referral-code-card premium-card">
-        <div className="referral-code-head">
-          <div>
-            <span>Sizning shaxsiy linkingiz</span>
-            <small>Har bir do‘st faqat bir marta biriktiriladi</small>
-          </div>
-          <strong>{referralCode}</strong>
-        </div>
-
-        <button type="button" className="referral-link-box" onClick={copyReferral}>
-          <span>{referralLink}</span>
-          <AppIcon name="copy" />
+        <button type="button" className="referral-primary-share" onClick={shareReferral}>
+          <AppIcon name="send" />
+          <span>Telegramda ulashish</span>
         </button>
 
-        <div className="referral-actions">
-          <button type="button" className="referral-copy-btn" onClick={copyReferral}>
-            <AppIcon name={copied ? 'check' : 'copy'} />
-            <span>{copied ? 'Nusxalandi' : 'Linkni nusxalash'}</span>
-          </button>
+        <button
+          type="button"
+          className={`referral-inline-link${copied ? ' is-copied' : ''}`}
+          onClick={copyReferral}
+          aria-label={copied ? 'Referal link nusxalandi' : 'Referal linkni nusxalash'}
+        >
+          <span>{referralLink}</span>
+          <AppIcon name={copied ? 'check' : 'copy'} />
+        </button>
+      </article>
 
-          <button type="button" className="referral-share-btn" onClick={shareReferral}>
-            <AppIcon name="send" />
-            <span>Telegramda ulashish</span>
-          </button>
-        </div>
-      </div>
+      <section className="referral-overview-card premium-card" aria-label="Referal statistikasi">
+        <article className="referral-overview-stat">
+          <span>Takliflar</span>
+          <strong>{loadingOverview ? '—' : money(stats.total)}</strong>
+        </article>
 
-      <div className="referral-rules-card premium-card">
-        <div className="referral-section-head">
-          <div>
-            <span>QANDAY ISHLAYDI</span>
-            <h2>3 ta oddiy qadam</h2>
+        <article className="referral-overview-stat">
+          <span>Faol</span>
+          <strong>{loadingOverview ? '—' : money(stats.active)}</strong>
+        </article>
+
+        <article className="referral-overview-stat is-earned">
+          <span>Yig‘ilgan</span>
+          <div>{coinIcon()}<strong>{loadingOverview ? '—' : formatPrice(stats.earned)}</strong></div>
+        </article>
+
+        <article className="referral-overview-rate">
+          <div
+            className="referral-progress-ring"
+            style={{ '--referral-rate': `${loadingOverview ? 0 : conversionRate}%` }}
+          >
+            <span>
+              <strong>{loadingOverview ? '—' : `${conversionRate.toFixed(0)}%`}</strong>
+              <small>faollik</small>
+            </span>
           </div>
-          <span className="referral-friend-bonus">Do‘stga +{formatPrice(inviteeReward)} ★</span>
-        </div>
+        </article>
+      </section>
 
-        <div className="referral-steps">
-          <article>
-            <b>1</b>
-            <div><strong>Linkni yuboring</strong><span>Shaxsiy linkingizni do‘stingizga ulashing.</span></div>
-          </article>
-          <article>
-            <b>2</b>
-            <div><strong>Do‘stingiz qo‘shiladi</strong><span>Telegram ID bo‘yicha xavfsiz biriktiriladi.</span></div>
-          </article>
-          <article>
-            <b>3</b>
-            <div><strong>Bonus avtomatik tushadi</strong><span>Birinchi pullik faollikdan keyin bir marta beriladi.</span></div>
-          </article>
-        </div>
-      </div>
-
-      <div className="referral-friends-card premium-card">
-        <div className="referral-section-head">
-          <div>
-            <span>SO‘NGGI TAKLIFLAR</span>
-            <h2>Do‘stlaringiz</h2>
-          </div>
+      <section className="referral-friends-section">
+        <div className="referral-friends-head">
+          <h2>Do‘stlaringiz</h2>
           <button
             type="button"
             className="referral-refresh-btn"
@@ -2379,6 +2343,21 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
             <button type="button" onClick={shareReferral}><AppIcon name="send" /> Linkni ulashish</button>
           </div>
         )}
+      </section>
+
+      <div className="referral-flow" aria-label="Referal dasturi uch bosqichi">
+        <article>
+          <b>1</b>
+          <span>Ulashish</span>
+        </article>
+        <article>
+          <b>2</b>
+          <span>Qo‘shilish</span>
+        </article>
+        <article>
+          <b>3</b>
+          <span>Bonus</span>
+        </article>
       </div>
     </section>
   );
