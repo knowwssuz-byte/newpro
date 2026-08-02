@@ -490,8 +490,8 @@ export default function WebAppClient() {
 
   useEffect(() => {
     warmImageCacheFromData(
-      '/feature/rocket.webp',
-      '/feature/pvp.webp',
+      '/feature/premium-arcade/rocket-premium-static-v15.png',
+      '/feature/premium-arcade/pvp-premium-static-v15.png',
       activeCases.slice(0, 8),
       gifts.slice(0, 42),
       selectedCase ? giftsByCase[selectedCase.id] || [] : []
@@ -1522,24 +1522,18 @@ function PromoImageCard({
   subtitle,
   actionText,
   onClick,
-  animationUrl,
-  mediaSettings,
 }) {
   const [failed, setFailed] = useState(false);
-  const defaultScale = variant === 'pvp' ? 78 : 80;
-  const defaultY = variant === 'pvp' ? -18 : -16;
-  const scale = Number.isFinite(Number(mediaSettings?.scale)) ? Number(mediaSettings.scale) : defaultScale;
-  const offsetX = Number.isFinite(Number(mediaSettings?.offset_x)) ? Number(mediaSettings.offset_x) : 0;
-  const offsetY = Number.isFinite(Number(mediaSettings?.offset_y)) ? Number(mediaSettings.offset_y) : defaultY;
 
   return (
     <button
       type="button"
-      className={`promo-banner promo-image-banner premium-promo ${variant} ${failed ? 'image-failed' : ''}`}
-      style={{ '--feature-scale': String(scale / 100), '--feature-x': `${offsetX}px`, '--feature-y': `${offsetY}px` }}
+      className={`promo-banner promo-image-banner premium-promo premium-arcade-card ${variant} ${failed ? 'image-failed' : ''}`}
       onClick={onClick}
       aria-label={title}
     >
+      <span className="arcade-card-depth" aria-hidden="true" />
+      <span className="arcade-card-grid" aria-hidden="true" />
       <span className="promo-shine" aria-hidden="true" />
       <span className="promo-orbit one" aria-hidden="true" />
       <span className="promo-orbit two" aria-hidden="true" />
@@ -1561,15 +1555,16 @@ function PromoImageCard({
       </div>
 
       <div className="promo-webp-stage" aria-hidden="true">
-        {animationUrl ? (
-          <TelegramTgsAnimation src={animationUrl} className="promo-webp promo-feature-animation" animate />
-        ) : !failed && image ? (
-          <img
+        {!failed && image ? (
+          <Image
             src={image}
             alt=""
-            className="promo-webp"
+            className="promo-webp premium-arcade-static-art"
+            fill
+            sizes="(max-width: 590px) 58vw, 342px"
+            priority
+            unoptimized
             draggable="false"
-            loading="eager"
             onError={() => setFailed(true)}
           />
         ) : (
@@ -1594,7 +1589,6 @@ function HomeView({
   onOpenRocket,
   onComingSoon,
   busy,
-  featureSettings,
 }) {
   const featuredCases = cases || [];
 
@@ -1609,9 +1603,7 @@ function HomeView({
       <div className="home-promo-stack">
         <PromoImageCard
           variant="rocket"
-          image="/feature/rocket.webp"
-          animationUrl={featureSettings?.feature_rocket?.animation_url || ''}
-          mediaSettings={featureSettings?.feature_rocket}
+          image="/feature/premium-arcade/rocket-premium-static-v15.png"
           badge="HOT!"
           badgeIcon="rocket"
           title="ROCKET"
@@ -1622,9 +1614,7 @@ function HomeView({
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/pvp.webp"
-          animationUrl={featureSettings?.feature_pvp?.animation_url || ''}
-          mediaSettings={featureSettings?.feature_pvp}
+          image="/feature/premium-arcade/pvp-premium-static-v15.png"
           badge="NEW!"
           badgeIcon="spark"
           title="PVP"
@@ -1635,7 +1625,7 @@ function HomeView({
       </div>
 
       <div className="home-actions-grid">
-        <button type="button" className="home-action-btn contracts" onClick={onGoCases}>
+        <button type="button" className="home-action-btn premium-arcade-action contracts" onClick={onGoCases}>
           <span>
             <AppIcon name="box" />
           </span>
@@ -1643,7 +1633,7 @@ function HomeView({
           <b>›</b>
         </button>
 
-        <button type="button" className="home-action-btn upgrade" onClick={onGoInventory}>
+        <button type="button" className="home-action-btn premium-arcade-action upgrade" onClick={onGoInventory}>
           <span>
             <AppIcon name="spark" />
           </span>
@@ -1685,7 +1675,7 @@ function HomeView({
   );
 }
 
-function CasesView({ onGoHome, onOpenRocket, onComingSoon, featureSettings }) {
+function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
   return (
     <section className="screen-stack">
       <div className="page-header premium-card games-page-header">
@@ -1699,9 +1689,7 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon, featureSettings }) {
       <div className="home-promo-stack games-promo-stack">
         <PromoImageCard
           variant="rocket"
-          image="/feature/rocket.webp"
-          animationUrl={featureSettings?.feature_rocket?.animation_url || ''}
-          mediaSettings={featureSettings?.feature_rocket}
+          image="/feature/premium-arcade/rocket-premium-static-v15.png"
           badge="LIVE"
           badgeIcon="rocket"
           title="ROCKET"
@@ -1712,9 +1700,7 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon, featureSettings }) {
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/pvp.webp"
-          animationUrl={featureSettings?.feature_pvp?.animation_url || ''}
-          mediaSettings={featureSettings?.feature_pvp}
+          image="/feature/premium-arcade/pvp-premium-static-v15.png"
           badge="NEW!"
           badgeIcon="spark"
           title="PVP"
