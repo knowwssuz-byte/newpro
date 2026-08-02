@@ -3618,3 +3618,564 @@ body {
     transition: none !important;
   }
 }
+
+/* =========================================================
+   PREMIUM ARCADE CARDS V15
+   Static Rocket/PVP artwork, matching the approved Variant 1.
+   This final scoped layer intentionally overrides legacy promo rules.
+========================================================= */
+
+.premium-home .home-promo-stack,
+.games-promo-stack.home-promo-stack {
+  gap: 10px !important;
+  margin: 0 0 10px !important;
+}
+
+.promo-image-banner.premium-arcade-card,
+.home-promo-stack .promo-image-banner.premium-arcade-card {
+  --arcade-edge: rgba(113, 207, 255, 0.92);
+  --arcade-edge-soft: rgba(65, 150, 255, 0.42);
+  --arcade-shadow: rgba(0, 71, 198, 0.36);
+  position: relative !important;
+  width: 100% !important;
+  height: clamp(118px, 31vw, 174px) !important;
+  min-height: 118px !important;
+  max-height: 174px !important;
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: space-between !important;
+  padding: clamp(10px, 2.7vw, 15px) clamp(12px, 3.2vw, 18px) !important;
+  overflow: hidden !important;
+  border: 2px solid var(--arcade-edge) !important;
+  border-radius: clamp(20px, 5.4vw, 28px) !important;
+  isolation: isolate !important;
+  cursor: pointer !important;
+  transform: none !important;
+  animation: none !important;
+  transition: filter 140ms ease !important;
+  box-shadow:
+    0 16px 30px rgba(2, 1, 12, 0.32),
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 0 18px var(--arcade-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -12px 28px rgba(0, 0, 0, 0.22) !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+.promo-image-banner.premium-arcade-card.rocket {
+  background:
+    radial-gradient(62% 118% at 89% 22%, rgba(80, 181, 255, 0.52), transparent 62%),
+    radial-gradient(78% 130% at 12% 108%, rgba(0, 35, 126, 0.9), transparent 68%),
+    linear-gradient(128deg, #03194e 0%, #063c9c 43%, #0a70d6 73%, #05245e 100%) !important;
+}
+
+.promo-image-banner.premium-arcade-card.pvp {
+  --arcade-edge: rgba(255, 200, 54, 0.96);
+  --arcade-edge-soft: rgba(255, 157, 0, 0.46);
+  --arcade-shadow: rgba(255, 138, 0, 0.32);
+  background:
+    radial-gradient(62% 130% at 91% 18%, rgba(255, 204, 79, 0.52), transparent 62%),
+    radial-gradient(72% 150% at 10% 110%, rgba(119, 38, 0, 0.86), transparent 70%),
+    linear-gradient(128deg, #632200 0%, #a74d00 38%, #d98400 72%, #7b2c00 100%) !important;
+}
+
+.promo-image-banner.premium-arcade-card::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 0 !important;
+  display: block !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  background:
+    linear-gradient(112deg, rgba(255, 255, 255, 0.2), transparent 18% 76%, rgba(255, 255, 255, 0.09)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.11), transparent 34%, rgba(0, 0, 0, 0.14)) !important;
+  background-size: 100% 100% !important;
+  opacity: 1 !important;
+}
+
+.promo-image-banner.premium-arcade-card::after {
+  content: "" !important;
+  position: absolute !important;
+  inset: 3px !important;
+  z-index: 7 !important;
+  display: block !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  border-radius: calc(clamp(20px, 5.4vw, 28px) - 4px) !important;
+  pointer-events: none !important;
+  background: transparent !important;
+  box-shadow:
+    inset 0 0 0 1px var(--arcade-edge-soft),
+    inset 0 10px 15px rgba(255, 255, 255, 0.06),
+    inset 0 -9px 15px rgba(0, 0, 0, 0.14) !important;
+}
+
+.premium-arcade-card .arcade-card-depth,
+.premium-arcade-card .arcade-card-grid {
+  position: absolute !important;
+  display: block !important;
+  pointer-events: none !important;
+}
+
+.premium-arcade-card .arcade-card-depth {
+  inset: 6px !important;
+  z-index: 1 !important;
+  border-radius: calc(clamp(20px, 5.4vw, 28px) - 7px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -22px 42px rgba(0, 0, 0, 0.12) !important;
+}
+
+.premium-arcade-card .arcade-card-grid {
+  inset: 0 !important;
+  z-index: 1 !important;
+  opacity: 0.46 !important;
+  -webkit-mask-image: linear-gradient(90deg, transparent 2%, #000 27%, #000 92%, transparent 100%) !important;
+  mask-image: linear-gradient(90deg, transparent 2%, #000 27%, #000 92%, transparent 100%) !important;
+}
+
+.premium-arcade-card.rocket .arcade-card-grid {
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.85) 0 1px, transparent 1.45px),
+    linear-gradient(rgba(76, 179, 255, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(76, 179, 255, 0.16) 1px, transparent 1px) !important;
+  background-position: 11px 7px, 0 0, 0 0 !important;
+  background-size: 49px 43px, 34px 34px, 34px 34px !important;
+  transform: perspective(230px) rotateX(56deg) scale(1.22) translateY(18%) !important;
+  transform-origin: 50% 100% !important;
+}
+
+.premium-arcade-card.pvp .arcade-card-grid {
+  background:
+    radial-gradient(ellipse at 50% 111%, transparent 0 31%, rgba(255, 215, 111, 0.26) 31.5% 32%, transparent 32.5% 44%, rgba(255, 215, 111, 0.15) 44.5% 45%, transparent 45.5%),
+    repeating-linear-gradient(65deg, transparent 0 18px, rgba(255, 220, 135, 0.1) 19px 20px),
+    repeating-linear-gradient(-65deg, transparent 0 18px, rgba(255, 220, 135, 0.08) 19px 20px) !important;
+  opacity: 0.54 !important;
+}
+
+.premium-arcade-card .promo-shine {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  display: block !important;
+  border-radius: inherit !important;
+  pointer-events: none !important;
+  background: linear-gradient(111deg, rgba(255, 255, 255, 0.19), transparent 21% 67%, rgba(255, 255, 255, 0.08)) !important;
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+.premium-arcade-card .promo-orbit {
+  display: none !important;
+  animation: none !important;
+}
+
+.premium-arcade-card .promo-banner-copy {
+  position: relative !important;
+  z-index: 5 !important;
+  width: 53% !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: clamp(3px, 1vw, 6px) !important;
+}
+
+.premium-arcade-card .promo-badge {
+  width: fit-content !important;
+  min-height: clamp(25px, 6.8vw, 32px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 0 clamp(9px, 2.5vw, 13px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.96) !important;
+  border-radius: clamp(10px, 3.2vw, 15px) !important;
+  color: #1458bd !important;
+  background: linear-gradient(180deg, #ffffff 0%, #e7edf8 68%, #c9d4e7 100%) !important;
+  box-shadow:
+    0 4px 0 rgba(7, 39, 100, 0.42),
+    0 8px 13px rgba(0, 10, 43, 0.34),
+    inset 0 1px 0 #fff,
+    inset 0 -1px 0 rgba(74, 116, 178, 0.32) !important;
+  font-size: clamp(9px, 2.55vw, 12px) !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.02em !important;
+  text-shadow: 0 1px 0 #fff !important;
+}
+
+.premium-arcade-card.pvp .promo-badge {
+  color: #9a5200 !important;
+  background: linear-gradient(180deg, #fffdf5 0%, #f8e4b3 67%, #d9b25c 100%) !important;
+  box-shadow:
+    0 4px 0 rgba(107, 48, 0, 0.46),
+    0 8px 13px rgba(65, 24, 0, 0.3),
+    inset 0 1px 0 #fff,
+    inset 0 -1px 0 rgba(143, 82, 0, 0.3) !important;
+}
+
+.premium-arcade-card .promo-badge svg {
+  width: clamp(12px, 3.2vw, 15px) !important;
+  height: clamp(12px, 3.2vw, 15px) !important;
+  stroke-width: 2.5 !important;
+}
+
+.premium-arcade-card .promo-banner-text {
+  width: 100% !important;
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.premium-arcade-card .promo-banner-text strong {
+  width: fit-content !important;
+  color: #f8fbff !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f6f9ff 40%, #b9c7dc 72%, #ffffff 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  -webkit-text-stroke: 0.35px rgba(255, 255, 255, 0.82) !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(31px, 8.8vw, 47px) !important;
+  font-weight: 950 !important;
+  line-height: 0.84 !important;
+  letter-spacing: -0.06em !important;
+  filter: drop-shadow(0 3px 0 rgba(6, 36, 91, 0.9)) drop-shadow(0 7px 9px rgba(0, 17, 60, 0.38)) !important;
+}
+
+.premium-arcade-card.pvp .promo-banner-text strong {
+  background: linear-gradient(180deg, #fffef7 0%, #fff2cf 42%, #d7ad5c 75%, #fff8e2 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  -webkit-text-stroke-color: rgba(255, 251, 226, 0.88) !important;
+  filter: drop-shadow(0 3px 0 rgba(91, 37, 0, 0.88)) drop-shadow(0 7px 9px rgba(64, 20, 0, 0.34)) !important;
+}
+
+.premium-arcade-card .promo-banner-text em {
+  width: 100% !important;
+  overflow: hidden !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-size: clamp(9px, 2.65vw, 13px) !important;
+  font-style: normal !important;
+  font-weight: 760 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.015em !important;
+  text-overflow: ellipsis !important;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5) !important;
+  white-space: nowrap !important;
+}
+
+.premium-arcade-card .promo-action-chip {
+  width: fit-content !important;
+  min-height: clamp(26px, 6.9vw, 33px) !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 0 clamp(10px, 2.9vw, 14px) !important;
+  border: 1px solid rgba(135, 213, 255, 0.86) !important;
+  border-radius: clamp(10px, 3vw, 14px) !important;
+  color: #fff !important;
+  background: linear-gradient(180deg, #1978e8 0%, #0757c7 62%, #063c91 100%) !important;
+  box-shadow:
+    0 3px 0 #022963,
+    0 7px 12px rgba(0, 20, 74, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 0 12px rgba(62, 180, 255, 0.26) !important;
+  font-size: clamp(9px, 2.55vw, 12px) !important;
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+
+.premium-arcade-card.pvp .promo-action-chip {
+  border-color: rgba(255, 218, 103, 0.9) !important;
+  background: linear-gradient(180deg, #eca900 0%, #b96f00 63%, #7b3d00 100%) !important;
+  box-shadow:
+    0 3px 0 #592700,
+    0 7px 12px rgba(77, 26, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 12px rgba(255, 209, 65, 0.28) !important;
+}
+
+.premium-arcade-card .promo-action-chip b {
+  font-size: clamp(15px, 4.1vw, 20px) !important;
+  font-weight: 700 !important;
+  line-height: 0.8 !important;
+}
+
+.home-promo-stack .promo-image-banner.premium-arcade-card .promo-webp-stage,
+.games-promo-stack .promo-image-banner.premium-arcade-card .promo-webp-stage {
+  position: absolute !important;
+  z-index: 4 !important;
+  top: -5% !important;
+  right: -1% !important;
+  bottom: -5% !important;
+  width: 57% !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+.home-promo-stack .promo-image-banner.premium-arcade-card.pvp .promo-webp-stage,
+.games-promo-stack .promo-image-banner.premium-arcade-card.pvp .promo-webp-stage {
+  top: -11% !important;
+  right: -1.5% !important;
+  bottom: -11% !important;
+  width: 57% !important;
+}
+
+.promo-image-banner.premium-arcade-card .premium-arcade-static-art,
+.home-promo-stack .promo-image-banner.premium-arcade-card.rocket .premium-arcade-static-art,
+.home-promo-stack .promo-image-banner.premium-arcade-card.pvp .premium-arcade-static-art,
+.games-promo-stack .promo-image-banner.premium-arcade-card .premium-arcade-static-art {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  transform: none !important;
+  transform-origin: center !important;
+  animation: none !important;
+  transition: none !important;
+  filter:
+    drop-shadow(0 10px 9px rgba(0, 0, 0, 0.34))
+    drop-shadow(0 0 8px rgba(255, 214, 94, 0.24)) !important;
+  will-change: auto !important;
+}
+
+.promo-image-banner.premium-arcade-card .promo-fallback-icon {
+  width: 82px !important;
+  height: 82px !important;
+  border: 1px solid rgba(255, 255, 255, 0.24) !important;
+  border-radius: 24px !important;
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+}
+
+.promo-image-banner.premium-arcade-card .promo-fallback-icon svg {
+  width: 46px !important;
+  height: 46px !important;
+}
+
+@media (hover: hover) {
+  .promo-image-banner.premium-arcade-card:hover {
+    transform: none !important;
+    filter: brightness(1.04) saturate(1.03) !important;
+  }
+}
+
+.promo-image-banner.premium-arcade-card:active {
+  transform: none !important;
+  filter: brightness(0.96) !important;
+}
+
+/* Variant-1 lower action cards */
+.premium-home .home-actions-grid {
+  gap: 10px !important;
+  margin: 10px 0 17px !important;
+}
+
+.home-action-btn.premium-arcade-action {
+  --action-edge: rgba(201, 132, 255, 0.92);
+  --action-glow: rgba(143, 43, 255, 0.34);
+  position: relative !important;
+  height: clamp(72px, 19vw, 92px) !important;
+  min-height: 72px !important;
+  max-height: 92px !important;
+  display: grid !important;
+  grid-template-columns: clamp(37px, 10.5vw, 50px) minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  gap: clamp(7px, 2.1vw, 11px) !important;
+  padding: 0 clamp(10px, 2.7vw, 14px) !important;
+  overflow: hidden !important;
+  border: 2px solid var(--action-edge) !important;
+  border-radius: clamp(18px, 5vw, 24px) !important;
+  color: #fff !important;
+  background:
+    radial-gradient(90% 130% at 16% 0%, rgba(229, 163, 255, 0.38), transparent 52%),
+    linear-gradient(135deg, #7d1ed8 0%, #5c0fb2 55%, #340875 100%) !important;
+  box-shadow:
+    0 13px 25px rgba(3, 1, 10, 0.28),
+    0 0 15px var(--action-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.44),
+    inset 0 -12px 23px rgba(28, 0, 69, 0.28) !important;
+  isolation: isolate !important;
+}
+
+.home-action-btn.premium-arcade-action.upgrade {
+  --action-edge: rgba(77, 255, 203, 0.86);
+  --action-glow: rgba(0, 218, 162, 0.28);
+  background:
+    radial-gradient(90% 130% at 16% 0%, rgba(120, 255, 224, 0.34), transparent 52%),
+    linear-gradient(135deg, #00a47c 0%, #007b61 56%, #004d42 100%) !important;
+}
+
+.home-action-btn.premium-arcade-action::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 3px !important;
+  z-index: -1 !important;
+  display: block !important;
+  border: 1px solid rgba(255, 255, 255, 0.26) !important;
+  border-radius: calc(clamp(18px, 5vw, 24px) - 4px) !important;
+  background: linear-gradient(112deg, rgba(255, 255, 255, 0.14), transparent 37% 78%, rgba(255, 255, 255, 0.07)) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06) !important;
+  pointer-events: none !important;
+}
+
+.home-action-btn.premium-arcade-action::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 1px !important;
+  right: 11% !important;
+  left: 11% !important;
+  height: 1px !important;
+  z-index: 1 !important;
+  display: block !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent) !important;
+  pointer-events: none !important;
+}
+
+.home-action-btn.premium-arcade-action > span {
+  position: relative !important;
+  z-index: 2 !important;
+  width: clamp(37px, 10.5vw, 50px) !important;
+  height: clamp(37px, 10.5vw, 50px) !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(239, 211, 255, 0.72) !important;
+  border-radius: clamp(11px, 3.3vw, 15px) !important;
+  color: #fff !important;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.34), transparent 44%),
+    linear-gradient(145deg, #a946f2, #5e16a9) !important;
+  box-shadow:
+    0 4px 0 rgba(50, 5, 94, 0.66),
+    0 7px 12px rgba(31, 0, 67, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 0 12px rgba(255, 255, 255, 0.08) !important;
+}
+
+.home-action-btn.premium-arcade-action.upgrade > span {
+  border-color: rgba(163, 255, 230, 0.7) !important;
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.36), transparent 44%),
+    linear-gradient(145deg, #13d2a2, #007d66) !important;
+  box-shadow:
+    0 4px 0 rgba(0, 64, 51, 0.7),
+    0 7px 12px rgba(0, 54, 43, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.52),
+    inset 0 0 12px rgba(255, 255, 255, 0.08) !important;
+}
+
+.home-action-btn.premium-arcade-action svg {
+  width: clamp(20px, 5.8vw, 27px) !important;
+  height: clamp(20px, 5.8vw, 27px) !important;
+  stroke-width: 2.5 !important;
+  filter: drop-shadow(0 2px 0 rgba(70, 13, 121, 0.72)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.42)) !important;
+}
+
+.home-action-btn.premium-arcade-action.upgrade svg {
+  filter: drop-shadow(0 2px 0 rgba(0, 80, 63, 0.75)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.48)) !important;
+}
+
+.home-action-btn.premium-arcade-action strong {
+  position: relative !important;
+  z-index: 2 !important;
+  overflow: hidden !important;
+  color: #fff !important;
+  font-family: var(--font-display) !important;
+  font-size: clamp(10px, 3.35vw, 16px) !important;
+  font-weight: 930 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.035em !important;
+  text-align: left !important;
+  text-overflow: ellipsis !important;
+  text-shadow: 0 3px 0 rgba(43, 3, 87, 0.72), 0 6px 10px rgba(28, 0, 59, 0.38) !important;
+  white-space: nowrap !important;
+}
+
+.home-action-btn.premium-arcade-action.upgrade strong {
+  text-shadow: 0 3px 0 rgba(0, 71, 56, 0.78), 0 6px 10px rgba(0, 52, 41, 0.34) !important;
+}
+
+.home-action-btn.premium-arcade-action > b {
+  position: relative !important;
+  z-index: 2 !important;
+  color: rgba(255, 255, 255, 0.95) !important;
+  font-size: clamp(23px, 6.2vw, 31px) !important;
+  font-weight: 650 !important;
+  line-height: 1 !important;
+  text-shadow: 0 2px 0 rgba(39, 0, 75, 0.7) !important;
+}
+
+@media (hover: hover) {
+  .home-action-btn.premium-arcade-action:hover {
+    filter: brightness(1.055) saturate(1.04) !important;
+    transform: translateY(-1px) !important;
+  }
+}
+
+.home-action-btn.premium-arcade-action:active {
+  filter: brightness(0.95) !important;
+  transform: scale(0.985) !important;
+}
+
+@media (max-width: 350px) {
+  .promo-image-banner.premium-arcade-card,
+  .home-promo-stack .promo-image-banner.premium-arcade-card {
+    height: 114px !important;
+    min-height: 114px !important;
+    padding: 9px 11px !important;
+  }
+
+  .premium-arcade-card .promo-banner-copy {
+    width: 55% !important;
+  }
+
+  .premium-arcade-card .promo-banner-text strong {
+    font-size: 29px !important;
+  }
+
+  .premium-arcade-card .promo-banner-text em {
+    font-size: 8.7px !important;
+  }
+
+  .home-promo-stack .promo-image-banner.premium-arcade-card .promo-webp-stage,
+  .games-promo-stack .promo-image-banner.premium-arcade-card .promo-webp-stage {
+    right: -4% !important;
+    width: 57% !important;
+  }
+
+  .home-action-btn.premium-arcade-action {
+    height: 69px !important;
+    min-height: 69px !important;
+    grid-template-columns: 35px minmax(0, 1fr) auto !important;
+    gap: 6px !important;
+    padding-inline: 9px !important;
+  }
+
+  .home-action-btn.premium-arcade-action > span {
+    width: 35px !important;
+    height: 35px !important;
+  }
+
+  .home-action-btn.premium-arcade-action strong {
+    font-size: 10px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promo-image-banner.premium-arcade-card,
+  .promo-image-banner.premium-arcade-card *,
+  .home-action-btn.premium-arcade-action {
+    animation: none !important;
+    transition: none !important;
+  }
+}
