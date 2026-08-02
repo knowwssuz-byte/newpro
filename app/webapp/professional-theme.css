@@ -3633,6 +3633,10 @@ body {
   margin: 0 0 10px !important;
 }
 
+.premium-home .home-promo-stack {
+  margin-top: 8px !important;
+}
+
 .premium-home .home-promo-stack::before,
 .games-promo-stack.home-promo-stack::before {
   content: "" !important;
