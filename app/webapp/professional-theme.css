@@ -1793,7 +1793,7 @@ body {
 /* Reference-style capsule dock: one glossy bar, one dark active segment. */
 .mobile-nav.premium-card,
 .mobile-nav {
-  --nav-blue: #08a8ff;
+  --nav-accent: #bda2ff;
   position: fixed !important;
   left: 50% !important;
   right: auto !important;
@@ -1810,16 +1810,16 @@ body {
   padding: 3px !important;
   overflow: hidden !important;
   isolation: isolate !important;
-  border: 1px solid rgba(82, 185, 255, 0.5) !important;
+  border: 1px solid rgba(202, 174, 255, 0.46) !important;
   border-radius: 35px !important;
   background:
-    radial-gradient(72% 160% at 94% -32%, rgba(0, 167, 255, 0.98) 0%, rgba(0, 120, 233, 0.62) 31%, transparent 64%),
-    radial-gradient(56% 135% at 5% -28%, rgba(0, 159, 255, 0.72) 0%, rgba(0, 94, 190, 0.34) 36%, transparent 70%),
-    linear-gradient(180deg, rgba(20, 68, 103, 0.96) 0%, rgba(9, 20, 31, 0.98) 48%, rgba(5, 8, 14, 0.99) 100%) !important;
+    radial-gradient(72% 160% at 94% -32%, rgba(166, 110, 255, 0.82) 0%, rgba(108, 60, 190, 0.5) 31%, transparent 64%),
+    radial-gradient(56% 135% at 5% -28%, rgba(210, 179, 255, 0.54) 0%, rgba(113, 70, 179, 0.28) 36%, transparent 70%),
+    linear-gradient(180deg, rgba(69, 42, 99, 0.94) 0%, rgba(24, 14, 40, 0.97) 48%, rgba(9, 5, 16, 0.99) 100%) !important;
   box-shadow:
     0 13px 30px rgba(1, 4, 10, 0.52),
-    0 -4px 18px rgba(0, 145, 255, 0.28),
-    inset 0 1px 0 rgba(220, 245, 255, 0.32),
+    0 -4px 18px rgba(139, 92, 246, 0.24),
+    inset 0 1px 0 rgba(244, 235, 255, 0.32),
     inset 0 -1px 0 rgba(0, 0, 0, 0.72) !important;
   transform: translateX(-50%) !important;
   backdrop-filter: blur(26px) saturate(1.55) !important;
@@ -1834,7 +1834,7 @@ body {
   height: 43% !important;
   border-radius: 34px 34px 18px 18px !important;
   background:
-    linear-gradient(180deg, rgba(210, 243, 255, 0.16), rgba(90, 204, 255, 0.045) 52%, transparent) !important;
+    linear-gradient(180deg, rgba(246, 237, 255, 0.17), rgba(188, 152, 255, 0.045) 52%, transparent) !important;
   content: "" !important;
   pointer-events: none !important;
 }
@@ -1848,7 +1848,7 @@ body {
   display: block !important;
   height: 30px !important;
   border-radius: 50% !important;
-  background: rgba(0, 120, 226, 0.2) !important;
+  background: rgba(139, 92, 246, 0.2) !important;
   filter: blur(15px) !important;
   content: "" !important;
   pointer-events: none !important;
@@ -1942,16 +1942,16 @@ body {
 
 .mobile-nav .mobile-nav-btn[data-nav].active,
 .mobile-nav .mobile-nav-btn.center-home.active {
-  color: var(--nav-blue) !important;
-  border-color: rgba(175, 219, 243, 0.22) !important;
+  color: var(--nav-accent) !important;
+  border-color: rgba(211, 188, 255, 0.22) !important;
   background:
-    radial-gradient(90% 48% at 50% 0%, rgba(32, 148, 221, 0.13), transparent 75%),
-    linear-gradient(155deg, rgba(12, 17, 24, 0.99), rgba(2, 5, 9, 0.93)) !important;
+    radial-gradient(90% 48% at 50% 0%, rgba(184, 143, 255, 0.14), transparent 75%),
+    linear-gradient(155deg, rgba(24, 14, 41, 0.98), rgba(7, 4, 13, 0.93)) !important;
   box-shadow:
     0 5px 16px rgba(0, 0, 0, 0.42),
     inset 0 1px 0 rgba(255, 255, 255, 0.13),
     inset 0 -1px 0 rgba(0, 0, 0, 0.76),
-    0 0 15px rgba(0, 151, 255, 0.08) !important;
+    0 0 15px rgba(150, 102, 246, 0.1) !important;
   backdrop-filter: blur(18px) saturate(1.2) !important;
   -webkit-backdrop-filter: blur(18px) saturate(1.2) !important;
 }
@@ -1962,18 +1962,18 @@ body {
   filter:
     brightness(0)
     saturate(100%)
-    invert(53%)
-    sepia(96%)
-    saturate(3126%)
-    hue-rotate(170deg)
-    brightness(106%)
-    contrast(104%)
-    drop-shadow(0 0 6px rgba(0, 166, 255, 0.48)) !important;
+    invert(72%)
+    sepia(23%)
+    saturate(1945%)
+    hue-rotate(214deg)
+    brightness(105%)
+    contrast(101%)
+    drop-shadow(0 0 6px rgba(174, 126, 255, 0.44)) !important;
 }
 
 .mobile-nav .mobile-nav-btn[data-nav].active strong {
-  color: var(--nav-blue) !important;
-  text-shadow: 0 0 8px rgba(0, 157, 255, 0.2) !important;
+  color: var(--nav-accent) !important;
+  text-shadow: 0 0 8px rgba(171, 126, 255, 0.22) !important;
 }
 
 .mobile-nav-btn:active:not(:disabled) {
@@ -2596,27 +2596,28 @@ body {
 }
 
 /* =========================================================
-   LIQUID BLUR NAVBAR V10
-   One continuous glass dock. Icon artwork stays completely
-   unframed, including the active Home icon.
+   PURPLE LIQUID BLUR NAVBAR V11
+   One continuous high-blur glass dock. Icon artwork stays
+   completely unframed, including the active Home icon.
 ========================================================= */
 
 .mobile-nav.premium-card,
 .mobile-nav {
-  background-color: rgba(7, 15, 28, 0.5) !important;
+  --nav-accent: #c2a7ff;
+  background-color: rgba(20, 11, 36, 0.38) !important;
   background-image:
-    radial-gradient(86% 155% at 91% -45%, rgba(32, 175, 255, 0.48) 0%, rgba(18, 116, 207, 0.18) 44%, transparent 70%),
-    radial-gradient(72% 135% at 4% -38%, rgba(78, 181, 255, 0.34) 0%, rgba(36, 97, 173, 0.12) 48%, transparent 74%),
-    linear-gradient(180deg, rgba(53, 113, 154, 0.38) 0%, rgba(12, 29, 49, 0.55) 45%, rgba(4, 10, 20, 0.66) 100%) !important;
-  border-color: rgba(148, 218, 255, 0.38) !important;
+    radial-gradient(86% 155% at 91% -45%, rgba(176, 126, 255, 0.42) 0%, rgba(116, 70, 201, 0.15) 44%, transparent 70%),
+    radial-gradient(72% 135% at 4% -38%, rgba(217, 190, 255, 0.3) 0%, rgba(111, 72, 178, 0.1) 48%, transparent 74%),
+    linear-gradient(180deg, rgba(83, 55, 119, 0.34) 0%, rgba(29, 17, 48, 0.48) 45%, rgba(10, 6, 18, 0.58) 100%) !important;
+  border-color: rgba(211, 190, 255, 0.34) !important;
   box-shadow:
-    0 14px 34px rgba(0, 3, 10, 0.38),
-    0 -3px 18px rgba(12, 142, 235, 0.18),
-    inset 0 1px 0 rgba(232, 248, 255, 0.34),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.38),
-    inset 0 0 22px rgba(74, 174, 235, 0.08) !important;
-  backdrop-filter: blur(34px) saturate(185%) brightness(1.04) !important;
-  -webkit-backdrop-filter: blur(34px) saturate(185%) brightness(1.04) !important;
+    0 14px 36px rgba(5, 1, 13, 0.4),
+    0 -3px 20px rgba(139, 92, 246, 0.16),
+    inset 0 1px 0 rgba(245, 238, 255, 0.36),
+    inset 0 -1px 0 rgba(11, 4, 22, 0.42),
+    inset 0 0 26px rgba(178, 137, 255, 0.09) !important;
+  backdrop-filter: blur(52px) saturate(190%) brightness(1.03) !important;
+  -webkit-backdrop-filter: blur(52px) saturate(190%) brightness(1.03) !important;
 }
 
 .mobile-nav::before {
@@ -2624,8 +2625,8 @@ body {
   height: 46% !important;
   border-radius: 33px 33px 20px 20px !important;
   background:
-    radial-gradient(58% 105% at 22% -10%, rgba(255, 255, 255, 0.2), transparent 72%),
-    linear-gradient(180deg, rgba(226, 247, 255, 0.18), rgba(108, 204, 255, 0.045) 58%, transparent) !important;
+    radial-gradient(58% 105% at 22% -10%, rgba(255, 255, 255, 0.22), transparent 72%),
+    linear-gradient(180deg, rgba(246, 238, 255, 0.18), rgba(190, 157, 255, 0.045) 58%, transparent) !important;
   box-shadow: none !important;
   opacity: 0.92 !important;
 }
@@ -2636,23 +2637,45 @@ body {
   left: 9% !important;
   height: 28px !important;
   border-radius: 50% !important;
-  background: rgba(22, 151, 239, 0.17) !important;
-  filter: blur(16px) !important;
+  background: rgba(139, 92, 246, 0.18) !important;
+  filter: blur(20px) !important;
   opacity: 1 !important;
 }
 
 .mobile-nav .mobile-nav-btn[data-nav].active,
 .mobile-nav .mobile-nav-btn.center-home.active {
-  border-color: rgba(155, 215, 247, 0.24) !important;
+  color: var(--nav-accent) !important;
+  border-color: rgba(212, 188, 255, 0.22) !important;
   background:
-    radial-gradient(90% 56% at 50% 0%, rgba(61, 174, 238, 0.12), transparent 76%),
-    linear-gradient(155deg, rgba(5, 14, 25, 0.7), rgba(2, 7, 14, 0.52)) !important;
+    radial-gradient(90% 56% at 50% 0%, rgba(186, 145, 255, 0.14), transparent 76%),
+    linear-gradient(155deg, rgba(25, 14, 43, 0.66), rgba(8, 5, 15, 0.48)) !important;
   box-shadow:
-    0 6px 18px rgba(0, 3, 9, 0.28),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.34) !important;
-  backdrop-filter: blur(22px) saturate(145%) !important;
-  -webkit-backdrop-filter: blur(22px) saturate(145%) !important;
+    0 6px 18px rgba(5, 1, 12, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 0 rgba(12, 5, 23, 0.36) !important;
+  backdrop-filter: blur(34px) saturate(155%) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(155%) !important;
+}
+
+.mobile-nav .mobile-nav-btn[data-nav].active .nav-icon-img,
+.mobile-nav .mobile-nav-btn.center-home.active .nav-icon-img {
+  opacity: 1 !important;
+  filter:
+    brightness(0)
+    saturate(100%)
+    invert(72%)
+    sepia(23%)
+    saturate(1945%)
+    hue-rotate(214deg)
+    brightness(105%)
+    contrast(101%)
+    drop-shadow(0 0 7px rgba(174, 126, 255, 0.44)) !important;
+}
+
+.mobile-nav .mobile-nav-btn[data-nav].active strong,
+.mobile-nav .mobile-nav-btn.center-home.active strong {
+  color: var(--nav-accent) !important;
+  text-shadow: 0 0 9px rgba(169, 121, 255, 0.22) !important;
 }
 
 /* Beat the older active-tab rule that painted a square behind the icon. */
@@ -2686,6 +2709,6 @@ body {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .mobile-nav.premium-card,
   .mobile-nav {
-    background-color: rgba(9, 22, 38, 0.94) !important;
+    background-color: rgba(24, 14, 40, 0.94) !important;
   }
 }
