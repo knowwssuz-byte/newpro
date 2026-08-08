@@ -4813,11 +4813,11 @@ body {
 }
 
 /* =========================================================
-   REFERENCE OPTICAL FROSTED LIQUID GLASS NAVBAR V22
-   Neutral glass: all visible colour is inherited from the
-   page behind the dock. The optical rim, inner reflection and
-   active lens are drawn as vectors so they stay crisp at every
-   supported phone width without a stretched bitmap edge.
+   REFERENCE LIQUID GLASS NAVBAR V23
+   Rebuilt from the platform material model: one continuous
+   backdrop surface, a restrained specular rim and one moving
+   selection lens. No clip-path/backdrop-root nesting, coloured
+   navbar tint, bitmap frame or outside dark halo.
 ========================================================= */
 
 .app-shell {
@@ -4826,7 +4826,7 @@ body {
 
 .mobile-nav.premium-card,
 .mobile-nav {
-  --nav-v22-white: 255, 255, 255;
+  --nav-v23-white: 255, 255, 255;
   position: fixed !important;
   left: 50% !important;
   right: auto !important;
@@ -4835,93 +4835,85 @@ body {
   box-sizing: border-box !important;
   width: min(calc(100% - 16px), 566px) !important;
   max-width: 566px !important;
-  height: 78px !important;
-  min-height: 78px !important;
+  height: 76px !important;
+  min-height: 76px !important;
   margin: 0 !important;
-  padding: 4px !important;
+  padding: 5px !important;
   display: grid !important;
   grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
   align-items: stretch !important;
   gap: 0 !important;
   overflow: hidden !important;
   isolation: isolate !important;
-  contain: paint !important;
+  contain: none !important;
   border: 1px solid transparent !important;
-  border-radius: 34px !important;
+  border-radius: 32px !important;
   outline: 0 !important;
   background:
-    radial-gradient(92% 78% at 50% -28%, rgba(var(--nav-v22-white), 0.18), transparent 64%) padding-box,
-    linear-gradient(180deg, rgba(var(--nav-v22-white), 0.145) 0%, rgba(var(--nav-v22-white), 0.09) 48%, rgba(var(--nav-v22-white), 0.12) 100%) padding-box,
-    linear-gradient(105deg, rgba(var(--nav-v22-white), 0.66) 0%, rgba(var(--nav-v22-white), 0.24) 24%, rgba(var(--nav-v22-white), 0.48) 52%, rgba(var(--nav-v22-white), 0.25) 76%, rgba(var(--nav-v22-white), 0.7) 100%) border-box !important;
+    linear-gradient(180deg, rgba(var(--nav-v23-white), 0.155) 0%, rgba(var(--nav-v23-white), 0.085) 46%, rgba(var(--nav-v23-white), 0.115) 100%) padding-box,
+    linear-gradient(145deg, rgba(var(--nav-v23-white), 0.58) 0%, rgba(var(--nav-v23-white), 0.19) 29%, rgba(var(--nav-v23-white), 0.13) 58%, rgba(var(--nav-v23-white), 0.43) 100%) border-box !important;
   background-color: transparent !important;
   background-blend-mode: normal !important;
   box-shadow:
-    inset 0 1px 0 rgba(var(--nav-v22-white), 0.32),
-    inset 0 2px 4px rgba(var(--nav-v22-white), 0.07),
-    inset 0 -1px 0 rgba(var(--nav-v22-white), 0.19),
-    inset 1px 0 0 rgba(var(--nav-v22-white), 0.13),
-    inset -1px 0 0 rgba(var(--nav-v22-white), 0.13) !important;
+    inset 0 1px 0 rgba(var(--nav-v23-white), 0.36),
+    inset 0 -1px 0 rgba(var(--nav-v23-white), 0.11),
+    inset 1px 0 0 rgba(var(--nav-v23-white), 0.055),
+    inset -1px 0 0 rgba(var(--nav-v23-white), 0.055) !important;
   opacity: 1 !important;
   filter: none !important;
   transform: translate3d(-50%, 0, 0) !important;
   transform-origin: 50% 50% !important;
   backface-visibility: hidden !important;
   -webkit-backface-visibility: hidden !important;
-  clip-path: inset(0 round 34px) !important;
-  -webkit-clip-path: inset(0 round 34px) !important;
-  backdrop-filter: blur(42px) saturate(142%) contrast(102%) brightness(1.04) !important;
-  -webkit-backdrop-filter: blur(42px) saturate(142%) contrast(102%) brightness(1.04) !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+  backdrop-filter: blur(34px) saturate(138%) brightness(1.045) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(138%) brightness(1.045) !important;
 }
 
-/* Second rim + top specular reflection. It never paints outside the capsule. */
+/* Ambient/specular reflection lives inside the platter; no second hard rim. */
 .mobile-nav::before {
   content: "" !important;
   position: absolute !important;
-  z-index: 0 !important;
-  inset: 2px !important;
+  z-index: 1 !important;
+  inset: 0 !important;
   display: block !important;
   width: auto !important;
   height: auto !important;
-  border: 1px solid rgba(var(--nav-v22-white), 0.18) !important;
-  border-radius: 31px !important;
+  border: 0 !important;
+  border-radius: inherit !important;
   background:
-    linear-gradient(90deg, transparent 7%, rgba(var(--nav-v22-white), 0.22) 31%, rgba(var(--nav-v22-white), 0.32) 50%, rgba(var(--nav-v22-white), 0.2) 69%, transparent 93%) bottom / 78% 1px no-repeat,
-    radial-gradient(72% 46% at 50% -12%, rgba(var(--nav-v22-white), 0.19), transparent 74%) !important;
+    radial-gradient(66% 54% at 16% -12%, rgba(var(--nav-v23-white), 0.185), transparent 72%),
+    radial-gradient(60% 50% at 88% 114%, rgba(var(--nav-v23-white), 0.09), transparent 74%) !important;
   box-shadow:
-    inset 0 1px 0 rgba(var(--nav-v22-white), 0.2),
-    inset 0 -1px 0 rgba(var(--nav-v22-white), 0.055) !important;
+    inset 0 1px 0 rgba(var(--nav-v23-white), 0.12),
+    inset 0 -1px 0 rgba(var(--nav-v23-white), 0.035) !important;
   opacity: 1 !important;
   filter: none !important;
   pointer-events: none !important;
 }
 
-/*
- * Raised active lens. :has() lets the single lens physically glide between
- * tabs instead of fading one button out and another one in.
- */
+/* One selection lens glides across the continuous glass surface. */
 .mobile-nav::after {
   content: "" !important;
   position: absolute !important;
-  z-index: 1 !important;
-  top: 4px !important;
-  bottom: 4px !important;
-  left: 4px !important;
+  z-index: 2 !important;
+  top: 5px !important;
+  bottom: 5px !important;
+  left: 5px !important;
   right: auto !important;
-  width: calc(20% - 1.6px) !important;
+  width: calc(20% - 2px) !important;
   height: auto !important;
   display: block !important;
   box-sizing: border-box !important;
-  border: 1px solid transparent !important;
-  border-radius: 27px !important;
+  border: 1px solid rgba(var(--nav-v23-white), 0.2) !important;
+  border-radius: 25px !important;
   background:
-    radial-gradient(92% 76% at 50% -5%, rgba(var(--nav-v22-white), 0.29), transparent 65%) padding-box,
-    linear-gradient(155deg, rgba(var(--nav-v22-white), 0.17), rgba(var(--nav-v22-white), 0.085) 58%, rgba(var(--nav-v22-white), 0.13)) padding-box,
-    linear-gradient(145deg, rgba(var(--nav-v22-white), 0.72), rgba(var(--nav-v22-white), 0.24) 42%, rgba(var(--nav-v22-white), 0.61)) border-box !important;
+    radial-gradient(100% 74% at 50% -8%, rgba(var(--nav-v23-white), 0.19), transparent 68%),
+    linear-gradient(180deg, rgba(var(--nav-v23-white), 0.115), rgba(var(--nav-v23-white), 0.052)) !important;
   box-shadow:
-    inset 0 1px 0 rgba(var(--nav-v22-white), 0.38),
-    inset 0 0 0 1px rgba(var(--nav-v22-white), 0.095),
-    inset 0 -1px 0 rgba(var(--nav-v22-white), 0.19),
-    0 0 13px rgba(var(--nav-v22-white), 0.105) !important;
+    inset 0 1px 0 rgba(var(--nav-v23-white), 0.29),
+    inset 0 -1px 0 rgba(var(--nav-v23-white), 0.06) !important;
   opacity: 0 !important;
   filter: none !important;
   transform: translate3d(0%, 0, 0) !important;
@@ -4930,15 +4922,15 @@ body {
   backface-visibility: hidden !important;
   -webkit-backface-visibility: hidden !important;
   transition:
-    transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 120ms linear !important;
+    transform 260ms cubic-bezier(0.2, 0.82, 0.2, 1),
+    opacity 70ms linear !important;
   pointer-events: none !important;
 }
 
 .mobile-nav-btn,
 .mobile-nav-btn.center-home {
   position: relative !important;
-  z-index: 2 !important;
+  z-index: 3 !important;
   box-sizing: border-box !important;
   width: 100% !important;
   min-width: 0 !important;
@@ -4955,15 +4947,15 @@ body {
   border: 1px solid transparent !important;
   border-radius: 27px !important;
   outline: 0 !important;
-  color: rgba(var(--nav-v22-white), 0.62) !important;
+  color: rgba(var(--nav-v23-white), 0.6) !important;
   background: transparent !important;
   box-shadow: none !important;
   opacity: 1 !important;
   filter: none !important;
   transform: translateZ(0) !important;
   transition:
-    color 210ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 210ms ease !important;
+    color 150ms cubic-bezier(0.2, 0.82, 0.2, 1),
+    opacity 150ms ease !important;
   animation: none !important;
   -webkit-tap-highlight-color: transparent !important;
   touch-action: manipulation !important;
@@ -5004,14 +4996,14 @@ body {
   min-width: 25px !important;
   height: 25px !important;
   object-fit: contain !important;
-  opacity: 0.66 !important;
+  opacity: 0.62 !important;
   filter: brightness(0) invert(1) !important;
   transform: translateZ(0) !important;
   backface-visibility: hidden !important;
   -webkit-backface-visibility: hidden !important;
   transition:
-    opacity 210ms ease,
-    filter 210ms ease !important;
+    opacity 150ms ease,
+    filter 150ms ease !important;
 }
 
 .mobile-nav-btn strong,
@@ -5034,14 +5026,14 @@ body {
 /* CSS-only fallback: the active button is still a raised glass lens. */
 .mobile-nav .mobile-nav-btn[data-nav].active,
 .mobile-nav .mobile-nav-btn.center-home.active {
-  color: rgba(var(--nav-v22-white), 0.98) !important;
-  border-color: rgba(var(--nav-v22-white), 0.34) !important;
+  color: rgba(var(--nav-v23-white), 0.98) !important;
+  border-color: rgba(var(--nav-v23-white), 0.2) !important;
   background:
-    radial-gradient(88% 70% at 50% -4%, rgba(var(--nav-v22-white), 0.2), transparent 66%),
-    linear-gradient(155deg, rgba(var(--nav-v22-white), 0.13), rgba(var(--nav-v22-white), 0.065)) !important;
+    radial-gradient(92% 72% at 50% -6%, rgba(var(--nav-v23-white), 0.16), transparent 67%),
+    linear-gradient(180deg, rgba(var(--nav-v23-white), 0.1), rgba(var(--nav-v23-white), 0.045)) !important;
   box-shadow:
-    inset 0 1px 0 rgba(var(--nav-v22-white), 0.25),
-    inset 0 -1px 0 rgba(var(--nav-v22-white), 0.09) !important;
+    inset 0 1px 0 rgba(var(--nav-v23-white), 0.24),
+    inset 0 -1px 0 rgba(var(--nav-v23-white), 0.055) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -5049,14 +5041,14 @@ body {
 .mobile-nav .mobile-nav-btn[data-nav].active .nav-icon-img,
 .mobile-nav .mobile-nav-btn.center-home.active .nav-icon-img {
   opacity: 1 !important;
-  filter: brightness(0) invert(1) drop-shadow(0 0 4px rgba(var(--nav-v22-white), 0.28)) !important;
+  filter: brightness(0) invert(1) !important;
 }
 
 .mobile-nav .mobile-nav-btn[data-nav].active strong,
 .mobile-nav .mobile-nav-btn.center-home.active strong {
-  color: rgba(var(--nav-v22-white), 0.99) !important;
+  color: rgba(var(--nav-v23-white), 0.99) !important;
   font-weight: 710 !important;
-  text-shadow: 0 0 7px rgba(var(--nav-v22-white), 0.19) !important;
+  text-shadow: none !important;
 }
 
 .mobile-nav-btn:hover,
@@ -5113,8 +5105,8 @@ body {
   .mobile-nav.premium-card,
   .mobile-nav {
     background:
-      linear-gradient(180deg, rgba(var(--nav-v22-white), 0.25), rgba(var(--nav-v22-white), 0.17)) padding-box,
-      linear-gradient(105deg, rgba(var(--nav-v22-white), 0.64), rgba(var(--nav-v22-white), 0.22), rgba(var(--nav-v22-white), 0.66)) border-box !important;
+      linear-gradient(180deg, rgba(var(--nav-v23-white), 0.22), rgba(var(--nav-v23-white), 0.13)) padding-box,
+      linear-gradient(145deg, rgba(var(--nav-v23-white), 0.5), rgba(var(--nav-v23-white), 0.16), rgba(var(--nav-v23-white), 0.4)) border-box !important;
   }
 }
 
@@ -5122,15 +5114,15 @@ body {
   .mobile-nav.premium-card,
   .mobile-nav {
     width: calc(100% - 14px) !important;
-    height: 76px !important;
-    min-height: 76px !important;
-    border-radius: 33px !important;
-    clip-path: inset(0 round 33px) !important;
-    -webkit-clip-path: inset(0 round 33px) !important;
+    height: 74px !important;
+    min-height: 74px !important;
+    border-radius: 31px !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
   }
 
   .mobile-nav::before {
-    border-radius: 30px !important;
+    border-radius: inherit !important;
   }
 
   .mobile-nav::after,
@@ -5148,17 +5140,17 @@ body {
   .mobile-nav.premium-card,
   .mobile-nav {
     width: calc(100% - 12px) !important;
-    height: 72px !important;
-    min-height: 72px !important;
+    height: 70px !important;
+    min-height: 70px !important;
     padding: 3px !important;
-    border-radius: 31px !important;
-    clip-path: inset(0 round 31px) !important;
-    -webkit-clip-path: inset(0 round 31px) !important;
+    border-radius: 29px !important;
+    clip-path: none !important;
+    -webkit-clip-path: none !important;
   }
 
   .mobile-nav::before {
-    inset: 2px !important;
-    border-radius: 28px !important;
+    inset: 0 !important;
+    border-radius: inherit !important;
   }
 
   .mobile-nav::after {
@@ -5166,7 +5158,7 @@ body {
     bottom: 3px !important;
     left: 3px !important;
     width: calc(20% - 1.2px) !important;
-    border-radius: 25px !important;
+    border-radius: 23px !important;
   }
 
   .mobile-nav-btn,
