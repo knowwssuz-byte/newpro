@@ -1,0 +1,741 @@
+.stack {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.stack::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -12px -8px;
+  pointer-events: none;
+  background:
+    radial-gradient(48% 38% at 78% 18%, rgba(118, 99, 255, 0.09), transparent 74%),
+    radial-gradient(42% 34% at 85% 82%, rgba(236, 91, 219, 0.055), transparent 76%);
+  filter: blur(20px);
+}
+
+.gamesStack {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
+.heroCard {
+  --accent: 127, 105, 255;
+  --accent-secondary: 80, 205, 255;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  width: 100%;
+  height: clamp(132px, 31vw, 168px);
+  min-height: 132px;
+  margin: 0;
+  padding: clamp(12px, 3vw, 16px) clamp(13px, 3.3vw, 18px);
+  overflow: hidden;
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: clamp(27px, 7vw, 32px);
+  color: #fff;
+  background:
+    linear-gradient(
+      150deg,
+      rgba(255, 255, 255, 0.092) 0%,
+      rgba(255, 255, 255, 0.034) 38%,
+      rgba(255, 255, 255, 0.018) 68%,
+      rgba(255, 255, 255, 0.044) 100%
+    ) padding-box,
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.43) 0%,
+      rgba(255, 255, 255, 0.12) 31%,
+      rgba(var(--accent), 0.22) 66%,
+      rgba(255, 255, 255, 0.27) 100%
+    ) border-box;
+  box-shadow:
+    0 18px 42px rgba(2, 0, 10, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.045),
+    inset 1px 0 0 rgba(255, 255, 255, 0.045);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-backdrop-filter: blur(25px) saturate(168%) contrast(91%) brightness(1.035);
+  backdrop-filter: blur(25px) saturate(168%) contrast(91%) brightness(1.035);
+  transform: translate3d(0, 0, 0) scale(1);
+  transition:
+    transform 520ms cubic-bezier(0.16, 1.18, 0.3, 1),
+    border-color 260ms ease,
+    box-shadow 420ms ease,
+    filter 320ms ease;
+}
+
+.rocket {
+  --accent: 120, 102, 255;
+  --accent-secondary: 71, 208, 255;
+}
+
+.pvp {
+  --accent: 194, 103, 255;
+  --accent-secondary: 255, 105, 188;
+}
+
+.heroCard::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  top: 1px;
+  right: 10%;
+  left: 10%;
+  height: 1px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.68), transparent);
+  opacity: 0.7;
+}
+
+.heroCard::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: -72%;
+  left: -35%;
+  width: 24%;
+  height: 245%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.03) 18%,
+    rgba(255, 255, 255, 0.17) 50%,
+    rgba(255, 255, 255, 0.035) 82%,
+    transparent
+  );
+  filter: blur(9px);
+  opacity: 0.48;
+  transform: rotate(13deg) translate3d(0, 0, 0);
+  animation: glassSweep 9s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+.ambient {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+  background:
+    radial-gradient(58% 112% at 91% 44%, rgba(var(--accent), 0.13), transparent 70%),
+    radial-gradient(45% 82% at 72% 106%, rgba(var(--accent-secondary), 0.07), transparent 72%),
+    linear-gradient(104deg, rgba(9, 6, 17, 0.22), transparent 57%);
+  opacity: 0.92;
+  transition: opacity 420ms ease, transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.refraction {
+  position: absolute;
+  z-index: 1;
+  top: -88%;
+  right: -31%;
+  width: 64%;
+  height: 280%;
+  display: block;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      92deg,
+      transparent 0 27%,
+      rgba(var(--accent-secondary), 0.045) 39%,
+      rgba(255, 255, 255, 0.095) 49%,
+      rgba(var(--accent), 0.065) 61%,
+      transparent 76%
+    );
+  filter: blur(13px);
+  opacity: 0.72;
+  transform: rotate(12deg) translate3d(0, 0, 0);
+  transition: transform 720ms cubic-bezier(0.16, 1, 0.3, 1), opacity 360ms ease;
+}
+
+.opticalRim {
+  position: absolute;
+  z-index: 6;
+  inset: 2px;
+  display: block;
+  border: 1px solid rgba(255, 255, 255, 0.105);
+  border-radius: calc(clamp(27px, 7vw, 32px) - 2px);
+  pointer-events: none;
+  background:
+    radial-gradient(70% 74% at 12% -28%, rgba(255, 255, 255, 0.08), transparent 68%),
+    radial-gradient(50% 58% at 102% 105%, rgba(var(--accent), 0.055), transparent 70%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.025);
+}
+
+.copy {
+  position: relative;
+  z-index: 5;
+  width: 49%;
+  height: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 5px;
+}
+
+.status {
+  min-height: 23px;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.047);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
+  font-size: clamp(8px, 2.2vw, 10px);
+  font-weight: 760;
+  line-height: 1;
+  letter-spacing: 0.055em;
+  white-space: nowrap;
+}
+
+.statusDot {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 5px;
+  border-radius: 50%;
+  background: rgb(var(--accent-secondary));
+  box-shadow: 0 0 8px rgba(var(--accent-secondary), 0.62);
+}
+
+.status svg {
+  width: 11px;
+  height: 11px;
+  flex: 0 0 11px;
+  stroke-width: 2.2;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.titleGroup {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.titleGroup strong {
+  width: fit-content;
+  max-width: 100%;
+  color: rgba(255, 255, 255, 0.975);
+  font-family: var(--font-display);
+  font-size: clamp(31px, 8.4vw, 43px);
+  font-weight: 850;
+  line-height: 0.9;
+  letter-spacing: -0.062em;
+  text-shadow: 0 5px 18px rgba(5, 2, 12, 0.2);
+  white-space: nowrap;
+}
+
+.titleGroup em {
+  max-width: 100%;
+  overflow: hidden;
+  color: rgba(242, 238, 251, 0.6);
+  font-size: clamp(9px, 2.45vw, 11.5px);
+  font-style: normal;
+  font-weight: 610;
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cta {
+  min-height: 27px;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.19);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.9);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.04)),
+    rgba(var(--accent), 0.055);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 5px 14px rgba(1, 0, 7, 0.11);
+  font-size: clamp(8.5px, 2.35vw, 10.5px);
+  font-weight: 740;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: background 320ms ease, border-color 320ms ease, transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cta b {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 0.8;
+  transform: translateY(-0.5px);
+}
+
+.artStage {
+  position: absolute;
+  z-index: 4;
+  top: -34%;
+  right: -7%;
+  bottom: -34%;
+  width: 65%;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  transition: transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pvp .artStage {
+  top: -29%;
+  right: -8%;
+  bottom: -29%;
+  width: 65%;
+}
+
+.art {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  filter:
+    drop-shadow(0 17px 18px rgba(2, 0, 11, 0.28))
+    drop-shadow(0 0 12px rgba(var(--accent), 0.10));
+  transform: translate3d(0, 0, 0) rotate(-0.8deg) scale(1.02);
+  transform-origin: center;
+  transition:
+    transform 760ms cubic-bezier(0.16, 1.18, 0.3, 1),
+    filter 420ms ease;
+  will-change: transform;
+}
+
+.pvp .art {
+  transform: translate3d(0, 0, 0) scale(0.985);
+}
+
+.fallbackIcon {
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 26px;
+  color: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+}
+
+.fallbackIcon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.imageFailed .artStage {
+  top: 0;
+  right: 1%;
+  bottom: 0;
+  width: 48%;
+}
+
+.actionsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0 19px;
+}
+
+.actionCard {
+  --action-accent: 158, 124, 255;
+  position: relative;
+  isolation: isolate;
+  box-sizing: border-box;
+  height: clamp(66px, 18vw, 78px);
+  min-width: 0;
+  display: grid;
+  grid-template-columns: clamp(34px, 9.2vw, 40px) minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: clamp(7px, 1.8vw, 10px);
+  margin: 0;
+  padding: 0 clamp(9px, 2.4vw, 12px);
+  overflow: hidden;
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: clamp(21px, 5.7vw, 25px);
+  color: #fff;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.024)) padding-box,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0.085) 46%, rgba(var(--action-accent), 0.18)) border-box;
+  box-shadow:
+    0 13px 30px rgba(2, 0, 10, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.028);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-backdrop-filter: blur(21px) saturate(150%) contrast(93%);
+  backdrop-filter: blur(21px) saturate(150%) contrast(93%);
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 460ms cubic-bezier(0.16, 1.18, 0.3, 1),
+    filter 300ms ease,
+    box-shadow 400ms ease;
+}
+
+.upgrade {
+  --action-accent: 83, 215, 245;
+}
+
+.actionCard::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(92% 120% at 10% -28%, rgba(var(--action-accent), 0.11), transparent 55%),
+    radial-gradient(65% 96% at 108% 120%, rgba(var(--action-accent), 0.055), transparent 68%);
+}
+
+.actionCard::after {
+  content: "";
+  position: absolute;
+  z-index: 3;
+  top: 1px;
+  right: 13%;
+  left: 13%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.48), transparent);
+}
+
+.actionIcon {
+  position: relative;
+  z-index: 1;
+  width: clamp(34px, 9.2vw, 40px);
+  height: clamp(34px, 9.2vw, 40px);
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  border-radius: clamp(12px, 3.2vw, 15px);
+  color: rgba(255, 255, 255, 0.88);
+  background:
+    radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.18), transparent 45%),
+    rgba(var(--action-accent), 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 5px 14px rgba(2, 0, 9, 0.10);
+  transition: transform 520ms cubic-bezier(0.16, 1.18, 0.3, 1), background 300ms ease;
+}
+
+.actionIcon svg {
+  width: clamp(17px, 4.7vw, 21px);
+  height: clamp(17px, 4.7vw, 21px);
+  stroke-width: 2.05;
+}
+
+.actionCopy {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.actionCopy strong {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.91);
+  font-size: clamp(9.5px, 2.85vw, 13px);
+  font-weight: 760;
+  line-height: 1;
+  letter-spacing: -0.025em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actionCopy small {
+  overflow: hidden;
+  color: rgba(235, 229, 247, 0.46);
+  font-size: clamp(7.2px, 2.05vw, 9px);
+  font-weight: 570;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actionChevron {
+  position: relative;
+  z-index: 1;
+  justify-self: end;
+  color: rgba(255, 255, 255, 0.46);
+  font-size: 21px;
+  font-weight: 450;
+  line-height: 1;
+  transform: translateY(-1px);
+  transition: transform 420ms cubic-bezier(0.16, 1.18, 0.3, 1), color 280ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .heroCard:hover {
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow:
+      0 20px 46px rgba(2, 0, 10, 0.27),
+      inset 0 1px 0 rgba(255, 255, 255, 0.29),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.055);
+    filter: brightness(1.025);
+    transform: translate3d(0, -2px, 0) scale(1.004);
+  }
+
+  .heroCard:hover .ambient {
+    opacity: 1;
+    transform: scale(1.035);
+  }
+
+  .heroCard:hover .refraction {
+    opacity: 0.92;
+    transform: rotate(12deg) translate3d(-14%, 0, 0);
+  }
+
+  .heroCard:hover .art {
+    filter:
+      drop-shadow(0 18px 20px rgba(2, 0, 11, 0.31))
+      drop-shadow(0 0 14px rgba(var(--accent), 0.14));
+    transform: translate3d(1.2%, -1.4%, 0) rotate(0.6deg) scale(1.052);
+  }
+
+  .pvp:hover .art {
+    transform: translate3d(0, -1.1%, 0) scale(1.025);
+  }
+
+  .heroCard:hover .cta {
+    border-color: rgba(255, 255, 255, 0.25);
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.052)),
+      rgba(var(--accent), 0.075);
+  }
+
+  .actionCard:hover {
+    filter: brightness(1.035);
+    transform: translate3d(0, -1.5px, 0);
+    box-shadow:
+      0 16px 34px rgba(2, 0, 10, 0.20),
+      inset 0 1px 0 rgba(255, 255, 255, 0.19);
+  }
+
+  .actionCard:hover .actionIcon {
+    background:
+      radial-gradient(circle at 28% 18%, rgba(255, 255, 255, 0.22), transparent 45%),
+      rgba(var(--action-accent), 0.11);
+    transform: scale(1.055) rotate(-2deg);
+  }
+
+  .actionCard:hover .actionChevron {
+    color: rgba(255, 255, 255, 0.72);
+    transform: translate3d(2px, -1px, 0);
+  }
+}
+
+.heroCard:active {
+  filter: brightness(0.96);
+  transform: translate3d(0, 0, 0) scale(0.985);
+  transition-duration: 100ms;
+}
+
+.heroCard:active .art {
+  transform: translate3d(-1%, 1%, 0) scale(0.995);
+  transition-duration: 100ms;
+}
+
+.heroCard:active .cta {
+  transform: scale(0.96);
+  transition-duration: 100ms;
+}
+
+.actionCard:active {
+  filter: brightness(0.95);
+  transform: scale(0.975);
+  transition-duration: 90ms;
+}
+
+@keyframes glassSweep {
+  0%, 15% {
+    left: -35%;
+    opacity: 0;
+  }
+
+  24% {
+    opacity: 0.48;
+  }
+
+  49% {
+    left: 120%;
+    opacity: 0;
+  }
+
+  100% {
+    left: 120%;
+    opacity: 0;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .heroCard {
+    background:
+      linear-gradient(150deg, rgba(32, 26, 46, 0.92), rgba(13, 10, 21, 0.94)) padding-box,
+      linear-gradient(145deg, rgba(255, 255, 255, 0.34), rgba(var(--accent), 0.16)) border-box;
+  }
+
+  .actionCard {
+    background:
+      linear-gradient(145deg, rgba(29, 24, 40, 0.92), rgba(13, 10, 20, 0.94)) padding-box,
+      linear-gradient(145deg, rgba(255, 255, 255, 0.26), rgba(var(--action-accent), 0.14)) border-box;
+  }
+}
+
+@media (max-width: 430px) {
+  .stack {
+    gap: 9px;
+    margin-top: 9px;
+  }
+
+  .heroCard {
+    height: clamp(128px, 34vw, 146px);
+    min-height: 128px;
+    padding: 12px 13px;
+    border-radius: 28px;
+  }
+
+  .opticalRim {
+    border-radius: 26px;
+  }
+
+  .copy {
+    width: 50%;
+  }
+
+  .artStage {
+    right: -8%;
+    width: 66%;
+  }
+
+  .pvp .artStage {
+    right: -9%;
+    width: 66%;
+  }
+
+  .actionsGrid {
+    gap: 9px;
+    margin-top: 9px;
+  }
+
+  .actionCard {
+    height: 68px;
+    border-radius: 22px;
+  }
+}
+
+@media (max-width: 350px) {
+  .heroCard {
+    height: 124px;
+    min-height: 124px;
+    padding: 11px 12px;
+    border-radius: 26px;
+  }
+
+  .opticalRim {
+    border-radius: 24px;
+  }
+
+  .copy {
+    width: 53%;
+  }
+
+  .status {
+    min-height: 21px;
+    padding-inline: 7px;
+  }
+
+  .titleGroup strong {
+    font-size: 29px;
+  }
+
+  .titleGroup em {
+    font-size: 8.4px;
+  }
+
+  .cta {
+    min-height: 25px;
+    padding-inline: 9px;
+    font-size: 8.2px;
+  }
+
+  .artStage,
+  .pvp .artStage {
+    right: -10%;
+    width: 65%;
+  }
+
+  .actionsGrid {
+    gap: 7px;
+  }
+
+  .actionCard {
+    height: 64px;
+    grid-template-columns: 32px minmax(0, 1fr) 11px;
+    gap: 6px;
+    padding-inline: 8px;
+    border-radius: 20px;
+  }
+
+  .actionIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 11px;
+  }
+
+  .actionCopy strong {
+    font-size: 9px;
+  }
+
+  .actionCopy small {
+    font-size: 6.8px;
+  }
+
+  .actionChevron {
+    font-size: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroCard,
+  .heroCard::after,
+  .ambient,
+  .refraction,
+  .art,
+  .cta,
+  .actionCard,
+  .actionIcon,
+  .actionChevron {
+    animation: none;
+    transition: none;
+  }
+}
