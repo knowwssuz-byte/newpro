@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import caseOpeningStyles from './CaseOpening.module.css';
 import liquidNavStyles from './LiquidGlassNav.module.css';
+import gameCardStyles from './PremiumGameCards.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
 
@@ -1582,47 +1583,47 @@ function PromoImageCard({
   return (
     <button
       type="button"
-      className={`promo-banner promo-image-banner premium-promo premium-arcade-card ${variant} ${failed ? 'image-failed' : ''}`}
+      className={`${gameCardStyles.heroCard} ${gameCardStyles[variant]} ${failed ? gameCardStyles.imageFailed : ''}`}
       onClick={onClick}
       aria-label={title}
     >
-      <span className="arcade-card-depth" aria-hidden="true" />
-      <span className="arcade-card-grid" aria-hidden="true" />
-      <span className="promo-shine" aria-hidden="true" />
-      <span className="promo-orbit one" aria-hidden="true" />
-      <span className="promo-orbit two" aria-hidden="true" />
+      <span className={gameCardStyles.ambient} aria-hidden="true" />
+      <span className={gameCardStyles.refraction} aria-hidden="true" />
+      <span className={gameCardStyles.opticalRim} aria-hidden="true" />
 
-      <div className="promo-banner-copy">
-        <span className={`promo-badge ${variant === 'pvp' ? 'new' : ''}`}>
-          <AppIcon name={badgeIcon} /> {badge}
+      <div className={gameCardStyles.copy}>
+        <span className={gameCardStyles.status}>
+          <span className={gameCardStyles.statusDot} aria-hidden="true" />
+          <AppIcon name={badgeIcon} />
+          {badge}
         </span>
 
-        <span className="promo-banner-text">
+        <span className={gameCardStyles.titleGroup}>
           <strong>{title}</strong>
           {subtitle ? <em>{subtitle}</em> : null}
         </span>
 
-        <span className="promo-action-chip">
+        <span className={gameCardStyles.cta}>
           {actionText || 'Open'}
-          <b>›</b>
+          <b aria-hidden="true">›</b>
         </span>
       </div>
 
-      <div className="promo-webp-stage" aria-hidden="true">
+      <div className={gameCardStyles.artStage} aria-hidden="true">
         {!failed && image ? (
           <Image
             src={image}
             alt=""
-            className="promo-webp premium-arcade-static-art"
+            className={gameCardStyles.art}
             fill
-            sizes="(max-width: 590px) 58vw, 342px"
+            sizes="(max-width: 590px) 64vw, 370px"
             priority
             unoptimized
             draggable="false"
             onError={() => setFailed(true)}
           />
         ) : (
-          <span className="promo-fallback-icon">
+          <span className={gameCardStyles.fallbackIcon}>
             <AppIcon name={variant === 'pvp' ? 'swords' : 'rocket'} />
           </span>
         )}
@@ -1654,11 +1655,11 @@ function HomeView({
 
   return (
     <section className="home-view premium-home">
-      <div className="home-promo-stack">
+      <div className={gameCardStyles.stack}>
         <PromoImageCard
           variant="rocket"
-          image="/feature/premium-arcade/rocket-premium-static-v16.png"
-          badge="HOT!"
+          image="/feature/giftmyst-liquid-v30/rocket-premium-3d-v30.png"
+          badge="LIVE"
           badgeIcon="rocket"
           title="ROCKET"
           subtitle="Crash game • Live"
@@ -1668,8 +1669,8 @@ function HomeView({
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/premium-arcade/pvp-premium-static-v16.png"
-          badge="NEW!"
+          image="/feature/giftmyst-liquid-v30/pvp-premium-3d-v30.png"
+          badge="SOON"
           badgeIcon="spark"
           title="PVP"
           subtitle="Battle mode • Tez orada"
@@ -1678,21 +1679,27 @@ function HomeView({
         />
       </div>
 
-      <div className="home-actions-grid">
-        <button type="button" className="home-action-btn premium-arcade-action contracts" onClick={onGoCases}>
-          <span>
+      <div className={gameCardStyles.actionsGrid}>
+        <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.contracts}`} onClick={onGoCases}>
+          <span className={gameCardStyles.actionIcon}>
             <AppIcon name="box" />
           </span>
-          <strong>CONTRACTS</strong>
-          <b>›</b>
+          <span className={gameCardStyles.actionCopy}>
+            <strong>CONTRACTS</strong>
+            <small>Open cases</small>
+          </span>
+          <b className={gameCardStyles.actionChevron} aria-hidden="true">›</b>
         </button>
 
-        <button type="button" className="home-action-btn premium-arcade-action upgrade" onClick={onGoInventory}>
-          <span>
+        <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.upgrade}`} onClick={onGoInventory}>
+          <span className={gameCardStyles.actionIcon}>
             <AppIcon name="spark" />
           </span>
-          <strong>UPGRADE</strong>
-          <b>›</b>
+          <span className={gameCardStyles.actionCopy}>
+            <strong>UPGRADE</strong>
+            <small>Boost items</small>
+          </span>
+          <b className={gameCardStyles.actionChevron} aria-hidden="true">›</b>
         </button>
       </div>
 
@@ -1740,10 +1747,10 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
         <p>Stavkani tanlang va raketa portlashidan oldin yutuqni oling.</p>
       </div>
 
-      <div className="home-promo-stack games-promo-stack">
+      <div className={`${gameCardStyles.stack} ${gameCardStyles.gamesStack}`}>
         <PromoImageCard
           variant="rocket"
-          image="/feature/premium-arcade/rocket-premium-static-v16.png"
+          image="/feature/giftmyst-liquid-v30/rocket-premium-3d-v30.png"
           badge="LIVE"
           badgeIcon="rocket"
           title="ROCKET"
@@ -1754,8 +1761,8 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/premium-arcade/pvp-premium-static-v16.png"
-          badge="NEW!"
+          image="/feature/giftmyst-liquid-v30/pvp-premium-3d-v30.png"
+          badge="SOON"
           badgeIcon="spark"
           title="PVP"
           subtitle="Battle mode • Tez orada"
