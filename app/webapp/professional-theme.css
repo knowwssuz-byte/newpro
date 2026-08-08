@@ -4291,7 +4291,7 @@ body {
 }
 
 /* =========================================================
-   HOME OPTICAL POLISH + COLOURLESS LIQUID GLASS NAV V20
+   HOME OPTICAL POLISH + DENSE COLOURLESS FROSTED GLASS V21
    Final scoped layer for the Telegram home chrome. The dock
    contains no coloured material of its own: it only refracts
    the background below it. All effects are clipped in-bounds
@@ -4302,19 +4302,19 @@ body {
   box-sizing: border-box !important;
   overflow: hidden !important;
   border: 0 !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.105) !important;
-  background-color: rgba(255, 255, 255, 0.022) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.17) !important;
+  background-color: rgba(255, 255, 255, 0.105) !important;
   background-image: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.052) 0%,
-    rgba(255, 255, 255, 0.018) 55%,
-    rgba(255, 255, 255, 0.034) 100%
+    rgba(255, 255, 255, 0.13) 0%,
+    rgba(255, 255, 255, 0.07) 55%,
+    rgba(255, 255, 255, 0.095) 100%
   ) !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.018) !important;
-  backdrop-filter: blur(28px) saturate(112%) contrast(103%) !important;
-  -webkit-backdrop-filter: blur(28px) saturate(112%) contrast(103%) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.035) !important;
+  backdrop-filter: blur(36px) saturate(82%) contrast(98%) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(82%) contrast(98%) !important;
 }
 
 .global-balance-stabilizer::before {
@@ -4324,8 +4324,8 @@ body {
   inset: 0 !important;
   display: block !important;
   background:
-    radial-gradient(70% 90% at 18% -34%, rgba(255, 255, 255, 0.105), transparent 66%),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.018), transparent 36% 64%, rgba(255, 255, 255, 0.012)) !important;
+    radial-gradient(70% 90% at 18% -34%, rgba(255, 255, 255, 0.13), transparent 66%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035), transparent 36% 64%, rgba(255, 255, 255, 0.025)) !important;
   pointer-events: none !important;
 }
 
@@ -4482,7 +4482,10 @@ body {
   transform: none !important;
 }
 
-/* True colourless frosted liquid-glass dock. */
+/*
+ * Dense colourless frost: background light can pass through, but shapes and
+ * text behind the dock are deliberately diffused beyond recognition.
+ */
 .mobile-nav.premium-card,
 .mobile-nav {
   --nav-neutral: rgba(255, 255, 255, 0.92);
@@ -4505,23 +4508,23 @@ body {
   overflow: hidden !important;
   isolation: isolate !important;
   contain: paint !important;
-  border: 1px solid rgba(255, 255, 255, 0.255) !important;
+  border: 1px solid rgba(255, 255, 255, 0.36) !important;
   border-radius: 30px !important;
   outline: 0 !important;
-  background-color: rgba(255, 255, 255, 0.052) !important;
+  background-color: rgba(255, 255, 255, 0.16) !important;
   background-image: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.105) 0%,
-    rgba(255, 255, 255, 0.038) 46%,
-    rgba(255, 255, 255, 0.052) 100%
+    rgba(255, 255, 255, 0.19) 0%,
+    rgba(255, 255, 255, 0.105) 46%,
+    rgba(255, 255, 255, 0.145) 100%
   ) !important;
   background-blend-mode: normal !important;
   background-clip: padding-box !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.07),
-    inset 1px 0 0 rgba(255, 255, 255, 0.045),
-    inset -1px 0 0 rgba(255, 255, 255, 0.045) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.085),
+    inset 1px 0 0 rgba(255, 255, 255, 0.065),
+    inset -1px 0 0 rgba(255, 255, 255, 0.065) !important;
   opacity: 1 !important;
   filter: none !important;
   transform: translate3d(-50%, 0, 0) !important;
@@ -4529,8 +4532,8 @@ body {
   -webkit-backface-visibility: hidden !important;
   clip-path: inset(0 round 30px) !important;
   -webkit-clip-path: inset(0 round 30px) !important;
-  backdrop-filter: blur(30px) saturate(112%) contrast(103%) !important;
-  -webkit-backdrop-filter: blur(30px) saturate(112%) contrast(103%) !important;
+  backdrop-filter: blur(38px) saturate(78%) contrast(98%) !important;
+  -webkit-backdrop-filter: blur(38px) saturate(78%) contrast(98%) !important;
 }
 
 .mobile-nav::before {
@@ -4543,9 +4546,9 @@ body {
   border: 0 !important;
   border-radius: 28px !important;
   background:
-    radial-gradient(78% 88% at 18% -24%, rgba(255, 255, 255, 0.15), transparent 62%),
-    radial-gradient(72% 80% at 86% 118%, rgba(255, 255, 255, 0.055), transparent 68%) !important;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+    radial-gradient(78% 88% at 18% -24%, rgba(255, 255, 255, 0.17), transparent 62%),
+    radial-gradient(72% 80% at 86% 118%, rgba(255, 255, 255, 0.08), transparent 68%) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.075) !important;
   opacity: 1 !important;
   filter: none !important;
   pointer-events: none !important;
@@ -4662,15 +4665,15 @@ body {
 .mobile-nav .mobile-nav-btn[data-nav].active,
 .mobile-nav .mobile-nav-btn.center-home.active {
   color: var(--nav-neutral) !important;
-  border-color: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.22) !important;
   background:
-    linear-gradient(155deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.035)) !important;
+    linear-gradient(155deg, rgba(255, 255, 255, 0.145), rgba(255, 255, 255, 0.075)) !important;
   background-clip: padding-box !important;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.025) !important;
-  backdrop-filter: blur(16px) saturate(105%) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(105%) !important;
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .mobile-nav .mobile-nav-btn[data-nav].active .nav-icon-img,
@@ -4705,7 +4708,7 @@ body {
   .global-balance-stabilizer,
   .mobile-nav.premium-card,
   .mobile-nav {
-    background-color: rgba(255, 255, 255, 0.105) !important;
+    background-color: rgba(255, 255, 255, 0.22) !important;
   }
 
   .global-balance-bar .home-balance-copy {
