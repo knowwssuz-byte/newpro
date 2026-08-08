@@ -5170,12 +5170,11 @@ body {
 }
 
 /* =========================================================
-   UI VERSE GLASS NAVBAR V24
-   Material source: Uiverse solid-metal `.card`, adapted only
-   for the existing five-item floating navigation geometry.
-   The glass recipe itself stays faithful to the supplied card:
-   #ffffff56 border, 10.5px backdrop blur, #ffffff45 inset
-   reflection and the soft diagonal white shine pass.
+   FROSTED GHOST GLASS NAVBAR V25
+   Keeps the supplied Uiverse card's border/inset/shine language,
+   but tunes the backdrop to the user's visual reference: the
+   underlying UI loses readable detail while its colour survives
+   as a soft, diffused glow inside the glass.
 ========================================================= */
 
 .app-shell {
@@ -5201,20 +5200,27 @@ body {
   align-items: stretch !important;
   gap: 0 !important;
 
-  /* Exact glass recipe from the supplied Uiverse card. */
+  /* Uiverse glass edge + a neutral diffusion veil. No hue is added. */
   overflow: hidden !important;
   isolation: isolate !important;
   contain: none !important;
   border: 1px solid #ffffff56 !important;
   border-radius: 29px !important;
   outline: 0 !important;
-  background: transparent !important;
-  background-color: transparent !important;
-  background-image: none !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.018) 52%, rgba(255, 255, 255, 0.035) 100%),
+    rgba(12, 12, 14, 0.34) !important;
   background-blend-mode: normal !important;
-  box-shadow: inset 2px 1px 6px #ffffff45 !important;
-  backdrop-filter: blur(10.5px) !important;
-  -webkit-backdrop-filter: blur(10.5px) !important;
+  box-shadow:
+    inset 2px 1px 6px #ffffff45,
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.055) !important;
+  /*
+     Blur removes shape/text recognition; lower contrast softens edges;
+     saturation preserves only the colour impression seen in the reference.
+  */
+  backdrop-filter: blur(24px) saturate(155%) contrast(82%) brightness(0.94) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) contrast(82%) brightness(0.94) !important;
 
   opacity: 1 !important;
   filter: none !important;
@@ -5226,7 +5232,7 @@ body {
   -webkit-clip-path: none !important;
 }
 
-/* V24 intentionally removes the previous synthetic rim/refraction layer. */
+/* Keep one continuous backdrop surface; no nested blur/backdrop root. */
 .mobile-nav::before {
   content: none !important;
   display: none !important;
@@ -5248,7 +5254,7 @@ body {
   border-radius: 999px !important;
   background: #ffffff !important;
   box-shadow: none !important;
-  opacity: 1 !important;
+  opacity: 0.58 !important;
   transform: rotateZ(50deg) !important;
   transform-origin: center !important;
   filter: blur(30px) !important;
@@ -5347,13 +5353,17 @@ body {
   transition: color 140ms ease !important;
 }
 
-/* Active state uses the same Uiverse border/inset language without nested blur. */
+/* Active lens stays neutral so the backdrop's own colour remains the accent. */
 .mobile-nav .mobile-nav-btn[data-nav].active,
 .mobile-nav .mobile-nav-btn.center-home.active {
   color: rgba(255, 255, 255, 0.99) !important;
   border-color: #ffffff56 !important;
-  background: rgba(255, 255, 255, 0.055) !important;
-  box-shadow: inset 2px 1px 6px #ffffff45 !important;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.025)),
+    rgba(8, 8, 10, 0.16) !important;
+  box-shadow:
+    inset 2px 1px 6px #ffffff45,
+    inset 0 -1px 0 rgba(255, 255, 255, 0.045) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
@@ -5403,7 +5413,9 @@ body {
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .mobile-nav.premium-card,
   .mobile-nav {
-    background: rgba(255, 255, 255, 0.08) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.035)),
+      rgba(12, 12, 14, 0.72) !important;
   }
 }
 
