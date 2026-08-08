@@ -410,6 +410,7 @@ const APP_ICONS = {
   rocket: Rocket,
   send: Send,
   settings: Settings,
+  shield: ShieldCheck,
   spark: Sparkles,
   swords: Swords,
   trend: TrendingUp,
@@ -1589,6 +1590,21 @@ function PromoImageCard({
     >
       <span className={gameCardStyles.ambient} aria-hidden="true" />
       <span className={gameCardStyles.refraction} aria-hidden="true" />
+      <span className={gameCardStyles.motionField} aria-hidden="true">
+        <span className={gameCardStyles.orbitRing}><i /></span>
+        <span className={`${gameCardStyles.motionSymbol} ${gameCardStyles.symbolOne}`}>
+          <AppIcon name={variant === 'pvp' ? 'swords' : 'spark'} />
+        </span>
+        <span className={`${gameCardStyles.motionSymbol} ${gameCardStyles.symbolTwo}`}>
+          <AppIcon name={variant === 'pvp' ? 'shield' : 'trend'} />
+        </span>
+        <span className={`${gameCardStyles.motionSymbol} ${gameCardStyles.symbolThree}`}>
+          <AppIcon name={variant === 'pvp' ? 'spark' : 'gem'} />
+        </span>
+        <i className={`${gameCardStyles.particle} ${gameCardStyles.particleOne}`} />
+        <i className={`${gameCardStyles.particle} ${gameCardStyles.particleTwo}`} />
+        <i className={`${gameCardStyles.particle} ${gameCardStyles.particleThree}`} />
+      </span>
       <span className={gameCardStyles.opticalRim} aria-hidden="true" />
 
       <div className={gameCardStyles.copy}>
