@@ -4257,6 +4257,13 @@ body {
 .app-frame::after {
   z-index: 0 !important;
   background:
+    linear-gradient(
+      180deg,
+      rgba(10, 6, 17, 0.96) 0px,
+      rgba(10, 6, 17, 0.72) 10px,
+      rgba(8, 4, 15, 0.32) 82px,
+      transparent 150px
+    ),
     radial-gradient(ellipse at 50% 44%, transparent 30%, rgba(3, 1, 8, 0.24) 100%),
     linear-gradient(
       180deg,
@@ -5555,27 +5562,8 @@ body {
 }
 
 .global-balance-stabilizer::after {
-  content: "" !important;
-  position: absolute !important;
-  z-index: 0 !important;
-  top: -58% !important;
-  left: -28% !important;
-  width: 48% !important;
-  height: 215% !important;
-  display: block !important;
-  border: 0 !important;
-  border-radius: 50% !important;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.14) 0%,
-    rgba(255, 255, 255, 0.052) 30%,
-    transparent 70%
-  ) !important;
-  filter: blur(9px) !important;
-  opacity: 0.38 !important;
-  transform: translate3d(-8%, 0, 0) rotate(8deg) !important;
-  animation: topBalanceGlassCaustic 12s ease-in-out infinite !important;
-  pointer-events: none !important;
+  content: none !important;
+  display: none !important;
 }
 
 .home-hero.global-balance-bar,
@@ -5676,18 +5664,6 @@ body {
   padding-top: 0 !important;
 }
 
-@keyframes topBalanceGlassCaustic {
-  0%, 100% {
-    transform: translate3d(-8%, 0, 0) rotate(8deg);
-    opacity: 0.30;
-  }
-
-  50% {
-    transform: translate3d(265%, 0, 0) rotate(8deg);
-    opacity: 0.46;
-  }
-}
-
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .global-balance-stabilizer {
     background: rgba(25, 22, 34, 0.82) !important;
@@ -5749,11 +5725,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .global-balance-stabilizer::after {
-    animation: none !important;
-    opacity: 0.22 !important;
-  }
-
   .global-balance-bar .deposit-button {
     transition: none !important;
   }
