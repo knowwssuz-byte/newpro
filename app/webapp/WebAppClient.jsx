@@ -32,6 +32,7 @@ import {
   WalletCards,
 } from 'lucide-react';
 import caseOpeningStyles from './CaseOpening.module.css';
+import liquidNavStyles from './LiquidGlassNav.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
 
@@ -1244,6 +1245,13 @@ export default function WebAppClient() {
 
   const isCaseOpening =
     opening?.stage === 'preparing' || opening?.stage === 'rolling';
+  const bottomNavActiveId = !selectedCase
+    ? tab === 'rocket'
+      ? 'games'
+      : navItems.some((item) => item.id === tab)
+        ? tab
+        : 'none'
+    : 'none';
 
   return (
     <div className="app-frame">
@@ -1377,7 +1385,12 @@ export default function WebAppClient() {
           )}
         </main>
 
-        <nav className="mobile-nav premium-card" aria-label="Bottom navigation">
+        <nav
+          className={liquidNavStyles.nav}
+          data-active={bottomNavActiveId}
+          aria-label="Bottom navigation"
+        >
+          <span className={liquidNavStyles.selectionLens} aria-hidden="true" />
           {navItems.map((item) => (
             <NavButton
               key={item.id}
@@ -1481,20 +1494,34 @@ function NavButton({ item, active, onClick, mobile = false, disabled = false }) 
     return false;
   };
 
+  const buttonClassName = mobile
+    ? [
+        liquidNavStyles.item,
+        active ? liquidNavStyles.active : '',
+        item.center ? liquidNavStyles.center : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+    : `nav-button ${active ? 'active' : ''} ${item.center ? 'center-home' : ''}`;
+  const iconWrapClassName = mobile ? liquidNavStyles.iconWrap : 'nav-icon-wrap';
+  const iconClassName = mobile ? liquidNavStyles.icon : 'nav-icon-img';
+  const labelClassName = mobile ? liquidNavStyles.label : undefined;
+  const homeDotClassName = mobile ? liquidNavStyles.homeDot : 'home-glow-dot';
+
   return (
     <button
       type="button"
-      className={`nav-button ${active ? 'active' : ''} ${item.center ? 'center-home' : ''} ${mobile ? 'mobile-nav-btn' : ''}`}
+      className={buttonClassName}
       onClick={onClick}
       disabled={disabled}
       onContextMenu={preventIconMenu}
       data-nav={item.id}
       aria-current={active ? 'page' : undefined}
     >
-      <span className="nav-icon-wrap" onContextMenu={preventIconMenu}>
+      <span className={iconWrapClassName} onContextMenu={preventIconMenu}>
         {item.image ? (
           <Image
-            className="nav-icon-img"
+            className={iconClassName}
             src={item.image}
             alt=""
             width={32}
@@ -1509,8 +1536,8 @@ function NavButton({ item, active, onClick, mobile = false, disabled = false }) 
           <AppIcon name={item.icon} />
         )}
       </span>
-      <strong>{item.label}</strong>
-      {item.center ? <em className="home-glow-dot" /> : null}
+      <strong className={labelClassName}>{item.label}</strong>
+      {item.center ? <em className={homeDotClassName} /> : null}
     </button>
   );
 }
