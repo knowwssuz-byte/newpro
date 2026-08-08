@@ -1386,29 +1386,54 @@ export default function WebAppClient() {
         </main>
 
         <nav
-          className={liquidNavStyles.nav}
+          className={liquidNavStyles.dock}
           data-active={bottomNavActiveId}
           aria-label="Bottom navigation"
         >
-          <span className={liquidNavStyles.selectionLens} aria-hidden="true" />
-          {navItems.map((item) => (
-            <NavButton
-              key={item.id}
-              item={item}
-              active={
-                !selectedCase &&
-                (tab === item.id || (item.id === 'games' && tab === 'rocket'))
-              }
-              disabled={isCaseOpening || rocketRoundActive}
-              onClick={() => {
-                if (isCaseOpening || rocketRoundActive) return;
-                setOpening(null);
-                setSelectedCase(null);
-                setTab(item.id);
-              }}
-              mobile
-            />
-          ))}
+          <div
+            className={liquidNavStyles.gamesOrb}
+            data-selected={bottomNavActiveId === 'games' ? 'true' : 'false'}
+          >
+            <span className={liquidNavStyles.orbLens} aria-hidden="true" />
+            {navItems
+              .filter((item) => item.id === 'games')
+              .map((item) => (
+                <NavButton
+                  key={item.id}
+                  item={item}
+                  active={!selectedCase && (tab === item.id || tab === 'rocket')}
+                  disabled={isCaseOpening || rocketRoundActive}
+                  onClick={() => {
+                    if (isCaseOpening || rocketRoundActive) return;
+                    setOpening(null);
+                    setSelectedCase(null);
+                    setTab(item.id);
+                  }}
+                  mobile
+                />
+              ))}
+          </div>
+
+          <div className={liquidNavStyles.nav} data-active={bottomNavActiveId}>
+            <span className={liquidNavStyles.selectionLens} aria-hidden="true" />
+            {navItems
+              .filter((item) => item.id !== 'games')
+              .map((item) => (
+                <NavButton
+                  key={item.id}
+                  item={item}
+                  active={!selectedCase && tab === item.id}
+                  disabled={isCaseOpening || rocketRoundActive}
+                  onClick={() => {
+                    if (isCaseOpening || rocketRoundActive) return;
+                    setOpening(null);
+                    setSelectedCase(null);
+                    setTab(item.id);
+                  }}
+                  mobile
+                />
+              ))}
+          </div>
         </nav>
 
       </div>
