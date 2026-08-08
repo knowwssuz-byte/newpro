@@ -5493,3 +5493,268 @@ body {
     transition: none !important;
   }
 }
+
+/* =========================================================
+   TOP BALANCE LIQUID GLASS V29
+   Match the isolated V28 dock material: one real backdrop
+   surface, neutral optical highlights and fully rounded pills.
+   The inner balance/deposit controls do not stack another blur.
+========================================================= */
+
+.global-balance-stabilizer {
+  position: fixed !important;
+  top: 6px !important;
+  left: 50% !important;
+  right: auto !important;
+  width: min(calc(100% - 16px), 548px) !important;
+  max-width: 548px !important;
+  min-height: 60px !important;
+  height: 60px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  isolation: auto !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.30) !important;
+  border-radius: 999px !important;
+  background:
+    radial-gradient(120% 95% at 13% -22%, rgba(255, 255, 255, 0.115), transparent 53%),
+    radial-gradient(75% 80% at 94% 118%, rgba(255, 255, 255, 0.04), transparent 62%),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.052) 0%,
+      rgba(255, 255, 255, 0.014) 43%,
+      rgba(255, 255, 255, 0.028) 100%
+    ),
+    rgba(255, 255, 255, 0.008) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.40),
+    inset 1px 0 0 rgba(255, 255, 255, 0.11),
+    inset -1px 0 0 rgba(255, 255, 255, 0.075),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.085) !important;
+  -webkit-backdrop-filter: blur(25px) saturate(188%) contrast(87%) brightness(1.075) !important;
+  backdrop-filter: blur(25px) saturate(188%) contrast(87%) brightness(1.075) !important;
+}
+
+.global-balance-stabilizer::before {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  inset: 1px !important;
+  display: block !important;
+  border: 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.36) !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.115) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.055) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.045) !important;
+  border-radius: inherit !important;
+  background:
+    radial-gradient(86% 62% at 15% -8%, rgba(255, 255, 255, 0.12), transparent 66%),
+    radial-gradient(62% 55% at 91% 111%, rgba(255, 255, 255, 0.045), transparent 72%) !important;
+  pointer-events: none !important;
+}
+
+.global-balance-stabilizer::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: 0 !important;
+  top: -58% !important;
+  left: -28% !important;
+  width: 48% !important;
+  height: 215% !important;
+  display: block !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.052) 30%,
+    transparent 70%
+  ) !important;
+  filter: blur(9px) !important;
+  opacity: 0.38 !important;
+  transform: translate3d(-8%, 0, 0) rotate(8deg) !important;
+  animation: topBalanceGlassCaustic 12s ease-in-out infinite !important;
+  pointer-events: none !important;
+}
+
+.home-hero.global-balance-bar,
+.global-balance-bar.home-hero.premium-card {
+  position: relative !important;
+  z-index: 1 !important;
+  width: 100% !important;
+  min-height: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 9px 10px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: inherit !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.home-hero.global-balance-bar::before,
+.global-balance-bar.home-hero.premium-card::before {
+  content: none !important;
+  display: none !important;
+}
+
+.global-balance-bar .home-balance-copy {
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.22) !important;
+  border-radius: 999px !important;
+  background:
+    radial-gradient(88% 100% at 22% -30%, rgba(255, 255, 255, 0.18), transparent 62%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.022)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.29),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.045) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.global-balance-bar .home-balance-copy::before,
+.global-balance-bar .home-balance-copy::after {
+  content: none !important;
+  display: none !important;
+}
+
+.global-balance-bar .deposit-button {
+  overflow: hidden !important;
+  border: 1px solid rgba(255, 255, 255, 0.32) !important;
+  border-radius: 999px !important;
+  background:
+    radial-gradient(82% 130% at 25% -12%, rgba(255, 255, 255, 0.30), transparent 58%),
+    linear-gradient(145deg, rgba(143, 99, 235, 0.92), rgba(91, 53, 177, 0.90)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -1px 0 rgba(40, 18, 78, 0.20) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  transition:
+    transform 360ms cubic-bezier(0.16, 1.18, 0.3, 1),
+    border-color 220ms ease,
+    filter 220ms ease !important;
+}
+
+.global-balance-bar .deposit-button::before {
+  top: 1px !important;
+  right: 12px !important;
+  left: 12px !important;
+  width: auto !important;
+  height: 1px !important;
+  border-radius: 999px !important;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.62), transparent) !important;
+  filter: none !important;
+}
+
+.global-balance-bar .deposit-button:hover {
+  border-color: rgba(255, 255, 255, 0.40) !important;
+  background:
+    radial-gradient(82% 130% at 25% -12%, rgba(255, 255, 255, 0.32), transparent 58%),
+    linear-gradient(145deg, rgba(151, 108, 239, 0.94), rgba(100, 59, 188, 0.92)) !important;
+}
+
+.global-balance-bar .deposit-button:active {
+  border-color: rgba(255, 255, 255, 0.34) !important;
+  background:
+    radial-gradient(82% 130% at 25% -12%, rgba(255, 255, 255, 0.27), transparent 58%),
+    linear-gradient(145deg, rgba(132, 88, 222, 0.92), rgba(82, 45, 162, 0.92)) !important;
+  transform: scale(0.955) !important;
+  transition-duration: 90ms !important;
+}
+
+.app-main {
+  padding-top: 72px !important;
+}
+
+.app-main.deposit-page-main,
+.app-main.rocket-game-main {
+  padding-top: 0 !important;
+}
+
+@keyframes topBalanceGlassCaustic {
+  0%, 100% {
+    transform: translate3d(-8%, 0, 0) rotate(8deg);
+    opacity: 0.30;
+  }
+
+  50% {
+    transform: translate3d(265%, 0, 0) rotate(8deg);
+    opacity: 0.46;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .global-balance-stabilizer {
+    background: rgba(25, 22, 34, 0.82) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .global-balance-stabilizer {
+    width: calc(100% - 14px) !important;
+    min-height: 58px !important;
+    height: 58px !important;
+  }
+
+  .home-hero.global-balance-bar,
+  .global-balance-bar.home-hero.premium-card {
+    min-height: 100% !important;
+    height: 100% !important;
+    padding: 9px 9px !important;
+    border-radius: inherit !important;
+  }
+
+  .global-balance-bar .home-balance-copy,
+  .global-balance-bar .deposit-button {
+    border-radius: 999px !important;
+  }
+
+  .app-main {
+    padding-top: 70px !important;
+  }
+
+  .app-main.deposit-page-main,
+  .app-main.rocket-game-main {
+    padding-top: 0 !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .global-balance-stabilizer {
+    width: calc(100% - 12px) !important;
+    min-height: 56px !important;
+    height: 56px !important;
+  }
+
+  .home-hero.global-balance-bar,
+  .global-balance-bar.home-hero.premium-card {
+    min-height: 100% !important;
+    height: 100% !important;
+    padding: 9px 8px !important;
+  }
+
+  .app-main {
+    padding-top: 68px !important;
+  }
+
+  .app-main.deposit-page-main,
+  .app-main.rocket-game-main {
+    padding-top: 0 !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .global-balance-stabilizer::after {
+    animation: none !important;
+    opacity: 0.22 !important;
+  }
+
+  .global-balance-bar .deposit-button {
+    transition: none !important;
+  }
+}
