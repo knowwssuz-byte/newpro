@@ -2,8 +2,8 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  gap: 10px;
-  margin: 10px 0;
+  gap: 11px;
+  margin: 11px 0;
 }
 
 .stack::before {
@@ -13,9 +13,9 @@
   inset: -12px -8px;
   pointer-events: none;
   background:
-    radial-gradient(48% 38% at 78% 18%, rgba(118, 99, 255, 0.09), transparent 74%),
-    radial-gradient(42% 34% at 85% 82%, rgba(236, 91, 219, 0.055), transparent 76%);
-  filter: blur(20px);
+    radial-gradient(50% 38% at 77% 17%, rgba(89, 111, 255, 0.14), transparent 74%),
+    radial-gradient(44% 36% at 83% 84%, rgba(224, 83, 202, 0.10), transparent 76%);
+  filter: blur(24px);
 }
 
 .gamesStack {
@@ -26,44 +26,58 @@
 .heroCard {
   --accent: 127, 105, 255;
   --accent-secondary: 80, 205, 255;
+  --surface: 48, 51, 118;
+  --surface-deep: 24, 20, 62;
+  --shadow-accent: 65, 83, 235;
   position: relative;
   isolation: isolate;
   box-sizing: border-box;
   width: 100%;
-  height: clamp(132px, 31vw, 168px);
-  min-height: 132px;
+  height: clamp(136px, 28.6vw, 154px);
+  min-height: 136px;
   margin: 0;
   padding: clamp(12px, 3vw, 16px) clamp(13px, 3.3vw, 18px);
   overflow: hidden;
   appearance: none;
   border: 1px solid transparent;
-  border-radius: clamp(27px, 7vw, 32px);
+  border-radius: clamp(27px, 6.6vw, 31px);
   color: #fff;
   background:
+    radial-gradient(
+      80% 138% at 92% 42%,
+      rgba(var(--accent-secondary), 0.19) 0%,
+      rgba(var(--accent-secondary), 0.055) 42%,
+      transparent 70%
+    ) padding-box,
+    radial-gradient(
+      80% 128% at 2% -18%,
+      rgba(var(--accent), 0.20) 0%,
+      transparent 60%
+    ) padding-box,
     linear-gradient(
-      150deg,
-      rgba(255, 255, 255, 0.092) 0%,
-      rgba(255, 255, 255, 0.034) 38%,
-      rgba(255, 255, 255, 0.018) 68%,
-      rgba(255, 255, 255, 0.044) 100%
+      142deg,
+      rgba(var(--surface), 0.70) 0%,
+      rgba(var(--surface), 0.51) 48%,
+      rgba(var(--surface-deep), 0.68) 100%
     ) padding-box,
     linear-gradient(
       145deg,
-      rgba(255, 255, 255, 0.43) 0%,
-      rgba(255, 255, 255, 0.12) 31%,
-      rgba(var(--accent), 0.22) 66%,
-      rgba(255, 255, 255, 0.27) 100%
+      rgba(255, 255, 255, 0.42) 0%,
+      rgba(255, 255, 255, 0.13) 28%,
+      rgba(var(--accent), 0.38) 68%,
+      rgba(var(--accent-secondary), 0.25) 100%
     ) border-box;
   box-shadow:
-    0 18px 42px rgba(2, 0, 10, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.24),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.045),
+    0 18px 40px rgba(2, 0, 10, 0.25),
+    0 9px 26px rgba(var(--shadow-accent), 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.055),
     inset 1px 0 0 rgba(255, 255, 255, 0.045);
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  -webkit-backdrop-filter: blur(25px) saturate(168%) contrast(91%) brightness(1.035);
-  backdrop-filter: blur(25px) saturate(168%) contrast(91%) brightness(1.035);
+  -webkit-backdrop-filter: blur(23px) saturate(176%) contrast(92%) brightness(1.035);
+  backdrop-filter: blur(23px) saturate(176%) contrast(92%) brightness(1.035);
   transform: translate3d(0, 0, 0) scale(1);
   transition:
     transform 520ms cubic-bezier(0.16, 1.18, 0.3, 1),
@@ -73,27 +87,24 @@
 }
 
 .rocket {
-  --accent: 120, 102, 255;
-  --accent-secondary: 71, 208, 255;
+  --accent: 116, 99, 255;
+  --accent-secondary: 65, 195, 255;
+  --surface: 49, 55, 126;
+  --surface-deep: 25, 23, 67;
+  --shadow-accent: 63, 86, 235;
 }
 
 .pvp {
-  --accent: 194, 103, 255;
-  --accent-secondary: 255, 105, 188;
+  --accent: 201, 91, 225;
+  --accent-secondary: 255, 92, 170;
+  --surface: 98, 43, 109;
+  --surface-deep: 52, 27, 72;
+  --shadow-accent: 208, 66, 180;
 }
 
 .heroCard::before {
-  content: "";
-  position: absolute;
-  z-index: 1;
-  top: 1px;
-  right: 10%;
-  left: 10%;
-  height: 1px;
-  border-radius: 999px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.68), transparent);
-  opacity: 0.7;
+  content: none;
+  display: none;
 }
 
 .heroCard::after {
@@ -115,7 +126,7 @@
     transparent
   );
   filter: blur(9px);
-  opacity: 0.48;
+  opacity: 0.32;
   transform: rotate(13deg) translate3d(0, 0, 0);
   animation: glassSweep 9s cubic-bezier(0.45, 0, 0.25, 1) infinite;
 }
@@ -127,35 +138,33 @@
   display: block;
   pointer-events: none;
   background:
-    radial-gradient(58% 112% at 91% 44%, rgba(var(--accent), 0.13), transparent 70%),
-    radial-gradient(45% 82% at 72% 106%, rgba(var(--accent-secondary), 0.07), transparent 72%),
-    linear-gradient(104deg, rgba(9, 6, 17, 0.22), transparent 57%);
-  opacity: 0.92;
+    radial-gradient(62% 120% at 92% 43%, rgba(var(--accent-secondary), 0.16), transparent 69%),
+    radial-gradient(56% 90% at 70% 112%, rgba(var(--accent), 0.13), transparent 70%),
+    linear-gradient(104deg, rgba(7, 5, 18, 0.16), transparent 60%);
+  opacity: 0.96;
   transition: opacity 420ms ease, transform 620ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .refraction {
   position: absolute;
   z-index: 1;
-  top: -88%;
-  right: -31%;
-  width: 64%;
-  height: 280%;
+  top: -38%;
+  right: -9%;
+  width: 48%;
+  height: 176%;
   display: block;
   border-radius: 50%;
   pointer-events: none;
-  background:
-    linear-gradient(
-      92deg,
-      transparent 0 27%,
-      rgba(var(--accent-secondary), 0.045) 39%,
-      rgba(255, 255, 255, 0.095) 49%,
-      rgba(var(--accent), 0.065) 61%,
-      transparent 76%
-    );
-  filter: blur(13px);
-  opacity: 0.72;
-  transform: rotate(12deg) translate3d(0, 0, 0);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 255, 255, 0.10) 0%,
+    rgba(var(--accent-secondary), 0.08) 32%,
+    rgba(var(--accent), 0.035) 52%,
+    transparent 72%
+  );
+  filter: blur(22px);
+  opacity: 0.58;
+  transform: rotate(9deg) translate3d(0, 0, 0);
   transition: transform 720ms cubic-bezier(0.16, 1, 0.3, 1), opacity 360ms ease;
 }
 
@@ -165,11 +174,11 @@
   inset: 2px;
   display: block;
   border: 1px solid rgba(255, 255, 255, 0.105);
-  border-radius: calc(clamp(27px, 7vw, 32px) - 2px);
+  border-radius: calc(clamp(27px, 6.6vw, 31px) - 2px);
   pointer-events: none;
   background:
-    radial-gradient(70% 74% at 12% -28%, rgba(255, 255, 255, 0.08), transparent 68%),
-    radial-gradient(50% 58% at 102% 105%, rgba(var(--accent), 0.055), transparent 70%);
+    radial-gradient(70% 74% at 12% -28%, rgba(255, 255, 255, 0.09), transparent 68%),
+    radial-gradient(54% 62% at 102% 105%, rgba(var(--accent), 0.09), transparent 70%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.10),
     inset 0 -1px 0 rgba(255, 255, 255, 0.025);
@@ -196,10 +205,12 @@
   gap: 5px;
   box-sizing: border-box;
   padding: 0 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.78);
-  background: rgba(255, 255, 255, 0.047);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    rgba(var(--accent), 0.10);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09);
   font-size: clamp(8px, 2.2vw, 10px);
   font-weight: 760;
@@ -237,10 +248,10 @@
   max-width: 100%;
   color: rgba(255, 255, 255, 0.975);
   font-family: var(--font-display);
-  font-size: clamp(31px, 8.4vw, 43px);
-  font-weight: 850;
-  line-height: 0.9;
-  letter-spacing: -0.062em;
+  font-size: clamp(29px, 7.5vw, 38px);
+  font-weight: 820;
+  line-height: 0.94;
+  letter-spacing: -0.052em;
   text-shadow: 0 5px 18px rgba(5, 2, 12, 0.2);
   white-space: nowrap;
 }
@@ -270,8 +281,8 @@
   border-radius: 999px;
   color: rgba(255, 255, 255, 0.9);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.105), rgba(255, 255, 255, 0.04)),
-    rgba(var(--accent), 0.055);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(var(--accent), 0.14);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.14),
     0 5px 14px rgba(1, 0, 7, 0.11);
@@ -294,22 +305,24 @@
 .artStage {
   position: absolute;
   z-index: 4;
-  top: -34%;
-  right: -7%;
-  bottom: -34%;
-  width: 65%;
+  top: 50%;
+  right: 2.5%;
+  bottom: auto;
+  width: 52%;
+  height: 112%;
   display: grid;
   place-items: center;
   pointer-events: none;
-  transform: translate3d(0, 0, 0);
+  transform: translate3d(0, -50%, 0);
   transition: transform 720ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pvp .artStage {
-  top: -29%;
-  right: -8%;
-  bottom: -29%;
-  width: 65%;
+  top: 50%;
+  right: 2%;
+  bottom: auto;
+  width: 53%;
+  height: 98%;
 }
 
 .art {
@@ -320,7 +333,7 @@
   filter:
     drop-shadow(0 17px 18px rgba(2, 0, 11, 0.28))
     drop-shadow(0 0 12px rgba(var(--accent), 0.10));
-  transform: translate3d(0, 0, 0) rotate(-0.8deg) scale(1.02);
+  transform: translate3d(0, 0, 0) rotate(-0.8deg) scale(0.96);
   transform-origin: center;
   transition:
     transform 760ms cubic-bezier(0.16, 1.18, 0.3, 1),
@@ -329,7 +342,7 @@
 }
 
 .pvp .art {
-  transform: translate3d(0, 0, 0) scale(0.985);
+  transform: translate3d(0, 0, 0) scale(0.93);
 }
 
 .fallbackIcon {
@@ -350,10 +363,12 @@
 }
 
 .imageFailed .artStage {
-  top: 0;
+  top: 50%;
   right: 1%;
-  bottom: 0;
+  bottom: auto;
   width: 48%;
+  height: 100%;
+  transform: translate3d(0, -50%, 0);
 }
 
 .actionsGrid {
@@ -365,6 +380,8 @@
 
 .actionCard {
   --action-accent: 158, 124, 255;
+  --action-surface: 70, 48, 111;
+  --action-surface-deep: 35, 27, 58;
   position: relative;
   isolation: isolate;
   box-sizing: border-box;
@@ -382,8 +399,9 @@
   border-radius: clamp(21px, 5.7vw, 25px);
   color: #fff;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.024)) padding-box,
-    linear-gradient(145deg, rgba(255, 255, 255, 0.30), rgba(255, 255, 255, 0.085) 46%, rgba(var(--action-accent), 0.18)) border-box;
+    radial-gradient(90% 150% at 2% -28%, rgba(var(--action-accent), 0.17), transparent 58%) padding-box,
+    linear-gradient(145deg, rgba(var(--action-surface), 0.62), rgba(var(--action-surface-deep), 0.66)) padding-box,
+    linear-gradient(145deg, rgba(255, 255, 255, 0.31), rgba(255, 255, 255, 0.09) 45%, rgba(var(--action-accent), 0.30)) border-box;
   box-shadow:
     0 13px 30px rgba(2, 0, 10, 0.17),
     inset 0 1px 0 rgba(255, 255, 255, 0.15),
@@ -402,6 +420,8 @@
 
 .upgrade {
   --action-accent: 83, 215, 245;
+  --action-surface: 38, 80, 109;
+  --action-surface-deep: 24, 44, 65;
 }
 
 .actionCard::before {
@@ -411,8 +431,8 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(92% 120% at 10% -28%, rgba(var(--action-accent), 0.11), transparent 55%),
-    radial-gradient(65% 96% at 108% 120%, rgba(var(--action-accent), 0.055), transparent 68%);
+    radial-gradient(92% 120% at 10% -28%, rgba(var(--action-accent), 0.13), transparent 55%),
+    radial-gradient(65% 96% at 108% 120%, rgba(var(--action-accent), 0.09), transparent 68%);
 }
 
 .actionCard::after {
@@ -519,11 +539,11 @@
     filter:
       drop-shadow(0 18px 20px rgba(2, 0, 11, 0.31))
       drop-shadow(0 0 14px rgba(var(--accent), 0.14));
-    transform: translate3d(1.2%, -1.4%, 0) rotate(0.6deg) scale(1.052);
+    transform: translate3d(1.2%, -1.4%, 0) rotate(0.3deg) scale(0.995);
   }
 
   .pvp:hover .art {
-    transform: translate3d(0, -1.1%, 0) scale(1.025);
+    transform: translate3d(0, -1.1%, 0) scale(0.965);
   }
 
   .heroCard:hover .cta {
@@ -618,8 +638,8 @@
   }
 
   .heroCard {
-    height: clamp(128px, 34vw, 146px);
-    min-height: 128px;
+    height: clamp(132px, 33vw, 142px);
+    min-height: 132px;
     padding: 12px 13px;
     border-radius: 28px;
   }
@@ -633,13 +653,15 @@
   }
 
   .artStage {
-    right: -8%;
-    width: 66%;
+    right: 1.5%;
+    width: 52%;
+    height: 110%;
   }
 
   .pvp .artStage {
-    right: -9%;
-    width: 66%;
+    right: 1%;
+    width: 53%;
+    height: 96%;
   }
 
   .actionsGrid {
@@ -655,8 +677,8 @@
 
 @media (max-width: 350px) {
   .heroCard {
-    height: 124px;
-    min-height: 124px;
+    height: 128px;
+    min-height: 128px;
     padding: 11px 12px;
     border-radius: 26px;
   }
@@ -675,7 +697,7 @@
   }
 
   .titleGroup strong {
-    font-size: 29px;
+    font-size: 28px;
   }
 
   .titleGroup em {
@@ -690,8 +712,8 @@
 
   .artStage,
   .pvp .artStage {
-    right: -10%;
-    width: 65%;
+    right: 0;
+    width: 51%;
   }
 
   .actionsGrid {
