@@ -5067,40 +5067,6 @@ body {
   display: none !important;
 }
 
-@supports selector(:has(*)) {
-  .mobile-nav:has(.mobile-nav-btn.active)::after {
-    opacity: 1 !important;
-  }
-
-  .mobile-nav:has(.mobile-nav-btn[data-nav="games"].active)::after {
-    transform: translate3d(0%, 0, 0) !important;
-  }
-
-  .mobile-nav:has(.mobile-nav-btn[data-nav="inventory"].active)::after {
-    transform: translate3d(100%, 0, 0) !important;
-  }
-
-  .mobile-nav:has(.mobile-nav-btn[data-nav="home"].active)::after {
-    transform: translate3d(200%, 0, 0) !important;
-  }
-
-  .mobile-nav:has(.mobile-nav-btn[data-nav="history"].active)::after {
-    transform: translate3d(300%, 0, 0) !important;
-  }
-
-  .mobile-nav:has(.mobile-nav-btn[data-nav="referral"].active)::after {
-    transform: translate3d(400%, 0, 0) !important;
-  }
-
-  /* The moving pseudo-element supplies the lens on modern Telegram WebViews. */
-  .mobile-nav .mobile-nav-btn[data-nav].active,
-  .mobile-nav .mobile-nav-btn.center-home.active {
-    border-color: transparent !important;
-    background: transparent !important;
-    box-shadow: none !important;
-  }
-}
-
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .mobile-nav.premium-card,
   .mobile-nav {
@@ -5196,6 +5162,319 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-nav::after,
+  .mobile-nav-btn,
+  .mobile-nav-btn .nav-icon-img,
+  .mobile-nav-btn strong {
+    transition: none !important;
+  }
+}
+
+/* =========================================================
+   UI VERSE GLASS NAVBAR V24
+   Material source: Uiverse solid-metal `.card`, adapted only
+   for the existing five-item floating navigation geometry.
+   The glass recipe itself stays faithful to the supplied card:
+   #ffffff56 border, 10.5px backdrop blur, #ffffff45 inset
+   reflection and the soft diagonal white shine pass.
+========================================================= */
+
+.app-shell {
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+.mobile-nav.premium-card,
+.mobile-nav {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 9999 !important;
+  box-sizing: border-box !important;
+  width: min(calc(100% - 16px), 566px) !important;
+  max-width: 566px !important;
+  height: 74px !important;
+  min-height: 74px !important;
+  margin: 0 !important;
+  padding: 5px !important;
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  align-items: stretch !important;
+  gap: 0 !important;
+
+  /* Exact glass recipe from the supplied Uiverse card. */
+  overflow: hidden !important;
+  isolation: isolate !important;
+  contain: none !important;
+  border: 1px solid #ffffff56 !important;
+  border-radius: 29px !important;
+  outline: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  background-blend-mode: normal !important;
+  box-shadow: inset 2px 1px 6px #ffffff45 !important;
+  backdrop-filter: blur(10.5px) !important;
+  -webkit-backdrop-filter: blur(10.5px) !important;
+
+  opacity: 1 !important;
+  filter: none !important;
+  transform: translate3d(-50%, 0, 0) !important;
+  transform-origin: 50% 50% !important;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  clip-path: none !important;
+  -webkit-clip-path: none !important;
+}
+
+/* V24 intentionally removes the previous synthetic rim/refraction layer. */
+.mobile-nav::before {
+  content: none !important;
+  display: none !important;
+}
+
+/* The supplied card's moving white reflection. */
+.mobile-nav::after {
+  content: "" !important;
+  position: absolute !important;
+  z-index: -1 !important;
+  width: 150% !important;
+  height: 10px !important;
+  top: 100% !important;
+  left: -100% !important;
+  right: auto !important;
+  bottom: auto !important;
+  display: block !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  transform: rotateZ(50deg) !important;
+  transform-origin: center !important;
+  filter: blur(30px) !important;
+  animation: navUiverseShine 10s ease infinite !important;
+  pointer-events: none !important;
+}
+
+.mobile-nav-btn,
+.mobile-nav-btn.center-home {
+  position: relative !important;
+  z-index: 1 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 7px 2px 5px !important;
+  display: grid !important;
+  grid-template-rows: 30px 13px !important;
+  place-items: center !important;
+  align-content: center !important;
+  gap: 3px !important;
+  overflow: hidden !important;
+  border: 1px solid transparent !important;
+  border-radius: 23px !important;
+  outline: 0 !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  filter: none !important;
+  transform: none !important;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease !important;
+  animation: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  touch-action: manipulation !important;
+}
+
+.mobile-nav .mobile-nav-btn::before,
+.mobile-nav .mobile-nav-btn::after {
+  content: none !important;
+  display: none !important;
+}
+
+.mobile-nav-btn .nav-icon-wrap,
+.mobile-nav-btn.center-home .nav-icon-wrap,
+.mobile-nav-btn.center-home span,
+.mobile-nav .mobile-nav-btn[data-nav] > .nav-icon-wrap,
+.mobile-nav .mobile-nav-btn[data-nav].active > .nav-icon-wrap {
+  box-sizing: border-box !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  overflow: visible !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  filter: none !important;
+  transform: none !important;
+  transition: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.mobile-nav-btn .nav-icon-img,
+.mobile-nav-btn.center-home .nav-icon-img,
+.mobile-nav .mobile-nav-btn[data-nav] > .nav-icon-wrap > .nav-icon-img {
+  width: 25px !important;
+  min-width: 25px !important;
+  height: 25px !important;
+  object-fit: contain !important;
+  opacity: 0.62 !important;
+  filter: brightness(0) invert(1) !important;
+  transform: none !important;
+  transition: opacity 140ms ease !important;
+}
+
+.mobile-nav-btn strong,
+.mobile-nav-btn.center-home strong {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  color: currentColor !important;
+  font-size: clamp(8.5px, 2.7vw, 10.5px) !important;
+  font-weight: 620 !important;
+  line-height: 1 !important;
+  letter-spacing: -0.016em !important;
+  text-overflow: ellipsis !important;
+  text-shadow: none !important;
+  white-space: nowrap !important;
+  transition: color 140ms ease !important;
+}
+
+/* Active state uses the same Uiverse border/inset language without nested blur. */
+.mobile-nav .mobile-nav-btn[data-nav].active,
+.mobile-nav .mobile-nav-btn.center-home.active {
+  color: rgba(255, 255, 255, 0.99) !important;
+  border-color: #ffffff56 !important;
+  background: rgba(255, 255, 255, 0.055) !important;
+  box-shadow: inset 2px 1px 6px #ffffff45 !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.mobile-nav .mobile-nav-btn[data-nav].active .nav-icon-img,
+.mobile-nav .mobile-nav-btn.center-home.active .nav-icon-img {
+  opacity: 1 !important;
+  filter: brightness(0) invert(1) !important;
+}
+
+.mobile-nav .mobile-nav-btn[data-nav].active strong,
+.mobile-nav .mobile-nav-btn.center-home.active strong {
+  color: rgba(255, 255, 255, 0.99) !important;
+  font-weight: 700 !important;
+  text-shadow: none !important;
+}
+
+.mobile-nav-btn:hover,
+.mobile-nav-btn:active:not(:disabled),
+.mobile-nav-btn.center-home:active:not(:disabled) {
+  transform: none !important;
+  filter: none !important;
+}
+
+.mobile-nav-btn:disabled {
+  opacity: 0.46 !important;
+}
+
+.mobile-nav .home-glow-dot {
+  content: none !important;
+  display: none !important;
+}
+
+@keyframes navUiverseShine {
+  0% {
+    top: 100%;
+    left: -100%;
+  }
+
+  50%,
+  100% {
+    top: 0%;
+    left: 70%;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mobile-nav.premium-card,
+  .mobile-nav {
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .mobile-nav.premium-card,
+  .mobile-nav {
+    width: calc(100% - 14px) !important;
+    height: 72px !important;
+    min-height: 72px !important;
+    border-radius: 28px !important;
+  }
+
+  .mobile-nav-btn,
+  .mobile-nav-btn.center-home {
+    border-radius: 22px !important;
+  }
+}
+
+@media (max-width: 350px) {
+  .app-shell {
+    padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  .mobile-nav.premium-card,
+  .mobile-nav {
+    width: calc(100% - 12px) !important;
+    height: 68px !important;
+    min-height: 68px !important;
+    padding: 4px !important;
+    border-radius: 26px !important;
+  }
+
+  .mobile-nav-btn,
+  .mobile-nav-btn.center-home {
+    padding-right: 1px !important;
+    padding-left: 1px !important;
+    grid-template-rows: 28px 12px !important;
+    border-radius: 21px !important;
+  }
+
+  .mobile-nav-btn .nav-icon-wrap,
+  .mobile-nav-btn.center-home .nav-icon-wrap,
+  .mobile-nav-btn.center-home span,
+  .mobile-nav .mobile-nav-btn[data-nav] > .nav-icon-wrap,
+  .mobile-nav .mobile-nav-btn[data-nav].active > .nav-icon-wrap {
+    width: 28px !important;
+    min-width: 28px !important;
+    height: 28px !important;
+    min-height: 28px !important;
+  }
+
+  .mobile-nav-btn .nav-icon-img,
+  .mobile-nav-btn.center-home .nav-icon-img,
+  .mobile-nav .mobile-nav-btn[data-nav] > .nav-icon-wrap > .nav-icon-img {
+    width: 23px !important;
+    min-width: 23px !important;
+    height: 23px !important;
+  }
+
+  .mobile-nav-btn strong,
+  .mobile-nav-btn.center-home strong {
+    font-size: 8.25px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav::after {
+    animation: none !important;
+    opacity: 0 !important;
+  }
+
   .mobile-nav-btn,
   .mobile-nav-btn .nav-icon-img,
   .mobile-nav-btn strong {
