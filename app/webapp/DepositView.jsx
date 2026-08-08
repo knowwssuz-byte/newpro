@@ -836,7 +836,7 @@ export default function DepositView({
         <span className={styles.secureIcon}><ShieldIcon /></span>
         <div>
           <strong>Xavfsiz deposit</strong>
-          <span>To‘lov serverda tekshiriladi va bir marta hisoblanadi</span>
+          <span>Server himoyasi · har bir to‘lov faqat bir marta hisoblanadi</span>
         </div>
         <em>LIVE</em>
       </div>
@@ -847,7 +847,7 @@ export default function DepositView({
         <div>
           <span className={styles.eyebrow}>BALANCE TOP UP</span>
           <h2>Qulay usulni tanlang</h2>
-          <p>Stars — darhol, TON / GRAM — wallet va blockchain tasdig‘idan keyin, Gift — tekshiruvdan keyin tushadi.</p>
+          <p>Stars — darhol · TON / GRAM — wallet orqali · Gift — tekshiruv bilan.</p>
         </div>
         <div className={styles.heroMarks} aria-hidden="true">
           <StarsMark />
@@ -898,6 +898,7 @@ export default function DepositView({
             className={`${styles.methodCard} ${styles[item.id]} ${
               method === item.id ? styles.activeMethod : ''
             }`}
+            aria-pressed={method === item.id}
             onClick={() => {
               setMethod(item.id);
               setError('');
