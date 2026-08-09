@@ -1573,7 +1573,6 @@ function PromoImageCard({
   variant,
   image,
   badge,
-  badgeIcon,
   title,
   subtitle,
   actionText,
@@ -1581,15 +1580,6 @@ function PromoImageCard({
 }) {
   const [failed, setFailed] = useState(false);
   const isPvp = variant === 'pvp';
-  const symbolAssets = isPvp
-    ? {
-        primary: '/feature/giftmyst-liquid-v33/symbols/pvp-crossed-blades-v33.png',
-        secondary: '/feature/giftmyst-liquid-v33/symbols/pvp-split-shield-v33.png',
-      }
-    : {
-        primary: '/feature/giftmyst-liquid-v33/symbols/rocket-trajectory-arrow-v33.png',
-        secondary: '/feature/giftmyst-liquid-v33/symbols/rocket-orbital-crystal-v33.png',
-      };
 
   return (
     <button
@@ -1598,60 +1588,14 @@ function PromoImageCard({
       onClick={onClick}
       aria-label={title}
     >
-      <span className={gameCardStyles.ambient} aria-hidden="true" />
-      <span className={gameCardStyles.refraction} aria-hidden="true" />
-      <span className={gameCardStyles.motionField} aria-hidden="true">
-        <span className={gameCardStyles.orbitRing}><i /></span>
-        <span className={`${gameCardStyles.floatingAsset} ${gameCardStyles.symbolOne}`}>
-          <Image
-            src={symbolAssets.primary}
-            alt=""
-            className={gameCardStyles.symbolAsset}
-            fill
-            sizes="48px"
-            unoptimized
-            draggable={false}
-          />
-        </span>
-        <span className={`${gameCardStyles.floatingAsset} ${gameCardStyles.symbolTwo}`}>
-          <Image
-            src={symbolAssets.secondary}
-            alt=""
-            className={gameCardStyles.symbolAsset}
-            fill
-            sizes="44px"
-            unoptimized
-            draggable={false}
-          />
-        </span>
-        <i className={`${gameCardStyles.particle} ${gameCardStyles.particleOne}`} />
-        <i className={`${gameCardStyles.particle} ${gameCardStyles.particleTwo}`} />
-        <i className={`${gameCardStyles.particle} ${gameCardStyles.particleThree}`} />
-      </span>
+      <span className={gameCardStyles.scene} aria-hidden="true" />
+      <span className={gameCardStyles.sceneShade} aria-hidden="true" />
+      <span className={gameCardStyles.sceneGlow} aria-hidden="true" />
       <span className={gameCardStyles.opticalRim} aria-hidden="true" />
-
-      {isPvp ? (
-        <span className={`${gameCardStyles.telemetry} ${gameCardStyles.pvpTelemetry}`} aria-hidden="true">
-          <small>DUEL SYNC</small>
-          <span className={`${gameCardStyles.playerValue} ${gameCardStyles.playerOne}`}>01</span>
-          <b className={gameCardStyles.vsMark}>VS</b>
-          <span className={`${gameCardStyles.playerValue} ${gameCardStyles.playerTwo}`}>01</span>
-          <i className={gameCardStyles.duelMeter}><b /></i>
-        </span>
-      ) : (
-        <span className={`${gameCardStyles.telemetry} ${gameCardStyles.rocketTelemetry}`} aria-hidden="true">
-          <small>LIVE CURVE</small>
-          <span className={`${gameCardStyles.multiplier} ${gameCardStyles.multiplierLow}`}>x1.24</span>
-          <span className={`${gameCardStyles.multiplier} ${gameCardStyles.multiplierMid}`}>x1.86</span>
-          <span className={`${gameCardStyles.multiplier} ${gameCardStyles.multiplierHigh}`}>x3.80</span>
-          <i className={gameCardStyles.trajectoryTrack}><b /></i>
-        </span>
-      )}
 
       <div className={gameCardStyles.copy}>
         <span className={gameCardStyles.status}>
           <span className={gameCardStyles.statusDot} aria-hidden="true" />
-          <AppIcon name={badgeIcon} />
           {badge}
         </span>
 
@@ -1717,7 +1661,6 @@ function HomeView({
           variant="rocket"
           image="/feature/giftmyst-liquid-v30/rocket-premium-3d-v30.png"
           badge="LIVE"
-          badgeIcon="rocket"
           title="ROCKET"
           subtitle="Crash game • Live"
           actionText="Play"
@@ -1728,7 +1671,6 @@ function HomeView({
           variant="pvp"
           image="/feature/giftmyst-liquid-v30/pvp-premium-3d-v30.png"
           badge="SOON"
-          badgeIcon="spark"
           title="PVP"
           subtitle="Battle mode • Tez orada"
           actionText="Tez orada"
@@ -1809,7 +1751,6 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
           variant="rocket"
           image="/feature/giftmyst-liquid-v30/rocket-premium-3d-v30.png"
           badge="LIVE"
-          badgeIcon="rocket"
           title="ROCKET"
           subtitle="Multiplier crash game"
           actionText="Play"
@@ -1820,7 +1761,6 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
           variant="pvp"
           image="/feature/giftmyst-liquid-v30/pvp-premium-3d-v30.png"
           badge="SOON"
-          badgeIcon="spark"
           title="PVP"
           subtitle="Battle mode • Tez orada"
           actionText="Tez orada"
