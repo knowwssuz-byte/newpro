@@ -1580,6 +1580,16 @@ function PromoImageCard({
   onClick,
 }) {
   const [failed, setFailed] = useState(false);
+  const isPvp = variant === 'pvp';
+  const symbolAssets = isPvp
+    ? {
+        primary: '/feature/giftmyst-liquid-v33/symbols/pvp-crossed-blades-v33.png',
+        secondary: '/feature/giftmyst-liquid-v33/symbols/pvp-split-shield-v33.png',
+      }
+    : {
+        primary: '/feature/giftmyst-liquid-v33/symbols/rocket-trajectory-arrow-v33.png',
+        secondary: '/feature/giftmyst-liquid-v33/symbols/rocket-orbital-crystal-v33.png',
+      };
 
   return (
     <button
@@ -1592,20 +1602,51 @@ function PromoImageCard({
       <span className={gameCardStyles.refraction} aria-hidden="true" />
       <span className={gameCardStyles.motionField} aria-hidden="true">
         <span className={gameCardStyles.orbitRing}><i /></span>
-        <span className={`${gameCardStyles.motionSymbol} ${gameCardStyles.symbolOne}`}>
-          <AppIcon name={variant === 'pvp' ? 'swords' : 'spark'} />
+        <span className={`${gameCardStyles.floatingAsset} ${gameCardStyles.symbolOne}`}>
+          <Image
+            src={symbolAssets.primary}
+            alt=""
+            className={gameCardStyles.symbolAsset}
+            fill
+            sizes="48px"
+            unoptimized
+            draggable={false}
+          />
         </span>
-        <span className={`${gameCardStyles.motionSymbol} ${gameCardStyles.symbolTwo}`}>
-          <AppIcon name={variant === 'pvp' ? 'shield' : 'trend'} />
-        </span>
-        <span className={`${gameCardStyles.motionSymbol} ${gameCardStyles.symbolThree}`}>
-          <AppIcon name={variant === 'pvp' ? 'spark' : 'gem'} />
+        <span className={`${gameCardStyles.floatingAsset} ${gameCardStyles.symbolTwo}`}>
+          <Image
+            src={symbolAssets.secondary}
+            alt=""
+            className={gameCardStyles.symbolAsset}
+            fill
+            sizes="44px"
+            unoptimized
+            draggable={false}
+          />
         </span>
         <i className={`${gameCardStyles.particle} ${gameCardStyles.particleOne}`} />
         <i className={`${gameCardStyles.particle} ${gameCardStyles.particleTwo}`} />
         <i className={`${gameCardStyles.particle} ${gameCardStyles.particleThree}`} />
       </span>
       <span className={gameCardStyles.opticalRim} aria-hidden="true" />
+
+      {isPvp ? (
+        <span className={`${gameCardStyles.telemetry} ${gameCardStyles.pvpTelemetry}`} aria-hidden="true">
+          <small>DUEL SYNC</small>
+          <span className={`${gameCardStyles.playerValue} ${gameCardStyles.playerOne}`}>01</span>
+          <b className={gameCardStyles.vsMark}>VS</b>
+          <span className={`${gameCardStyles.playerValue} ${gameCardStyles.playerTwo}`}>01</span>
+          <i className={gameCardStyles.duelMeter}><b /></i>
+        </span>
+      ) : (
+        <span className={`${gameCardStyles.telemetry} ${gameCardStyles.rocketTelemetry}`} aria-hidden="true">
+          <small>LIVE CURVE</small>
+          <span className={`${gameCardStyles.multiplier} ${gameCardStyles.multiplierLow}`}>x1.24</span>
+          <span className={`${gameCardStyles.multiplier} ${gameCardStyles.multiplierMid}`}>x1.86</span>
+          <span className={`${gameCardStyles.multiplier} ${gameCardStyles.multiplierHigh}`}>x3.80</span>
+          <i className={gameCardStyles.trajectoryTrack}><b /></i>
+        </span>
+      )}
 
       <div className={gameCardStyles.copy}>
         <span className={gameCardStyles.status}>
@@ -1640,7 +1681,7 @@ function PromoImageCard({
           />
         ) : (
           <span className={gameCardStyles.fallbackIcon}>
-            <AppIcon name={variant === 'pvp' ? 'swords' : 'rocket'} />
+            <AppIcon name={isPvp ? 'swords' : 'rocket'} />
           </span>
         )}
       </div>
