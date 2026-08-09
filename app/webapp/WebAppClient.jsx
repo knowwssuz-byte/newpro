@@ -1574,61 +1574,40 @@ function PromoImageCard({
   image,
   badge,
   title,
-  subtitle,
   actionText,
   onClick,
 }) {
   const [failed, setFailed] = useState(false);
   const isPvp = variant === 'pvp';
+  const accessibleAction = actionText ? `, ${actionText}` : '';
 
   return (
     <button
       type="button"
       className={`${gameCardStyles.heroCard} ${gameCardStyles[variant]} ${failed ? gameCardStyles.imageFailed : ''}`}
       onClick={onClick}
-      aria-label={title}
+      aria-label={`${title}, ${badge}${accessibleAction}`}
     >
-      <span className={gameCardStyles.scene} aria-hidden="true" />
-      <span className={gameCardStyles.sceneShade} aria-hidden="true" />
-      <span className={gameCardStyles.sceneGlow} aria-hidden="true" />
-      <span className={gameCardStyles.opticalRim} aria-hidden="true" />
-
-      <div className={gameCardStyles.copy}>
-        <span className={gameCardStyles.status}>
-          <span className={gameCardStyles.statusDot} aria-hidden="true" />
-          {badge}
-        </span>
-
-        <span className={gameCardStyles.titleGroup}>
+      {!failed && image ? (
+        <Image
+          src={image}
+          alt=""
+          className={gameCardStyles.completeCardArt}
+          width={768}
+          height={1152}
+          sizes="(max-width: 590px) 46vw, 240px"
+          priority
+          unoptimized
+          draggable={false}
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <span className={gameCardStyles.fallbackCard} aria-hidden="true">
+          <AppIcon name={isPvp ? 'swords' : 'rocket'} />
           <strong>{title}</strong>
-          {subtitle ? <em>{subtitle}</em> : null}
+          <em>{badge}</em>
         </span>
-
-        <span className={gameCardStyles.cta}>
-          {actionText || 'Open'}
-          <b aria-hidden="true">›</b>
-        </span>
-      </div>
-
-      <div className={gameCardStyles.artStage} aria-hidden="true">
-        {!failed && image ? (
-          <Image
-            src={image}
-            alt=""
-            className={gameCardStyles.art}
-            fill
-            sizes="(max-width: 590px) 64vw, 370px"
-            priority
-            unoptimized
-            draggable="false"
-            onError={() => setFailed(true)}
-          />
-        ) : (
-          <span className={gameCardStyles.fallbackIcon}>
-            <AppIcon name={isPvp ? 'swords' : 'rocket'} />
-          </span>
-        )}
-      </div>
+      )}
     </button>
   );
 }
@@ -1659,20 +1638,18 @@ function HomeView({
       <div className={gameCardStyles.stack}>
         <PromoImageCard
           variant="rocket"
-          image="/feature/giftmyst-liquid-v30/rocket-premium-3d-v30.png"
+          image="/feature/giftmyst-complete-v39/rocket-card-live-transparent-v39.webp"
           badge="LIVE"
           title="ROCKET"
-          subtitle="Crash game • Live"
           actionText="Play"
           onClick={onOpenRocket}
         />
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/giftmyst-liquid-v30/pvp-premium-3d-v30.png"
-          badge="SOON"
+          image="/feature/giftmyst-complete-v39/pvp-card-duel-transparent-v39.webp"
+          badge="DUEL"
           title="PVP"
-          subtitle="Battle mode • Tez orada"
           actionText="Tez orada"
           onClick={showComingSoon}
         />
@@ -1749,20 +1726,18 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
       <div className={`${gameCardStyles.stack} ${gameCardStyles.gamesStack}`}>
         <PromoImageCard
           variant="rocket"
-          image="/feature/giftmyst-liquid-v30/rocket-premium-3d-v30.png"
+          image="/feature/giftmyst-complete-v39/rocket-card-live-transparent-v39.webp"
           badge="LIVE"
           title="ROCKET"
-          subtitle="Multiplier crash game"
           actionText="Play"
           onClick={onOpenRocket}
         />
 
         <PromoImageCard
           variant="pvp"
-          image="/feature/giftmyst-liquid-v30/pvp-premium-3d-v30.png"
-          badge="SOON"
+          image="/feature/giftmyst-complete-v39/pvp-card-duel-transparent-v39.webp"
+          badge="DUEL"
           title="PVP"
-          subtitle="Battle mode • Tez orada"
           actionText="Tez orada"
           onClick={onComingSoon}
         />
