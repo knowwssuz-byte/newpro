@@ -1235,14 +1235,7 @@ export default function WebAppClient() {
   if (loading) {
     return (
       <div className="initial-loader-screen">
-        <div className="initial-loader" role="status" aria-label="Gift Myst yuklanmoqda">
-          <div className="initial-loader-mark" aria-hidden="true">
-            <span />
-            <span />
-          </div>
-          <strong>GIFT MYST</strong>
-          <small>Yuklanmoqda</small>
-        </div>
+        <div className="spinner" role="status" aria-label="Gift Myst yuklanmoqda" />
       </div>
     );
   }
@@ -1728,8 +1721,8 @@ function HomeView({
             <AppIcon name="box" />
           </span>
           <span className={gameCardStyles.actionCopy}>
-            <strong>CONTRACTS</strong>
-            <small>Open cases</small>
+            <strong>CASES</strong>
+            <small>Browse &amp; open</small>
           </span>
           <b className={gameCardStyles.actionChevron} aria-hidden="true">›</b>
         </button>
@@ -1739,8 +1732,8 @@ function HomeView({
             <AppIcon name="spark" />
           </span>
           <span className={gameCardStyles.actionCopy}>
-            <strong>UPGRADE</strong>
-            <small>Boost items</small>
+            <strong>INVENTORY</strong>
+            <small>Your rewards</small>
           </span>
           <b className={gameCardStyles.actionChevron} aria-hidden="true">›</b>
         </button>

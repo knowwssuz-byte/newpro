@@ -1745,3 +1745,155 @@
     transition: none;
   }
 }
+
+/* V42 — brighter premium shortcuts for Cases and Inventory. */
+.actionsGrid {
+  gap: 11px;
+  margin-top: 2px;
+  margin-bottom: 20px;
+}
+
+.actionCard {
+  height: clamp(78px, 20vw, 88px);
+  grid-template-columns: clamp(40px, 10.8vw, 46px) minmax(0, 1fr) 16px;
+  gap: clamp(8px, 2vw, 11px);
+  padding: 0 clamp(10px, 2.7vw, 14px);
+  border: 1px solid rgba(221, 234, 255, 0.3);
+  border-radius: 22px;
+  background:
+    radial-gradient(110% 130% at -5% -25%, rgba(var(--action-accent), 0.48), transparent 57%),
+    radial-gradient(90% 120% at 112% 120%, rgba(var(--action-secondary), 0.25), transparent 67%),
+    linear-gradient(145deg, rgba(var(--action-surface), 0.94), rgba(var(--action-surface-deep), 0.97));
+  box-shadow:
+    0 13px 28px rgba(6, 18, 48, 0.2),
+    0 6px 16px rgba(var(--action-accent), 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    inset 0 -1px 0 rgba(5, 12, 32, 0.12);
+}
+
+.contracts {
+  --action-accent: 112, 145, 255;
+  --action-secondary: 137, 111, 255;
+  --action-surface: 53, 72, 126;
+  --action-surface-deep: 31, 43, 78;
+}
+
+.upgrade {
+  --action-accent: 76, 218, 235;
+  --action-secondary: 75, 139, 255;
+  --action-surface: 42, 93, 116;
+  --action-surface-deep: 28, 48, 76;
+}
+
+.actionCard::before {
+  opacity: 0.9;
+  background:
+    radial-gradient(62% 150% at 10% -60%, rgba(255, 255, 255, 0.24), transparent 58%),
+    radial-gradient(50% 100% at 104% 108%, rgba(var(--action-accent), 0.2), transparent 68%);
+  animation: none;
+}
+
+.actionCard::after {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 17%;
+  left: 17%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.58), transparent);
+  pointer-events: none;
+}
+
+.actionIcon {
+  width: clamp(40px, 10.8vw, 46px);
+  height: clamp(40px, 10.8vw, 46px);
+  border: 1px solid rgba(230, 239, 255, 0.29);
+  border-radius: 15px;
+  color: #f8fbff;
+  background:
+    radial-gradient(circle at 25% 18%, rgba(255, 255, 255, 0.26), transparent 43%),
+    linear-gradient(145deg, rgba(var(--action-accent), 0.3), rgba(255, 255, 255, 0.07));
+  box-shadow:
+    0 7px 17px rgba(4, 14, 38, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.actionIcon svg {
+  width: clamp(20px, 5.4vw, 23px);
+  height: clamp(20px, 5.4vw, 23px);
+  stroke-width: 2.15;
+}
+
+.actionCopy {
+  gap: 5px;
+}
+
+.actionCopy strong {
+  font-family: var(--font-display);
+  font-size: clamp(10px, 3.05vw, 13.5px);
+  font-weight: 820;
+  letter-spacing: -0.02em;
+}
+
+.actionCopy small {
+  color: rgba(226, 235, 255, 0.7);
+  font-size: clamp(7px, 2.15vw, 9.5px);
+  font-weight: 610;
+}
+
+.actionChevron {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.06);
+  font-size: 16px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .actionCard:hover {
+    filter: brightness(1.06) saturate(1.04);
+    transform: translate3d(0, -2px, 0);
+    box-shadow:
+      0 17px 34px rgba(6, 18, 48, 0.24),
+      0 8px 20px rgba(var(--action-accent), 0.14),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+}
+
+@media (max-width: 430px) {
+  .actionsGrid {
+    gap: 9px;
+  }
+
+  .actionCard {
+    height: 76px;
+    border-radius: 20px;
+  }
+}
+
+@media (max-width: 350px) {
+  .actionCard {
+    height: 70px;
+    grid-template-columns: 36px minmax(0, 1fr) 12px;
+    gap: 7px;
+    padding-inline: 8px;
+    border-radius: 18px;
+  }
+
+  .actionIcon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+
+  .actionChevron {
+    width: 17px;
+    height: 17px;
+    font-size: 14px;
+  }
+}
