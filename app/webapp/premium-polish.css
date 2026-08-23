@@ -827,3 +827,114 @@ body::before {
     animation-duration: 2.8s;
   }
 }
+
+/* Initial loader V2 — minimal rotating X on a clean, grid-free canvas. */
+.initial-loader-screen {
+  color: #fff;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(128, 101, 255, 0.12), transparent 23%),
+    #080a12;
+}
+
+.initial-loader-screen::before {
+  display: none;
+}
+
+.initial-loader {
+  min-width: 150px;
+  gap: 10px;
+}
+
+.initial-loader-mark {
+  width: 58px;
+  height: 58px;
+  margin-bottom: 12px;
+  border-radius: 0;
+  animation: gm-loader-x 1.25s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.initial-loader-mark::before {
+  display: none;
+}
+
+.initial-loader-mark::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background: #8b73ff;
+  box-shadow: 0 0 16px rgba(139, 115, 255, 0.58);
+  transform: translate(-50%, -50%);
+}
+
+.initial-loader-mark span,
+.initial-loader-mark span:nth-child(1),
+.initial-loader-mark span:nth-child(2) {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  width: 55px;
+  height: 11px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #6d55ff 0%, #f7f5ff 48%, #6d55ff 100%);
+  box-shadow:
+    0 0 14px rgba(123, 94, 255, 0.28),
+    inset 0 1px 1px rgba(255, 255, 255, 0.58);
+}
+
+.initial-loader-mark span:nth-child(1) {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.initial-loader-mark span:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.initial-loader > strong {
+  font-size: 16px;
+  font-weight: 820;
+  letter-spacing: 0.18em;
+  text-shadow: none;
+}
+
+.initial-loader > small {
+  color: rgba(230, 229, 242, 0.48);
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+@keyframes gm-loader-x {
+  0% {
+    transform: rotate(0deg) scale(0.84);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(0.84);
+  }
+}
+
+@media (max-width: 430px) {
+  .initial-loader-mark {
+    width: 58px;
+    height: 58px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .initial-loader-mark {
+    animation-duration: 2.5s;
+  }
+}

@@ -1239,12 +1239,9 @@ export default function WebAppClient() {
           <div className="initial-loader-mark" aria-hidden="true">
             <span />
             <span />
-            <span />
-            <span />
-            <i />
           </div>
           <strong>GIFT MYST</strong>
-          <small>Preparing your experience</small>
+          <small>Yuklanmoqda</small>
         </div>
       </div>
     );
@@ -1623,12 +1620,10 @@ function HomeGameBanner({
   title,
   description,
   actionText,
-  background,
-  art,
+  image,
   onClick,
 }) {
   const isPvp = variant === 'pvp';
-  const highlights = isPvp ? ['1V1', 'DUEL', 'SOON'] : ['x1.25', 'x2.80', 'x5.40'];
 
   return (
     <button
@@ -1638,19 +1633,18 @@ function HomeGameBanner({
       aria-label={`${title}, ${badge}, ${actionText}`}
     >
       <Image
-        src={background}
+        src={image}
         alt=""
-        className={gameCardStyles.bannerBackdrop}
-        width={1536}
-        height={512}
+        className={gameCardStyles.bannerImage}
+        width={1600}
+        height={800}
         sizes="(max-width: 590px) 100vw, 560px"
         priority
         unoptimized
         draggable={false}
       />
 
-      <span className={gameCardStyles.bannerVeil} aria-hidden="true" />
-      <span className={gameCardStyles.bannerShard} aria-hidden="true" />
+      <span className={gameCardStyles.bannerShade} aria-hidden="true" />
 
       <span className={gameCardStyles.bannerCopy}>
         <span className={gameCardStyles.bannerBadge}>
@@ -1658,7 +1652,6 @@ function HomeGameBanner({
           {badge}
         </span>
         <span className={gameCardStyles.bannerTitle}>
-          <AppIcon name={isPvp ? 'swords' : 'rocket'} />
           <strong>{title}</strong>
         </span>
         <small>{description}</small>
@@ -1666,24 +1659,6 @@ function HomeGameBanner({
           {actionText}
           <b aria-hidden="true">›</b>
         </span>
-      </span>
-
-      <span className={gameCardStyles.bannerRates} aria-hidden="true">
-        {highlights.map((item) => <em key={item}>{item}</em>)}
-      </span>
-
-      <span className={gameCardStyles.bannerArtStage} aria-hidden="true">
-        <Image
-          src={art}
-          alt=""
-          className={gameCardStyles.bannerArt}
-          width={1024}
-          height={1024}
-          sizes="(max-width: 590px) 56vw, 300px"
-          priority
-          unoptimized
-          draggable={false}
-        />
       </span>
     </button>
   );
@@ -1731,8 +1706,7 @@ function HomeView({
             title="ROCKET"
             description="Fly high. Cash out in time."
             actionText="Play now"
-            background="/feature/premium-arcade/rocket-launch-deck-bg-v16.webp"
-            art="/feature/premium-arcade/rocket-premium-static-v16.png"
+            image="/feature/game-banners/rocket-v41.webp"
             onClick={onOpenRocket}
           />
 
@@ -1742,8 +1716,7 @@ function HomeView({
             title="PVP"
             description="Challenge rivals. Own the arena."
             actionText="Tez orada"
-            background="/feature/premium-arcade/pvp-golden-arena-bg-v16.webp"
-            art="/feature/premium-arcade/pvp-premium-static-v16.png"
+            image="/feature/game-banners/pvp-v41.webp"
             onClick={showComingSoon}
           />
         </div>

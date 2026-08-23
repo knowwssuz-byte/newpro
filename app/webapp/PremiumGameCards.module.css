@@ -1562,3 +1562,186 @@
     transition: none;
   }
 }
+
+/* V41 — unified premium artwork with a restrained, readable overlay. */
+.bannerStack {
+  gap: 12px;
+}
+
+.gameBanner {
+  height: clamp(138px, 31vw, 158px);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 24px;
+  background: #2388ee;
+  box-shadow:
+    0 16px 34px rgba(20, 87, 184, 0.24),
+    0 3px 10px rgba(5, 19, 50, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58);
+}
+
+.pvpBanner {
+  background: #f59e0b;
+  border-color: rgba(255, 247, 219, 0.7);
+  box-shadow:
+    0 16px 34px rgba(211, 113, 0, 0.23),
+    0 3px 10px rgba(68, 33, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.bannerImage {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center right;
+  filter: saturate(1.04) contrast(1.02);
+  pointer-events: none;
+  transform: scale(1.012);
+  transition: transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.rocketBanner .bannerImage {
+  object-position: 62% 54%;
+}
+
+.pvpBanner .bannerImage {
+  object-position: 57% 50%;
+}
+
+.bannerShade {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(21, 119, 216, 0.94) 0%, rgba(28, 132, 227, 0.78) 33%, rgba(22, 116, 220, 0.2) 57%, transparent 76%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 35%);
+  pointer-events: none;
+}
+
+.pvpBanner .bannerShade {
+  background:
+    linear-gradient(90deg, rgba(244, 145, 5, 0.96) 0%, rgba(242, 140, 0, 0.78) 34%, rgba(213, 91, 0, 0.16) 60%, transparent 78%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), transparent 35%);
+}
+
+.bannerCopy {
+  z-index: 2;
+  top: 13px;
+  bottom: 13px;
+  left: 15px;
+  width: 48%;
+  gap: 5px;
+}
+
+.bannerBadge {
+  min-height: 25px;
+  padding: 0 9px;
+  border: 0;
+  border-radius: 8px;
+  color: #2787df;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 5px 14px rgba(16, 75, 155, 0.16);
+  font-size: 10px;
+  letter-spacing: 0.02em;
+}
+
+.pvpBanner .bannerBadge {
+  color: #ef8b05;
+  box-shadow: 0 5px 14px rgba(128, 60, 0, 0.15);
+}
+
+.bannerTitle {
+  margin-top: 2px;
+  text-shadow: 0 5px 14px rgba(0, 45, 120, 0.2);
+}
+
+.bannerTitle strong {
+  font-size: clamp(30px, 8vw, 40px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+}
+
+.bannerCopy > small {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.bannerAction {
+  min-height: 24px;
+  margin-top: auto;
+  padding: 0 7px 0 10px;
+  border-color: rgba(255, 255, 255, 0.34);
+  color: #fff;
+  background: rgba(6, 63, 145, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  font-size: 9px;
+}
+
+.pvpBanner .bannerAction {
+  background: rgba(132, 53, 0, 0.19);
+}
+
+.bannerAction b {
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.17);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gameBanner:hover {
+    filter: brightness(1.025) saturate(1.025);
+    transform: translate3d(0, -2px, 0);
+  }
+
+  .gameBanner:hover .bannerImage {
+    transform: scale(1.035);
+  }
+}
+
+@media (max-width: 430px) {
+  .bannerStack {
+    gap: 10px;
+  }
+
+  .gameBanner {
+    height: clamp(124px, 34vw, 142px);
+    border-radius: 21px;
+  }
+
+  .bannerCopy {
+    top: 11px;
+    bottom: 11px;
+    left: 13px;
+    width: 50%;
+    gap: 5px;
+  }
+
+  .bannerTitle strong {
+    font-size: clamp(27px, 8.6vw, 36px);
+  }
+
+  .bannerCopy > small {
+    display: none;
+  }
+
+  .rocketBanner .bannerImage {
+    object-position: 58% 54%;
+  }
+
+  .pvpBanner .bannerImage {
+    object-position: 55% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bannerImage {
+    transition: none;
+  }
+}
