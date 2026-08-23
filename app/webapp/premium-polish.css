@@ -1,0 +1,530 @@
+/*
+ * Gift Myst — premium visual polish layer
+ * Home, shell, bottom navigation and Rocket boot experience only.
+ * This file intentionally does not touch game/payment business logic.
+ */
+
+:root {
+  --gm-bg-0: #06080d;
+  --gm-bg-1: #090d14;
+  --gm-bg-2: #0d131d;
+  --gm-surface: rgba(17, 23, 34, 0.84);
+  --gm-surface-strong: rgba(20, 27, 40, 0.94);
+  --gm-border: rgba(255, 255, 255, 0.075);
+  --gm-border-strong: rgba(255, 255, 255, 0.115);
+  --gm-text: #f4f7fb;
+  --gm-muted: rgba(218, 226, 238, 0.58);
+  --gm-accent: #6ee7b7;
+  --gm-accent-2: #67a7ff;
+  --gm-shadow: 0 20px 60px rgba(0, 0, 0, 0.34);
+}
+
+html,
+body {
+  background: var(--gm-bg-0) !important;
+}
+
+body {
+  min-height: 100dvh;
+  color: var(--gm-text);
+  background:
+    radial-gradient(70% 52% at 12% -8%, rgba(71, 108, 255, 0.13), transparent 68%),
+    radial-gradient(60% 42% at 92% 8%, rgba(46, 213, 154, 0.08), transparent 72%),
+    linear-gradient(180deg, #070a10 0%, #090d14 42%, #06080d 100%) !important;
+  background-attachment: fixed !important;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.017) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 44px 44px;
+  -webkit-mask-image: linear-gradient(to bottom, black, transparent 82%);
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+.app-frame,
+.app-shell,
+.app-main,
+.home-view,
+.premium-home {
+  background: transparent !important;
+}
+
+.app-frame {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+}
+
+.app-shell {
+  width: min(100%, 600px) !important;
+  margin-inline: auto !important;
+}
+
+.app-main {
+  padding-bottom: calc(82px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* --------------------------- Global balance header ----------------------- */
+
+.global-balance-stabilizer {
+  padding-inline: 12px !important;
+}
+
+.global-balance-bar {
+  min-height: 58px !important;
+  padding: 8px 10px 8px 8px !important;
+  border: 1px solid var(--gm-border) !important;
+  border-radius: 18px !important;
+  background:
+    linear-gradient(180deg, rgba(24, 31, 45, 0.92), rgba(12, 17, 26, 0.9)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.055),
+    0 12px 34px rgba(0, 0, 0, 0.22) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+}
+
+.global-balance-bar .home-hero-bg {
+  opacity: 0.34 !important;
+  filter: saturate(0.7) brightness(0.62) !important;
+}
+
+.global-balance-bar .home-avatar {
+  width: 38px !important;
+  height: 38px !important;
+  border: 1px solid rgba(255, 255, 255, 0.11) !important;
+  box-shadow: 0 5px 18px rgba(0, 0, 0, 0.3) !important;
+}
+
+.global-balance-bar .home-balance-copy strong {
+  color: #f8fafc !important;
+  font-size: clamp(16px, 4.3vw, 19px) !important;
+  letter-spacing: -0.035em !important;
+}
+
+.global-balance-bar .deposit-button {
+  min-height: 38px !important;
+  padding: 0 13px !important;
+  gap: 7px !important;
+  border: 1px solid rgba(110, 231, 183, 0.2) !important;
+  border-radius: 12px !important;
+  color: #dffdf0 !important;
+  background:
+    linear-gradient(180deg, rgba(45, 125, 96, 0.28), rgba(24, 72, 58, 0.22)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.055) !important;
+}
+
+.global-balance-bar .deposit-button:active {
+  transform: scale(0.97) !important;
+}
+
+/* ------------------------------- Home ----------------------------------- */
+
+.premium-home {
+  padding-inline: 12px !important;
+  padding-top: 10px !important;
+}
+
+/* Remove the two oversized Rocket/PVP image promo cards from Home only.
+   The same game cards remain available on the dedicated Games screen. */
+.premium-home > div:first-child {
+  display: none !important;
+}
+
+/* Home quick actions: compact, realistic product shortcuts. */
+.premium-home > div:nth-child(2) {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 9px !important;
+  margin: 0 0 18px !important;
+  padding: 0 !important;
+}
+
+.premium-home > div:nth-child(2) > button {
+  position: relative !important;
+  min-width: 0 !important;
+  min-height: 82px !important;
+  padding: 13px 12px !important;
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) 16px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  overflow: hidden !important;
+  border: 1px solid var(--gm-border) !important;
+  border-radius: 17px !important;
+  color: var(--gm-text) !important;
+  background:
+    linear-gradient(145deg, rgba(22, 29, 42, 0.96), rgba(12, 17, 26, 0.91)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.045),
+    0 14px 32px rgba(0, 0, 0, 0.18) !important;
+  transition:
+    transform 150ms ease,
+    border-color 180ms ease,
+    background 180ms ease !important;
+}
+
+.premium-home > div:nth-child(2) > button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(80% 100% at 0% 0%, rgba(103, 167, 255, 0.09), transparent 70%);
+}
+
+.premium-home > div:nth-child(2) > button:nth-child(2)::before {
+  background: radial-gradient(80% 100% at 0% 0%, rgba(110, 231, 183, 0.085), transparent 70%);
+}
+
+.premium-home > div:nth-child(2) > button:active {
+  transform: scale(0.975) !important;
+  border-color: var(--gm-border-strong) !important;
+}
+
+.premium-home > div:nth-child(2) > button > span:first-child {
+  width: 38px !important;
+  height: 38px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(255, 255, 255, 0.075) !important;
+  border-radius: 12px !important;
+  background: rgba(255, 255, 255, 0.035) !important;
+}
+
+.premium-home > div:nth-child(2) > button > span:first-child svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.premium-home > div:nth-child(2) > button > span:nth-child(2) {
+  min-width: 0 !important;
+  text-align: left !important;
+}
+
+.premium-home > div:nth-child(2) > button > span:nth-child(2) strong,
+.premium-home > div:nth-child(2) > button > span:nth-child(2) small {
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.premium-home > div:nth-child(2) > button > span:nth-child(2) strong {
+  margin-bottom: 4px !important;
+  color: #f7f9fc !important;
+  font-size: 13px !important;
+  font-weight: 720 !important;
+  letter-spacing: 0.015em !important;
+}
+
+.premium-home > div:nth-child(2) > button > span:nth-child(2) small {
+  color: var(--gm-muted) !important;
+  font-size: 10.5px !important;
+  font-weight: 520 !important;
+}
+
+/* Make the shortcuts read like real navigation instead of game promotions. */
+.premium-home > div:nth-child(2) > button:nth-child(1) > span:nth-child(2) strong,
+.premium-home > div:nth-child(2) > button:nth-child(2) > span:nth-child(2) strong,
+.premium-home > div:nth-child(2) > button:nth-child(1) > span:nth-child(2) small,
+.premium-home > div:nth-child(2) > button:nth-child(2) > span:nth-child(2) small {
+  font-size: 0 !important;
+}
+
+.premium-home > div:nth-child(2) > button:nth-child(1) > span:nth-child(2) strong::after {
+  content: "Cases";
+  font-size: 13px;
+}
+
+.premium-home > div:nth-child(2) > button:nth-child(1) > span:nth-child(2) small::after {
+  content: "Browse & open";
+  font-size: 10.5px;
+}
+
+.premium-home > div:nth-child(2) > button:nth-child(2) > span:nth-child(2) strong::after {
+  content: "Inventory";
+  font-size: 13px;
+}
+
+.premium-home > div:nth-child(2) > button:nth-child(2) > span:nth-child(2) small::after {
+  content: "Your rewards";
+  font-size: 10.5px;
+}
+
+.premium-home > div:nth-child(2) > button > b:last-child {
+  color: rgba(255, 255, 255, 0.28) !important;
+  font-size: 20px !important;
+  font-weight: 400 !important;
+}
+
+.premium-home .cases-section {
+  margin-top: 0 !important;
+  padding-bottom: 8px !important;
+}
+
+.premium-home .section-title-row {
+  min-height: 34px !important;
+  margin: 0 2px 10px !important;
+}
+
+.premium-home .section-title-row h2 {
+  color: #eef3f9 !important;
+  font-size: 16px !important;
+  font-weight: 730 !important;
+  letter-spacing: -0.025em !important;
+}
+
+.premium-home .section-title-row svg {
+  opacity: 0.66 !important;
+}
+
+.premium-cases-grid {
+  gap: 10px !important;
+}
+
+.premium-cases-grid > article {
+  border-color: rgba(255, 255, 255, 0.065) !important;
+  background:
+    linear-gradient(160deg, rgba(21, 27, 39, 0.93), rgba(11, 15, 23, 0.94)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.035),
+    0 12px 30px rgba(0, 0, 0, 0.17) !important;
+}
+
+/* -------------------------- Compact bottom dock -------------------------- */
+
+nav[aria-label="Bottom navigation"] {
+  bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+  width: min(calc(100% - 22px), 510px) !important;
+  height: 58px !important;
+  gap: 6px !important;
+}
+
+nav[aria-label="Bottom navigation"] > div:first-child,
+nav[aria-label="Bottom navigation"] > div:last-child {
+  border-color: rgba(255, 255, 255, 0.11) !important;
+  background:
+    linear-gradient(180deg, rgba(21, 27, 39, 0.9), rgba(10, 14, 22, 0.88)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 12px 34px rgba(0, 0, 0, 0.26) !important;
+  -webkit-backdrop-filter: blur(19px) saturate(130%) !important;
+  backdrop-filter: blur(19px) saturate(130%) !important;
+}
+
+nav[aria-label="Bottom navigation"] > div:first-child {
+  flex: 0 0 58px !important;
+  width: 58px !important;
+  height: 58px !important;
+  border-radius: 18px !important;
+}
+
+nav[aria-label="Bottom navigation"] > div:last-child {
+  height: 58px !important;
+  min-height: 58px !important;
+  padding: 3px !important;
+  border-radius: 18px !important;
+}
+
+nav[aria-label="Bottom navigation"] button[data-nav] {
+  padding: 4px 2px 3px !important;
+  grid-template-rows: 22px 10px !important;
+  gap: 2px !important;
+  border-radius: 14px !important;
+}
+
+nav[aria-label="Bottom navigation"] button[data-nav] > span:first-child {
+  width: 23px !important;
+  min-width: 23px !important;
+  height: 23px !important;
+  min-height: 23px !important;
+}
+
+nav[aria-label="Bottom navigation"] button[data-nav] img,
+nav[aria-label="Bottom navigation"] button[data-nav] svg {
+  width: 21px !important;
+  height: 21px !important;
+}
+
+nav[aria-label="Bottom navigation"] button[data-nav] strong {
+  font-size: 9px !important;
+  line-height: 1 !important;
+  font-weight: 610 !important;
+}
+
+nav[aria-label="Bottom navigation"] button[data-nav]:active {
+  transform: translateY(1px) scale(0.94) !important;
+}
+
+/* ----------------------------- Rocket boot ------------------------------- */
+
+main.rocket-game-main section[aria-busy="true"] > div[role="status"] {
+  z-index: 100 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 24px !important;
+  background:
+    radial-gradient(50% 36% at 50% 43%, rgba(75, 116, 255, 0.09), transparent 72%),
+    linear-gradient(180deg, rgba(7, 10, 16, 0.985), rgba(5, 8, 13, 0.995)) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+}
+
+main.rocket-game-main section[aria-busy="true"] > div[role="status"] > div {
+  width: min(100%, 260px) !important;
+  padding: 22px 20px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 7px !important;
+  border: 1px solid rgba(255, 255, 255, 0.065) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(180deg, rgba(20, 27, 39, 0.78), rgba(11, 15, 23, 0.7)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 70px rgba(0, 0, 0, 0.34) !important;
+}
+
+main.rocket-game-main section[aria-busy="true"] > div[role="status"] > div > span:first-child {
+  position: relative !important;
+  width: 48px !important;
+  height: 48px !important;
+  margin-bottom: 7px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(103, 167, 255, 0.16) !important;
+  border-radius: 15px !important;
+  background: rgba(103, 167, 255, 0.055) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  animation: none !important;
+}
+
+main.rocket-game-main section[aria-busy="true"] > div[role="status"] > div > span:first-child i {
+  display: none !important;
+}
+
+main.rocket-game-main section[aria-busy="true"] > div[role="status"] > div > span:first-child::before {
+  content: "";
+  width: 21px;
+  height: 21px;
+  box-sizing: border-box;
+  border: 2px solid rgba(208, 224, 255, 0.18);
+  border-top-color: #93b8ff;
+  border-right-color: rgba(110, 231, 183, 0.66);
+  border-radius: 50%;
+  animation: gm-loader-spin 720ms linear infinite;
+}
+
+main.rocket-game-main section[aria-busy="true"] > div[role="status"] strong {
+  color: #f5f7fb !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.02em !important;
+}
+
+main.rocket-game-main section[aria-busy="true"] > div[role="status"] > div > span:last-child {
+  color: rgba(215, 225, 239, 0.5) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.45 !important;
+  text-align: center !important;
+}
+
+/* Initial Telegram WebApp loader gets the same restrained language. */
+.minimal-loader-screen {
+  background:
+    radial-gradient(44% 30% at 50% 44%, rgba(103, 167, 255, 0.08), transparent 74%),
+    linear-gradient(180deg, #080b11, #05070b) !important;
+}
+
+.minimal-loader-screen .morph-loader {
+  width: 46px !important;
+  height: 46px !important;
+  border: 1px solid rgba(255, 255, 255, 0.065) !important;
+  border-radius: 15px !important;
+  background: rgba(255, 255, 255, 0.025) !important;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28) !important;
+}
+
+.minimal-loader-screen .morph-box {
+  display: none !important;
+}
+
+.minimal-loader-screen .morph-loader::before {
+  content: "";
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  box-sizing: border-box;
+  border: 2px solid rgba(208, 224, 255, 0.16);
+  border-top-color: #93b8ff;
+  border-right-color: rgba(110, 231, 183, 0.64);
+  border-radius: 50%;
+  animation: gm-loader-spin 720ms linear infinite;
+}
+
+@keyframes gm-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 420px) {
+  .premium-home {
+    padding-inline: 10px !important;
+  }
+
+  .global-balance-stabilizer {
+    padding-inline: 10px !important;
+  }
+
+  .premium-home > div:nth-child(2) {
+    gap: 8px !important;
+  }
+
+  .premium-home > div:nth-child(2) > button {
+    min-height: 76px !important;
+    padding: 11px 10px !important;
+    grid-template-columns: 34px minmax(0, 1fr) 12px !important;
+    gap: 8px !important;
+  }
+
+  .premium-home > div:nth-child(2) > button > span:first-child {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  nav[aria-label="Bottom navigation"] {
+    width: calc(100% - 18px) !important;
+    gap: 5px !important;
+  }
+
+  nav[aria-label="Bottom navigation"] > div:first-child {
+    flex-basis: 54px !important;
+    width: 54px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .premium-home > div:nth-child(2) > button,
+  nav[aria-label="Bottom navigation"] button[data-nav] {
+    transition: none !important;
+  }
+
+  main.rocket-game-main section[aria-busy="true"] > div[role="status"] > div > span:first-child::before,
+  .minimal-loader-screen .morph-loader::before {
+    animation-duration: 1.35s !important;
+  }
+}
