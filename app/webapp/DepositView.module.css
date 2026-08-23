@@ -384,7 +384,7 @@
 .starsMark {
   display: inline-block;
   background:
-    url('/currency/stars.png') center / 82% no-repeat,
+    url('/currency/stars-4k.webp') center / 82% no-repeat,
     radial-gradient(circle, rgba(129, 101, 255, 0.32), transparent 68%);
   filter: drop-shadow(0 8px 15px rgba(102, 70, 255, 0.3));
 }
@@ -3284,5 +3284,350 @@
   .primaryButton,
   .walletButton {
     transition: none;
+  }
+}
+
+/* Deposit V3 — compact premium payment center. */
+.page {
+  width: min(100%, 540px);
+  padding: 6px 9px calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+.page::before {
+  top: -135px;
+  right: -95px;
+  width: 300px;
+  height: 300px;
+  background: rgba(89, 126, 255, 0.14);
+}
+
+.header {
+  min-height: 46px;
+  grid-template-columns: 38px 1fr auto;
+  gap: 9px;
+  margin-bottom: 5px;
+}
+
+.backButton {
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+}
+
+.headerTitle {
+  gap: 1px;
+}
+
+.headerTitle span {
+  color: rgba(170, 192, 255, 0.72);
+  font-size: 7.6px;
+}
+
+.headerTitle h1 {
+  font-size: 21px;
+}
+
+.balancePill {
+  min-height: 37px;
+  gap: 4px;
+  padding: 4px 10px 4px 6px;
+  border-color: rgba(239, 224, 255, 0.19);
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.025)),
+    rgba(28, 24, 49, 0.78);
+}
+
+.balancePill strong {
+  font-size: 12px;
+}
+
+.secureStrip {
+  min-height: 38px;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 5px 9px;
+  border-radius: 14px;
+}
+
+.secureIcon {
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+}
+
+.secureIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.secureStrip strong {
+  font-size: 9px;
+}
+
+.secureStrip > div span {
+  display: none;
+}
+
+.methodGrid {
+  gap: 4px;
+  margin: 6px 0;
+  padding: 4px;
+  border-radius: 18px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.012)),
+    rgba(14, 18, 34, 0.72);
+}
+
+.methodCard {
+  min-height: 66px;
+  gap: 1px;
+  padding: 6px 3px 5px;
+  border-radius: 14px;
+}
+
+.methodCard .starsMark,
+.methodCard .tonMark,
+.methodCard .giftMark {
+  width: 31px;
+  height: 31px;
+}
+
+.methodCard strong {
+  font-size: 9.5px;
+  font-weight: 750;
+}
+
+.methodCard small {
+  font-size: 6.4px;
+}
+
+.methodCard em {
+  top: 4px;
+  right: 4px;
+  padding: 2px 4px;
+  font-size: 5.8px;
+}
+
+.activeMethod {
+  border-color: rgba(170, 191, 255, 0.3);
+  background:
+    linear-gradient(145deg, rgba(117, 146, 255, 0.2), rgba(116, 89, 190, 0.1)),
+    rgba(35, 43, 73, 0.78);
+}
+
+.stars.activeMethod {
+  border-color: rgba(255, 214, 92, 0.35);
+  background:
+    radial-gradient(80% 120% at 50% -30%, rgba(255, 220, 86, 0.23), transparent 64%),
+    rgba(60, 45, 44, 0.78);
+}
+
+.ton.activeMethod {
+  border-color: rgba(77, 201, 255, 0.34);
+  background:
+    radial-gradient(80% 120% at 50% -30%, rgba(70, 196, 255, 0.22), transparent 64%),
+    rgba(27, 50, 73, 0.8);
+}
+
+.gift.activeMethod {
+  border-color: rgba(221, 134, 255, 0.32);
+  background:
+    radial-gradient(80% 120% at 50% -30%, rgba(215, 116, 255, 0.2), transparent 64%),
+    rgba(53, 33, 69, 0.8);
+}
+
+.panel,
+.history {
+  padding: 12px;
+  border-color: rgba(211, 224, 255, 0.14);
+  border-radius: 18px;
+  background:
+    linear-gradient(132deg, rgba(255, 255, 255, 0.075), rgba(255, 255, 255, 0.012) 44%),
+    rgba(17, 22, 40, 0.76);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 11px 28px rgba(2, 7, 22, 0.2);
+}
+
+.panelHeading,
+.historyHeading {
+  min-height: 32px;
+  margin-bottom: 8px;
+}
+
+.panelHeading > div,
+.historyHeading > div {
+  gap: 3px;
+}
+
+.panelHeading > div > span,
+.historyHeading > div > span {
+  color: rgba(164, 186, 255, 0.68);
+  font-size: 7.5px;
+}
+
+.panelHeading h3,
+.historyHeading h3 {
+  font-size: 16px;
+}
+
+.autoBadge,
+.chainBadge,
+.reviewBadge {
+  min-height: 22px;
+  padding-inline: 8px;
+  border-radius: 8px;
+  font-size: 6.2px;
+}
+
+.amountLabel {
+  margin: 1px 0 5px;
+}
+
+.amountInput {
+  min-height: 58px;
+  gap: 8px;
+  padding: 7px 11px;
+  border-radius: 15px;
+  background:
+    linear-gradient(150deg, rgba(255, 255, 255, 0.065), rgba(255, 255, 255, 0.008) 44%),
+    rgba(7, 11, 24, 0.56);
+}
+
+.amountInput input {
+  font-size: clamp(25px, 7.5vw, 32px);
+}
+
+.presetRow {
+  gap: 5px;
+  margin: 6px 0 7px;
+}
+
+.presetRow button {
+  min-height: 29px;
+  border-radius: 9px;
+}
+
+.summary {
+  min-height: 40px;
+  margin-bottom: 7px;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+
+.primaryButton,
+.walletButton {
+  min-height: 47px;
+  border-radius: 14px;
+}
+
+.starsButton {
+  border-color: rgba(255, 226, 118, 0.34);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02) 48%),
+    linear-gradient(135deg, #c98524, #8c4fd0 118%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.33),
+    0 9px 22px rgba(181, 113, 27, 0.2);
+}
+
+.tonButton,
+.walletButton {
+  border-color: rgba(94, 208, 255, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.015) 48%),
+    linear-gradient(135deg, #238fd3, #5369d5);
+}
+
+.giftButton {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.17), rgba(255, 255, 255, 0.014) 48%),
+    linear-gradient(135deg, #a04fd0, #6c4dc6);
+}
+
+.panelFootnote {
+  display: none;
+}
+
+.walletConnect,
+.walletConnected,
+.giftRecipient {
+  min-height: 56px;
+  border-radius: 14px;
+}
+
+.rateLine {
+  min-height: 32px;
+  margin: 6px 0 5px;
+}
+
+.manualToggle {
+  min-height: 34px;
+  margin-top: 6px;
+}
+
+.history {
+  margin-top: 6px;
+}
+
+.historyHeading button {
+  min-height: 27px;
+}
+
+.historyList {
+  gap: 5px;
+}
+
+.historyItem {
+  border-radius: 12px;
+}
+
+@media (max-width: 430px) {
+  .page {
+    padding: 5px 8px calc(96px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .header {
+    min-height: 44px;
+    grid-template-columns: 37px 1fr auto;
+    margin-bottom: 4px;
+  }
+
+  .backButton {
+    width: 37px;
+    height: 37px;
+  }
+
+  .methodCard {
+    min-height: 63px;
+  }
+
+  .panel,
+  .history {
+    padding: 11px;
+    border-radius: 17px;
+  }
+
+  .amountInput {
+    min-height: 56px;
+  }
+}
+
+@media (max-width: 350px) {
+  .methodGrid {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .methodCard {
+    min-height: 59px;
+  }
+
+  .methodCard .starsMark,
+  .methodCard .tonMark,
+  .methodCard .giftMark {
+    width: 28px;
+    height: 28px;
   }
 }

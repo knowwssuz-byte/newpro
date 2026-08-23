@@ -115,11 +115,10 @@ function StarsMark({ small = false }) {
       aria-hidden="true"
     >
       <Image
-        src="/currency/stars.png"
+        src="/currency/stars-4k.webp"
         alt=""
         width={46}
         height={46}
-        unoptimized
         draggable={false}
       />
     </span>
@@ -839,21 +838,6 @@ export default function DepositView({
           <span>Server himoyasi · har bir to‘lov faqat bir marta hisoblanadi</span>
         </div>
         <em>LIVE</em>
-      </div>
-
-      <div className={styles.hero}>
-        <span className={styles.heroOrbOne} aria-hidden="true" />
-        <span className={styles.heroOrbTwo} aria-hidden="true" />
-        <div>
-          <span className={styles.eyebrow}>BALANCE TOP UP</span>
-          <h2>Qulay usulni tanlang</h2>
-          <p>Stars — darhol · TON / GRAM — wallet orqali · Gift — tekshiruv bilan.</p>
-        </div>
-        <div className={styles.heroMarks} aria-hidden="true">
-          <StarsMark />
-          <TonMark />
-          <GiftMark />
-        </div>
       </div>
 
       {error ? (

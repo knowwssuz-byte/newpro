@@ -377,11 +377,10 @@ function coinIcon() {
   return (
     <span className="coin-icon stars-currency-icon" aria-hidden="true">
       <Image
-        src="/currency/stars.png"
+        src="/currency/stars-4k.webp"
         alt=""
         width={31}
         height={31}
-        unoptimized
         draggable={false}
       />
     </span>
