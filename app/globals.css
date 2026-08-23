@@ -223,6 +223,152 @@
   .case-page-open-btn, .case-page-prize-card { transition: none !important; }
 }
 
+/* =========================================================
+   DICE ADMIN CONTROL CENTER
+========================================================= */
+.dice-admin-console {
+  display: grid;
+  gap: 16px;
+}
+
+.dice-admin-hero {
+  position: relative;
+  isolation: isolate;
+  min-height: 178px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 28px 30px;
+  overflow: hidden;
+  border: 1px solid rgba(177, 120, 255, 0.28);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 82% 24%, rgba(55, 235, 160, 0.11), transparent 28%),
+    radial-gradient(circle at 14% 0%, rgba(139, 76, 255, 0.26), transparent 42%),
+    linear-gradient(135deg, #231540 0%, #171426 52%, #10111b 100%);
+  box-shadow: 0 22px 54px rgba(12, 4, 31, 0.31), inset 0 1px 0 rgba(255,255,255,.08);
+}
+
+.dice-admin-hero::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  right: -70px;
+  top: -90px;
+  width: 290px;
+  height: 290px;
+  border: 1px solid rgba(170, 112, 255, 0.16);
+  border-radius: 50%;
+  box-shadow: 0 0 0 24px rgba(139, 76, 255, 0.025), inset 0 0 65px rgba(112, 52, 224, .13);
+}
+
+.dice-admin-hero > div:first-child { max-width: 680px; }
+.dice-admin-hero > div:first-child > span,
+.dice-admin-preview-head span { color: #a989ff; font-size: 10px; font-weight: 900; letter-spacing: .13em; }
+.dice-admin-hero h2 { margin: 8px 0 7px; color: #fff; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.045em; }
+.dice-admin-hero p { max-width: 650px; margin: 0; color: rgba(229,222,241,.6); font-size: 13px; line-height: 1.55; }
+
+.dice-admin-master-toggle {
+  position: relative;
+  z-index: 2;
+  min-width: 178px;
+  min-height: 65px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 15px 0 18px;
+  border: 1px solid rgba(79, 240, 169, .2);
+  border-radius: 20px;
+  background: rgba(31, 178, 112, .08);
+  cursor: pointer;
+}
+.dice-admin-master-toggle > span { display: flex; align-items: center; gap: 8px; color: #73edb1; font-size: 10px; font-weight: 900; letter-spacing: .08em; }
+.dice-admin-master-toggle > span i { width: 8px; height: 8px; border-radius: 50%; background: #35e895; box-shadow: 0 0 12px rgba(53,232,149,.8); }
+.dice-admin-master-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.dice-admin-master-toggle > b { position: relative; width: 42px; height: 24px; flex: 0 0 42px; border-radius: 999px; background: rgba(255,255,255,.12); transition: background .2s ease; }
+.dice-admin-master-toggle > b::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.25); transition: transform .2s ease; }
+.dice-admin-master-toggle input:checked + b { background: #32d98d; }
+.dice-admin-master-toggle input:checked + b::after { transform: translateX(18px); }
+
+.dice-admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+}
+.dice-admin-stats article {
+  min-height: 113px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  padding: 17px 18px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 21px;
+  background: linear-gradient(145deg, rgba(32,29,43,.94), rgba(21,20,29,.96));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035);
+}
+.dice-admin-stats span { color: rgba(218,210,230,.42); font-size: 9px; font-weight: 900; letter-spacing: .08em; }
+.dice-admin-stats strong { color: #fff; font-size: 24px; font-weight: 900; letter-spacing: -.035em; }
+.dice-admin-stats small { color: rgba(218,210,230,.42); font-size: 9px; line-height: 1.3; }
+
+.dice-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(360px, .85fr);
+  gap: 14px;
+}
+
+.dice-admin-preview,
+.dice-admin-settings {
+  border: 1px solid rgba(255,255,255,.075) !important;
+  border-radius: 25px !important;
+  background: linear-gradient(145deg, rgba(29,27,39,.96), rgba(18,18,26,.98)) !important;
+  box-shadow: 0 20px 45px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.04) !important;
+}
+
+.dice-admin-preview { min-height: 360px; display: grid; align-content: center; padding: 27px; }
+.dice-admin-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.dice-admin-preview-head h3 { margin: 7px 0 0; color: #fff; font-size: 23px; letter-spacing: -.035em; }
+.dice-admin-preview-head > b { min-height: 32px; display: grid; place-items: center; padding: 0 12px; border: 1px solid rgba(63,233,154,.2); border-radius: 999px; color: #68ecaa; background: rgba(45,202,129,.08); font-size: 9px; letter-spacing: .07em; }
+.dice-admin-scale { display: flex; justify-content: space-between; margin: 42px 0 9px; color: rgba(225,219,235,.35); font-size: 9px; font-weight: 850; }
+.dice-admin-track { position: relative; height: 22px; display: flex; overflow: visible; border-radius: 999px; box-shadow: 0 0 26px rgba(41,221,137,.13), inset 0 1px 1px rgba(255,255,255,.25); }
+.dice-admin-track-green { width: var(--safe-zone); border-radius: 999px 0 0 999px; background: linear-gradient(90deg, #12b965, #20e887); }
+.dice-admin-track-red { flex: 1; border-radius: 0 999px 999px 0; background: linear-gradient(90deg, #ff3a61, #d71948); }
+.dice-admin-track::after { content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: .32; background: repeating-linear-gradient(120deg, transparent 0 6px, rgba(255,255,255,.2) 6px 8px); }
+.dice-admin-track i { position: absolute; z-index: 2; top: 50%; width: 36px; height: 36px; border: 6px solid #fff; border-radius: 50%; background: #8b4dff; box-shadow: 0 5px 17px rgba(116,54,255,.48); transform: translate(-50%,-50%); }
+.dice-admin-zone-labels { display: flex; justify-content: space-between; gap: 20px; margin-top: 19px; font-size: 8px; font-weight: 900; letter-spacing: .07em; }
+.dice-admin-zone-labels span:first-child { color: #5febaa; }
+.dice-admin-zone-labels span:last-child { color: #ff6a86; text-align: right; }
+.dice-admin-preview > p { max-width: 620px; margin: 35px 0 0; padding: 13px 14px; border: 1px solid rgba(255,255,255,.055); border-radius: 14px; color: rgba(224,218,234,.5); background: rgba(255,255,255,.025); font-size: 10px; line-height: 1.5; }
+
+.dice-admin-settings { padding: 23px !important; }
+.dice-admin-settings .browser-admin-two { gap: 10px; }
+.dice-admin-range > span { display: flex !important; align-items: center; justify-content: space-between; }
+.dice-admin-range output { color: #b89cff; font-size: 11px; font-weight: 900; }
+.dice-admin-range input[type="range"] { height: 6px !important; padding: 0 !important; accent-color: #8b4dff; }
+
+@media (max-width: 1050px) {
+  .dice-admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dice-admin-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .dice-admin-hero { min-height: 0; display: grid; padding: 21px 18px; border-radius: 23px; }
+  .dice-admin-master-toggle { width: 100%; min-width: 0; }
+  .dice-admin-stats { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .dice-admin-stats article { min-height: 98px; padding: 14px; border-radius: 17px; }
+  .dice-admin-stats strong { font-size: 19px; }
+  .dice-admin-preview { min-height: 320px; padding: 19px 16px; border-radius: 20px !important; }
+  .dice-admin-preview-head { align-items: flex-start; }
+  .dice-admin-preview-head h3 { font-size: 19px; }
+  .dice-admin-settings { padding: 17px !important; border-radius: 20px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dice-admin-master-toggle > b,
+  .dice-admin-master-toggle > b::after { transition: none; }
+}
+
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;

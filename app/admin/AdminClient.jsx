@@ -53,6 +53,16 @@ const emptyDepositSettings = {
   giftCreditPercent: 85,
 };
 
+const emptyDiceSettings = {
+  enabled: true,
+  minBet: 1,
+  maxBet: 10000,
+  minWinChance: 5,
+  maxWinChance: 85,
+  houseEdgePercent: 3,
+  rollDurationMs: 1400,
+};
+
 function featureLayout(slot, setting = {}) {
   const defaults = featureDefaults[slot] || featureDefaults.rocket;
   return {
@@ -266,6 +276,7 @@ export default function AdminClient() {
   const [depositSettings, setDepositSettings] = useState(
     emptyDepositSettings
   );
+  const [diceSettings, setDiceSettings] = useState(emptyDiceSettings);
   const [depositDrafts, setDepositDrafts] = useState({});
 
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
@@ -323,6 +334,10 @@ export default function AdminClient() {
     setDepositSettings({
       ...emptyDepositSettings,
       ...(data.depositSettings || {}),
+    });
+    setDiceSettings({
+      ...emptyDiceSettings,
+      ...(data.diceSettings || {}),
     });
     setDepositDrafts((current) =>
       Object.fromEntries(
@@ -852,6 +867,33 @@ export default function AdminClient() {
     }
   }
 
+  async function saveDiceSettings(event) {
+    event.preventDefault();
+
+    const data = await run(
+      () =>
+        callAdmin('dice_settings_update', {
+          settings: {
+            ...diceSettings,
+            minBet: Number(diceSettings.minBet),
+            maxBet: Number(diceSettings.maxBet),
+            minWinChance: Number(diceSettings.minWinChance),
+            maxWinChance: Number(diceSettings.maxWinChance),
+            houseEdgePercent: Number(diceSettings.houseEdgePercent),
+            rollDurationMs: Number(diceSettings.rollDurationMs),
+          },
+        }),
+      'Dice sozlamalari saqlandi ✅'
+    );
+
+    if (data?.diceSettings) {
+      setDiceSettings({
+        ...emptyDiceSettings,
+        ...data.diceSettings,
+      });
+    }
+  }
+
   function changeDepositDraft(depositId, key, value) {
     setDepositDrafts((current) => ({
       ...current,
@@ -950,6 +992,7 @@ export default function AdminClient() {
             ['gifts', 'Casega gift'],
             ['features', 'PVP / Rocket'],
             ['rocket', 'Rocket control'],
+            ['dice', 'Dice settings'],
             [
               'deposits',
               pendingDepositCount
@@ -1330,6 +1373,91 @@ export default function AdminClient() {
                 <span>Jonli raund va keyingi reja sinxronlanmoqda.</span>
               </div>
             )}
+          </section>
+        ) : null}
+
+        {tab === 'dice' ? (
+          <section className="dice-admin-console">
+            <div className="dice-admin-hero">
+              <div>
+                <span>DICE RISK CONTROL</span>
+                <h2>Dice boshqaruvi</h2>
+                <p>
+                  Yashil zona limiti, stavka oralig‘i, platforma edge’i va
+                  natija animatsiyasini bir joydan boshqaring. Barcha limitlar
+                  serverda majburiy tekshiriladi.
+                </p>
+              </div>
+              <label className="dice-admin-master-toggle">
+                <span><i />{diceSettings.enabled ? 'GAME LIVE' : 'GAME OFF'}</span>
+                <input
+                  type="checkbox"
+                  checked={Boolean(diceSettings.enabled)}
+                  onChange={(event) => setDiceSettings({ ...diceSettings, enabled: event.target.checked })}
+                />
+                <b />
+              </label>
+            </div>
+
+            <div className="dice-admin-stats">
+              <article><span>MAX YASHIL ZONA</span><strong>{Number(diceSettings.maxWinChance)}%</strong><small>Kamida {100 - Number(diceSettings.maxWinChance)}% xavf zonasi qoladi</small></article>
+              <article><span>HOUSE EDGE</span><strong>{Number(diceSettings.houseEdgePercent).toFixed(1)}%</strong><small>Multiplier hisobiga qo‘llanadi</small></article>
+              <article><span>STAVKA ORALIG‘I</span><strong>{money(diceSettings.minBet)}–{money(diceSettings.maxBet)}</strong><small>Telegram Stars</small></article>
+              <article><span>TO‘XTASH VAQTI</span><strong>{Number(diceSettings.rollDurationMs) / 1000}s</strong><small>Sekinlashib natijada to‘xtaydi</small></article>
+            </div>
+
+            <div className="dice-admin-grid">
+              <div className="dice-admin-preview">
+                <div className="dice-admin-preview-head">
+                  <div><span>LIVE LIMIT PREVIEW</span><h3>Yashil zona himoyasi</h3></div>
+                  <b>MAX {Number(diceSettings.maxWinChance)}%</b>
+                </div>
+                <div className="dice-admin-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+                <div className="dice-admin-track" style={{ '--safe-zone': `${Number(diceSettings.maxWinChance)}%` }}>
+                  <span className="dice-admin-track-green" />
+                  <span className="dice-admin-track-red" />
+                  <i style={{ left: `${Number(diceSettings.maxWinChance)}%` }} />
+                </div>
+                <div className="dice-admin-zone-labels">
+                  <span>ENG KATTA YUTISH ZONASI</span>
+                  <span>DOIM QOLADIGAN XAVF</span>
+                </div>
+                <p>
+                  Admin limiti 90% dan yuqoriga chiqmaydi. Foydalanuvchi
+                  requestni qo‘lda o‘zgartirsa ham server yuqori chance’ni rad etadi.
+                </p>
+              </div>
+
+              <form className="browser-admin-form dice-admin-settings" onSubmit={saveDiceSettings}>
+                <div className="admin-form-heading">
+                  <span>SERVER SETTINGS</span>
+                  <h2>Risk va o‘yin sozlamalari</h2>
+                  <p>Saqlangandan keyin yangi Dice raundlariga darhol qo‘llanadi.</p>
+                </div>
+
+                <div className="browser-admin-two">
+                  <label><span>Minimal stavka</span><input type="number" min="1" max="100000" value={diceSettings.minBet} onChange={(event) => setDiceSettings({ ...diceSettings, minBet: event.target.value })} /></label>
+                  <label><span>Maksimal stavka</span><input type="number" min="1" max="1000000" value={diceSettings.maxBet} onChange={(event) => setDiceSettings({ ...diceSettings, maxBet: event.target.value })} /></label>
+                </div>
+
+                <div className="browser-admin-two">
+                  <label><span>Minimal yutish ehtimoli %</span><input type="number" min="2" max="30" value={diceSettings.minWinChance} onChange={(event) => setDiceSettings({ ...diceSettings, minWinChance: event.target.value })} /></label>
+                  <label><span>Maksimal yashil zona %</span><input type="number" min="50" max="90" value={diceSettings.maxWinChance} onChange={(event) => setDiceSettings({ ...diceSettings, maxWinChance: event.target.value })} /><small className="manual-field-note">90% — qattiq maksimal limit.</small></label>
+                </div>
+
+                <label className="dice-admin-range">
+                  <span>House edge <output>{Number(diceSettings.houseEdgePercent).toFixed(1)}%</output></span>
+                  <input type="range" min="0.5" max="10" step="0.1" value={diceSettings.houseEdgePercent} onChange={(event) => setDiceSettings({ ...diceSettings, houseEdgePercent: event.target.value })} />
+                </label>
+
+                <label className="dice-admin-range">
+                  <span>Sekinlashish davomiyligi <output>{Number(diceSettings.rollDurationMs)} ms</output></span>
+                  <input type="range" min="800" max="2400" step="100" value={diceSettings.rollDurationMs} onChange={(event) => setDiceSettings({ ...diceSettings, rollDurationMs: event.target.value })} />
+                </label>
+
+                <button type="submit" disabled={busy}>{busy ? 'Saqlanmoqda...' : 'Dice sozlamalarini saqlash'}</button>
+              </form>
+            </div>
           </section>
         ) : null}
 

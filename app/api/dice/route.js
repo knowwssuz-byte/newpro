@@ -1,17 +1,10 @@
 import crypto from 'crypto';
+import { diceSettingsForClient, getDiceSettings } from '@/lib/diceSettings';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-const DICE_CONFIG = Object.freeze({
-  minBet: 1,
-  maxBet: 10000,
-  minTarget: 5,
-  maxTarget: 95,
-  houseEdgePercent: 3,
-});
 
 function integer(value, fallback = 0) {
   const number = Number(value);
@@ -23,14 +16,8 @@ function number(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function publicConfig() {
-  return {
-    minBet: DICE_CONFIG.minBet,
-    maxBet: DICE_CONFIG.maxBet,
-    minTarget: DICE_CONFIG.minTarget,
-    maxTarget: DICE_CONFIG.maxTarget,
-    houseEdgePercent: DICE_CONFIG.houseEdgePercent,
-  };
+function publicConfig(settings) {
+  return diceSettingsForClient(settings);
 }
 
 function mapError(error) {
@@ -51,10 +38,10 @@ function mapError(error) {
   return { status: 500, message };
 }
 
-function makeOutcome({ mode, target, bet }) {
+function makeOutcome({ mode, target, bet, settings }) {
   const chancePercent = mode === 'higher' ? 100 - target : target;
   const multiplier = Math.floor(
-    ((100 - DICE_CONFIG.houseEdgePercent) / chancePercent) * 100
+    ((100 - settings.houseEdgePercent) / chancePercent) * 100
   ) / 100;
   const roll = crypto.randomInt(0, 10000) / 100;
   const won = mode === 'higher' ? roll > target : roll < target;
@@ -112,18 +99,23 @@ export async function POST(request) {
 
     const body = auth.body || {};
     const action = String(body.action || 'play').toLowerCase();
-    const dbUser = await ensureUser(auth.telegramUser);
+    const supabase = getSupabaseAdmin();
+    const [dbUser, settings] = await Promise.all([
+      ensureUser(auth.telegramUser),
+      getDiceSettings(supabase),
+    ]);
 
     if (action === 'state') {
       return Response.json({
         ok: true,
         balance: Math.max(0, number(dbUser.balance)),
-        config: publicConfig(),
+        config: publicConfig(settings),
       });
     }
 
     if (action !== 'play') return jsonError('Noto‘g‘ri Dice amali.', 400);
     if (dbUser.is_banned) return jsonError('Siz bloklangansiz.', 403);
+    if (!settings.enabled) return jsonError('Dice o‘yini vaqtincha o‘chirilgan.', 403);
 
     const mode = String(body.mode || '').toLowerCase();
     const target = integer(body.target, -1);
@@ -133,22 +125,26 @@ export async function POST(request) {
       return jsonError('Rejim Past yoki Baland bo‘lishi kerak.', 400);
     }
 
-    if (target < DICE_CONFIG.minTarget || target > DICE_CONFIG.maxTarget) {
+    const chancePercent = mode === 'higher' ? 100 - target : target;
+
+    if (
+      chancePercent < settings.minWinChance ||
+      chancePercent > settings.maxWinChance
+    ) {
       return jsonError(
-        `Tanlangan son ${DICE_CONFIG.minTarget}–${DICE_CONFIG.maxTarget} oralig‘ida bo‘lishi kerak.`,
+        `Yutish ehtimoli ${settings.minWinChance}%–${settings.maxWinChance}% oralig‘ida bo‘lishi kerak.`,
         400
       );
     }
 
-    if (bet < DICE_CONFIG.minBet || bet > DICE_CONFIG.maxBet) {
+    if (bet < settings.minBet || bet > settings.maxBet) {
       return jsonError(
-        `Stavka ${DICE_CONFIG.minBet}–${DICE_CONFIG.maxBet} Stars oralig‘ida bo‘lishi kerak.`,
+        `Stavka ${settings.minBet}–${settings.maxBet} Stars oralig‘ida bo‘lishi kerak.`,
         400
       );
     }
 
-    const outcome = makeOutcome({ mode, target, bet });
-    const supabase = getSupabaseAdmin();
+    const outcome = makeOutcome({ mode, target, bet, settings });
     const balance = await settleBalance(
       supabase,
       Number(auth.telegramUser.id),
@@ -160,7 +156,7 @@ export async function POST(request) {
       ok: true,
       balance,
       result: outcome,
-      config: publicConfig(),
+      config: publicConfig(settings),
     });
   } catch (error) {
     const mapped = mapError(error);

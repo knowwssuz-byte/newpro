@@ -247,6 +247,31 @@
   animation: sweepRoll 720ms cubic-bezier(.55,.05,.45,.95) infinite alternate;
 }
 
+.settlingMarker {
+  position: absolute;
+  z-index: 7;
+  top: 22px;
+  left: var(--roll);
+  width: 29px;
+  height: 29px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  background: var(--dice-violet);
+  box-shadow: 0 0 22px rgba(139, 77, 255, 0.82);
+  transform: translateX(-50%);
+  animation: settleRoll var(--settle-duration, 1400ms) linear both;
+}
+
+.settlingMarker[data-win="true"] {
+  background: var(--dice-green);
+  box-shadow: 0 0 22px rgba(29, 230, 122, 0.76);
+}
+
+.settlingMarker[data-win="false"] {
+  background: var(--dice-red);
+  box-shadow: 0 0 22px rgba(255, 49, 95, 0.72);
+}
+
 .zones { display: grid; grid-template-columns: var(--target) 1fr; margin-top: 2px; color: rgba(255,255,255,.3); font-size: 7px; font-weight: 900; letter-spacing: .08em; }
 .zones span:first-child { padding-left: 3px; color: rgba(255,91,122,.6); }
 .zones span:last-child { padding-right: 3px; color: rgba(82,247,156,.65); text-align: right; }
@@ -406,6 +431,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rollingMarker,
+  .settlingMarker,
   .buttonDice,
   .lobbyOrbit::after { animation: none; }
   .lobbyArt img { transition: none; }
@@ -414,6 +440,38 @@
 @keyframes sweepRoll {
   0% { left: 2%; transform: rotate(0deg); }
   100% { left: calc(98% - 28px); transform: rotate(360deg); }
+}
+
+@keyframes settleRoll {
+  0% {
+    left: 8%;
+    transform: translateX(-50%) rotate(0deg) scale(0.96);
+    animation-timing-function: cubic-bezier(.48,.04,.54,.96);
+  }
+  34% {
+    left: 89%;
+    transform: translateX(-50%) rotate(540deg) scale(1.04);
+    animation-timing-function: cubic-bezier(.46,.05,.48,.95);
+  }
+  61% {
+    left: 23%;
+    transform: translateX(-50%) rotate(920deg) scale(0.98);
+    animation-timing-function: cubic-bezier(.25,.66,.2,1);
+  }
+  79% {
+    left: clamp(4%, calc(var(--roll) + 9%), 96%);
+    transform: translateX(-50%) rotate(1190deg) scale(1.03);
+    animation-timing-function: cubic-bezier(.18,.72,.15,1);
+  }
+  92% {
+    left: clamp(4%, calc(var(--roll) - 2.5%), 96%);
+    transform: translateX(-50%) rotate(1330deg) scale(0.99);
+    animation-timing-function: cubic-bezier(.12,.8,.12,1);
+  }
+  100% {
+    left: var(--roll);
+    transform: translateX(-50%) rotate(1380deg) scale(1);
+  }
 }
 
 @keyframes buttonRoll { to { transform: rotate(360deg); } }

@@ -9,6 +9,12 @@ import {
   normalizeDepositSettings,
   settingsRow,
 } from '@/lib/depositSettings';
+import {
+  diceSettingsForClient,
+  diceSettingsRow,
+  getDiceSettings,
+  normalizeDiceSettings,
+} from '@/lib/diceSettings';
 import { normalizeTonAddress } from '@/lib/tonDeposits';
 
 export const runtime = 'nodejs';
@@ -141,6 +147,7 @@ async function bootstrap(supabase) {
     featureRows,
     deposits,
     depositSettings,
+    diceSettings,
   ] = await Promise.all([
     fetchCasesForAdmin(supabase),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').order('created_at', { ascending: false })),
@@ -170,6 +177,7 @@ async function bootstrap(supabase) {
         .limit(250)
     ),
     getDepositSettings(supabase),
+    getDiceSettings(supabase),
   ]);
 
   return {
@@ -181,6 +189,7 @@ async function bootstrap(supabase) {
     featureSettings: Object.fromEntries((featureRows || []).map((item) => [item.key, item.value || {}])),
     deposits,
     depositSettings: depositSettingsForClient(depositSettings),
+    diceSettings: diceSettingsForClient(diceSettings),
   };
 }
 
@@ -475,6 +484,20 @@ export async function POST(request) {
     if (action === 'bootstrap') {
       const data = await bootstrap(supabase);
       return json({ ok: true, ...data });
+    }
+
+    if (action === 'dice_settings_update') {
+      const settings = normalizeDiceSettings(body.settings || {});
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert(diceSettingsRow(settings), { onConflict: 'key' });
+
+      if (error) throw error;
+
+      return json({
+        ok: true,
+        diceSettings: diceSettingsForClient(settings),
+      });
     }
 
     if (action === 'deposit_settings_update') {

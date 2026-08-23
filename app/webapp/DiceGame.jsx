@@ -5,10 +5,15 @@ import Image from 'next/image';
 import { ChevronLeft, ShieldCheck, TrendingDown, TrendingUp } from 'lucide-react';
 import styles from './DiceGame.module.css';
 
-const MIN_TARGET = 5;
-const MAX_TARGET = 95;
-const MAX_BET = 10000;
-const HOUSE_EDGE = 3;
+const DEFAULT_CONFIG = {
+  enabled: true,
+  minBet: 1,
+  maxBet: 10000,
+  minWinChance: 5,
+  maxWinChance: 85,
+  houseEdgePercent: 3,
+  rollDurationMs: 1400,
+};
 const QUICK_BETS = [10, 25, 50, 100];
 
 const STAR_FORMATTER = new Intl.NumberFormat('uz-UZ', {
@@ -75,39 +80,79 @@ export default function DiceGame({
   const [mode, setMode] = useState('higher');
   const [target, setTarget] = useState(50);
   const [bet, setBet] = useState(10);
+  const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [rolling, setRolling] = useState(false);
+  const [settling, setSettling] = useState(false);
+  const [pendingResult, setPendingResult] = useState(null);
   const [result, setResult] = useState(null);
   const [recent, setRecent] = useState([]);
   const [localError, setLocalError] = useState('');
 
   const balance = Math.max(0, safeInteger(profile?.balance));
+  const minTarget = mode === 'higher'
+    ? 100 - config.maxWinChance
+    : config.minWinChance;
+  const maxTarget = mode === 'higher'
+    ? 100 - config.minWinChance
+    : config.maxWinChance;
   const chance = mode === 'higher' ? 100 - target : target;
   const multiplier = useMemo(
-    () => Math.floor(((100 - HOUSE_EDGE) / chance) * 100) / 100,
-    [chance]
+    () => Math.floor(((100 - config.houseEdgePercent) / chance) * 100) / 100,
+    [chance, config.houseEdgePercent]
   );
   const possiblePayout = Math.max(bet + 1, Math.floor(bet * multiplier));
-  const sliderFill = ((target - MIN_TARGET) / (MAX_TARGET - MIN_TARGET)) * 100;
+  const sliderFill = ((target - minTarget) / Math.max(1, maxTarget - minTarget)) * 100;
+  const activeRoll = pendingResult?.roll ?? result?.roll ?? target;
 
   useEffect(() => () => onRoundStateChange?.(false), [onRoundStateChange]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    apiPost('/api/dice', { action: 'state' })
+      .then((data) => {
+        if (cancelled) return;
+        if (data?.config) setConfig({ ...DEFAULT_CONFIG, ...data.config });
+        if (Number.isFinite(Number(data?.balance))) onBalanceChange?.(data.balance);
+      })
+      .catch(() => {});
+
+    return () => { cancelled = true; };
+  }, [apiPost, onBalanceChange]);
+
+  useEffect(() => {
+    setTarget((current) => clamp(current, minTarget, maxTarget));
+    setBet((current) => clamp(
+      current,
+      config.minBet,
+      Math.max(config.minBet, Math.min(config.maxBet, Math.max(config.minBet, balance)))
+    ));
+  }, [balance, config.maxBet, config.minBet, maxTarget, minTarget]);
 
   const changeMode = useCallback((nextMode) => {
     if (rolling) return;
     setMode(nextMode);
+    const nextMin = nextMode === 'higher' ? 100 - config.maxWinChance : config.minWinChance;
+    const nextMax = nextMode === 'higher' ? 100 - config.minWinChance : config.maxWinChance;
+    setTarget((current) => clamp(current, nextMin, nextMax));
     setResult(null);
     setLocalError('');
     tg?.HapticFeedback?.selectionChanged?.();
-  }, [rolling, tg]);
+  }, [config.maxWinChance, config.minWinChance, rolling, tg]);
 
   const updateBet = useCallback((value) => {
-    setBet(clamp(safeInteger(value, 1), 1, Math.min(MAX_BET, Math.max(1, balance))));
+    setBet(clamp(
+      safeInteger(value, config.minBet),
+      config.minBet,
+      Math.max(config.minBet, Math.min(config.maxBet, Math.max(config.minBet, balance)))
+    ));
     setLocalError('');
-  }, [balance]);
+  }, [balance, config.maxBet, config.minBet]);
 
   const play = useCallback(async () => {
     if (rolling) return;
 
-    const normalizedBet = clamp(safeInteger(bet, 1), 1, MAX_BET);
+    const normalizedBet = clamp(safeInteger(bet, config.minBet), config.minBet, config.maxBet);
     if (normalizedBet > balance) {
       setLocalError('Balans yetarli emas. Stavkani kamaytiring.');
       tg?.HapticFeedback?.notificationOccurred?.('error');
@@ -116,6 +161,8 @@ export default function DiceGame({
 
     setBet(normalizedBet);
     setRolling(true);
+    setSettling(false);
+    setPendingResult(null);
     setResult(null);
     setLocalError('');
     onRoundStateChange?.(true);
@@ -129,11 +176,17 @@ export default function DiceGame({
         target,
         bet: normalizedBet,
       });
-      const waitMs = Math.max(0, 900 - (Date.now() - startedAt));
+      const nextConfig = { ...config, ...(data?.config || {}) };
+      setConfig(nextConfig);
+      const waitMs = Math.max(0, 480 - (Date.now() - startedAt));
       if (waitMs) await new Promise((resolve) => window.setTimeout(resolve, waitMs));
 
       const nextResult = data?.result;
       if (!nextResult) throw new Error('Dice natijasi olinmadi.');
+
+      setPendingResult(nextResult);
+      setSettling(true);
+      await new Promise((resolve) => window.setTimeout(resolve, nextConfig.rollDurationMs));
 
       setResult(nextResult);
       setRecent((items) => [nextResult, ...items].slice(0, 6));
@@ -148,10 +201,12 @@ export default function DiceGame({
       setLocalError(error?.message || 'Dice o‘yinida xatolik yuz berdi.');
       tg?.HapticFeedback?.notificationOccurred?.('error');
     } finally {
+      setPendingResult(null);
+      setSettling(false);
       setRolling(false);
       onRoundStateChange?.(false);
     }
-  }, [apiPost, balance, bet, mode, onBalanceChange, onRoundStateChange, onToast, rolling, target, tg]);
+  }, [apiPost, balance, bet, config, mode, onBalanceChange, onRoundStateChange, onToast, rolling, target, tg]);
 
   return (
     <section className={styles.root} aria-busy={rolling}>
@@ -178,15 +233,16 @@ export default function DiceGame({
           <div className={styles.scaleTicks} aria-hidden="true" />
         </div>
 
-        <div className={styles.trackWrap} data-mode={mode} style={{ '--target': `${target}%`, '--roll': `${result?.roll ?? target}%` }}>
+        <div className={styles.trackWrap} data-mode={mode} style={{ '--target': `${target}%`, '--roll': `${activeRoll}%`, '--settle-duration': `${config.rollDurationMs}ms` }}>
           <div className={styles.track} />
           <span className={styles.targetMarker}><b>{target}</b></span>
-          {result ? <span className={styles.rollMarker} data-win={result.won ? 'true' : 'false'}><i>{Number(result.roll).toFixed(2)}</i></span> : null}
-          {rolling ? <span className={styles.rollingMarker} /> : null}
+          {result && !rolling ? <span className={styles.rollMarker} data-win={result.won ? 'true' : 'false'}><i>{Number(result.roll).toFixed(2)}</i></span> : null}
+          {rolling && !settling ? <span className={styles.rollingMarker} /> : null}
+          {rolling && settling ? <span className={styles.settlingMarker} data-win={pendingResult?.won ? 'true' : 'false'} /> : null}
           <input
             type="range"
-            min={MIN_TARGET}
-            max={MAX_TARGET}
+            min={minTarget}
+            max={maxTarget}
             step="1"
             value={target}
             disabled={rolling}
@@ -229,17 +285,17 @@ export default function DiceGame({
       <section className={styles.betPanel}>
         <div className={styles.betHeading}><span>STAVKA</span><small>Mumkin bo‘lgan yutuq: {formatStars(possiblePayout)} ⭐</small></div>
         <div className={styles.betField}>
-          <button type="button" onClick={() => updateBet(bet - 1)} disabled={rolling || bet <= 1}>−</button>
-          <label>{starIcon(styles.betStar)}<input type="number" min="1" max={Math.min(MAX_BET, Math.max(1, balance))} value={bet} disabled={rolling} onChange={(event) => updateBet(event.target.value)} /></label>
+          <button type="button" onClick={() => updateBet(bet - 1)} disabled={rolling || bet <= config.minBet}>−</button>
+          <label>{starIcon(styles.betStar)}<input type="number" min={config.minBet} max={Math.min(config.maxBet, Math.max(config.minBet, balance))} value={bet} disabled={rolling} onChange={(event) => updateBet(event.target.value)} /></label>
           <button type="button" onClick={() => updateBet(bet + 1)} disabled={rolling || bet >= balance}>+</button>
         </div>
         <div className={styles.quickBets}>
-          {QUICK_BETS.map((amount) => <button key={amount} type="button" onClick={() => updateBet(amount)} disabled={rolling || amount > balance}>{amount}</button>)}
-          <button type="button" onClick={() => updateBet(Math.min(balance, MAX_BET))} disabled={rolling || balance <= 0}>MAX</button>
+          {QUICK_BETS.map((amount) => <button key={amount} type="button" onClick={() => updateBet(amount)} disabled={rolling || amount > balance || amount < config.minBet}>{amount}</button>)}
+          <button type="button" onClick={() => updateBet(Math.min(balance, config.maxBet))} disabled={rolling || balance < config.minBet}>MAX</button>
         </div>
         {localError ? <p className={styles.error}>{localError}</p> : null}
-        <button type="button" className={styles.playButton} onClick={play} disabled={rolling || balance < 1}>
-          {rolling ? <><span className={styles.buttonDice} /> NATIJA ANIQLANMOQDA...</> : <>{starIcon(styles.buttonStar)} {formatStars(bet)} STARS BILAN O‘YNASH</>}
+        <button type="button" className={styles.playButton} onClick={play} disabled={rolling || !config.enabled || balance < config.minBet}>
+          {!config.enabled ? 'O‘YIN VAQTINCHA O‘CHIRILGAN' : rolling ? <><span className={styles.buttonDice} /> {settling ? 'SEKINLASHMOQDA...' : 'NATIJA ANIQLANMOQDA...'}</> : <>{starIcon(styles.buttonStar)} {formatStars(bet)} STARS BILAN O‘YNASH</>}
         </button>
         <div className={styles.security}><ShieldCheck /> Natija serverdagi xavfsiz random orqali yaratiladi</div>
       </section>
