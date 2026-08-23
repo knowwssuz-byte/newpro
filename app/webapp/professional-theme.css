@@ -2596,6 +2596,304 @@ body {
 }
 
 /* =========================================================
+   REFERRAL EXPERIENCE V15
+   Faster first paint, stronger hierarchy and anti-abuse cues.
+========================================================= */
+.referral-view {
+  --referral-green: #55e8aa;
+  --referral-ink: #12101c;
+  gap: 12px !important;
+  padding-top: 12px !important;
+}
+
+.referral-page-head {
+  min-height: 54px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 14px !important;
+}
+
+.referral-page-head > div {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 4px !important;
+}
+
+.referral-page-head > div > span {
+  color: rgba(207, 167, 255, 0.75) !important;
+  font-size: 8px !important;
+  font-weight: 850 !important;
+  letter-spacing: 0.13em !important;
+}
+
+.referral-page-head h1 {
+  font-size: clamp(27px, 7.8vw, 34px) !important;
+}
+
+.referral-secure-pill {
+  min-height: 29px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 0 10px !important;
+  border: 1px solid rgba(85, 232, 170, 0.18) !important;
+  border-radius: 999px !important;
+  color: rgba(126, 239, 191, 0.84) !important;
+  background: rgba(42, 184, 121, 0.075) !important;
+  font-size: 8px !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+}
+
+.referral-secure-pill svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.referral-reward-card {
+  gap: 10px !important;
+  padding: 17px !important;
+  border-color: rgba(213, 176, 255, 0.32) !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(90% 80% at 92% 5%, rgba(157, 88, 255, 0.28), transparent 66%),
+    radial-gradient(72% 76% at 0% 0%, rgba(255, 213, 111, 0.09), transparent 69%),
+    linear-gradient(145deg, rgba(66, 39, 92, 0.95), rgba(31, 19, 47, 0.985) 55%, rgba(17, 11, 27, 0.99)) !important;
+}
+
+.referral-reward-top {
+  min-height: 194px !important;
+  grid-template-columns: minmax(0, 1.08fr) minmax(138px, 0.92fr) !important;
+}
+
+.referral-reward-copy {
+  gap: 8px !important;
+}
+
+.referral-reward-kicker {
+  color: rgba(210, 176, 248, 0.7) !important;
+  font-size: 7.5px !important;
+  font-weight: 850 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.11em !important;
+}
+
+.referral-reward-copy h2 {
+  font-size: clamp(25px, 7.1vw, 31px) !important;
+  line-height: 0.98 !important;
+}
+
+.referral-reward-amount {
+  margin-top: 4px !important;
+  font-size: clamp(36px, 10vw, 45px) !important;
+}
+
+.referral-reward-art {
+  position: relative !important;
+  width: clamp(148px, 39vw, 205px) !important;
+  height: clamp(158px, 42vw, 215px) !important;
+  max-width: none !important;
+  margin: -3px -8px -4px -18px !important;
+  filter: none !important;
+}
+
+.referral-art-orbit {
+  position: absolute !important;
+  inset: 11% 3% 4% 10% !important;
+  border: 1px solid rgba(215, 172, 255, 0.22) !important;
+  border-radius: 50% !important;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(175, 105, 255, 0.22), transparent 49%),
+    rgba(105, 52, 153, 0.09) !important;
+  box-shadow:
+    0 0 0 12px rgba(164, 95, 232, 0.025),
+    0 0 38px rgba(173, 99, 246, 0.17),
+    inset 0 0 32px rgba(187, 118, 255, 0.14) !important;
+}
+
+.referral-art-orbit::before,
+.referral-art-orbit::after {
+  content: "" !important;
+  position: absolute !important;
+  border-radius: 50% !important;
+}
+
+.referral-art-orbit::before {
+  inset: 14% !important;
+  border: 1px dashed rgba(255, 222, 145, 0.2) !important;
+  animation: referralOrbitSpin 16s linear infinite !important;
+}
+
+.referral-art-orbit::after {
+  inset: 31% !important;
+  background: rgba(205, 155, 255, 0.13) !important;
+  filter: blur(12px) !important;
+}
+
+.referral-art-avatar {
+  position: absolute !important;
+  z-index: 3 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(255, 255, 255, 0.34) !important;
+  border-radius: 22px !important;
+  color: #fff !important;
+  box-shadow: 0 13px 27px rgba(8, 3, 15, 0.32), inset 0 1px 0 rgba(255,255,255,.24) !important;
+}
+
+.referral-art-avatar svg {
+  width: 44% !important;
+  height: 44% !important;
+  stroke-width: 1.8 !important;
+}
+
+.referral-art-avatar.is-main {
+  top: 25% !important;
+  left: 14% !important;
+  width: 77px !important;
+  height: 77px !important;
+  background: linear-gradient(145deg, #a866ef, #7540bd) !important;
+  transform: rotate(-7deg) !important;
+}
+
+.referral-art-avatar.is-friend {
+  right: 6% !important;
+  bottom: 16% !important;
+  width: 62px !important;
+  height: 62px !important;
+  border-radius: 19px !important;
+  background: linear-gradient(145deg, #e6ad52, #b96b33) !important;
+  transform: rotate(8deg) !important;
+}
+
+.referral-art-star {
+  position: absolute !important;
+  z-index: 5 !important;
+  display: grid !important;
+  place-items: center !important;
+  filter: drop-shadow(0 7px 10px rgba(25, 10, 0, 0.28)) !important;
+}
+
+.referral-art-star .coin-icon,
+.referral-art-star .coin-icon img {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.referral-art-star.is-one { top: 5% !important; right: 15% !important; width: 32px !important; height: 32px !important; transform: rotate(11deg) !important; }
+.referral-art-star.is-two { left: 4% !important; bottom: 10% !important; width: 25px !important; height: 25px !important; transform: rotate(-13deg) !important; }
+.referral-art-star.is-three { right: 0 !important; top: 43% !important; width: 20px !important; height: 20px !important; opacity: .82 !important; }
+
+.referral-primary-share {
+  min-height: 54px !important;
+  border-radius: 16px !important;
+  background:
+    radial-gradient(80% 190% at 50% -90%, rgba(255,255,255,.55), transparent 66%),
+    linear-gradient(100deg, #a65ee8, #8748d2 54%, #6d36ba) !important;
+}
+
+.referral-inline-link {
+  min-height: 45px !important;
+  border-radius: 14px !important;
+}
+
+.referral-trust-strip {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 7px !important;
+}
+
+.referral-trust-strip > span {
+  min-width: 0 !important;
+  min-height: 34px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 0 8px !important;
+  border: 1px solid rgba(229, 210, 249, 0.1) !important;
+  border-radius: 12px !important;
+  color: rgba(225, 210, 243, 0.57) !important;
+  background: rgba(14, 9, 23, 0.34) !important;
+}
+
+.referral-trust-strip svg { width: 12px !important; height: 12px !important; color: #8ee6bc !important; }
+.referral-trust-strip b { overflow: hidden !important; font-size: 8px !important; font-weight: 760 !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+
+.referral-overview-card {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  padding: 10px !important;
+  border-radius: 23px !important;
+  background: linear-gradient(145deg, rgba(43, 30, 58, 0.91), rgba(21, 14, 32, 0.97)) !important;
+}
+
+.referral-overview-stat,
+.referral-overview-rate {
+  min-height: 78px !important;
+  border: 1px solid rgba(232, 213, 252, 0.075) !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,.025) !important;
+}
+
+.referral-overview-stat {
+  justify-items: start !important;
+  padding: 12px 14px !important;
+  text-align: left !important;
+}
+
+.referral-overview-stat::after { display: none !important; }
+.referral-overview-stat.is-earned > div { justify-content: flex-start !important; }
+.referral-overview-rate { padding: 8px !important; }
+.referral-progress-ring { width: 61px !important; height: 61px !important; }
+
+.referral-friends-section {
+  padding: 13px 11px 11px !important;
+  border: 1px solid rgba(223, 202, 245, 0.12) !important;
+  border-radius: 22px !important;
+  background: rgba(26, 18, 37, 0.64) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.035) !important;
+}
+
+.referral-friends-head { padding: 0 3px 2px !important; }
+.referral-friend-row { border-radius: 16px !important; background: rgba(255,255,255,.026) !important; }
+
+.referral-flow {
+  gap: 6px !important;
+  padding: 0 !important;
+}
+
+.referral-flow::before { left: 13% !important; right: 13% !important; }
+.referral-flow article { min-width: 0 !important; gap: 6px !important; }
+.referral-flow article > span { min-width: 0 !important; display: grid !important; gap: 2px !important; }
+.referral-flow article > span strong { color: rgba(255,255,255,.86) !important; font-size: 8px !important; line-height: 1 !important; }
+.referral-flow article > span small { color: rgba(218,204,232,.38) !important; font-size: 6.5px !important; line-height: 1 !important; white-space: nowrap !important; }
+
+@keyframes referralOrbitSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 390px) {
+  .referral-view { padding-inline: 8px !important; }
+  .referral-secure-pill { padding-inline: 8px !important; }
+  .referral-reward-card { padding: 14px !important; border-radius: 24px !important; }
+  .referral-reward-top { min-height: 178px !important; grid-template-columns: minmax(0, 1.05fr) 132px !important; }
+  .referral-reward-kicker { font-size: 6.8px !important; }
+  .referral-reward-copy h2 { font-size: 24px !important; }
+  .referral-reward-amount { font-size: 34px !important; }
+  .referral-invitee-chip { max-width: 164px !important; font-size: 8.4px !important; }
+  .referral-reward-art { width: 145px !important; height: 172px !important; margin-right: -10px !important; }
+  .referral-art-avatar.is-main { width: 65px !important; height: 65px !important; }
+  .referral-art-avatar.is-friend { width: 53px !important; height: 53px !important; }
+  .referral-overview-stat, .referral-overview-rate { min-height: 72px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .referral-art-orbit::before { animation: none !important; }
+}
+
+/* =========================================================
    REALISTIC FROSTED LIQUID GLASS NAVBAR V13
    The material is intentionally dense: content behind the
    dock dissolves into colour and light instead of remaining

@@ -4,6 +4,10 @@ import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const OVERVIEW_CACHE_TTL_MS = 15_000;
+const overviewCache = globalThis.__giftMystReferralOverviewCache || new Map();
+globalThis.__giftMystReferralOverviewCache = overviewCache;
+
 function sqlNotInstalled(error) {
   const text = `${error?.message || ''} ${error?.details || ''} ${error?.hint || ''}`.toLowerCase();
 
@@ -34,6 +38,17 @@ export async function POST(request) {
     const user = await ensureUser(auth.telegramUser);
 
     if (user.is_banned) return jsonError('Siz bloklangansiz', 403);
+
+    const cached = overviewCache.get(userId);
+    if (cached && Date.now() - cached.savedAt < OVERVIEW_CACHE_TTL_MS) {
+      return Response.json({
+        ok: true,
+        referral: {
+          ...cached.referral,
+          balance: Math.max(0, number(user.balance)),
+        },
+      });
+    }
 
     const [settingsResult, referralsResult, statsResult, invitedByResult] = await Promise.all([
       supabase
@@ -96,48 +111,53 @@ export async function POST(request) {
     const earned = Math.max(0, number(statsRow.earned));
     const settings = settingsResult.data || {};
 
-    return Response.json(
-      {
-        ok: true,
-        referral: {
-          balance: Math.max(0, number(user.balance)),
-          settings: {
-            enabled: settings.enabled !== false,
-            inviterReward: Math.max(0, number(settings.inviter_reward)),
-            inviteeReward: Math.max(0, number(settings.invitee_reward)),
-            activationMode: settings.activation_mode || 'first_paid_activity',
-          },
-          stats: {
-            total,
-            active,
-            pending: Math.max(0, total - active),
-            earned,
-            conversionRate: Math.max(0, number(statsRow.conversionRate ?? statsRow.conversion_rate)),
-          },
-          invitedBy: invitedByResult.data
-            ? {
-                userId: Number(invitedByResult.data.inviter_id),
-                status: invitedByResult.data.status,
-                joinedAt: invitedByResult.data.joined_at,
-              }
-            : null,
-          friends: referrals.map((item) => {
-            const friend = usersById.get(Number(item.invited_id));
-
-            return {
-              id: item.id,
-              userId: Number(item.invited_id),
-              firstName: friend?.first_name || '',
-              username: friend?.username || '',
-              status: item.status || 'joined',
-              joinedAt: item.joined_at,
-              activatedAt: item.activated_at,
-              rewardedAt: item.rewarded_at,
-              rewardAmount: Math.max(0, number(item.inviter_reward_amount)),
-            };
-          }),
-        },
+    const referral = {
+      balance: Math.max(0, number(user.balance)),
+      settings: {
+        enabled: settings.enabled !== false,
+        inviterReward: Math.max(0, number(settings.inviter_reward)),
+        inviteeReward: Math.max(0, number(settings.invitee_reward)),
+        activationMode: settings.activation_mode || 'first_paid_activity',
       },
+      stats: {
+        total,
+        active,
+        pending: Math.max(0, total - active),
+        earned,
+        conversionRate: Math.max(0, number(statsRow.conversionRate ?? statsRow.conversion_rate)),
+      },
+      invitedBy: invitedByResult.data
+        ? {
+            userId: Number(invitedByResult.data.inviter_id),
+            status: invitedByResult.data.status,
+            joinedAt: invitedByResult.data.joined_at,
+          }
+        : null,
+      friends: referrals.map((item) => {
+        const friend = usersById.get(Number(item.invited_id));
+
+        return {
+          id: item.id,
+          userId: Number(item.invited_id),
+          firstName: friend?.first_name || '',
+          username: friend?.username || '',
+          status: item.status || 'joined',
+          joinedAt: item.joined_at,
+          activatedAt: item.activated_at,
+          rewardedAt: item.rewarded_at,
+          rewardAmount: Math.max(0, number(item.inviter_reward_amount)),
+        };
+      }),
+    };
+
+    overviewCache.set(userId, { savedAt: Date.now(), referral });
+    if (overviewCache.size > 250) {
+      const oldestKey = overviewCache.keys().next().value;
+      overviewCache.delete(oldestKey);
+    }
+
+    return Response.json(
+      { ok: true, referral },
       {
         headers: {
           'Cache-Control': 'no-store, max-age=0',

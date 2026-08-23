@@ -73,6 +73,7 @@ const emptyUserForm = {
 };
 
 const WARMED_IMAGE_URLS = new Set();
+const BOOTSTRAP_CACHE_TTL_MS = 3 * 60_000;
 
 const GIFT_BACKGROUND_PRESETS = [
   { name: 'Gold', value: '#f59e0b' },
@@ -319,6 +320,73 @@ function getTelegramStartParam(app) {
     urlParams.get('startapp') ||
     ''
   );
+}
+
+function getOrCreateDeviceToken() {
+  if (typeof window === 'undefined') return '';
+
+  const key = 'gift_myst_device_v1';
+
+  try {
+    const existing = window.localStorage.getItem(key) || '';
+    if (/^[a-zA-Z0-9._:-]{16,160}$/.test(existing)) return existing;
+
+    const random = typeof window.crypto?.randomUUID === 'function'
+      ? window.crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+    const token = `gm-${random}`;
+    window.localStorage.setItem(key, token);
+    return token;
+  } catch {
+    return `gm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
+function getDeviceInfo() {
+  if (typeof window === 'undefined') return {};
+
+  const nav = window.navigator || {};
+  const screen = window.screen || {};
+
+  return {
+    platform: nav.userAgentData?.platform || nav.platform || '',
+    language: nav.language || '',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || '',
+    screen: `${screen.width || 0}x${screen.height || 0}@${window.devicePixelRatio || 1}`,
+    colorDepth: screen.colorDepth || 0,
+    cores: nav.hardwareConcurrency || 0,
+    memory: nav.deviceMemory || 0,
+  };
+}
+
+function bootstrapCacheKey(userId) {
+  return `gift_myst_bootstrap_v3_${String(userId || '')}`;
+}
+
+function readBootstrapCache(userId) {
+  if (typeof window === 'undefined' || !userId) return null;
+
+  try {
+    const parsed = JSON.parse(window.sessionStorage.getItem(bootstrapCacheKey(userId)) || 'null');
+    if (!parsed?.data || Date.now() - Number(parsed.savedAt || 0) > BOOTSTRAP_CACHE_TTL_MS) return null;
+    if (String(parsed.data?.telegramUser?.id || parsed.data?.user?.id || '') !== String(userId)) return null;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeBootstrapCache(userId, data) {
+  if (typeof window === 'undefined' || !userId || !data) return;
+
+  try {
+    window.sessionStorage.setItem(
+      bootstrapCacheKey(userId),
+      JSON.stringify({ savedAt: Date.now(), data })
+    );
+  } catch {
+    // Katta gift katalogida storage to‘lsa, live API odatdagidek ishlaydi.
+  }
 }
 
 function randomItem(items) {
@@ -610,6 +678,32 @@ export default function WebAppClient() {
     [initData]
   );
 
+  const applyBootstrapData = useCallback((data, { cache = true } = {}) => {
+    if (!data) return;
+
+    warmImageCacheFromData(data.cases || [], data.gifts || [], data.history || []);
+    setProfile(data.user || null);
+    setTelegramUser(data.telegramUser || null);
+    setIsAdmin(Boolean(data.isAdmin));
+    setCases(data.cases || []);
+    setGifts(data.gifts || []);
+    setHistory(data.history || []);
+    setWithdrawals(data.withdrawals || []);
+    setFeatureSettings(data.featureSettings || {});
+
+    if (data.cases?.[0]?.id) {
+      setGiftForm((current) => (
+        current.case_id ? current : { ...current, case_id: data.cases[0].id }
+      ));
+    }
+
+    hasBootstrappedRef.current = true;
+
+    if (cache) {
+      writeBootstrapCache(data.telegramUser?.id || data.user?.id, data);
+    }
+  }, []);
+
   const loadApp = useCallback(
     async ({ silent = false } = {}) => {
       if (!initData) return;
@@ -623,22 +717,7 @@ export default function WebAppClient() {
       try {
         const data = await apiPost('/api/bootstrap');
         if (!mountedRef.current) return;
-
-        warmImageCacheFromData(data.cases || [], data.gifts || [], data.history || []);
-        setProfile(data.user);
-        setTelegramUser(data.telegramUser);
-        setIsAdmin(Boolean(data.isAdmin));
-        setCases(data.cases || []);
-        setGifts(data.gifts || []);
-        setHistory(data.history || []);
-        setWithdrawals(data.withdrawals || []);
-        setFeatureSettings(data.featureSettings || {});
-
-        if (data.cases?.[0]?.id) {
-          setGiftForm((current) => (current.case_id ? current : { ...current, case_id: data.cases[0].id }));
-        }
-
-        hasBootstrappedRef.current = true;
+        applyBootstrapData(data);
       } catch (err) {
         if (mountedRef.current) {
           setError(err.message || 'Ma’lumot yuklashda xatolik');
@@ -649,7 +728,7 @@ export default function WebAppClient() {
         }
       }
     },
-    [apiPost, initData]
+    [apiPost, applyBootstrapData, initData]
   );
 
   useEffect(() => {
@@ -704,7 +783,14 @@ export default function WebAppClient() {
         setTg(app);
         setInitData(app.initData || '');
         setStartParam(getTelegramStartParam(app));
-        setTelegramUser(app.initDataUnsafe?.user || null);
+        const telegramIdentity = app.initDataUnsafe?.user || null;
+        setTelegramUser(telegramIdentity);
+
+        const cachedBootstrap = readBootstrapCache(telegramIdentity?.id);
+        if (cachedBootstrap) {
+          applyBootstrapData(cachedBootstrap, { cache: false });
+          setLoading(false);
+        }
 
         if (!app.initData) {
           setLoading(false);
@@ -719,7 +805,7 @@ export default function WebAppClient() {
     initTelegram();
 
     return cleanup;
-  }, []);
+  }, [applyBootstrapData]);
 
   useEffect(() => {
     loadApp();
@@ -727,18 +813,26 @@ export default function WebAppClient() {
 
 
   useEffect(() => {
-    if (!initData || !startParam || referralTrackedRef.current) return;
-
-    const cleanStartParam = String(startParam || '').trim();
-
-    if (!/^ref[_-]?\d+$/i.test(cleanStartParam)) return;
+    if (!initData || referralTrackedRef.current) return;
 
     referralTrackedRef.current = true;
+    const cleanStartParam = String(startParam || '').trim();
 
-    apiPost('/api/referral/startapp', { startParam: cleanStartParam }).catch((err) => {
-      console.warn('Referral startapp track failed:', err?.message || err);
-    });
-  }, [apiPost, initData, startParam]);
+    apiPost('/api/referral/startapp', {
+      startParam: cleanStartParam,
+      deviceToken: getOrCreateDeviceToken(),
+      deviceInfo: getDeviceInfo(),
+    })
+      .then((data) => {
+        if (data?.blocked) {
+          showToast('Bu qurilmada referal bonusi mavjud akkaunt sabab bloklandi.');
+          tg?.HapticFeedback?.notificationOccurred?.('warning');
+        }
+      })
+      .catch((err) => {
+        console.warn('Referral device check failed:', err?.message || err);
+      });
+  }, [apiPost, initData, showToast, startParam, tg]);
 
   async function runAction(callback, successText, { silent = false } = {}) {
     if (actionLockRef.current) return null;
@@ -2188,6 +2282,35 @@ function referralDate(value) {
   }).format(date);
 }
 
+const REFERRAL_CACHE_TTL_MS = 2 * 60_000;
+
+function readReferralCache(userId) {
+  if (typeof window === 'undefined' || !userId) return null;
+
+  try {
+    const value = JSON.parse(
+      window.sessionStorage.getItem(`gift_myst_referral_v2_${userId}`) || 'null'
+    );
+    if (!value?.overview || Date.now() - Number(value.savedAt || 0) > REFERRAL_CACHE_TTL_MS) return null;
+    return value.overview;
+  } catch {
+    return null;
+  }
+}
+
+function writeReferralCache(userId, overview) {
+  if (typeof window === 'undefined' || !userId || !overview) return;
+
+  try {
+    window.sessionStorage.setItem(
+      `gift_myst_referral_v2_${userId}`,
+      JSON.stringify({ savedAt: Date.now(), overview })
+    );
+  } catch {
+    // Cache yordamchi optimizatsiya, quota to‘lsa live API ishlashda davom etadi.
+  }
+}
+
 function referralStatus(status) {
   const value = String(status || 'joined').toLowerCase();
 
@@ -2240,8 +2363,9 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
       }
 
       try {
-        const data = await apiPost('/api/referral/overview', {}, { timeoutMs: 8_000 });
+        const data = await apiPost('/api/referral/overview', {}, { timeoutMs: 5_000 });
         setOverview(data.referral || null);
+        writeReferralCache(userId, data.referral || null);
         onBalanceChange?.(data.referral?.balance);
         setOverviewError('');
       } catch (error) {
@@ -2251,22 +2375,28 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
         setRefreshingOverview(false);
       }
     },
-    [apiPost, onBalanceChange]
+    [apiPost, onBalanceChange, userId]
   );
 
   useEffect(() => {
     let cancelled = false;
 
+    const cachedOverview = readReferralCache(userId);
+    if (cachedOverview) {
+      setOverview(cachedOverview);
+      setLoadingOverview(false);
+    }
+
     const initialLoad = async () => {
       if (cancelled) return;
-      await loadOverview();
+      await loadOverview({ silent: Boolean(cachedOverview) });
     };
 
     initialLoad();
 
     const refreshTimer = window.setInterval(() => {
       if (!document.hidden) loadOverview({ silent: true });
-    }, 30_000);
+    }, 60_000);
 
     const handleVisibility = () => {
       if (!document.hidden) loadOverview({ silent: true });
@@ -2279,7 +2409,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
       window.clearInterval(refreshTimer);
       document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [loadOverview]);
+  }, [loadOverview, userId]);
 
   const copyReferral = async () => {
     try {
@@ -2326,13 +2456,18 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
   return (
     <section className="screen-stack referral-view" aria-busy={loadingOverview}>
       <header className="referral-page-head">
-        <h1>Referal</h1>
+        <div>
+          <span>REFERAL DASTURI</span>
+          <h1>Birga yuting</h1>
+        </div>
+        <span className="referral-secure-pill"><AppIcon name="shield" /> Himoyalangan</span>
       </header>
 
       <article className="referral-reward-card premium-card">
         <div className="referral-reward-top">
           <div className="referral-reward-copy">
-            <h2>Do‘stlaringiz bilan yuting</h2>
+            <span className="referral-reward-kicker">HAR BIR FAOL DO‘ST UCHUN</span>
+            <h2>Taklif qiling.<br />Stars oling.</h2>
             <strong className="referral-reward-amount">
               {loadingOverview ? '—' : `+${formatPrice(inviterReward)}`}
               <span>Stars</span>
@@ -2346,14 +2481,12 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
           </div>
 
           <div className="referral-reward-art" aria-hidden="true">
-            <Image
-              src="/referral/referral-reward-hero.png"
-              alt=""
-              width={1024}
-              height={1024}
-              priority
-              draggable={false}
-            />
+            <span className="referral-art-orbit" />
+            <span className="referral-art-avatar is-main"><AppIcon name="referral" /></span>
+            <span className="referral-art-avatar is-friend"><AppIcon name="userPlus" /></span>
+            <span className="referral-art-star is-one">{coinIcon()}</span>
+            <span className="referral-art-star is-two">{coinIcon()}</span>
+            <span className="referral-art-star is-three">{coinIcon()}</span>
           </div>
         </div>
 
@@ -2371,6 +2504,11 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
           <span>{referralLink}</span>
           <AppIcon name={copied ? 'check' : 'copy'} />
         </button>
+
+        <div className="referral-trust-strip">
+          <span><AppIcon name="shield" /><b>1 qurilma — 1 bonus</b></span>
+          <span><AppIcon name="clock" /><b>Faollikdan keyin</b></span>
+        </div>
       </article>
 
       <section className="referral-overview-card premium-card" aria-label="Referal statistikasi">
@@ -2461,15 +2599,15 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
       <div className="referral-flow" aria-label="Referal dasturi uch bosqichi">
         <article>
           <b>1</b>
-          <span>Ulashish</span>
+          <span><strong>Ulashish</strong><small>Linkni yuboring</small></span>
         </article>
         <article>
           <b>2</b>
-          <span>Qo‘shilish</span>
+          <span><strong>Qo‘shilish</strong><small>Do‘stingiz kiradi</small></span>
         </article>
         <article>
           <b>3</b>
-          <span>Bonus</span>
+          <span><strong>Bonus</strong><small>Stars tushadi</small></span>
         </article>
       </div>
     </section>

@@ -47,11 +47,6 @@ export async function POST(request) {
     }
 
     const supabase = getSupabaseAdmin();
-    const dbUser = await ensureUser(auth.telegramUser);
-
-    if (dbUser.is_banned) {
-      return jsonError('Siz bloklangansiz', 403);
-    }
 
     let giftsQuery = supabase.from('gifts').select('*').order('created_at', { ascending: false });
 
@@ -59,7 +54,8 @@ export async function POST(request) {
       giftsQuery = giftsQuery.eq('is_active', true);
     }
 
-    const [cases, giftsResult, historyResult, withdrawResult, featureResult] = await Promise.all([
+    const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult] = await Promise.all([
+      ensureUser(auth.telegramUser),
       fetchCases(supabase, { onlyActive: !auth.isAdmin }),
       giftsQuery,
       supabase
@@ -76,6 +72,10 @@ export async function POST(request) {
         .limit(30),
       supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp']),
     ]);
+
+    if (dbUser.is_banned) {
+      return jsonError('Siz bloklangansiz', 403);
+    }
 
     if (giftsResult.error) throw new Error(giftsResult.error.message);
     if (historyResult.error) throw new Error(historyResult.error.message);
