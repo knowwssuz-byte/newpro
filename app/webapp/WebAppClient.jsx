@@ -36,6 +36,7 @@ import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
+import DiceGame, { DiceLobbyCard } from './DiceGame';
 
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
@@ -445,6 +446,7 @@ export default function WebAppClient() {
   const [selectedCase, setSelectedCase] = useState(null);
   const [opening, setOpening] = useState(null);
   const [rocketRoundActive, setRocketRoundActive] = useState(false);
+  const [diceRoundActive, setDiceRoundActive] = useState(false);
 
   const [profile, setProfile] = useState(null);
   const [telegramUser, setTelegramUser] = useState(null);
@@ -471,6 +473,7 @@ export default function WebAppClient() {
   const pendingOpeningRef = useRef(null);
   const openingFallbackTimerRef = useRef(null);
   const rocketReturnTabRef = useRef('home');
+  const diceReturnTabRef = useRef('games');
   const depositReturnTabRef = useRef('home');
   const hasBootstrappedRef = useRef(false);
   const referralTrackedRef = useRef(false);
@@ -1201,6 +1204,21 @@ export default function WebAppClient() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
 
+  const openDiceGame = useCallback((returnTab = 'games') => {
+    diceReturnTabRef.current = returnTab === 'home' ? 'home' : 'games';
+    setError('');
+    setOpening(null);
+    setSelectedCase(null);
+    setTab('dice');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
+  const closeDiceGame = useCallback(() => {
+    setDiceRoundActive(false);
+    setTab(diceReturnTabRef.current || 'games');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
   const updateRocketBalance = useCallback((nextBalance) => {
     const value = Number(nextBalance);
 
@@ -1242,7 +1260,7 @@ export default function WebAppClient() {
   const isCaseOpening =
     opening?.stage === 'preparing' || opening?.stage === 'rolling';
   const bottomNavActiveId = !selectedCase
-    ? tab === 'rocket'
+    ? tab === 'rocket' || tab === 'dice'
       ? 'games'
       : navItems.some((item) => item.id === tab)
         ? tab
@@ -1266,7 +1284,7 @@ export default function WebAppClient() {
         ) : null}
         {busy ? <div className="busy-indicator">Amal bajarilmoqda...</div> : null}
 
-        {tab !== 'rocket' && tab !== 'deposit' ? (
+        {tab !== 'rocket' && tab !== 'dice' && tab !== 'deposit' ? (
           <GlobalBalanceBar
             telegramUser={telegramUser}
             profile={profile}
@@ -1279,6 +1297,8 @@ export default function WebAppClient() {
           className={`app-main ${
             selectedCase ? 'case-page-main' : ''
           } ${tab === 'rocket' ? 'rocket-game-main' : ''} ${
+            tab === 'dice' ? 'dice-game-main' : ''
+          } ${
             tab === 'deposit' ? 'deposit-page-main' : ''
           }`}
         >
@@ -1324,6 +1344,7 @@ export default function WebAppClient() {
                 <CasesView
                   onGoHome={() => setTab('home')}
                   onOpenRocket={() => openRocketGame('games')}
+                  onOpenDice={() => openDiceGame('games')}
                   onComingSoon={() => showToast('Tez orada 🚀')}
                   featureSettings={featureSettings}
                 />
@@ -1337,6 +1358,18 @@ export default function WebAppClient() {
                   onBack={closeRocketGame}
                   onBalanceChange={updateRocketBalance}
                   onRoundStateChange={setRocketRoundActive}
+                  onToast={showToast}
+                />
+              ) : null}
+
+              {tab === 'dice' ? (
+                <DiceGame
+                  apiPost={apiPost}
+                  profile={profile}
+                  tg={tg}
+                  onBack={closeDiceGame}
+                  onBalanceChange={updateRocketBalance}
+                  onRoundStateChange={setDiceRoundActive}
                   onToast={showToast}
                 />
               ) : null}
@@ -1397,10 +1430,10 @@ export default function WebAppClient() {
                 <NavButton
                   key={item.id}
                   item={item}
-                  active={!selectedCase && (tab === item.id || tab === 'rocket')}
-                  disabled={isCaseOpening || rocketRoundActive}
+                  active={!selectedCase && (tab === item.id || tab === 'rocket' || tab === 'dice')}
+                  disabled={isCaseOpening || rocketRoundActive || diceRoundActive}
                   onClick={() => {
-                    if (isCaseOpening || rocketRoundActive) return;
+                    if (isCaseOpening || rocketRoundActive || diceRoundActive) return;
                     setOpening(null);
                     setSelectedCase(null);
                     setTab(item.id);
@@ -1419,9 +1452,9 @@ export default function WebAppClient() {
                   key={item.id}
                   item={item}
                   active={!selectedCase && tab === item.id}
-                  disabled={isCaseOpening || rocketRoundActive}
+                  disabled={isCaseOpening || rocketRoundActive || diceRoundActive}
                   onClick={() => {
-                    if (isCaseOpening || rocketRoundActive) return;
+                    if (isCaseOpening || rocketRoundActive || diceRoundActive) return;
                     setOpening(null);
                     setSelectedCase(null);
                     setTab(item.id);
@@ -1771,7 +1804,7 @@ function HomeView({
   );
 }
 
-function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
+function CasesView({ onGoHome, onOpenRocket, onOpenDice, onComingSoon }) {
   return (
     <section className="screen-stack">
       <div className="page-header premium-card games-page-header">
@@ -1779,7 +1812,7 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
           ‹ Home
         </button>
         <h1>Games</h1>
-        <p>Stavkani tanlang va raketa portlashidan oldin yutuqni oling.</p>
+        <p>O‘yinni tanlang, Stars tiking va omadingizni sinang.</p>
       </div>
 
       <div className={`${gameCardStyles.stack} ${gameCardStyles.gamesStack}`}>
@@ -1800,6 +1833,8 @@ function CasesView({ onGoHome, onOpenRocket, onComingSoon }) {
           actionText="Tez orada"
           onClick={onComingSoon}
         />
+
+        <DiceLobbyCard onClick={onOpenDice} />
       </div>
     </section>
   );
