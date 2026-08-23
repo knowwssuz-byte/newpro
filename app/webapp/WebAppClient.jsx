@@ -2396,32 +2396,27 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
     : 0;
 
   return (
-    <section className="bonus-view">
+    <section className="bonus-view bonus-v17">
       <header className="bonus-page-head">
-        <div><span>REWARD CENTER</span><h1>Bonus</h1><p>Tasklarni bajaring va bepul Stars oling.</p></div>
-        <span className="bonus-secure-pill"><AppIcon name="shield" /> Bot verified</span>
+        <div className="bonus-title-lockup">
+          <span className="bonus-title-icon"><AppIcon name="gift" /></span>
+          <div><h1>Bonus</h1><p>Tasklar va mukofotlar</p></div>
+        </div>
+        <button className="bonus-refresh-button" type="button" aria-label="Tasklarni yangilash" onClick={() => loadTasks({ silent: true })} disabled={refreshing}><AppIcon name="refresh" /></button>
       </header>
 
-      <section className="bonus-hero-card">
-        <span className="bonus-hero-glow" aria-hidden="true" />
-        <div className="bonus-hero-copy">
-          <span>MISSION PROGRESS</span>
-          <strong>{formatPrice(stats.earned)} <small>Stars olindi</small></strong>
-          <div className="bonus-progress-track"><i style={{ width: `${completedPercent}%` }} /></div>
-          <p>{stats.completed}/{stats.total} task yakunlandi</p>
+      <section className="bonus-compact-summary">
+        <div className="bonus-summary-earned">
+          <span className="bonus-summary-star"><Image src="/currency/stars.png" alt="" width={25} height={25} /></span>
+          <div><small>Yig‘ilgan</small><strong>{formatPrice(stats.earned)} Stars</strong></div>
         </div>
-        <div className="bonus-hero-art" aria-hidden="true">
-          <span className="bonus-gift-core"><AppIcon name="gift" /></span>
-          <span className="bonus-star bonus-star-one">✦</span>
-          <span className="bonus-star bonus-star-two">✦</span>
-          <span className="bonus-star bonus-star-three">✦</span>
+        <div className="bonus-summary-progress">
+          <span><b>{stats.completed}</b> / {stats.total}</span>
+          <div><i style={{ width: `${completedPercent}%` }} /></div>
         </div>
       </section>
 
-      <div className="bonus-section-title">
-        <div><span>AVAILABLE MISSIONS</span><h2>Tasklar</h2></div>
-        <button type="button" onClick={() => loadTasks({ silent: true })} disabled={refreshing}><AppIcon name="refresh" />{refreshing ? 'Yangilanmoqda' : 'Yangilash'}</button>
-      </div>
+      <div className="bonus-section-title"><h2>Tasklar</h2><span>{tasks.filter((task) => task.status !== 'completed').length} ta mavjud</span></div>
 
       {viewError ? <div className="bonus-inline-error"><AppIcon name="shield" /><span>{viewError}</span></div> : null}
 
@@ -2440,20 +2435,19 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
               <article className={`bonus-task-card is-${task.accent} is-${completed ? 'completed' : waiting ? 'waiting' : ready ? 'ready' : 'available'}`} key={task.id}>
                 <span className="bonus-task-icon"><AppIcon name={bonusTaskIcon(task.type)} /></span>
                 <div className="bonus-task-copy">
-                  <span>{task.typeLabel}{task.waitMinutes > 0 ? ` · ${task.waitMinutes} daqiqa` : ''}</span>
+                  <span>{task.typeLabel}{task.waitMinutes > 0 ? ` · ${task.waitMinutes} daq` : ''}</span>
                   <strong>{task.title}</strong>
-                  <small>{completed ? 'Mukofot balansga qo‘shildi' : task.subtitle || 'Shartni bajaring va bonusni oling'}</small>
-                  {waiting ? <button type="button" className="bonus-reopen-link" onClick={() => openTaskLink(task)}>Havolani qayta ochish ↗</button> : null}
+                  <small>{completed ? 'Mukofot olindi' : task.subtitle || 'Shartni bajaring'}</small>
                 </div>
+                <span className="bonus-task-reward"><Image src="/currency/stars.png" alt="" width={18} height={18} />+{formatPrice(task.reward)}</span>
                 <div className="bonus-task-action-wrap">
                   {completed ? (
-                    <button type="button" className="bonus-task-button is-done" disabled><AppIcon name="check" /> Olindi</button>
-                  ) : waiting ? (
-                    <button type="button" className="bonus-task-button is-timer" disabled><AppIcon name="clock" /> {bonusRemaining(task.eligibleAt, now)}</button>
-                  ) : ready ? (
-                    <button type="button" className="bonus-task-button is-check" disabled={Boolean(actionTaskId)} onClick={() => claimTask(task)}>{acting ? 'Tekshirilmoqda...' : <>Tekshirish <b>+{formatPrice(task.reward)} ★</b></>}</button>
+                    <button type="button" className="bonus-task-button is-done" disabled><AppIcon name="check" /> Bajarildi</button>
                   ) : (
-                    <button type="button" className="bonus-task-button" disabled={Boolean(actionTaskId)} onClick={() => startTask(task)}>{acting ? 'Ochilmoqda...' : <>Bajarish <b>+{formatPrice(task.reward)} ★</b></>}</button>
+                    <>
+                      <button type="button" className="bonus-task-button is-open" disabled={Boolean(actionTaskId)} onClick={() => ready || waiting ? openTaskLink(task) : startTask(task)}>{acting && !ready && !waiting ? 'Ochilmoqda...' : <><AppIcon name="send" /> Bajarish</>}</button>
+                      <button type="button" className="bonus-task-button is-check" disabled={Boolean(actionTaskId) || !ready} onClick={() => claimTask(task)}>{acting && ready ? 'Tekshirilmoqda...' : waiting ? <><AppIcon name="clock" /> {bonusRemaining(task.eligibleAt, now)}</> : <><AppIcon name="check" /> Tekshirish</>}</button>
+                    </>
                   )}
                 </div>
               </article>
@@ -2464,10 +2458,6 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
         <div className="bonus-empty-state"><span><AppIcon name="gift" /></span><strong>Yangi tasklar tayyorlanmoqda</strong><p>Bonus tasklar qo‘shilganda shu yerda paydo bo‘ladi.</p></div>
       )}
 
-      <div className="bonus-rules-card">
-        <AppIcon name="shield" />
-        <div><strong>Halol reward tizimi</strong><span>Har bir task bir akkauntga faqat bir marta beriladi. Kanal a’zoligi bot orqali serverda tekshiriladi.</span></div>
-      </div>
     </section>
   );
 }

@@ -71,7 +71,7 @@ const emptyBonusTaskForm = {
   reward: '2',
   url: '',
   chatId: '',
-  waitMinutes: '30',
+  waitMinutes: '0',
   accent: 'purple',
   sortOrder: '0',
   isActive: true,
@@ -961,7 +961,7 @@ export default function AdminClient() {
       reward: String(task.reward ?? 2),
       url: task.url || '',
       chatId: task.chatId || '',
-      waitMinutes: String(task.waitMinutes ?? 30),
+      waitMinutes: String(task.type === 'telegram_channel' ? 0 : task.waitMinutes ?? 30),
       accent: task.accent || 'purple',
       sortOrder: String(task.sortOrder ?? 0),
       isActive: task.isActive !== false,
@@ -1569,8 +1569,8 @@ export default function AdminClient() {
                 <h2>Task va mukofotlar</h2>
                 <p>
                   Telegram kanal, bot, tashqi havola yoki Mini App tasklarini
-                  yarating. Kanal taski botning getChatMember tekshiruvidan
-                  o‘tadi, barcha tasklarda kutish vaqti serverda hisoblanadi.
+                  yarating. Kanal taski getChatMember orqali darhol tekshiriladi;
+                  faqat boshqa tasklarda kutish vaqtini belgilaysiz.
                 </p>
               </div>
               <div className="bonus-admin-security">
@@ -1590,7 +1590,7 @@ export default function AdminClient() {
                 <div className="admin-form-heading">
                   <span>{bonusTaskForm.id ? 'EDIT MISSION' : 'NEW MISSION'}</span>
                   <h2>{bonusTaskForm.id ? 'Taskni tahrirlash' : 'Yangi task qo‘shish'}</h2>
-                  <p>30 daqiqa standart. Istasangiz har bir task uchun alohida vaqt belgilang.</p>
+                  <p>Kanal taskida kutish yo‘q. Boshqa tasklar uchun kerakli vaqtni belgilang.</p>
                 </div>
 
                 <label><span>Task nomi</span><input value={bonusTaskForm.title} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, title: event.target.value })} placeholder="Masalan: Gift Myst News" required /></label>
@@ -1599,7 +1599,16 @@ export default function AdminClient() {
                 <div className="browser-admin-two">
                   <label>
                     <span>Task turi</span>
-                    <select value={bonusTaskForm.type} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, type: event.target.value })}>
+                    <select value={bonusTaskForm.type} onChange={(event) => {
+                      const type = event.target.value;
+                      setBonusTaskForm({
+                        ...bonusTaskForm,
+                        type,
+                        waitMinutes: type === 'telegram_channel'
+                          ? '0'
+                          : bonusTaskForm.waitMinutes === '0' ? '30' : bonusTaskForm.waitMinutes,
+                      });
+                    }}>
                       <option value="telegram_channel">Telegram kanal — bot tekshiradi</option>
                       <option value="external_link">Tashqi havola — timer</option>
                       <option value="telegram_bot">Telegram bot — timer</option>
@@ -1620,7 +1629,7 @@ export default function AdminClient() {
                 ) : null}
 
                 <div className="browser-admin-two">
-                  <label><span>Kutish, daqiqa</span><input type="number" min="0" max="10080" value={bonusTaskForm.waitMinutes} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, waitMinutes: event.target.value })} required /></label>
+                  <label><span>{bonusTaskForm.type === 'telegram_channel' ? 'Darhol tekshiriladi' : 'Kutish, daqiqa'}</span><input type="number" min="0" max="10080" value={bonusTaskForm.type === 'telegram_channel' ? '0' : bonusTaskForm.waitMinutes} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, waitMinutes: event.target.value })} disabled={bonusTaskForm.type === 'telegram_channel'} required /></label>
                   <label><span>Tartib raqami</span><input type="number" min="0" max="100000" value={bonusTaskForm.sortOrder} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, sortOrder: event.target.value })} /></label>
                 </div>
 
@@ -1641,7 +1650,7 @@ export default function AdminClient() {
                   <article className={`bonus-admin-task is-${task.accent} ${task.isActive === false ? 'is-disabled' : ''}`} key={task.id}>
                     <span className="bonus-admin-task-icon">{task.type === 'telegram_channel' ? '✈' : task.type === 'telegram_bot' ? '🤖' : task.type === 'mini_app' ? '◆' : '↗'}</span>
                     <div className="bonus-admin-task-copy">
-                      <span>{bonusTypeLabel(task.type)} · {task.waitMinutes} daqiqa</span>
+                      <span>{bonusTypeLabel(task.type)} · {task.type === 'telegram_channel' ? 'darhol tekshiruv' : `${task.waitMinutes} daqiqa`}</span>
                       <strong>{task.title}</strong>
                       <small>{task.subtitle || task.url}</small>
                     </div>

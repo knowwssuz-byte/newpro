@@ -188,9 +188,15 @@ export async function POST(request) {
       }
 
       const startedAt = existing?.startedAt || new Date().toISOString();
-      const eligibleAt = existing?.eligibleAt || new Date(
-        new Date(startedAt).getTime() + task.waitMinutes * 60_000
-      ).toISOString();
+      const effectiveWaitMinutes =
+        BONUS_TASK_TYPES[task.type]?.verification === 'telegram_membership'
+          ? 0
+          : task.waitMinutes;
+      const eligibleAt = effectiveWaitMinutes === 0
+        ? new Date().toISOString()
+        : existing?.eligibleAt || new Date(
+            new Date(startedAt).getTime() + effectiveWaitMinutes * 60_000
+          ).toISOString();
       const progress = await writeProgress(supabase, userId, task.id, {
         userId,
         taskId: task.id,
@@ -220,7 +226,11 @@ export async function POST(request) {
     }
 
     const eligibleAt = new Date(existing.eligibleAt || 0).getTime();
-    if (Number.isFinite(eligibleAt) && eligibleAt > Date.now()) {
+    if (
+      BONUS_TASK_TYPES[task.type]?.verification !== 'telegram_membership' &&
+      Number.isFinite(eligibleAt) &&
+      eligibleAt > Date.now()
+    ) {
       return jsonError('Tekshirish vaqti hali kelmadi.', 425, {
         reason: 'TASK_WAITING',
         eligibleAt: existing.eligibleAt,
