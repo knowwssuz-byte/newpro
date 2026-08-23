@@ -994,3 +994,146 @@
     transition: none;
   }
 }
+
+/* Home game showcase — light glass framing for the V39 artwork. */
+.showcase {
+  position: relative;
+  isolation: isolate;
+  margin: 2px 0 12px;
+  padding: 14px 12px 11px;
+  overflow: hidden;
+  border: 1px solid rgba(197, 216, 255, 0.2);
+  border-radius: 26px;
+  background:
+    radial-gradient(72% 90% at 10% 0%, rgba(63, 215, 255, 0.16), transparent 68%),
+    radial-gradient(72% 90% at 92% 10%, rgba(196, 111, 255, 0.17), transparent 70%),
+    linear-gradient(155deg, rgba(39, 51, 82, 0.86), rgba(23, 30, 54, 0.84));
+  box-shadow:
+    0 18px 45px rgba(2, 7, 25, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(20px) saturate(135%);
+  backdrop-filter: blur(20px) saturate(135%);
+}
+
+.showcase::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: -70px;
+  left: 12%;
+  width: 76%;
+  height: 130px;
+  border-radius: 50%;
+  background: rgba(111, 154, 255, 0.17);
+  filter: blur(42px);
+  pointer-events: none;
+}
+
+.showcaseHeader {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 3px;
+}
+
+.showcaseHeader > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.showcaseKicker {
+  color: rgba(155, 207, 255, 0.86);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.13em;
+}
+
+.showcaseTitle {
+  margin: 0;
+  color: #f8fbff;
+  font-family: var(--font-display);
+  font-size: clamp(19px, 5.4vw, 24px);
+  font-weight: 780;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.showcaseStatus {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid rgba(75, 243, 190, 0.24);
+  border-radius: 999px;
+  color: #8ff0d0;
+  background: rgba(34, 190, 141, 0.1);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+}
+
+.showcaseStatus i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #5ce4b7;
+  box-shadow: 0 0 10px rgba(92, 228, 183, 0.78);
+  animation: statusPulse 2.1s ease-in-out infinite;
+}
+
+.showcase .stack {
+  gap: 8px;
+  margin: 7px -3px -1px;
+}
+
+.showcase .stack::before {
+  opacity: 0.8;
+}
+
+.showcase .completeCardArt {
+  filter:
+    brightness(1.055)
+    saturate(1.08)
+    drop-shadow(0 14px 22px rgba(4, 7, 26, 0.22));
+}
+
+.showcase .rocket .completeCardArt {
+  filter:
+    brightness(1.06)
+    saturate(1.08)
+    drop-shadow(0 14px 22px rgba(4, 7, 26, 0.22))
+    drop-shadow(0 5px 14px rgba(37, 224, 255, 0.12));
+}
+
+.showcase .pvp .completeCardArt {
+  filter:
+    brightness(1.06)
+    saturate(1.08)
+    drop-shadow(0 14px 22px rgba(4, 7, 26, 0.22))
+    drop-shadow(0 5px 14px rgba(255, 93, 190, 0.11));
+}
+
+@media (max-width: 430px) {
+  .showcase {
+    padding: 13px 10px 9px;
+    border-radius: 23px;
+  }
+
+  .showcase .stack {
+    gap: 5px;
+    margin-inline: -4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .showcaseStatus i {
+    animation: none;
+  }
+}

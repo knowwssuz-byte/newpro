@@ -493,10 +493,8 @@ export default function WebAppClient() {
 
   useEffect(() => {
     warmImageCacheFromData(
-      '/feature/premium-arcade/rocket-premium-static-v16.png',
-      '/feature/premium-arcade/pvp-premium-static-v16.png',
-      '/feature/premium-arcade/rocket-launch-deck-bg-v16.webp',
-      '/feature/premium-arcade/pvp-golden-arena-bg-v16.webp',
+      '/feature/giftmyst-complete-v39/rocket-card-live-transparent-v39.webp',
+      '/feature/giftmyst-complete-v39/pvp-card-duel-transparent-v39.webp',
       activeCases.slice(0, 8),
       gifts.slice(0, 42),
       selectedCase ? giftsByCase[selectedCase.id] || [] : []
@@ -1635,25 +1633,38 @@ function HomeView({
 
   return (
     <section className="home-view premium-home">
-      <div className={gameCardStyles.stack}>
-        <PromoImageCard
-          variant="rocket"
-          image="/feature/giftmyst-complete-v39/rocket-card-live-transparent-v39.webp"
-          badge="LIVE"
-          title="ROCKET"
-          actionText="Play"
-          onClick={onOpenRocket}
-        />
+      <section className={gameCardStyles.showcase} aria-labelledby="game-modes-title">
+        <div className={gameCardStyles.showcaseHeader}>
+          <div>
+            <span className={gameCardStyles.showcaseKicker}>GAME MODES</span>
+            <h2 id="game-modes-title" className={gameCardStyles.showcaseTitle}>Choose your game</h2>
+          </div>
+          <span className={gameCardStyles.showcaseStatus}>
+            <i aria-hidden="true" />
+            LIVE
+          </span>
+        </div>
 
-        <PromoImageCard
-          variant="pvp"
-          image="/feature/giftmyst-complete-v39/pvp-card-duel-transparent-v39.webp"
-          badge="DUEL"
-          title="PVP"
-          actionText="Tez orada"
-          onClick={showComingSoon}
-        />
-      </div>
+        <div className={gameCardStyles.stack}>
+          <PromoImageCard
+            variant="rocket"
+            image="/feature/giftmyst-complete-v39/rocket-card-live-transparent-v39.webp"
+            badge="LIVE"
+            title="ROCKET"
+            actionText="Play"
+            onClick={onOpenRocket}
+          />
+
+          <PromoImageCard
+            variant="pvp"
+            image="/feature/giftmyst-complete-v39/pvp-card-duel-transparent-v39.webp"
+            badge="DUEL"
+            title="PVP"
+            actionText="Tez orada"
+            onClick={showComingSoon}
+          />
+        </div>
+      </section>
 
       <div className={gameCardStyles.actionsGrid}>
         <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.contracts}`} onClick={onGoCases}>
