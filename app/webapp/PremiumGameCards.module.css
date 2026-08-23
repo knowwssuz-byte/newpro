@@ -1137,3 +1137,428 @@
     animation: none;
   }
 }
+
+/* V40 — horizontal arcade banners inspired by game lobby entry cards. */
+.showcase {
+  margin: 2px 0 13px;
+  padding: 4px 0 0;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.showcase::after {
+  display: none;
+}
+
+.showcaseHeader {
+  margin: 0 4px 11px;
+  padding: 0;
+}
+
+.bannerStack {
+  display: grid;
+  gap: 10px;
+}
+
+.gameBanner {
+  --banner-accent: 66, 172, 255;
+  --banner-accent-2: 96, 105, 255;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  height: clamp(126px, 29vw, 152px);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  appearance: none;
+  border: 1px solid rgba(223, 237, 255, 0.34);
+  border-radius: 25px;
+  color: #fff;
+  background: rgb(31, 104, 222);
+  box-shadow:
+    0 17px 32px rgba(5, 36, 100, 0.24),
+    0 7px 18px rgba(var(--banner-accent), 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 420ms cubic-bezier(0.16, 1.14, 0.3, 1),
+    filter 250ms ease,
+    box-shadow 320ms ease;
+}
+
+.pvpBanner {
+  --banner-accent: 255, 177, 38;
+  --banner-accent-2: 255, 99, 43;
+  border-color: rgba(255, 239, 195, 0.42);
+  background: #ec9709;
+  box-shadow:
+    0 17px 32px rgba(101, 45, 2, 0.22),
+    0 7px 18px rgba(255, 165, 34, 0.13),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.bannerBackdrop {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center right;
+  opacity: 0.92;
+  filter: saturate(1.18) brightness(1.24);
+  transform: scale(1.02);
+  pointer-events: none;
+}
+
+.pvpBanner .bannerBackdrop {
+  filter: saturate(1.25) brightness(1.18);
+}
+
+.bannerVeil {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(40, 129, 238, 0.98) 0%, rgba(45, 139, 241, 0.9) 39%, rgba(35, 102, 208, 0.14) 74%, transparent 100%),
+    radial-gradient(70% 135% at 30% -25%, rgba(255, 255, 255, 0.27), transparent 60%);
+  pointer-events: none;
+}
+
+.pvpBanner .bannerVeil {
+  background:
+    linear-gradient(90deg, rgba(255, 169, 13, 0.99) 0%, rgba(255, 166, 15, 0.91) 40%, rgba(198, 91, 1, 0.16) 76%, transparent 100%),
+    radial-gradient(70% 135% at 30% -25%, rgba(255, 255, 255, 0.3), transparent 60%);
+}
+
+.bannerShard {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  opacity: 0.42;
+  background:
+    linear-gradient(105deg, transparent 0 27%, rgba(255, 255, 255, 0.22) 27.3% 28%, transparent 28.3% 41%, rgba(255, 255, 255, 0.14) 41.3% 42%, transparent 42.4%),
+    linear-gradient(74deg, transparent 0 55%, rgba(255, 255, 255, 0.16) 55.3% 56%, transparent 56.4%);
+  clip-path: polygon(0 0, 100% 0, 92% 100%, 0 100%);
+  pointer-events: none;
+}
+
+.bannerCopy {
+  position: absolute;
+  z-index: 6;
+  top: 12px;
+  bottom: 12px;
+  left: 14px;
+  width: min(55%, 285px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.bannerBadge {
+  min-height: 25px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.68);
+  border-radius: 8px;
+  color: rgb(45, 125, 230);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 5px 13px rgba(7, 49, 120, 0.12);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: 0.015em;
+}
+
+.pvpBanner .bannerBadge {
+  color: #f29408;
+  box-shadow: 0 5px 13px rgba(119, 54, 0, 0.12);
+}
+
+.bannerBadge svg {
+  width: 13px;
+  height: 13px;
+}
+
+.bannerTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  text-shadow: 0 5px 16px rgba(12, 54, 134, 0.24);
+}
+
+.pvpBanner .bannerTitle {
+  text-shadow: 0 5px 16px rgba(111, 47, 0, 0.24);
+}
+
+.bannerTitle svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.3;
+}
+
+.bannerTitle strong {
+  font-family: var(--font-display);
+  font-size: clamp(25px, 7vw, 37px);
+  font-weight: 880;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
+}
+
+.bannerCopy > small {
+  overflow: hidden;
+  color: rgba(255, 255, 255, 0.77);
+  font-size: 9.5px;
+  font-weight: 620;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bannerAction {
+  min-height: 23px;
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.95);
+  background: rgba(7, 43, 111, 0.16);
+  font-size: 9px;
+  font-weight: 760;
+}
+
+.pvpBanner .bannerAction {
+  background: rgba(103, 42, 0, 0.12);
+}
+
+.bannerAction b {
+  font-size: 16px;
+  font-weight: 450;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.bannerRates {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  pointer-events: none;
+}
+
+.bannerRates em {
+  position: absolute;
+  min-width: 39px;
+  min-height: 20px;
+  display: grid;
+  place-items: center;
+  padding: 0 5px;
+  border: 1px solid rgba(211, 255, 228, 0.34);
+  border-radius: 6px;
+  color: #f2fff7;
+  background: rgba(45, 191, 104, 0.88);
+  box-shadow: 0 5px 12px rgba(14, 92, 50, 0.2);
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 850;
+  line-height: 1;
+  transform: rotate(-6deg);
+}
+
+.bannerRates em:nth-child(1) {
+  top: 12px;
+  right: 40%;
+}
+
+.bannerRates em:nth-child(2) {
+  top: 52%;
+  right: 8px;
+  transform: rotate(7deg);
+}
+
+.bannerRates em:nth-child(3) {
+  right: 29%;
+  bottom: 8px;
+  transform: rotate(4deg);
+}
+
+.pvpBanner .bannerRates em {
+  border-color: rgba(255, 239, 199, 0.32);
+  color: #fff7e5;
+  background: rgba(86, 52, 26, 0.79);
+  box-shadow: 0 5px 12px rgba(69, 31, 4, 0.18);
+}
+
+.bannerArtStage {
+  position: absolute;
+  z-index: 4;
+  top: -35%;
+  right: -4%;
+  width: 58%;
+  height: 175%;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  transform: rotate(3deg);
+  transition: transform 620ms cubic-bezier(0.16, 1.14, 0.3, 1);
+}
+
+.pvpBanner .bannerArtStage {
+  top: -43%;
+  right: -8%;
+  width: 62%;
+  height: 190%;
+  transform: rotate(-5deg);
+}
+
+.bannerArt {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 17px 18px rgba(5, 20, 57, 0.22))
+    drop-shadow(0 0 14px rgba(var(--banner-accent), 0.2));
+  transform: translate3d(0, 0, 0);
+  transition: transform 620ms cubic-bezier(0.16, 1.14, 0.3, 1);
+}
+
+.pvpBanner .bannerArt {
+  filter:
+    drop-shadow(0 17px 18px rgba(78, 31, 0, 0.22))
+    drop-shadow(0 0 14px rgba(255, 196, 69, 0.18));
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .gameBanner:hover {
+    filter: brightness(1.04) saturate(1.04);
+    transform: translate3d(0, -2px, 0);
+    box-shadow:
+      0 21px 38px rgba(5, 36, 100, 0.28),
+      0 8px 22px rgba(var(--banner-accent), 0.17),
+      inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  }
+
+  .gameBanner:hover .bannerArtStage {
+    transform: translate3d(-2px, -2px, 0) rotate(5deg) scale(1.035);
+  }
+
+  .pvpBanner:hover .bannerArtStage {
+    transform: translate3d(-2px, -2px, 0) rotate(-3deg) scale(1.035);
+  }
+}
+
+.gameBanner:active {
+  filter: brightness(0.97);
+  transform: scale(0.982);
+  transition-duration: 90ms;
+}
+
+@media (max-width: 430px) {
+  .showcase {
+    padding: 2px 0 0;
+    border-radius: 0;
+  }
+
+  .showcaseHeader {
+    margin-bottom: 9px;
+  }
+
+  .bannerStack {
+    gap: 9px;
+  }
+
+  .gameBanner {
+    height: clamp(120px, 33vw, 139px);
+    border-radius: 22px;
+  }
+
+  .bannerCopy {
+    top: 10px;
+    bottom: 10px;
+    left: 12px;
+    width: 58%;
+    gap: 5px;
+  }
+
+  .bannerCopy > small {
+    display: none;
+  }
+
+  .bannerBadge {
+    min-height: 23px;
+    padding-inline: 8px;
+    font-size: 9px;
+  }
+
+  .bannerTitle {
+    gap: 7px;
+  }
+
+  .bannerTitle svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .bannerAction {
+    min-height: 22px;
+  }
+
+  .bannerRates em:nth-child(1) {
+    right: 35%;
+  }
+
+  .bannerRates em:nth-child(3) {
+    right: 24%;
+  }
+
+  .bannerArtStage {
+    right: -8%;
+    width: 62%;
+  }
+
+  .pvpBanner .bannerArtStage {
+    right: -13%;
+    width: 68%;
+  }
+}
+
+@media (max-width: 350px) {
+  .gameBanner {
+    height: 116px;
+    border-radius: 20px;
+  }
+
+  .bannerTitle strong {
+    font-size: 24px;
+  }
+
+  .bannerRates em {
+    min-width: 34px;
+    min-height: 18px;
+    font-size: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gameBanner,
+  .bannerArtStage,
+  .bannerArt {
+    transition: none;
+  }
+}

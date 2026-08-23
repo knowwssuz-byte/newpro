@@ -493,8 +493,10 @@ export default function WebAppClient() {
 
   useEffect(() => {
     warmImageCacheFromData(
-      '/feature/giftmyst-complete-v39/rocket-card-live-transparent-v39.webp',
-      '/feature/giftmyst-complete-v39/pvp-card-duel-transparent-v39.webp',
+      '/feature/premium-arcade/rocket-launch-deck-bg-v16.webp',
+      '/feature/premium-arcade/rocket-premium-static-v16.png',
+      '/feature/premium-arcade/pvp-golden-arena-bg-v16.webp',
+      '/feature/premium-arcade/pvp-premium-static-v16.png',
       activeCases.slice(0, 8),
       gifts.slice(0, 42),
       selectedCase ? giftsByCase[selectedCase.id] || [] : []
@@ -1232,12 +1234,17 @@ export default function WebAppClient() {
 
   if (loading) {
     return (
-      <div className="minimal-loader-screen">
-        <div className="minimal-loader-bg" />
-        <div className="morph-loader" aria-label="Loading">
-          <div className="morph-box morph-box1" />
-          <div className="morph-box morph-box2" />
-          <div className="morph-box morph-box3" />
+      <div className="initial-loader-screen">
+        <div className="initial-loader" role="status" aria-label="Gift Myst yuklanmoqda">
+          <div className="initial-loader-mark" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+            <span />
+            <i />
+          </div>
+          <strong>GIFT MYST</strong>
+          <small>Preparing your experience</small>
         </div>
       </div>
     );
@@ -1610,6 +1617,78 @@ function PromoImageCard({
   );
 }
 
+function HomeGameBanner({
+  variant,
+  badge,
+  title,
+  description,
+  actionText,
+  background,
+  art,
+  onClick,
+}) {
+  const isPvp = variant === 'pvp';
+  const highlights = isPvp ? ['1V1', 'DUEL', 'SOON'] : ['x1.25', 'x2.80', 'x5.40'];
+
+  return (
+    <button
+      type="button"
+      className={`${gameCardStyles.gameBanner} ${gameCardStyles[`${variant}Banner`]}`}
+      onClick={onClick}
+      aria-label={`${title}, ${badge}, ${actionText}`}
+    >
+      <Image
+        src={background}
+        alt=""
+        className={gameCardStyles.bannerBackdrop}
+        width={1536}
+        height={512}
+        sizes="(max-width: 590px) 100vw, 560px"
+        priority
+        unoptimized
+        draggable={false}
+      />
+
+      <span className={gameCardStyles.bannerVeil} aria-hidden="true" />
+      <span className={gameCardStyles.bannerShard} aria-hidden="true" />
+
+      <span className={gameCardStyles.bannerCopy}>
+        <span className={gameCardStyles.bannerBadge}>
+          <AppIcon name={isPvp ? 'swords' : 'spark'} />
+          {badge}
+        </span>
+        <span className={gameCardStyles.bannerTitle}>
+          <AppIcon name={isPvp ? 'swords' : 'rocket'} />
+          <strong>{title}</strong>
+        </span>
+        <small>{description}</small>
+        <span className={gameCardStyles.bannerAction}>
+          {actionText}
+          <b aria-hidden="true">›</b>
+        </span>
+      </span>
+
+      <span className={gameCardStyles.bannerRates} aria-hidden="true">
+        {highlights.map((item) => <em key={item}>{item}</em>)}
+      </span>
+
+      <span className={gameCardStyles.bannerArtStage} aria-hidden="true">
+        <Image
+          src={art}
+          alt=""
+          className={gameCardStyles.bannerArt}
+          width={1024}
+          height={1024}
+          sizes="(max-width: 590px) 56vw, 300px"
+          priority
+          unoptimized
+          draggable={false}
+        />
+      </span>
+    </button>
+  );
+}
+
 function HomeView({
   telegramUser,
   profile,
@@ -1637,7 +1716,7 @@ function HomeView({
         <div className={gameCardStyles.showcaseHeader}>
           <div>
             <span className={gameCardStyles.showcaseKicker}>GAME MODES</span>
-            <h2 id="game-modes-title" className={gameCardStyles.showcaseTitle}>Choose your game</h2>
+            <h2 id="game-modes-title" className={gameCardStyles.showcaseTitle}>Play. Win. Repeat.</h2>
           </div>
           <span className={gameCardStyles.showcaseStatus}>
             <i aria-hidden="true" />
@@ -1645,22 +1724,26 @@ function HomeView({
           </span>
         </div>
 
-        <div className={gameCardStyles.stack}>
-          <PromoImageCard
+        <div className={gameCardStyles.bannerStack}>
+          <HomeGameBanner
             variant="rocket"
-            image="/feature/giftmyst-complete-v39/rocket-card-live-transparent-v39.webp"
-            badge="LIVE"
+            badge="HOT!"
             title="ROCKET"
-            actionText="Play"
+            description="Fly high. Cash out in time."
+            actionText="Play now"
+            background="/feature/premium-arcade/rocket-launch-deck-bg-v16.webp"
+            art="/feature/premium-arcade/rocket-premium-static-v16.png"
             onClick={onOpenRocket}
           />
 
-          <PromoImageCard
+          <HomeGameBanner
             variant="pvp"
-            image="/feature/giftmyst-complete-v39/pvp-card-duel-transparent-v39.webp"
-            badge="DUEL"
+            badge="NEW!"
             title="PVP"
+            description="Challenge rivals. Own the arena."
             actionText="Tez orada"
+            background="/feature/premium-arcade/pvp-golden-arena-bg-v16.webp"
+            art="/feature/premium-arcade/pvp-premium-static-v16.png"
             onClick={showComingSoon}
           />
         </div>
