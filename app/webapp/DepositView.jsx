@@ -115,7 +115,7 @@ function StarsMark({ small = false }) {
       aria-hidden="true"
     >
       <Image
-        src="/currency/stars-4k.webp"
+        src="/currency/stars.png"
         alt=""
         width={46}
         height={46}

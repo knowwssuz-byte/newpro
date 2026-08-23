@@ -613,7 +613,7 @@ function StarCoin({ small = false }) {
   return (
     <span className={`${styles.coin} ${small ? styles.coinSmall : ''}`}>
       <Image
-        src="/currency/stars-4k.webp"
+        src="/currency/stars.png"
         alt=""
         width={24}
         height={24}

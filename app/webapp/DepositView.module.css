@@ -384,7 +384,7 @@
 .starsMark {
   display: inline-block;
   background:
-    url('/currency/stars-4k.webp') center / 82% no-repeat,
+    url('/currency/stars.png') center / 82% no-repeat,
     radial-gradient(circle, rgba(129, 101, 255, 0.32), transparent 68%);
   filter: drop-shadow(0 8px 15px rgba(102, 70, 255, 0.3));
 }
