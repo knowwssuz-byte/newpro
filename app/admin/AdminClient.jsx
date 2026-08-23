@@ -63,6 +63,20 @@ const emptyDiceSettings = {
   rollDurationMs: 1400,
 };
 
+const emptyBonusTaskForm = {
+  id: '',
+  title: '',
+  subtitle: '',
+  type: 'telegram_channel',
+  reward: '2',
+  url: '',
+  chatId: '',
+  waitMinutes: '30',
+  accent: 'purple',
+  sortOrder: '0',
+  isActive: true,
+};
+
 function featureLayout(slot, setting = {}) {
   const defaults = featureDefaults[slot] || featureDefaults.rocket;
   return {
@@ -114,6 +128,13 @@ function depositStatusLabel(status) {
   if (status === 'expired') return 'VAQTI TUGADI';
   if (status === 'cancelled') return 'BEKOR';
   return 'KUTILMOQDA';
+}
+
+function bonusTypeLabel(type) {
+  if (type === 'telegram_channel') return 'Telegram kanal';
+  if (type === 'telegram_bot') return 'Telegram bot';
+  if (type === 'mini_app') return 'Mini App';
+  return 'Havolaga kirish';
 }
 
 function adminDate(value) {
@@ -278,6 +299,15 @@ export default function AdminClient() {
   );
   const [diceSettings, setDiceSettings] = useState(emptyDiceSettings);
   const [depositDrafts, setDepositDrafts] = useState({});
+  const [bonusTasks, setBonusTasks] = useState([]);
+  const [bonusStats, setBonusStats] = useState({
+    totalTasks: 0,
+    activeTasks: 0,
+    started: 0,
+    completed: 0,
+    paid: 0,
+  });
+  const [bonusTaskForm, setBonusTaskForm] = useState(emptyBonusTaskForm);
 
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
   const [caseFile, setCaseFile] = useState(null);
@@ -339,6 +369,11 @@ export default function AdminClient() {
       ...emptyDiceSettings,
       ...(data.diceSettings || {}),
     });
+    setBonusTasks(data.bonusTasks || []);
+    setBonusStats((current) => ({
+      ...current,
+      ...(data.bonusStats || {}),
+    }));
     setDepositDrafts((current) =>
       Object.fromEntries(
         (data.deposits || []).map((deposit) => [
@@ -599,6 +634,9 @@ export default function AdminClient() {
     setDeposits([]);
     setDepositSettings(emptyDepositSettings);
     setDepositDrafts({});
+    setBonusTasks([]);
+    setBonusStats({ totalTasks: 0, activeTasks: 0, started: 0, completed: 0, paid: 0 });
+    setBonusTaskForm(emptyBonusTaskForm);
   }
 
   async function createCase(event) {
@@ -894,6 +932,67 @@ export default function AdminClient() {
     }
   }
 
+  async function saveBonusTask(event) {
+    event.preventDefault();
+
+    const data = await run(
+      () => callAdmin('bonus_task_save', {
+        taskData: {
+          ...bonusTaskForm,
+          reward: Number(bonusTaskForm.reward),
+          waitMinutes: Number(bonusTaskForm.waitMinutes),
+          sortOrder: Number(bonusTaskForm.sortOrder),
+        },
+      }),
+      bonusTaskForm.id ? 'Task yangilandi ✅' : 'Yangi bonus task qo‘shildi ✅'
+    );
+
+    if (!data) return;
+    applyBootstrap(data);
+    setBonusTaskForm(emptyBonusTaskForm);
+  }
+
+  function editBonusTask(task) {
+    setBonusTaskForm({
+      id: task.id || '',
+      title: task.title || '',
+      subtitle: task.subtitle || '',
+      type: task.type || 'external_link',
+      reward: String(task.reward ?? 2),
+      url: task.url || '',
+      chatId: task.chatId || '',
+      waitMinutes: String(task.waitMinutes ?? 30),
+      accent: task.accent || 'purple',
+      sortOrder: String(task.sortOrder ?? 0),
+      isActive: task.isActive !== false,
+    });
+    setTab('bonuses');
+    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+  }
+
+  async function toggleBonusTask(task) {
+    const data = await run(
+      () => callAdmin('bonus_task_save', {
+        taskData: { ...task, isActive: task.isActive === false },
+      }),
+      task.isActive === false ? 'Task yoqildi ✅' : 'Task vaqtincha o‘chirildi'
+    );
+    if (data) applyBootstrap(data);
+  }
+
+  async function deleteBonusTask(task) {
+    if (!window.confirm(`“${task.title}” taski o‘chirilsinmi?`)) return;
+
+    const data = await run(
+      () => callAdmin('bonus_task_delete', { taskId: task.id }),
+      'Task o‘chirildi'
+    );
+    if (data) {
+      applyBootstrap(data);
+      if (bonusTaskForm.id === task.id) setBonusTaskForm(emptyBonusTaskForm);
+    }
+  }
+
   function changeDepositDraft(depositId, key, value) {
     setDepositDrafts((current) => ({
       ...current,
@@ -993,6 +1092,7 @@ export default function AdminClient() {
             ['features', 'PVP / Rocket'],
             ['rocket', 'Rocket control'],
             ['dice', 'Dice settings'],
+            ['bonuses', 'Bonus tasks'],
             [
               'deposits',
               pendingDepositCount
@@ -1457,6 +1557,103 @@ export default function AdminClient() {
 
                 <button type="submit" disabled={busy}>{busy ? 'Saqlanmoqda...' : 'Dice sozlamalarini saqlash'}</button>
               </form>
+            </div>
+          </section>
+        ) : null}
+
+        {tab === 'bonuses' ? (
+          <section className="bonus-admin-console">
+            <div className="bonus-admin-hero">
+              <div>
+                <span>BONUS MISSION CONTROL</span>
+                <h2>Task va mukofotlar</h2>
+                <p>
+                  Telegram kanal, bot, tashqi havola yoki Mini App tasklarini
+                  yarating. Kanal taski botning getChatMember tekshiruvidan
+                  o‘tadi, barcha tasklarda kutish vaqti serverda hisoblanadi.
+                </p>
+              </div>
+              <div className="bonus-admin-security">
+                <i /> SERVER VERIFIED
+              </div>
+            </div>
+
+            <div className="bonus-admin-stats">
+              <article><span>JAMI TASK</span><strong>{money(bonusStats.totalTasks)}</strong><small>{money(bonusStats.activeTasks)} tasi aktiv</small></article>
+              <article><span>BOSHLANGAN</span><strong>{money(bonusStats.started)}</strong><small>Foydalanuvchi progressi</small></article>
+              <article><span>YAKUNLANGAN</span><strong>{money(bonusStats.completed)}</strong><small>Bir martalik claim</small></article>
+              <article><span>BERILGAN BONUS</span><strong>{money(bonusStats.paid)} ⭐</strong><small>Jami Stars</small></article>
+            </div>
+
+            <div className="bonus-admin-grid">
+              <form className="browser-admin-form bonus-admin-form" onSubmit={saveBonusTask}>
+                <div className="admin-form-heading">
+                  <span>{bonusTaskForm.id ? 'EDIT MISSION' : 'NEW MISSION'}</span>
+                  <h2>{bonusTaskForm.id ? 'Taskni tahrirlash' : 'Yangi task qo‘shish'}</h2>
+                  <p>30 daqiqa standart. Istasangiz har bir task uchun alohida vaqt belgilang.</p>
+                </div>
+
+                <label><span>Task nomi</span><input value={bonusTaskForm.title} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, title: event.target.value })} placeholder="Masalan: Gift Myst News" required /></label>
+                <label><span>Qisqa izoh</span><input value={bonusTaskForm.subtitle} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, subtitle: event.target.value })} placeholder="Kanalga qo‘shiling va bonus oling" /></label>
+
+                <div className="browser-admin-two">
+                  <label>
+                    <span>Task turi</span>
+                    <select value={bonusTaskForm.type} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, type: event.target.value })}>
+                      <option value="telegram_channel">Telegram kanal — bot tekshiradi</option>
+                      <option value="external_link">Tashqi havola — timer</option>
+                      <option value="telegram_bot">Telegram bot — timer</option>
+                      <option value="mini_app">Mini App — timer</option>
+                    </select>
+                  </label>
+                  <label><span>Mukofot, Stars</span><input type="number" min="1" max="100000" value={bonusTaskForm.reward} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, reward: event.target.value })} required /></label>
+                </div>
+
+                <label><span>Ochilganda o‘tiladigan havola</span><input type="url" value={bonusTaskForm.url} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, url: event.target.value })} placeholder="https://t.me/giftmyst" required /></label>
+
+                {bonusTaskForm.type === 'telegram_channel' ? (
+                  <label>
+                    <span>Kanal username yoki chat ID</span>
+                    <input value={bonusTaskForm.chatId} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, chatId: event.target.value })} placeholder="@giftmyst yoki -1001234567890" required />
+                    <small className="manual-field-note">Muhim: Gift Myst botini shu kanalga admin qiling. Aks holda a’zolikni tekshirib bo‘lmaydi.</small>
+                  </label>
+                ) : null}
+
+                <div className="browser-admin-two">
+                  <label><span>Kutish, daqiqa</span><input type="number" min="0" max="10080" value={bonusTaskForm.waitMinutes} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, waitMinutes: event.target.value })} required /></label>
+                  <label><span>Tartib raqami</span><input type="number" min="0" max="100000" value={bonusTaskForm.sortOrder} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, sortOrder: event.target.value })} /></label>
+                </div>
+
+                <div className="browser-admin-two">
+                  <label><span>Rang</span><select value={bonusTaskForm.accent} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, accent: event.target.value })}><option value="purple">Purple</option><option value="blue">Blue</option><option value="green">Green</option><option value="gold">Gold</option><option value="rose">Rose</option></select></label>
+                  <label className="manual-check"><input type="checkbox" checked={Boolean(bonusTaskForm.isActive)} onChange={(event) => setBonusTaskForm({ ...bonusTaskForm, isActive: event.target.checked })} /><span>Darhol aktiv qilish</span></label>
+                </div>
+
+                <div className="bonus-admin-form-actions">
+                  <button type="submit" disabled={busy}>{busy ? 'Saqlanmoqda...' : bonusTaskForm.id ? 'O‘zgarishlarni saqlash' : 'Taskni yaratish'}</button>
+                  {bonusTaskForm.id ? <button type="button" className="admin-secondary-button" onClick={() => setBonusTaskForm(emptyBonusTaskForm)}>Bekor qilish</button> : null}
+                </div>
+              </form>
+
+              <div className="browser-admin-list bonus-admin-list">
+                <div className="bonus-admin-list-head"><div><span>LIVE MISSIONS</span><h2>Tasklar</h2></div><b>{bonusTasks.length}</b></div>
+                {bonusTasks.length ? bonusTasks.map((task) => (
+                  <article className={`bonus-admin-task is-${task.accent} ${task.isActive === false ? 'is-disabled' : ''}`} key={task.id}>
+                    <span className="bonus-admin-task-icon">{task.type === 'telegram_channel' ? '✈' : task.type === 'telegram_bot' ? '🤖' : task.type === 'mini_app' ? '◆' : '↗'}</span>
+                    <div className="bonus-admin-task-copy">
+                      <span>{bonusTypeLabel(task.type)} · {task.waitMinutes} daqiqa</span>
+                      <strong>{task.title}</strong>
+                      <small>{task.subtitle || task.url}</small>
+                    </div>
+                    <b className="bonus-admin-reward">+{money(task.reward)} ⭐</b>
+                    <div className="bonus-admin-task-actions">
+                      <button type="button" onClick={() => editBonusTask(task)}>Edit</button>
+                      <button type="button" onClick={() => toggleBonusTask(task)}>{task.isActive === false ? 'Enable' : 'Disable'}</button>
+                      <button type="button" className="admin-danger-light" onClick={() => deleteBonusTask(task)}>Delete</button>
+                    </div>
+                  </article>
+                )) : <div className="bonus-admin-empty"><strong>Task hali yo‘q</strong><span>Chapdagi forma orqali birinchi bonus taskni yarating.</span></div>}
+              </div>
             </div>
           </section>
         ) : null}

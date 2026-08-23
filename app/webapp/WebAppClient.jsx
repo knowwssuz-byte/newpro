@@ -14,7 +14,6 @@ import {
   Gamepad2,
   Gem,
   Gift,
-  History,
   House,
   PackageOpen,
   RefreshCw,
@@ -469,7 +468,6 @@ const APP_ICONS = {
   games: Gamepad2,
   gem: Gem,
   gift: Gift,
-  history: History,
   home: House,
   inventory: PackageOpen,
   profile: UserRound,
@@ -555,7 +553,7 @@ export default function WebAppClient() {
       { id: 'games', icon: 'games', image: '/nav/games.svg', label: 'Games' },
       { id: 'inventory', icon: 'inventory', image: '/nav/cases.svg', label: 'Inventory' },
       { id: 'home', icon: 'home', image: '/nav/home.svg', label: 'Home' },
-      { id: 'history', icon: 'history', image: '/nav/history.svg', label: 'History' },
+      { id: 'bonus', icon: 'gift', label: 'Bonus' },
       { id: 'referral', icon: 'referral', image: '/nav/referral.svg', label: 'Referal' },
     ],
     []
@@ -1326,7 +1324,7 @@ export default function WebAppClient() {
       'home',
       'games',
       'inventory',
-      'history',
+      'bonus',
       'referral',
     ].includes(returnTab)
       ? returnTab
@@ -1490,8 +1488,14 @@ export default function WebAppClient() {
                 />
               ) : null}
 
-              {tab === 'history' ? (
-                <HistoryView history={history} gifts={gifts} cases={cases} withdrawals={withdrawals} />
+              {tab === 'bonus' ? (
+                <BonusView
+                  apiPost={apiPost}
+                  tg={tg}
+                  onToast={showToast}
+                  onBalanceChange={updateRocketBalance}
+                  userId={telegramUser?.id || profile?.id}
+                />
               ) : null}
 
               {tab === 'referral' ? (
@@ -2230,41 +2234,240 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onWithdraw })
   );
 }
 
-function HistoryView({ history, gifts, cases, withdrawals }) {
-  const rows = history.map((item) => {
-    const gift = gifts.find((giftItem) => String(giftItem.id) === String(item.gift_id));
-    const caseItem = cases.find((caseValue) => String(caseValue.id) === String(item.case_id));
-    const request = withdrawals.find((withdraw) => String(withdraw.gift_id) === String(item.gift_id));
-    const isSold = Boolean(item.sold_at);
-    return { item, gift, caseItem, request, isSold };
-  });
+function bonusTaskIcon(type) {
+  if (type === 'telegram_channel') return 'send';
+  if (type === 'telegram_bot') return 'spark';
+  if (type === 'mini_app') return 'games';
+  return 'trend';
+}
+
+function bonusRemaining(eligibleAt, now = Date.now()) {
+  const remaining = Math.max(0, new Date(eligibleAt || 0).getTime() - now);
+  const totalSeconds = Math.ceil(remaining / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  if (hours > 0) {
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  }
+
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function readBonusCache(userId) {
+  if (typeof window === 'undefined' || !userId) return null;
+
+  try {
+    const cached = JSON.parse(window.sessionStorage.getItem(`gift_myst_bonus_v1_${userId}`) || 'null');
+    if (!cached?.data || Date.now() - Number(cached.savedAt || 0) > 30_000) return null;
+    return cached.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeBonusCache(userId, data) {
+  if (typeof window === 'undefined' || !userId || !data) return;
+  try {
+    window.sessionStorage.setItem(
+      `gift_myst_bonus_v1_${userId}`,
+      JSON.stringify({ savedAt: Date.now(), data })
+    );
+  } catch {
+    // Cache to‘lsa live so‘rov ishlashda davom etadi.
+  }
+}
+
+function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
+  const [tasks, setTasks] = useState([]);
+  const [stats, setStats] = useState({ total: 0, completed: 0, earned: 0 });
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [actionTaskId, setActionTaskId] = useState('');
+  const [viewError, setViewError] = useState('');
+  const [now, setNow] = useState(0);
+
+  const applyData = useCallback((data) => {
+    setTasks(data?.tasks || []);
+    setStats(data?.stats || { total: 0, completed: 0, earned: 0 });
+    setNow(Date.now());
+    if (Number.isFinite(Number(data?.balance))) onBalanceChange?.(Number(data.balance));
+    writeBonusCache(userId, data);
+  }, [onBalanceChange, userId]);
+
+  const loadTasks = useCallback(async ({ silent = false } = {}) => {
+    if (silent) setRefreshing(true);
+    else setLoading(true);
+
+    try {
+      const data = await apiPost('/api/bonus', { action: 'list' }, { timeoutMs: 6_000 });
+      applyData(data);
+      setViewError('');
+    } catch (error) {
+      setViewError(error?.message || 'Bonus tasklar yuklanmadi.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [apiPost, applyData]);
+
+  useEffect(() => {
+    const cached = readBonusCache(userId);
+    if (cached) {
+      applyData(cached);
+      setLoading(false);
+    }
+    loadTasks({ silent: Boolean(cached) });
+  }, [applyData, loadTasks, userId]);
+
+  useEffect(() => {
+    if (!tasks.some((task) => task.status === 'waiting')) return undefined;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [tasks]);
+
+  const replaceTask = (nextTask) => {
+    if (!nextTask?.id) return;
+    setTasks((current) => current.map((task) => task.id === nextTask.id ? nextTask : task));
+  };
+
+  const openTaskLink = (task) => {
+    const url = String(task?.url || '');
+    if (!url) return;
+
+    if (/^https:\/\/(?:t\.me|telegram\.me)\//i.test(url) && typeof tg?.openTelegramLink === 'function') {
+      tg.openTelegramLink(url);
+    } else if (typeof tg?.openLink === 'function') {
+      tg.openLink(url);
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  const startTask = async (task) => {
+    if (actionTaskId) return;
+    setActionTaskId(task.id);
+    setViewError('');
+
+    const request = apiPost('/api/bonus', { action: 'start', taskId: task.id });
+    openTaskLink(task);
+
+    try {
+      const data = await request;
+      replaceTask(data.task);
+      onToast?.(task.waitMinutes > 0 ? `Task boshlandi. ${task.waitMinutes} daqiqadan keyin tekshiring.` : 'Task ochildi. Endi tekshirishingiz mumkin.');
+      tg?.HapticFeedback?.impactOccurred?.('light');
+    } catch (error) {
+      setViewError(error?.message || 'Taskni boshlab bo‘lmadi.');
+    } finally {
+      setActionTaskId('');
+    }
+  };
+
+  const claimTask = async (task) => {
+    if (actionTaskId) return;
+    setActionTaskId(task.id);
+    setViewError('');
+
+    try {
+      const data = await apiPost('/api/bonus', { action: 'claim', taskId: task.id });
+      replaceTask(data.task);
+      if (Number.isFinite(Number(data.balance))) onBalanceChange?.(Number(data.balance));
+      setStats((current) => ({
+        ...current,
+        completed: Math.min(Number(current.total || 0), Number(current.completed || 0) + 1),
+        earned: Number(current.earned || 0) + Number(data.reward || 0),
+      }));
+      onToast?.(`+${formatPrice(data.reward || task.reward)} Stars bonus olindi ✨`);
+      tg?.HapticFeedback?.notificationOccurred?.('success');
+    } catch (error) {
+      const message = error?.message || 'Task tekshiruvidan o‘tmadi.';
+      setViewError(message);
+      onToast?.(message);
+      tg?.HapticFeedback?.notificationOccurred?.('warning');
+    } finally {
+      setActionTaskId('');
+    }
+  };
+
+  const completedPercent = stats.total > 0
+    ? Math.min(100, Math.round((Number(stats.completed || 0) / Number(stats.total)) * 100))
+    : 0;
 
   return (
-    <section className="screen-stack">
-      <div className="page-header premium-card">
-        <h1>History</h1>
-        <p>Case ochish tarixi va yutuqlar.</p>
+    <section className="bonus-view">
+      <header className="bonus-page-head">
+        <div><span>REWARD CENTER</span><h1>Bonus</h1><p>Tasklarni bajaring va bepul Stars oling.</p></div>
+        <span className="bonus-secure-pill"><AppIcon name="shield" /> Bot verified</span>
+      </header>
+
+      <section className="bonus-hero-card">
+        <span className="bonus-hero-glow" aria-hidden="true" />
+        <div className="bonus-hero-copy">
+          <span>MISSION PROGRESS</span>
+          <strong>{formatPrice(stats.earned)} <small>Stars olindi</small></strong>
+          <div className="bonus-progress-track"><i style={{ width: `${completedPercent}%` }} /></div>
+          <p>{stats.completed}/{stats.total} task yakunlandi</p>
+        </div>
+        <div className="bonus-hero-art" aria-hidden="true">
+          <span className="bonus-gift-core"><AppIcon name="gift" /></span>
+          <span className="bonus-star bonus-star-one">✦</span>
+          <span className="bonus-star bonus-star-two">✦</span>
+          <span className="bonus-star bonus-star-three">✦</span>
+        </div>
+      </section>
+
+      <div className="bonus-section-title">
+        <div><span>AVAILABLE MISSIONS</span><h2>Tasklar</h2></div>
+        <button type="button" onClick={() => loadTasks({ silent: true })} disabled={refreshing}><AppIcon name="refresh" />{refreshing ? 'Yangilanmoqda' : 'Yangilash'}</button>
       </div>
 
-      {rows.length === 0 ? (
-        <EmptyState icon="history" title="History bo‘sh" text="Birinchi case’ni oching." />
-      ) : (
-        <div className="activity-list">
-          {rows.map(({ item, gift, caseItem, request, isSold }) => (
-            <div className="activity-row premium-card" key={item.id}>
-              <GiftMedia gift={gift} compact preferStatic />
-              <div>
-                <strong>{gift?.title || 'Sovg‘a'}</strong>
-                <span>
-                  {caseItem?.title || 'Case'} · {rewardSubtitle(gift)} ·{' '}
-                  {item.created_at ? new Date(item.created_at).toLocaleString('uz-UZ') : ''}
-                </span>
-              </div>
-              {isSold ? <span className="status-badge sold">sold</span> : request ? <span className={`status-badge ${request.status}`}>{request.status}</span> : null}
-            </div>
-          ))}
+      {viewError ? <div className="bonus-inline-error"><AppIcon name="shield" /><span>{viewError}</span></div> : null}
+
+      {loading ? (
+        <div className="bonus-skeleton-list" aria-label="Bonus tasklar yuklanmoqda">{[1, 2, 3].map((item) => <span key={item} />)}</div>
+      ) : tasks.length ? (
+        <div className="bonus-task-list">
+          {tasks.map((task) => {
+            const remainingMs = Math.max(0, new Date(task.eligibleAt || 0).getTime() - now);
+            const waiting = task.status === 'waiting' && remainingMs > 0;
+            const ready = task.status === 'ready' || (task.status === 'waiting' && !waiting);
+            const completed = task.status === 'completed';
+            const acting = actionTaskId === task.id;
+
+            return (
+              <article className={`bonus-task-card is-${task.accent} is-${completed ? 'completed' : waiting ? 'waiting' : ready ? 'ready' : 'available'}`} key={task.id}>
+                <span className="bonus-task-icon"><AppIcon name={bonusTaskIcon(task.type)} /></span>
+                <div className="bonus-task-copy">
+                  <span>{task.typeLabel}{task.waitMinutes > 0 ? ` · ${task.waitMinutes} daqiqa` : ''}</span>
+                  <strong>{task.title}</strong>
+                  <small>{completed ? 'Mukofot balansga qo‘shildi' : task.subtitle || 'Shartni bajaring va bonusni oling'}</small>
+                  {waiting ? <button type="button" className="bonus-reopen-link" onClick={() => openTaskLink(task)}>Havolani qayta ochish ↗</button> : null}
+                </div>
+                <div className="bonus-task-action-wrap">
+                  {completed ? (
+                    <button type="button" className="bonus-task-button is-done" disabled><AppIcon name="check" /> Olindi</button>
+                  ) : waiting ? (
+                    <button type="button" className="bonus-task-button is-timer" disabled><AppIcon name="clock" /> {bonusRemaining(task.eligibleAt, now)}</button>
+                  ) : ready ? (
+                    <button type="button" className="bonus-task-button is-check" disabled={Boolean(actionTaskId)} onClick={() => claimTask(task)}>{acting ? 'Tekshirilmoqda...' : <>Tekshirish <b>+{formatPrice(task.reward)} ★</b></>}</button>
+                  ) : (
+                    <button type="button" className="bonus-task-button" disabled={Boolean(actionTaskId)} onClick={() => startTask(task)}>{acting ? 'Ochilmoqda...' : <>Bajarish <b>+{formatPrice(task.reward)} ★</b></>}</button>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
+      ) : (
+        <div className="bonus-empty-state"><span><AppIcon name="gift" /></span><strong>Yangi tasklar tayyorlanmoqda</strong><p>Bonus tasklar qo‘shilganda shu yerda paydo bo‘ladi.</p></div>
       )}
+
+      <div className="bonus-rules-card">
+        <AppIcon name="shield" />
+        <div><strong>Halol reward tizimi</strong><span>Har bir task bir akkauntga faqat bir marta beriladi. Kanal a’zoligi bot orqali serverda tekshiriladi.</span></div>
+      </div>
     </section>
   );
 }

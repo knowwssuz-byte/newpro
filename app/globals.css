@@ -13777,3 +13777,86 @@ body {
     transition: none;
   }
 }
+
+/* Bonus task administration */
+.bonus-admin-console { display: grid; gap: 15px; }
+.bonus-admin-hero {
+  min-height: 174px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  overflow: hidden;
+  padding: 28px 30px;
+  border: 1px solid rgba(151,105,255,.2);
+  border-radius: 27px;
+  background:
+    radial-gradient(340px 190px at 95% 30%, rgba(136,80,255,.25), transparent 72%),
+    linear-gradient(135deg, rgba(39,29,61,.98), rgba(21,19,28,.99));
+  box-shadow: 0 22px 50px rgba(6,4,12,.28), inset 0 1px rgba(255,255,255,.07);
+}
+.bonus-admin-hero > div:first-child { max-width: 720px; }
+.bonus-admin-hero > div:first-child > span,
+.bonus-admin-list-head span { color: #ab8bff; font-size: 9px; font-weight: 950; letter-spacing: .15em; }
+.bonus-admin-hero h2 { margin: 8px 0 7px; color: #fff; font-size: clamp(28px,4vw,42px); letter-spacing: -.05em; }
+.bonus-admin-hero p { margin: 0; color: rgba(225,218,238,.57); font-size: 12px; line-height: 1.6; }
+.bonus-admin-security { min-height: 34px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px; border: 1px solid rgba(74,227,153,.17); border-radius: 999px; color: #69e5a9; background: rgba(37,198,121,.075); font-size: 9px; font-weight: 950; letter-spacing: .07em; white-space: nowrap; }
+.bonus-admin-security i { width: 8px; height: 8px; border-radius: 50%; background: #47e397; box-shadow: 0 0 13px rgba(71,227,151,.8); }
+
+.bonus-admin-stats { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+.bonus-admin-stats article { min-height: 112px; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 17px; border: 1px solid rgba(255,255,255,.065); border-radius: 20px; background: linear-gradient(145deg,rgba(35,31,43,.96),rgba(25,23,30,.98)); box-shadow: inset 0 1px rgba(255,255,255,.045); }
+.bonus-admin-stats span { color: rgba(218,209,233,.43); font-size: 8px; font-weight: 950; letter-spacing: .09em; }
+.bonus-admin-stats strong { color: #fff; font-size: 25px; font-weight: 950; letter-spacing: -.04em; }
+.bonus-admin-stats small { color: rgba(213,204,227,.4); font-size: 9px; }
+
+.bonus-admin-grid { display: grid; grid-template-columns: minmax(320px,.78fr) minmax(420px,1.22fr); gap: 15px; align-items: start; }
+.bonus-admin-form { position: sticky; top: 15px; padding: 22px !important; border-radius: 24px !important; }
+.bonus-admin-form .manual-check { min-height: 49px; display: flex; flex-direction: row; align-items: center; gap: 9px; padding: 0 13px; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; background: rgba(255,255,255,.025); }
+.bonus-admin-form .manual-check input { width: 17px; height: 17px; padding: 0; accent-color: #8956ff; }
+.bonus-admin-form .manual-check span { margin: 0; }
+.bonus-admin-form-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.bonus-admin-form-actions .admin-secondary-button { color: rgba(229,222,239,.7); background: rgba(255,255,255,.055); }
+
+.bonus-admin-list { max-height: 860px; gap: 9px !important; overflow: auto; padding: 18px !important; border-radius: 24px !important; }
+.bonus-admin-list-head { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 2px; }
+.bonus-admin-list-head h2 { margin: 5px 0 0; color: #fff; font-size: 23px; letter-spacing: -.04em; }
+.bonus-admin-list-head > b { min-width: 34px; height: 34px; display: grid; place-items: center; border-radius: 12px; color: #c6b2ff; background: rgba(137,86,255,.12); font-size: 11px; }
+.bonus-admin-task { --admin-task:#9362ff; position: relative; display: grid; grid-template-columns: 48px minmax(0,1fr) auto; align-items: center; gap: 11px; padding: 12px; border: 1px solid rgba(255,255,255,.065); border-radius: 18px; background: radial-gradient(120px 70px at 0 50%,color-mix(in srgb,var(--admin-task) 13%,transparent),transparent 75%),rgba(255,255,255,.025); }
+.bonus-admin-task.is-blue { --admin-task:#55a9ff; }
+.bonus-admin-task.is-green { --admin-task:#4be19a; }
+.bonus-admin-task.is-gold { --admin-task:#ffc25a; }
+.bonus-admin-task.is-rose { --admin-task:#ff6f9c; }
+.bonus-admin-task.is-disabled { opacity: .48; filter: saturate(.55); }
+.bonus-admin-task-icon { width: 47px; height: 47px; display: grid; place-items: center; border: 1px solid color-mix(in srgb,var(--admin-task) 26%,transparent); border-radius: 15px; color: #fff; background: color-mix(in srgb,var(--admin-task) 17%,rgba(24,22,29,.96)); font-size: 19px; }
+.bonus-admin-task-copy { min-width: 0; }
+.bonus-admin-task-copy > span { display: block; margin-bottom: 3px; color: color-mix(in srgb,var(--admin-task) 80%,white); font-size: 8px; font-weight: 900; text-transform: uppercase; }
+.bonus-admin-task-copy strong { display: block; overflow: hidden; color: #f7f4fb; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.bonus-admin-task-copy small { display: block; margin-top: 3px; overflow: hidden; color: rgba(215,207,227,.42); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.bonus-admin-reward { color: #fff; font-size: 12px; white-space: nowrap; }
+.bonus-admin-task-actions { grid-column: 2 / -1; display: flex; justify-content: flex-end; gap: 6px; }
+.bonus-admin-task-actions button { min-height: 30px; padding: 0 10px; border: 1px solid rgba(255,255,255,.07); border-radius: 10px; color: rgba(231,225,240,.66); background: rgba(255,255,255,.04); font-size: 8px; font-weight: 850; }
+.bonus-admin-task-actions .admin-danger-light { color: #ff8ba2; background: rgba(214,48,80,.08); }
+.bonus-admin-empty { min-height: 210px; display: grid; place-items: center; align-content: center; gap: 7px; border: 1px dashed rgba(255,255,255,.08); border-radius: 19px; text-align: center; }
+.bonus-admin-empty strong { color: #fff; font-size: 14px; }
+.bonus-admin-empty span { color: rgba(220,212,232,.45); font-size: 10px; }
+
+@media (max-width: 1050px) {
+  .bonus-admin-stats { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .bonus-admin-grid { grid-template-columns: 1fr; }
+  .bonus-admin-form { position: static; }
+  .bonus-admin-list { max-height: none; }
+}
+
+@media (max-width: 620px) {
+  .bonus-admin-hero { min-height: 0; display: grid; padding: 20px; border-radius: 22px; }
+  .bonus-admin-security { justify-self: start; }
+  .bonus-admin-stats { grid-template-columns: 1fr 1fr; }
+  .bonus-admin-stats article { min-height: 94px; padding: 14px; }
+  .bonus-admin-stats strong { font-size: 20px; }
+  .bonus-admin-form,
+  .bonus-admin-list { padding: 14px !important; border-radius: 20px !important; }
+  .bonus-admin-task { grid-template-columns: 43px minmax(0,1fr); }
+  .bonus-admin-task-icon { width: 42px; height: 42px; }
+  .bonus-admin-reward { grid-column: 2; }
+  .bonus-admin-task-actions { grid-column: 1 / -1; }
+}

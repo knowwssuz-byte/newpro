@@ -15,6 +15,12 @@ import {
   getDiceSettings,
   normalizeDiceSettings,
 } from '@/lib/diceSettings';
+import {
+  BONUS_TASK_TYPES,
+  bonusTasksRow,
+  getBonusTasks,
+  normalizeBonusTask,
+} from '@/lib/bonusTasks';
 import { normalizeTonAddress } from '@/lib/tonDeposits';
 
 export const runtime = 'nodejs';
@@ -148,6 +154,8 @@ async function bootstrap(supabase) {
     deposits,
     depositSettings,
     diceSettings,
+    bonusTasks,
+    bonusProgress,
   ] = await Promise.all([
     fetchCasesForAdmin(supabase),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').order('created_at', { ascending: false })),
@@ -178,7 +186,21 @@ async function bootstrap(supabase) {
     ),
     getDepositSettings(supabase),
     getDiceSettings(supabase),
+    getBonusTasks(supabase, { includeInactive: true }),
+    safeSelect(
+      supabase,
+      'app_settings',
+      supabase
+        .from('app_settings')
+        .select('key,value')
+        .like('key', 'bonus_progress_%')
+        .limit(1000)
+    ),
   ]);
+
+  const completedProgress = (bonusProgress || []).filter(
+    (row) => row?.value?.status === 'completed'
+  );
 
   return {
     cases: await normalizeCaseOrder(supabase, cases),
@@ -190,6 +212,17 @@ async function bootstrap(supabase) {
     deposits,
     depositSettings: depositSettingsForClient(depositSettings),
     diceSettings: diceSettingsForClient(diceSettings),
+    bonusTasks,
+    bonusStats: {
+      totalTasks: bonusTasks.length,
+      activeTasks: bonusTasks.filter((task) => task.isActive).length,
+      started: (bonusProgress || []).length,
+      completed: completedProgress.length,
+      paid: completedProgress.reduce(
+        (sum, row) => sum + Math.max(0, Number(row?.value?.reward || 0)),
+        0
+      ),
+    },
   };
 }
 
@@ -498,6 +531,60 @@ export async function POST(request) {
         ok: true,
         diceSettings: diceSettingsForClient(settings),
       });
+    }
+
+    if (action === 'bonus_task_save') {
+      const input = body.taskData || {};
+      const tasks = await getBonusTasks(supabase, { includeInactive: true });
+      const existingIndex = tasks.findIndex((task) => task.id === clean(input.id));
+      const existing = existingIndex >= 0 ? tasks[existingIndex] : null;
+      const now = new Date().toISOString();
+      const task = normalizeBonusTask({
+        ...existing,
+        ...input,
+        id: existing?.id || crypto.randomUUID(),
+        createdAt: existing?.createdAt || now,
+        updatedAt: now,
+        sortOrder: Number.isFinite(Number(input.sortOrder))
+          ? Number(input.sortOrder)
+          : existing?.sortOrder ?? tasks.length,
+      });
+
+      if (!task.title) return json({ ok: false, error: 'Task nomini yozing.' }, 400);
+      if (!task.url) return json({ ok: false, error: 'Task havolasi noto‘g‘ri.' }, 400);
+      if (!BONUS_TASK_TYPES[task.type]) {
+        return json({ ok: false, error: 'Task turi noto‘g‘ri.' }, 400);
+      }
+      if (task.type === 'telegram_channel' && !task.chatId) {
+        return json({ ok: false, error: 'Telegram kanal username yoki chat ID kiriting.' }, 400);
+      }
+
+      const nextTasks = [...tasks];
+      if (existingIndex >= 0) nextTasks[existingIndex] = task;
+      else nextTasks.push(task);
+
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert(bonusTasksRow(nextTasks), { onConflict: 'key' });
+      if (error) throw error;
+
+      return json({ ok: true, ...(await bootstrap(supabase)) });
+    }
+
+    if (action === 'bonus_task_delete') {
+      const taskId = clean(body.taskId);
+      const tasks = await getBonusTasks(supabase, { includeInactive: true });
+      const nextTasks = tasks.filter((task) => task.id !== taskId);
+      if (nextTasks.length === tasks.length) {
+        return json({ ok: false, error: 'Task topilmadi.' }, 404);
+      }
+
+      const { error } = await supabase
+        .from('app_settings')
+        .upsert(bonusTasksRow(nextTasks), { onConflict: 'key' });
+      if (error) throw error;
+
+      return json({ ok: true, ...(await bootstrap(supabase)) });
     }
 
     if (action === 'deposit_settings_update') {

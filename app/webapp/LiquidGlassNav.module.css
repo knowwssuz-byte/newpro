@@ -194,7 +194,7 @@
   --lens-opacity: 1;
 }
 
-.nav[data-active='history'] {
+.nav[data-active='bonus'] {
   --lens-x: 200%;
   --lens-opacity: 1;
 }
