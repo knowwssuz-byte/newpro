@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, ShieldCheck, TrendingDown, TrendingUp } from 'lucide-react';
 import styles from './DiceGame.module.css';
@@ -87,6 +87,8 @@ export default function DiceGame({
   const [result, setResult] = useState(null);
   const [recent, setRecent] = useState([]);
   const [localError, setLocalError] = useState('');
+  const settleResolveRef = useRef(null);
+  const settleFallbackRef = useRef(null);
 
   const balance = Math.max(0, safeInteger(profile?.balance));
   const minTarget = mode === 'higher'
@@ -104,7 +106,40 @@ export default function DiceGame({
   const sliderFill = ((target - minTarget) / Math.max(1, maxTarget - minTarget)) * 100;
   const activeRoll = pendingResult?.roll ?? result?.roll ?? target;
 
-  useEffect(() => () => onRoundStateChange?.(false), [onRoundStateChange]);
+  const finishSettlingAnimation = useCallback(() => {
+    const resolve = settleResolveRef.current;
+    if (!resolve) return;
+
+    settleResolveRef.current = null;
+    if (settleFallbackRef.current) {
+      window.clearTimeout(settleFallbackRef.current);
+      settleFallbackRef.current = null;
+    }
+    resolve();
+  }, []);
+
+  const waitForSettlingAnimation = useCallback((durationMs) => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      return Promise.resolve();
+    }
+
+    return new Promise((resolve) => {
+      settleResolveRef.current = resolve;
+      settleFallbackRef.current = window.setTimeout(
+        finishSettlingAnimation,
+        Math.max(0, Number(durationMs) || 0) + 500
+      );
+    });
+  }, [finishSettlingAnimation]);
+
+  useEffect(() => () => {
+    onRoundStateChange?.(false);
+    if (settleFallbackRef.current) {
+      window.clearTimeout(settleFallbackRef.current);
+      settleFallbackRef.current = null;
+    }
+    settleResolveRef.current = null;
+  }, [onRoundStateChange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,7 +221,7 @@ export default function DiceGame({
 
       setPendingResult(nextResult);
       setSettling(true);
-      await new Promise((resolve) => window.setTimeout(resolve, nextConfig.rollDurationMs));
+      await waitForSettlingAnimation(nextConfig.rollDurationMs);
 
       setResult(nextResult);
       setRecent((items) => [nextResult, ...items].slice(0, 6));
@@ -206,7 +241,7 @@ export default function DiceGame({
       setRolling(false);
       onRoundStateChange?.(false);
     }
-  }, [apiPost, balance, bet, config, mode, onBalanceChange, onRoundStateChange, onToast, rolling, target, tg]);
+  }, [apiPost, balance, bet, config, mode, onBalanceChange, onRoundStateChange, onToast, rolling, target, tg, waitForSettlingAnimation]);
 
   return (
     <section className={styles.root} aria-busy={rolling}>
@@ -238,17 +273,30 @@ export default function DiceGame({
           <span className={styles.targetMarker}><b>{target}</b></span>
           {result && !rolling ? <span className={styles.rollMarker} data-win={result.won ? 'true' : 'false'}><i>{Number(result.roll).toFixed(2)}</i></span> : null}
           {rolling && !settling ? <span className={styles.rollingMarker} /> : null}
-          {rolling && settling ? <span className={styles.settlingMarker} data-win={pendingResult?.won ? 'true' : 'false'} /> : null}
+          {rolling && settling ? (
+            <span
+              key={pendingResult?.id || 'settling'}
+              className={styles.settlingMarker}
+              data-win={pendingResult?.won ? 'true' : 'false'}
+              onAnimationEnd={finishSettlingAnimation}
+            />
+          ) : null}
           <input
             type="range"
-            min={minTarget}
-            max={maxTarget}
+            min="0"
+            max="100"
             step="1"
             value={target}
             disabled={rolling}
             aria-label="Dice chegarasi"
+            aria-valuemin={minTarget}
+            aria-valuemax={maxTarget}
             style={{ '--fill': `${sliderFill}%` }}
-            onChange={(event) => { setTarget(Number(event.target.value)); setResult(null); setLocalError(''); }}
+            onChange={(event) => {
+              setTarget(clamp(Number(event.target.value), minTarget, maxTarget));
+              setResult(null);
+              setLocalError('');
+            }}
           />
         </div>
 
