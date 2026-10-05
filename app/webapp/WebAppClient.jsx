@@ -36,7 +36,7 @@ import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
-import DiceGame from './DiceGame';
+import DiceGame, { DiceLobbyCard } from './DiceGame';
 
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
@@ -1952,37 +1952,17 @@ function HomeView({
 
 function CasesView({ onGoHome, onOpenDice }) {
   return (
-    <section className="screen-stack games-hub">
-      <header className="page-header premium-card games-page-header">
+    <section className="screen-stack">
+      <div className="page-header premium-card games-page-header">
         <button type="button" className="ghost-back" onClick={onGoHome} aria-label="Bosh sahifaga qaytish">
           ‹
         </button>
-        <div className="games-page-title">
-          <h1>Games</h1>
-          <span>1 live</span>
-        </div>
-      </header>
+        <h1>Games</h1>
+      </div>
 
-      <section className="games-hub-section" aria-label="Available games">
-        <div className="games-hub-section-head">
-          <div>
-            <span>PLAY</span>
-            <h2>Available now</h2>
-          </div>
-        </div>
-
-        <button type="button" className="games-hub-card is-live" onClick={onOpenDice}>
-          <span className="games-hub-icon">
-            <AppIcon name="dice" />
-          </span>
-          <span className="games-hub-copy">
-            <strong>Dice</strong>
-            <small>Roll. Win. Repeat.</small>
-          </span>
-          <span className="games-hub-status"><i /> Live</span>
-          <b className="games-hub-arrow" aria-hidden="true">›</b>
-        </button>
-      </section>
+      <div className={`${gameCardStyles.stack} ${gameCardStyles.gamesStack}`}>
+        <DiceLobbyCard onClick={onOpenDice} />
+      </div>
     </section>
   );
 }
