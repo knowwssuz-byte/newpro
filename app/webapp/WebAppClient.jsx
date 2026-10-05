@@ -497,6 +497,50 @@ function AppIcon({ name, className = '' }) {
   );
 }
 
+
+function playNavFeedback(app) {
+  try {
+    app?.HapticFeedback?.impactOccurred?.('light');
+    window.setTimeout(() => app?.HapticFeedback?.selectionChanged?.(), 34);
+  } catch {}
+
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+
+    const context = new AudioContextClass();
+    const now = context.currentTime;
+    const gain = context.createGain();
+    const low = context.createOscillator();
+    const high = context.createOscillator();
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.016, now + 0.004);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.048);
+
+    low.type = 'sine';
+    low.frequency.setValueAtTime(520, now);
+    low.frequency.exponentialRampToValueAtTime(410, now + 0.045);
+
+    high.type = 'triangle';
+    high.frequency.setValueAtTime(1040, now);
+    high.frequency.exponentialRampToValueAtTime(820, now + 0.032);
+
+    low.connect(gain);
+    high.connect(gain);
+    gain.connect(context.destination);
+
+    low.start(now);
+    high.start(now);
+    low.stop(now + 0.05);
+    high.stop(now + 0.038);
+
+    window.setTimeout(() => context.close?.().catch?.(() => {}), 120);
+  } catch {
+    // Audio is a progressive enhancement; navigation must never depend on it.
+  }
+}
+
 export default function WebAppClient() {
   const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Gift Myst';
 
@@ -550,11 +594,11 @@ export default function WebAppClient() {
 
   const navItems = useMemo(
     () => [
-      { id: 'games', icon: 'games', image: '/nav/games.svg', label: 'Games' },
-      { id: 'inventory', icon: 'inventory', image: '/nav/cases.svg', label: 'Inventory' },
-      { id: 'home', icon: 'home', image: '/nav/home.svg', label: 'Home' },
+      { id: 'games', icon: 'games', label: 'Games' },
+      { id: 'inventory', icon: 'inventory', label: 'Inventory' },
+      { id: 'home', icon: 'home', label: 'Home' },
       { id: 'bonus', icon: 'gift', label: 'Bonus' },
-      { id: 'referral', icon: 'referral', image: '/nav/referral.svg', label: 'Referal' },
+      { id: 'referral', icon: 'referral', label: 'Referral' },
     ],
     []
   );
@@ -1532,6 +1576,7 @@ export default function WebAppClient() {
                   disabled={isCaseOpening || rocketRoundActive || diceRoundActive}
                   onClick={() => {
                     if (isCaseOpening || rocketRoundActive || diceRoundActive) return;
+                    playNavFeedback(tg);
                     setOpening(null);
                     setSelectedCase(null);
                     setTab(item.id);
@@ -1553,6 +1598,7 @@ export default function WebAppClient() {
                   disabled={isCaseOpening || rocketRoundActive || diceRoundActive}
                   onClick={() => {
                     if (isCaseOpening || rocketRoundActive || diceRoundActive) return;
+                    playNavFeedback(tg);
                     setOpening(null);
                     setSelectedCase(null);
                     setTab(item.id);
