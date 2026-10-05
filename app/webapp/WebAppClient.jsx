@@ -11,6 +11,7 @@ import {
   Circle,
   Clock3,
   Copy,
+  Dices,
   Gamepad2,
   Gem,
   Gift,
@@ -35,7 +36,7 @@ import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
-import DiceGame, { DiceLobbyCard } from './DiceGame';
+import DiceGame from './DiceGame';
 
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
@@ -465,6 +466,7 @@ const APP_ICONS = {
   coin: Sparkles,
   copy: Copy,
   deposit: WalletCards,
+  dice: Dices,
   games: Gamepad2,
   gem: Gem,
   gift: Gift,
@@ -1948,37 +1950,39 @@ function HomeView({
   );
 }
 
-function CasesView({ onGoHome, onOpenRocket, onOpenDice, onComingSoon }) {
+function CasesView({ onGoHome, onOpenDice }) {
   return (
-    <section className="screen-stack">
-      <div className="page-header premium-card games-page-header">
+    <section className="screen-stack games-hub">
+      <header className="page-header premium-card games-page-header">
         <button type="button" className="ghost-back" onClick={onGoHome} aria-label="Bosh sahifaga qaytish">
           ‹
         </button>
-        <h1>Games</h1>
-      </div>
+        <div className="games-page-title">
+          <h1>Games</h1>
+          <span>1 live</span>
+        </div>
+      </header>
 
-      <div className={`${gameCardStyles.stack} ${gameCardStyles.gamesStack}`}>
-        <PromoImageCard
-          variant="rocket"
-          image="/feature/giftmyst-complete-v39/rocket-card-live-transparent-v39.webp"
-          badge="LIVE"
-          title="ROCKET"
-          actionText="Play"
-          onClick={onOpenRocket}
-        />
+      <section className="games-hub-section" aria-label="Available games">
+        <div className="games-hub-section-head">
+          <div>
+            <span>PLAY</span>
+            <h2>Available now</h2>
+          </div>
+        </div>
 
-        <PromoImageCard
-          variant="pvp"
-          image="/feature/giftmyst-complete-v39/pvp-card-duel-transparent-v39.webp"
-          badge="DUEL"
-          title="PVP"
-          actionText="Tez orada"
-          onClick={onComingSoon}
-        />
-
-        <DiceLobbyCard onClick={onOpenDice} />
-      </div>
+        <button type="button" className="games-hub-card is-live" onClick={onOpenDice}>
+          <span className="games-hub-icon">
+            <AppIcon name="dice" />
+          </span>
+          <span className="games-hub-copy">
+            <strong>Dice</strong>
+            <small>Roll. Win. Repeat.</small>
+          </span>
+          <span className="games-hub-status"><i /> Live</span>
+          <b className="games-hub-arrow" aria-hidden="true">›</b>
+        </button>
+      </section>
     </section>
   );
 }
@@ -2331,6 +2335,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
   const [actionTaskId, setActionTaskId] = useState('');
   const [viewError, setViewError] = useState('');
   const [now, setNow] = useState(0);
+  const [filter, setFilter] = useState('active');
 
   const applyData = useCallback((data) => {
     setTasks(data?.tasks || []);
@@ -2438,37 +2443,101 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
   const completedPercent = stats.total > 0
     ? Math.min(100, Math.round((Number(stats.completed || 0) / Number(stats.total)) * 100))
     : 0;
+  const completedTasks = tasks.filter((task) => task.status === 'completed');
+  const activeTasks = tasks.filter((task) => task.status !== 'completed');
+  const pendingReward = activeTasks.reduce((sum, task) => sum + Number(task.reward || 0), 0);
+  const visibleTasks = filter === 'all'
+    ? tasks
+    : filter === 'done'
+      ? completedTasks
+      : activeTasks;
 
   return (
-    <section className="bonus-view bonus-v17">
+    <section className="bonus-view bonus-v20">
       <header className="bonus-page-head">
         <div className="bonus-title-lockup">
           <span className="bonus-title-icon"><AppIcon name="gift" /></span>
-          <div><h1>Bonus</h1></div>
+          <div>
+            <h1>Bonus</h1>
+            <small>Rewards center</small>
+          </div>
         </div>
-        <button className="bonus-refresh-button" type="button" aria-label="Yangilash" onClick={() => loadTasks({ silent: true })} disabled={refreshing}><AppIcon name="refresh" /></button>
+        <button
+          className="bonus-refresh-button"
+          type="button"
+          aria-label="Yangilash"
+          onClick={() => loadTasks({ silent: true })}
+          disabled={refreshing}
+        >
+          <AppIcon name="refresh" />
+        </button>
       </header>
 
-      <section className="bonus-compact-summary">
-        <div className="bonus-summary-earned">
-          <span className="bonus-summary-star"><Image src="/currency/stars.png" alt="" width={25} height={25} /></span>
-          <div><small>Yig‘ilgan</small><strong>{formatPrice(stats.earned)} Stars</strong></div>
+      <section className="bonus-dashboard-card">
+        <div className="bonus-dashboard-main">
+          <span>Earned</span>
+          <strong>
+            <Image src="/currency/stars.png" alt="" width={28} height={28} />
+            {formatPrice(stats.earned)}
+          </strong>
+          <small>Stars</small>
         </div>
-        <div className="bonus-summary-progress">
-          <span><b>{stats.completed}</b> / {stats.total}</span>
-          <div><i style={{ width: `${completedPercent}%` }} /></div>
+
+        <div className="bonus-dashboard-progress">
+          <div className="bonus-dashboard-progress-head">
+            <span>Progress</span>
+            <strong>{completedPercent}%</strong>
+          </div>
+          <div className="bonus-dashboard-track">
+            <i style={{ width: `${completedPercent}%` }} />
+          </div>
+          <div className="bonus-dashboard-meta">
+            <span><b>{activeTasks.length}</b> active</span>
+            <span><b>{completedTasks.length}</b> done</span>
+          </div>
         </div>
       </section>
 
-      <div className="bonus-section-title"><h2>Tasklar</h2><span>{tasks.filter((task) => task.status !== 'completed').length} ta mavjud</span></div>
+      <section className="bonus-mini-stats" aria-label="Bonus summary">
+        <article>
+          <span className="bonus-mini-icon"><AppIcon name="spark" /></span>
+          <div><small>Available</small><strong>{activeTasks.length}</strong></div>
+        </article>
+        <article>
+          <span className="bonus-mini-icon"><Image src="/currency/stars.png" alt="" width={20} height={20} /></span>
+          <div><small>Up next</small><strong>{formatPrice(pendingReward)}</strong></div>
+        </article>
+      </section>
 
-      {viewError ? <div className="bonus-inline-error"><AppIcon name="shield" /><span>{viewError}</span></div> : null}
+      <div className="bonus-toolbar">
+        <div className="bonus-filter-tabs" role="tablist" aria-label="Bonus filter">
+          <button type="button" className={filter === 'active' ? 'is-active' : ''} onClick={() => setFilter('active')}>
+            Active <span>{activeTasks.length}</span>
+          </button>
+          <button type="button" className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}>
+            All <span>{tasks.length}</span>
+          </button>
+          <button type="button" className={filter === 'done' ? 'is-active' : ''} onClick={() => setFilter('done')}>
+            Done <span>{completedTasks.length}</span>
+          </button>
+        </div>
+      </div>
+
+      {viewError ? (
+        <div className="bonus-inline-error">
+          <AppIcon name="shield" />
+          <span>{viewError}</span>
+          <button type="button" onClick={() => loadTasks()}>Retry</button>
+        </div>
+      ) : null}
 
       {loading ? (
-        <div className="bonus-skeleton-list" aria-label="Bonus tasklar yuklanmoqda">{[1, 2, 3].map((item) => <span key={item} />)}</div>
-      ) : tasks.length ? (
-        <div className="bonus-task-list">
-          {tasks.map((task) => {
+        <div className="bonus-skeleton-list is-modern" aria-label="Bonus tasklar yuklanmoqda">
+          {[1, 2, 3].map((item) => <span key={item} />)}
+        </div>
+      ) : visibleTasks.length ? (
+        <div className="bonus-task-list is-modern">
+          {visibleTasks.map((task) => {
             const remainingMs = Math.max(0, new Date(task.eligibleAt || 0).getTime() - now);
             const waiting = task.status === 'waiting' && remainingMs > 0;
             const ready = task.status === 'ready' || (task.status === 'waiting' && !waiting);
@@ -2476,22 +2545,62 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
             const acting = actionTaskId === task.id;
 
             return (
-              <article className={`bonus-task-card is-${task.accent} is-${completed ? 'completed' : waiting ? 'waiting' : ready ? 'ready' : 'available'}`} key={task.id}>
-                <span className="bonus-task-icon"><AppIcon name={bonusTaskIcon(task.type)} /></span>
-                <div className="bonus-task-copy">
-                  <span>{task.typeLabel}{task.waitMinutes > 0 ? ` · ${task.waitMinutes} daq` : ''}</span>
-                  <strong>{task.title}</strong>
-                  <small>{completed ? 'Mukofot olindi' : task.subtitle || 'Shartni bajaring'}</small>
+              <article
+                className={`bonus-task-card is-modern is-${task.accent} is-${completed ? 'completed' : waiting ? 'waiting' : ready ? 'ready' : 'available'}`}
+                key={task.id}
+              >
+                <div className="bonus-task-top">
+                  <span className="bonus-task-icon"><AppIcon name={bonusTaskIcon(task.type)} /></span>
+                  <div className="bonus-task-copy">
+                    <span>{task.typeLabel || 'TASK'}</span>
+                    <strong>{task.title}</strong>
+                    <small>{completed ? 'Reward claimed' : task.subtitle || 'Complete the task to unlock the reward'}</small>
+                  </div>
+                  <span className="bonus-task-reward">
+                    <Image src="/currency/stars.png" alt="" width={17} height={17} />
+                    +{formatPrice(task.reward)}
+                  </span>
                 </div>
-                <span className="bonus-task-reward"><Image src="/currency/stars.png" alt="" width={18} height={18} />+{formatPrice(task.reward)}</span>
-                <div className="bonus-task-action-wrap">
+
+                <div className="bonus-task-footer">
+                  <span className={`bonus-task-state is-${completed ? 'done' : waiting ? 'waiting' : ready ? 'ready' : 'new'}`}>
+                    {completed ? <><AppIcon name="check" /> Done</> :
+                      waiting ? <><AppIcon name="clock" /> {bonusRemaining(task.eligibleAt, now)}</> :
+                      ready ? <><AppIcon name="check" /> Ready</> :
+                      <><AppIcon name="spark" /> New</>}
+                  </span>
+
                   {completed ? (
-                    <button type="button" className="bonus-task-button is-done" disabled><AppIcon name="check" /> Bajarildi</button>
+                    <button type="button" className="bonus-task-cta is-complete" disabled>
+                      Claimed
+                    </button>
+                  ) : ready ? (
+                    <button
+                      type="button"
+                      className="bonus-task-cta is-primary"
+                      disabled={Boolean(actionTaskId)}
+                      onClick={() => claimTask(task)}
+                    >
+                      {acting ? 'Checking…' : 'Claim'}
+                    </button>
+                  ) : waiting ? (
+                    <button
+                      type="button"
+                      className="bonus-task-cta"
+                      disabled={Boolean(actionTaskId)}
+                      onClick={() => openTaskLink(task)}
+                    >
+                      Open
+                    </button>
                   ) : (
-                    <>
-                      <button type="button" className="bonus-task-button is-open" disabled={Boolean(actionTaskId)} onClick={() => ready || waiting ? openTaskLink(task) : startTask(task)}>{acting && !ready && !waiting ? 'Ochilmoqda...' : <><AppIcon name="send" /> Bajarish</>}</button>
-                      <button type="button" className="bonus-task-button is-check" disabled={Boolean(actionTaskId) || !ready} onClick={() => claimTask(task)}>{acting && ready ? 'Tekshirilmoqda...' : waiting ? <><AppIcon name="clock" /> {bonusRemaining(task.eligibleAt, now)}</> : <><AppIcon name="check" /> Tekshirish</>}</button>
-                    </>
+                    <button
+                      type="button"
+                      className="bonus-task-cta is-primary"
+                      disabled={Boolean(actionTaskId)}
+                      onClick={() => startTask(task)}
+                    >
+                      {acting ? 'Opening…' : 'Start'}
+                    </button>
                   )}
                 </div>
               </article>
@@ -2499,11 +2608,15 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
           })}
         </div>
       ) : (
-        <div className="bonus-empty-state"><span><AppIcon name="gift" /></span><strong>Yangi tasklar tayyorlanmoqda</strong><p>Bonus tasklar qo‘shilganda shu yerda paydo bo‘ladi.</p></div>
+        <div className="bonus-empty-state is-modern">
+          <span><AppIcon name={filter === 'done' ? 'check' : 'gift'} /></span>
+          <strong>{filter === 'done' ? 'No completed tasks yet' : 'You’re all caught up'}</strong>
+          <p>{filter === 'done' ? 'Completed rewards will appear here.' : 'New bonus tasks will appear here.'}</p>
+        </div>
       )}
-
     </section>
   );
+}
 }
 
 function referralDate(value) {
