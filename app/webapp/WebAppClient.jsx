@@ -1880,8 +1880,8 @@ function HomeView({
         {featuredCases.length === 0 ? (
           <EmptyState
             icon="box"
-            title="Case hali qo‘shilmagan"
-            text="Admin paneldan Rocket, PVP yoki boshqa case qo‘shing."
+            title="Hozircha case yo‘q"
+            text="Yangi caselar shu yerda ko‘rinadi."
           />
         ) : (
           <div className="cases-grid premium-cases-grid">
@@ -1906,11 +1906,10 @@ function CasesView({ onGoHome, onOpenRocket, onOpenDice, onComingSoon }) {
   return (
     <section className="screen-stack">
       <div className="page-header premium-card games-page-header">
-        <button type="button" className="ghost-back" onClick={onGoHome}>
-          ‹ Home
+        <button type="button" className="ghost-back" onClick={onGoHome} aria-label="Bosh sahifaga qaytish">
+          ‹
         </button>
         <h1>Games</h1>
-        <p>O‘yinni tanlang, Stars tiking va omadingizni sinang.</p>
       </div>
 
       <div className={`${gameCardStyles.stack} ${gameCardStyles.gamesStack}`}>
@@ -2188,11 +2187,10 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onWithdraw })
     <section className="screen-stack">
       <div className="page-header premium-card">
         <h1>Inventory</h1>
-        <p>Yutgan gift rewardlar shu yerda. Balance reward esa avtomatik balansga qo‘shiladi.</p>
       </div>
 
       {wins.length === 0 ? (
-        <EmptyState icon="inventory" title="Inventory bo‘sh" text="Case ochib, sovg‘a yuting." />
+        <EmptyState icon="inventory" title="Inventory bo‘sh" text="Yutgan sovg‘alaringiz shu yerda ko‘rinadi." />
       ) : (
         <div className="inventory-list">
           {wins.map(({ item, gift, caseItem, request, isSold }) => (
@@ -2400,9 +2398,9 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
       <header className="bonus-page-head">
         <div className="bonus-title-lockup">
           <span className="bonus-title-icon"><AppIcon name="gift" /></span>
-          <div><h1>Bonus</h1><p>Tasklar va mukofotlar</p></div>
+          <div><h1>Bonus</h1></div>
         </div>
-        <button className="bonus-refresh-button" type="button" aria-label="Tasklarni yangilash" onClick={() => loadTasks({ silent: true })} disabled={refreshing}><AppIcon name="refresh" /></button>
+        <button className="bonus-refresh-button" type="button" aria-label="Yangilash" onClick={() => loadTasks({ silent: true })} disabled={refreshing}><AppIcon name="refresh" /></button>
       </header>
 
       <section className="bonus-compact-summary">
@@ -2650,17 +2648,14 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
     <section className="screen-stack referral-view" aria-busy={loadingOverview}>
       <header className="referral-page-head">
         <div>
-          <span>REFERAL DASTURI</span>
-          <h1>Birga yuting</h1>
+          <h1>Referral</h1>
         </div>
-        <span className="referral-secure-pill"><AppIcon name="shield" /> Himoyalangan</span>
       </header>
 
       <article className="referral-reward-card premium-card">
         <div className="referral-reward-top">
           <div className="referral-reward-copy">
-            <span className="referral-reward-kicker">HAR BIR FAOL DO‘ST UCHUN</span>
-            <h2>Taklif qiling.<br />Stars oling.</h2>
+            <h2>Do‘st taklif qiling</h2>
             <strong className="referral-reward-amount">
               {loadingOverview ? '—' : `+${formatPrice(inviterReward)}`}
               <span>Stars</span>
@@ -2698,10 +2693,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
           <AppIcon name={copied ? 'check' : 'copy'} />
         </button>
 
-        <div className="referral-trust-strip">
-          <span><AppIcon name="shield" /><b>1 qurilma — 1 bonus</b></span>
-          <span><AppIcon name="clock" /><b>Faollikdan keyin</b></span>
-        </div>
+
       </article>
 
       <section className="referral-overview-card premium-card" aria-label="Referal statistikasi">
@@ -2789,20 +2781,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
         )}
       </section>
 
-      <div className="referral-flow" aria-label="Referal dasturi uch bosqichi">
-        <article>
-          <b>1</b>
-          <span><strong>Ulashish</strong><small>Linkni yuboring</small></span>
-        </article>
-        <article>
-          <b>2</b>
-          <span><strong>Qo‘shilish</strong><small>Do‘stingiz kiradi</small></span>
-        </article>
-        <article>
-          <b>3</b>
-          <span><strong>Bonus</strong><small>Stars tushadi</small></span>
-        </article>
-      </div>
+
     </section>
   );
 }
@@ -2845,8 +2824,8 @@ function ProfileView({
         </div>
         <div>
           <h1>{telegramUser?.first_name || 'Telegram user'}</h1>
-          <p>{telegramUser?.username ? `@${telegramUser.username}` : `ID: ${telegramUser?.id || profile?.id || '-'}`}</p>
-          <strong>{money(profile?.balance)} balance</strong>
+          <p>{telegramUser?.username ? `@${telegramUser.username}` : 'Telegram account'}</p>
+          <strong>{money(profile?.balance)} Stars</strong>
         </div>
       </div>
 
