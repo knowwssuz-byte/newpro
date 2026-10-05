@@ -1758,8 +1758,8 @@
   grid-template-columns: clamp(40px, 10.8vw, 46px) minmax(0, 1fr) 16px;
   gap: clamp(8px, 2vw, 11px);
   padding: 0 clamp(10px, 2.7vw, 14px);
-  border: 1px solid rgba(221, 234, 255, 0.3);
-  border-radius: 22px;
+  border: 1px solid rgba(221, 234, 255, 0.18);
+  border-radius: var(--gm-radius-lg, 22px);
   background:
     radial-gradient(110% 130% at -5% -25%, rgba(var(--action-accent), 0.48), transparent 57%),
     radial-gradient(90% 120% at 112% 120%, rgba(var(--action-secondary), 0.25), transparent 67%),
@@ -1809,7 +1809,7 @@
   width: clamp(40px, 10.8vw, 46px);
   height: clamp(40px, 10.8vw, 46px);
   border: 1px solid rgba(230, 239, 255, 0.29);
-  border-radius: 15px;
+  border-radius: 13px;
   color: #f8fbff;
   background:
     radial-gradient(circle at 25% 18%, rgba(255, 255, 255, 0.26), transparent 43%),
@@ -1822,7 +1822,7 @@
 .actionIcon svg {
   width: clamp(20px, 5.4vw, 23px);
   height: clamp(20px, 5.4vw, 23px);
-  stroke-width: 2.15;
+  stroke-width: 1.8;
 }
 
 .actionCopy {
@@ -1831,14 +1831,14 @@
 
 .actionCopy strong {
   font-family: var(--font-display);
-  font-size: clamp(10px, 3.05vw, 13.5px);
-  font-weight: 820;
+  font-size: clamp(11px, 2.9vw, 13.5px);
+  font-weight: 720;
   letter-spacing: -0.02em;
 }
 
 .actionCopy small {
   color: rgba(226, 235, 255, 0.7);
-  font-size: clamp(7px, 2.15vw, 9.5px);
+  font-size: clamp(10px, 2.5vw, 12px);
   font-weight: 610;
 }
 
@@ -1872,7 +1872,7 @@
 
   .actionCard {
     height: 76px;
-    border-radius: 20px;
+    border-radius: var(--gm-radius-lg, 22px);
   }
 }
 
@@ -1882,7 +1882,7 @@
     grid-template-columns: 36px minmax(0, 1fr) 12px;
     gap: 7px;
     padding-inline: 8px;
-    border-radius: 18px;
+    border-radius: 20px;
   }
 
   .actionIcon {
@@ -1897,3 +1897,6 @@
     font-size: 14px;
   }
 }
+
+.actionChevron svg { width: 14px; height: 14px; }
+.bannerAction > svg { width: 16px; height: 16px; }

@@ -5040,7 +5040,7 @@ body {
   z-index: 0 !important;
   background:
     #0a0611
-    url('/background/premium-obsidian-atmosphere-v18.webp')
+    url('/premium-obsidian-atmosphere-v18.webp')
     center top / cover no-repeat !important;
   opacity: 0.9 !important;
   filter: saturate(0.9) contrast(1.035) brightness(0.92) !important;

@@ -195,7 +195,7 @@
   border: 0;
   border-radius: 17px;
   outline: 0;
-  color: rgba(239,244,255,.54);
+  color: rgba(222,232,249,.76);
   background: transparent;
   cursor: pointer;
   transform: translate3d(0,0,0) scale(1);
@@ -244,8 +244,8 @@
   height: 23px;
   min-width: 23px;
   color: currentColor;
-  opacity: .76;
-  stroke-width: 1.9;
+  opacity: 1;
+  stroke-width: 1.8;
   filter: none;
   transition:
     opacity 170ms ease,
@@ -258,7 +258,7 @@
   max-width: 100%;
   overflow: hidden;
   color: currentColor;
-  font-size: clamp(8.4px,2.4vw,10px);
+  font-size: clamp(10px,2.6vw,11px);
   font-weight: 590;
   line-height: 1;
   letter-spacing: -.015em;
@@ -330,7 +330,7 @@
 
   .iconWrap { width: 26px; height: 26px; }
   .iconWrap svg,.icon { width: 21px; height: 21px; min-width: 21px; }
-  .label { font-size: 8.7px; }
+  .label { font-size: 10px; }
 }
 
 @media (max-width:350px) {
@@ -346,7 +346,7 @@
     left: 3px;
     width: calc((100% - 6px)/4);
   }
-  .label { font-size: 8px; }
+  .label { font-size: 9px; }
 }
 
 @media (prefers-reduced-motion:reduce) {

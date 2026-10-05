@@ -1020,452 +1020,191 @@ body::before {
 }
 
 
-/* =========================================================
-   PRODUCT UI FINAL PASS — compact, consistent, restrained
-   ========================================================= */
-
+/* Shared product finish. Keep tokens and component rules together so that
+   spacing, nested corners and readable type have one source of truth. */
 :root {
   --gm-radius-sm: 12px;
   --gm-radius-md: 16px;
-  --gm-radius-lg: 20px;
+  --gm-radius-lg: 22px;
   --gm-gap-1: 6px;
   --gm-gap-2: 10px;
   --gm-gap-3: 14px;
   --gm-gap-4: 18px;
+  --gm-muted: #a9b5ca;
 }
 
-.app-shell {
-  padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+.app-shell { padding-top: max(8px, env(safe-area-inset-top, 0px)) !important; padding-bottom: 0 !important; }
+.app-main > .bonus-view, .app-main > .referral-view, .app-main > .screen-stack { padding-bottom: 12px !important; }
+.app-main, .screen-stack, .bonus-view, .referral-view { gap: 16px !important; }
+.screen-stack, .bonus-view, .referral-view { padding-inline: 12px !important; }
+.app-icon { flex-shrink: 0; }
+.app-shell button { touch-action: manipulation; }
+.app-shell button:focus-visible, .app-shell a:focus-visible {
+  outline: 2px solid #bad4ff !important;
+  outline-offset: 3px !important;
 }
+.app-shell button:disabled { cursor: not-allowed; }
+#case-collection { scroll-margin-top: 90px; }
 
-.app-main,
-.screen-stack,
-.bonus-view,
-.referral-view {
-  gap: 12px !important;
-}
-
-.screen-stack,
-.bonus-view,
-.referral-view {
-  padding-inline: 10px !important;
-}
-
-.page-header,
-.games-page-header {
-  min-height: 0 !important;
-  padding: 12px 14px !important;
-  border-radius: var(--gm-radius-md) !important;
+.page-header, .games-page-header {
+  min-height: 52px !important;
+  padding: 4px 0 !important;
   display: flex !important;
   align-items: center !important;
-  gap: 10px !important;
+  gap: 12px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-
-.page-header h1,
-.games-page-header h1 {
+.page-header::before, .page-header::after { display: none !important; }
+.page-header h1, .games-page-header h1, .bonus-page-head h1, .referral-page-head h1 {
   margin: 0 !important;
-  font-size: 20px !important;
-  line-height: 1.1 !important;
-  letter-spacing: -0.035em !important;
+  font-size: 25px !important;
+  line-height: 1.15 !important;
+  letter-spacing: -.035em !important;
 }
-
-.page-header p,
-.games-page-header p {
-  display: none !important;
+.page-header p, .games-page-header p { display: none !important; }
+.referral-page-head > .page-title-lockup, .bonus-title-lockup { display: flex !important; align-items: center !important; gap: 12px !important; }
+.page-title-icon, .bonus-title-icon {
+  width: 44px !important;
+  height: 44px !important;
+  display: grid !important;
+  place-items: center !important;
+  flex: 0 0 44px;
+  border: 1px solid rgba(173,193,240,.2) !important;
+  border-radius: 15px !important;
+  color: #b7caff !important;
+  background: linear-gradient(145deg,rgba(139,162,255,.18),rgba(117,139,233,.055)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
 }
-
-.ghost-back {
-  width: 34px !important;
-  min-width: 34px !important;
-  height: 34px !important;
-  min-height: 34px !important;
+.page-title-icon > svg, .bonus-title-icon > svg { width: 24px !important; height: 24px !important; }
+.bonus-title-icon { color: #f5d38e !important; border-color: rgba(245,211,142,.2) !important; background: linear-gradient(145deg,rgba(235,182,79,.16),rgba(235,182,79,.035)) !important; }
+.inventory-view .page-title-icon { color: #94dfdf !important; }
+.ghost-back, .bonus-refresh-button, .referral-refresh-btn {
+  width: 44px !important; min-width: 44px !important;
+  height: 44px !important; min-height: 44px !important;
   padding: 0 !important;
-  display: grid !important;
-  place-items: center !important;
-  border: 1px solid rgba(255,255,255,.1) !important;
-  border-radius: 11px !important;
+  display: grid !important; place-items: center !important;
+  border: 1px solid var(--gm-border-strong) !important;
+  border-radius: var(--gm-radius-sm) !important;
   background: rgba(255,255,255,.045) !important;
-  color: rgba(244,247,251,.86) !important;
-  font-size: 20px !important;
-  line-height: 1 !important;
+  color: #c4cfe2 !important;
 }
-
-.premium-card,
-.inventory-card,
-.profile-card,
-.referral-reward-card,
-.referral-overview-card,
-.bonus-compact-summary {
+.ghost-back svg { width: 20px; height: 20px; }
+.premium-card, .inventory-card, .profile-card, .referral-reward-card, .referral-overview-card {
   border-radius: var(--gm-radius-lg) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.055),
-    0 10px 28px rgba(3,8,27,.14) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.055),0 8px 24px rgba(3,8,27,.13) !important;
 }
+.premium-home { padding-top: 8px !important; }
+.premium-home > section:first-child { margin-bottom: 12px !important; }
+.premium-home .section-title-row { margin-bottom: 12px !important; }
+.premium-cases-grid { grid-template-columns: repeat(2,minmax(0,1fr)) !important; gap: 12px !important; }
 
-/* Home */
-.premium-home {
-  padding-top: 6px !important;
-}
+/* Collection rows retain readable metadata and distinct action targets. */
+.inventory-list { display: grid !important; gap: 12px !important; }
+.inventory-card { min-height: 0 !important; padding: 14px !important; gap: 12px !important; }
+.inventory-card > div { min-width: 0; }
+.inventory-card .gift-media { width: 60px !important; min-width: 60px !important; height: 60px !important; border-radius: var(--gm-radius-sm) !important; }
+.inventory-card h3 { margin: 4px 0 !important; font-size: 15px !important; line-height: 1.3 !important; }
+.inventory-card p { max-width: 100% !important; margin: 0 !important; color: var(--gm-muted) !important; font-size: 12px !important; line-height: 1.5 !important; overflow-wrap: anywhere; }
+.status-badge { min-height: 22px !important; padding: 2px 8px !important; font-size: 10px !important; border-radius: 7px !important; text-transform: capitalize !important; }
+.primary-btn, .ghost-btn { min-height: 44px !important; padding: 0 14px !important; border-radius: var(--gm-radius-sm) !important; font-size: 12px !important; }
 
-.premium-home > section:first-child {
-  margin-bottom: 10px !important;
+/* Bonus: every task type has its own icon; status never competes with it. */
+.bonus-page-head, .referral-page-head { min-height: 52px !important; padding: 4px 0 !important; align-items: center !important; }
+.bonus-title-lockup small { color: var(--gm-muted); font-size: 12px; }
+.bonus-v20 .bonus-dashboard-card { padding: 18px; border-radius: var(--gm-radius-lg); border-color: rgba(188,174,245,.2); background: radial-gradient(ellipse at 0 0,rgba(152,119,232,.16),transparent 70%),#171d2d; }
+.bonus-dashboard-main > span, .bonus-dashboard-main small,
+.bonus-dashboard-progress-head, .bonus-dashboard-meta { font-size: 12px; color: var(--gm-muted); }
+.bonus-dashboard-main strong { font-variant-numeric: tabular-nums; }
+.bonus-dashboard-track { height: 5px; overflow: hidden; }
+.bonus-dashboard-track i { border-radius: inherit; transition: width 260ms ease; }
+.bonus-v20 .bonus-mini-stats { gap: 10px; }
+.bonus-v20 .bonus-mini-stats article { padding: 12px; border-radius: var(--gm-radius-md); }
+.bonus-mini-stats small { font-size: 11px; color: var(--gm-muted); }
+.bonus-mini-stats strong { font-size: 18px; font-variant-numeric: tabular-nums; }
+.bonus-mini-icon { border-radius: 11px; }
+.bonus-filter-tabs { padding: 4px; border-radius: var(--gm-radius-md); background: rgba(16,23,37,.8); }
+.bonus-filter-tabs button { min-height: 40px; border-radius: 12px; font-size: 12px; color: var(--gm-muted); }
+.bonus-filter-tabs button span { font-size: 10px; }
+.bonus-task-list.is-modern { gap: 12px !important; }
+.bonus-v20 .bonus-task-card.is-modern {
+  padding: 14px !important; gap: 14px !important;
+  grid-template-columns: minmax(0,1fr) !important;
+  border-radius: var(--gm-radius-lg) !important;
+  border: 1px solid var(--gm-border-strong) !important;
+  background: linear-gradient(145deg,#20283b,#181f30) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.04) !important;
 }
+.bonus-v20 .bonus-task-card.is-modern.is-completed { opacity: 1; background: #171f2b !important; }
+.bonus-task-top { grid-template-columns: 42px minmax(0,1fr) auto; gap: 10px; }
+.bonus-v20 .bonus-task-card.is-modern .bonus-task-icon {
+  width: 42px !important; height: 42px !important; border-radius: 13px !important;
+  color: #accbff; border: 1px solid rgba(172,203,255,.18);
+  background: linear-gradient(145deg,rgba(130,171,246,.16),rgba(130,171,246,.035)) !important;
+}
+.bonus-task-icon:has([data-icon="bot"]) { color: #cbb8ff !important; }
+.bonus-task-icon:has([data-icon="games"]) { color: #8cdbc3 !important; }
+.bonus-v20 .bonus-task-card.is-modern .bonus-task-copy > span { margin: 0 0 4px !important; font-size: 10px !important; color: #a9b5ca !important; letter-spacing: .07em !important; }
+.bonus-v20 .bonus-task-card.is-modern .bonus-task-copy strong { font-size: 14px !important; line-height: 1.35 !important; white-space: normal; overflow-wrap: anywhere; }
+.bonus-v20 .bonus-task-card.is-modern .bonus-task-copy small { margin-top: 4px; color: var(--gm-muted) !important; font-size: 12px !important; line-height: 1.45 !important; white-space: normal; }
+.bonus-v20 .bonus-task-card.is-modern .bonus-task-reward { min-height: 28px; padding: 0 7px; font-size: 12px; border-radius: 9px; }
+.bonus-task-footer { padding-top: 10px; border-top: 1px solid rgba(255,255,255,.06); }
+.bonus-task-state { font-size: 11px; color: var(--gm-muted); }
+.bonus-task-state svg { width: 14px; height: 14px; }
+.bonus-task-cta { min-height: 44px; min-width: 88px; padding: 0 14px; border-radius: var(--gm-radius-sm); font-size: 12px; }
+.bonus-task-cta.is-complete { opacity: .8; }
+.bonus-inline-error { min-height: 0 !important; padding: 12px !important; }
+.bonus-inline-error button { min-height: 44px; font-size: 12px; }
 
-.premium-home .cases-section {
-  padding-bottom: 2px !important;
-}
+.referral-reward-card { padding: 18px !important; }
+.referral-reward-top { min-height: 0 !important; gap: 14px !important; }
+.referral-reward-copy h2 { margin: 0 0 12px !important; font-size: 22px !important; line-height: 1.2 !important; }
+.referral-reward-kicker, .referral-trust-strip, .referral-flow, .referral-secure-pill { display: none !important; }
+.referral-reward-art { transform: scale(.82) !important; transform-origin: center right !important; }
+.referral-primary-share { min-height: 46px !important; border-radius: var(--gm-radius-sm) !important; }
+.referral-inline-link { min-height: 44px !important; border-radius: var(--gm-radius-sm) !important; font-size: 12px !important; }
+.referral-overview-card { padding: 12px !important; gap: 10px !important; }
+.referral-overview-stat { min-height: 76px !important; padding: 12px !important; border-radius: 12px !important; }
+.referral-overview-stat strong { font-size: 22px !important; }
+.referral-overview-stat > span { font-size: 11px !important; color: var(--gm-muted) !important; }
+.referral-friends-head { margin: 0 2px 10px !important; }
+.referral-friends-head h2 { font-size: 17px !important; }
+.referral-friends-list { gap: 10px !important; }
+.referral-friend-row { min-height: 64px !important; padding: 12px !important; border-radius: var(--gm-radius-md) !important; }
+.profile-card { padding: 16px !important; gap: 14px !important; }
+.profile-card .home-avatar { width: 48px !important; height: 48px !important; }
+.profile-card h1 { margin: 0 0 4px !important; font-size: 20px !important; }
+.profile-card p { margin: 0 0 6px !important; color: var(--gm-muted) !important; font-size: 12px !important; }
 
-.premium-home .section-title-row {
-  margin-bottom: 8px !important;
+.empty-state, .referral-empty-friends, .bonus-empty-state {
+  min-height: 190px !important; padding: 28px 18px !important;
+  border-radius: var(--gm-radius-lg) !important;
+  border: 1px solid var(--gm-border-strong) !important;
+  background: linear-gradient(145deg,rgba(32,42,62,.7),rgba(19,26,40,.8)) !important;
 }
-
-.premium-cases-grid {
-  grid-template-columns: repeat(2, minmax(0,1fr)) !important;
-  gap: 9px !important;
-}
-
-/* Inventory */
-.inventory-list {
-  display: grid !important;
-  gap: 9px !important;
-}
-
-.inventory-card {
-  min-height: 0 !important;
-  padding: 11px !important;
-  gap: 10px !important;
-}
-
-.inventory-card .gift-media {
-  width: 56px !important;
-  min-width: 56px !important;
-  height: 56px !important;
-}
-
-.inventory-card h3 {
-  margin: 3px 0 2px !important;
-  font-size: 14px !important;
-  line-height: 1.2 !important;
-}
-
-.inventory-card p {
-  max-width: 100% !important;
-  margin: 0 !important;
-  color: var(--gm-muted) !important;
-  font-size: 10px !important;
-  line-height: 1.3 !important;
-  display: -webkit-box !important;
-  -webkit-line-clamp: 1 !important;
-  -webkit-box-orient: vertical !important;
-  overflow: hidden !important;
-}
-
-.status-badge {
-  min-height: 20px !important;
-  padding: 0 7px !important;
-  font-size: 8px !important;
-  border-radius: 999px !important;
-  text-transform: capitalize !important;
-}
-
-.primary-btn,
-.ghost-btn {
-  min-height: 36px !important;
-  padding: 0 12px !important;
-  border-radius: 11px !important;
-  font-size: 11px !important;
-}
-
-/* Bonus */
-.bonus-page-head {
-  min-height: 44px !important;
-  padding: 2px 2px !important;
-  align-items: center !important;
-}
-
-.bonus-page-head h1 {
-  font-size: 24px !important;
-}
-
-.bonus-page-head p,
-.bonus-page-head > div > span:not(.bonus-title-icon) {
-  display: none !important;
-}
-
-.bonus-title-lockup {
-  display: flex !important;
-  align-items: center !important;
-  gap: 9px !important;
-}
-
-.bonus-title-icon {
-  width: 34px !important;
-  height: 34px !important;
-  display: grid !important;
-  place-items: center !important;
-  border: 1px solid rgba(255,255,255,.09) !important;
-  border-radius: 11px !important;
-  background: rgba(255,255,255,.04) !important;
-}
-
-.bonus-refresh-button,
-.referral-refresh-btn {
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
-  min-height: 34px !important;
-  border-radius: 11px !important;
-}
-
-.bonus-compact-summary {
-  padding: 13px 14px !important;
-  min-height: 0 !important;
-}
-
-.bonus-section-title {
-  margin-top: 1px !important;
-}
-
-.bonus-section-title h2 {
-  font-size: 15px !important;
-}
-
-.bonus-task-list {
-  gap: 8px !important;
-}
-
-.bonus-task-card {
-  min-height: 0 !important;
-  padding: 11px !important;
-  gap: 9px !important;
-  border-radius: 16px !important;
-}
-
-.bonus-task-icon {
-  width: 38px !important;
-  height: 38px !important;
-  border-radius: 12px !important;
-}
-
-.bonus-task-copy > span {
-  font-size: 8px !important;
-}
-
-.bonus-task-copy strong {
-  font-size: 13px !important;
-  line-height: 1.2 !important;
-}
-
-.bonus-task-copy small {
-  font-size: 9.5px !important;
-  line-height: 1.25 !important;
-}
-
-.bonus-task-action-wrap {
-  gap: 6px !important;
-}
-
-.bonus-task-button {
-  min-height: 33px !important;
-  padding: 0 10px !important;
-  border-radius: 10px !important;
-  font-size: 9px !important;
-}
-
-/* Referral */
-.referral-page-head {
-  min-height: 44px !important;
-  padding: 2px 2px !important;
-  align-items: center !important;
-}
-
-.referral-page-head h1 {
-  margin: 0 !important;
-  font-size: 24px !important;
-  line-height: 1 !important;
-}
-
-.referral-page-head > div > span,
-.referral-secure-pill {
-  display: none !important;
-}
-
-.referral-reward-card {
-  padding: 16px !important;
-}
-
-.referral-reward-top {
-  min-height: 0 !important;
-  gap: 12px !important;
-}
-
-.referral-reward-copy h2 {
-  margin: 0 0 10px !important;
-  font-size: 20px !important;
-  line-height: 1.08 !important;
-}
-
-.referral-reward-kicker,
-.referral-trust-strip,
-.referral-flow {
-  display: none !important;
-}
-
-.referral-reward-art {
-  transform: scale(.82) !important;
-  transform-origin: center right !important;
-}
-
-.referral-primary-share {
-  min-height: 42px !important;
-  border-radius: 13px !important;
-}
-
-.referral-inline-link {
-  min-height: 38px !important;
-  border-radius: 12px !important;
-  font-size: 9.5px !important;
-}
-
-.referral-overview-card {
-  padding: 10px !important;
-  gap: 7px !important;
-}
-
-.referral-overview-stat {
-  min-height: 68px !important;
-  padding: 10px !important;
-  border-radius: 14px !important;
-}
-
-.referral-overview-stat strong {
-  font-size: 18px !important;
-}
-
-.referral-friends-head {
-  margin: 0 2px 7px !important;
-}
-
-.referral-friends-head h2 {
-  font-size: 15px !important;
-}
-
-.referral-friends-list {
-  gap: 7px !important;
-}
-
-.referral-friend-row {
-  min-height: 58px !important;
-  padding: 9px 10px !important;
-  border-radius: 14px !important;
-}
-
-/* Profile */
-.profile-card {
-  padding: 13px !important;
-  gap: 11px !important;
-}
-
-.profile-card .home-avatar {
-  width: 48px !important;
-  height: 48px !important;
-}
-
-.profile-card h1 {
-  margin: 0 0 2px !important;
-  font-size: 17px !important;
-}
-
-.profile-card p {
-  margin: 0 0 4px !important;
-  color: var(--gm-muted) !important;
-  font-size: 10px !important;
-}
-
-.profile-card strong {
-  font-size: 12px !important;
-}
-
-/* Empty/error states */
-.empty-state,
-.referral-empty-friends,
-.bonus-empty-state,
-.referral-load-error,
-.bonus-inline-error {
-  min-height: 120px !important;
-  padding: 16px !important;
-  border-radius: 16px !important;
-}
-
-.empty-state h3,
-.referral-empty-friends strong,
-.bonus-empty-state strong {
-  font-size: 14px !important;
-}
-
-.empty-state p,
-.referral-empty-friends p,
-.bonus-empty-state p {
-  max-width: 260px !important;
-  margin: 4px auto 0 !important;
-  font-size: 10px !important;
-  line-height: 1.35 !important;
-}
-
-/* Navigation: calmer active state, slightly tighter labels */
-nav[aria-label="Bottom navigation"] button[data-nav] {
-  transition: transform .14s ease, background .14s ease, opacity .14s ease !important;
-}
-
-nav[aria-label="Bottom navigation"] button[data-nav][aria-current="page"] {
-  background: rgba(255,255,255,.065) !important;
-}
-
-nav[aria-label="Bottom navigation"] button[data-nav] strong {
-  opacity: .72 !important;
-}
-
-nav[aria-label="Bottom navigation"] button[data-nav][aria-current="page"] strong {
-  opacity: 1 !important;
-}
-
-/* Restrain decorative effects that make the UI feel busy. */
-.premium-card::before,
-.page-header::before,
-.profile-card::before,
-.inventory-card::before {
-  opacity: .22 !important;
-}
+.empty-state > svg { width: 44px !important; height: 44px !important; color: #9caecf; margin: 0 auto 14px; }
+.empty-state h3, .referral-empty-friends strong, .bonus-empty-state strong { font-size: 16px !important; }
+.empty-state p, .referral-empty-friends p, .bonus-empty-state p { max-width: 290px !important; margin: 8px auto 0 !important; font-size: 13px !important; line-height: 1.5 !important; color: var(--gm-muted) !important; }
+.premium-card::before, .profile-card::before, .inventory-card::before { opacity: .2 !important; }
+.global-alert button { min-width: 44px; min-height: 44px; display: grid; place-items: center; }
+.global-alert button svg { width: 18px; height: 18px; }
 
 @media (max-width: 420px) {
-  .screen-stack,
-  .bonus-view,
-  .referral-view {
-    padding-inline: 8px !important;
-  }
-
-  .premium-cases-grid {
-    gap: 8px !important;
-  }
-
-  .referral-reward-art {
-    display: none !important;
-  }
-
-  .referral-reward-top {
-    grid-template-columns: 1fr !important;
-  }
-
-  .referral-overview-card {
-    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
-  }
-
-  .inventory-card {
-    grid-template-columns: 56px minmax(0,1fr) !important;
-  }
-
-  .inventory-card > button {
-    grid-column: 1 / -1 !important;
-    width: 100% !important;
-  }
+  .screen-stack, .bonus-view, .referral-view { padding-inline: 10px !important; }
+  .premium-cases-grid { gap: 10px !important; }
+  .referral-reward-art { display: none !important; }
+  .referral-reward-top { grid-template-columns: 1fr !important; }
+  .referral-overview-card { grid-template-columns: repeat(2,minmax(0,1fr)) !important; }
+  .inventory-card { grid-template-columns: 60px minmax(0,1fr) !important; }
+  .inventory-card > button { grid-column: 1/-1 !important; width: 100% !important; }
+}
+@media (max-width: 350px) {
+  .bonus-task-top { grid-template-columns: 36px minmax(0,1fr); }
+  .bonus-v20 .bonus-task-card.is-modern .bonus-task-icon { width: 36px !important; height: 36px !important; }
+  .bonus-v20 .bonus-task-card.is-modern .bonus-task-reward { grid-column: 2; justify-self: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bonus-dashboard-track i, .bonus-filter-tabs button { transition: none; }
+  .app-shell .is-spinning { animation: none !important; }
 }

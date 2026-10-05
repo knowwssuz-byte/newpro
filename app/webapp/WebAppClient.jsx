@@ -3,34 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
-import {
-  ArrowDownToLine,
-  Award,
-  Boxes,
-  Check,
-  Circle,
-  Clock3,
-  Copy,
-  Dices,
-  Gamepad2,
-  Gem,
-  Gift,
-  House,
-  PackageOpen,
-  RefreshCw,
-  Rocket,
-  Send,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  Swords,
-  TrendingUp,
-  UserRound,
-  UserCheck,
-  UserPlus,
-  UsersRound,
-  WalletCards,
-} from 'lucide-react';
+import AppIcon from './AppIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
 import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
@@ -456,50 +429,6 @@ function coinIcon() {
   );
 }
 
-const APP_ICONS = {
-  admin: ShieldCheck,
-  award: Award,
-  box: PackageOpen,
-  cases: Boxes,
-  check: Check,
-  clock: Clock3,
-  coin: Sparkles,
-  copy: Copy,
-  deposit: WalletCards,
-  dice: Dices,
-  games: Gamepad2,
-  gem: Gem,
-  gift: Gift,
-  home: House,
-  inventory: PackageOpen,
-  profile: UserRound,
-  refresh: RefreshCw,
-  referral: UsersRound,
-  rocket: Rocket,
-  send: Send,
-  settings: Settings,
-  shield: ShieldCheck,
-  spark: Sparkles,
-  swords: Swords,
-  trend: TrendingUp,
-  userCheck: UserCheck,
-  userPlus: UserPlus,
-  withdraw: ArrowDownToLine,
-};
-
-function AppIcon({ name, className = '' }) {
-  const Icon = APP_ICONS[name] || Circle;
-
-  return (
-    <Icon
-      className={`app-icon ${className}`.trim()}
-      aria-hidden="true"
-      strokeWidth={2.15}
-    />
-  );
-}
-
-
 function playNavFeedback(app) {
   try {
     app?.HapticFeedback?.impactOccurred?.('light');
@@ -599,7 +528,7 @@ export default function WebAppClient() {
       { id: 'games', icon: 'games', label: 'Games' },
       { id: 'inventory', icon: 'inventory', label: 'Inventory' },
       { id: 'home', icon: 'home', label: 'Home' },
-      { id: 'bonus', icon: 'gift', label: 'Bonus' },
+      { id: 'bonus', icon: 'bonus', label: 'Bonus' },
       { id: 'referral', icon: 'referral', label: 'Referral' },
     ],
     []
@@ -1410,13 +1339,13 @@ export default function WebAppClient() {
       <div className="app-shell">
 
 
-        {toast ? <div className="toast">{toast}</div> : null}
+        {toast ? <div className="toast" role="status">{toast}</div> : null}
         {error ? (
-          <div className="global-alert">
+          <div className="global-alert" role="alert">
             <strong>Xatolik</strong>
             <span>{error}</span>
-            <button type="button" onClick={() => setError('')}>
-              ×
+            <button type="button" aria-label="Xabarni yopish" onClick={() => setError('')}>
+              <AppIcon name="close" />
             </button>
           </div>
         ) : null}
@@ -1467,7 +1396,7 @@ export default function WebAppClient() {
                   profile={profile}
                   cases={activeCases}
                   giftsByCase={giftsByCase}
-                  onGoCases={() => setTab('games')}
+                  onGoCases={() => document.getElementById('case-collection')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })}
                   onGoInventory={() => setTab('inventory')}
                   onOpenCase={openCase}
                   onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
@@ -1819,7 +1748,7 @@ function HomeGameBanner({
 
       <span className={gameCardStyles.bannerCopy}>
         <span className={gameCardStyles.bannerBadge}>
-          <AppIcon name={isPvp ? 'swords' : 'spark'} />
+          <AppIcon name={isPvp ? 'swords' : 'rocket'} />
           {badge}
         </span>
         <span className={gameCardStyles.bannerTitle}>
@@ -1828,7 +1757,7 @@ function HomeGameBanner({
         <small>{description}</small>
         <span className={gameCardStyles.bannerAction}>
           {actionText}
-          <b aria-hidden="true">›</b>
+          <AppIcon name="chevronRight" />
         </span>
       </span>
     </button>
@@ -1896,28 +1825,28 @@ function HomeView({
       <div className={gameCardStyles.actionsGrid}>
         <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.contracts}`} onClick={onGoCases}>
           <span className={gameCardStyles.actionIcon}>
-            <AppIcon name="box" />
+            <AppIcon name="cases" />
           </span>
           <span className={gameCardStyles.actionCopy}>
             <strong>CASES</strong>
             <small>Browse &amp; open</small>
           </span>
-          <b className={gameCardStyles.actionChevron} aria-hidden="true">›</b>
+          <span className={gameCardStyles.actionChevron}><AppIcon name="chevronRight" /></span>
         </button>
 
         <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.upgrade}`} onClick={onGoInventory}>
           <span className={gameCardStyles.actionIcon}>
-            <AppIcon name="spark" />
+            <AppIcon name="inventory" />
           </span>
           <span className={gameCardStyles.actionCopy}>
             <strong>INVENTORY</strong>
             <small>Your rewards</small>
           </span>
-          <b className={gameCardStyles.actionChevron} aria-hidden="true">›</b>
+          <span className={gameCardStyles.actionChevron}><AppIcon name="chevronRight" /></span>
         </button>
       </div>
 
-      <div className="cases-section">
+      <div className="cases-section" id="case-collection">
         <div className="section-title-row cases-title-only">
           <div>
             <AppIcon name="cases" />
@@ -1955,7 +1884,7 @@ function CasesView({ onGoHome, onOpenDice }) {
     <section className="screen-stack">
       <div className="page-header premium-card games-page-header">
         <button type="button" className="ghost-back" onClick={onGoHome} aria-label="Bosh sahifaga qaytish">
-          ‹
+          <AppIcon name="chevronLeft" />
         </button>
         <h1>Games</h1>
       </div>
@@ -2017,7 +1946,7 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
       <div className={caseOpeningStyles.caseTileFooter}>
         <div className={caseOpeningStyles.caseTileCopy}>
           <h3>{caseItem.title}</h3>
-          <p>{readyCount || gifts.length || 0} rewards</p>
+          <p>{readyCount || gifts.length || 0} {(readyCount || gifts.length) === 1 ? 'reward' : 'rewards'}</p>
         </div>
 
         <button
@@ -2214,8 +2143,9 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onWithdraw })
   });
 
   return (
-    <section className="screen-stack">
+    <section className="screen-stack inventory-view">
       <div className="page-header premium-card">
+        <span className="page-title-icon"><AppIcon name="inventory" /></span>
         <h1>Inventory</h1>
       </div>
 
@@ -2263,10 +2193,10 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onWithdraw })
 }
 
 function bonusTaskIcon(type) {
-  if (type === 'telegram_channel') return 'send';
-  if (type === 'telegram_bot') return 'spark';
+  if (type === 'telegram_channel') return 'channel';
+  if (type === 'telegram_bot') return 'bot';
   if (type === 'mini_app') return 'games';
-  return 'trend';
+  return 'globe';
 }
 
 function bonusRemaining(eligibleAt, now = Date.now()) {
@@ -2436,7 +2366,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
     <section className="bonus-view bonus-v20">
       <header className="bonus-page-head">
         <div className="bonus-title-lockup">
-          <span className="bonus-title-icon"><AppIcon name="gift" /></span>
+          <span className="bonus-title-icon"><AppIcon name="bonus" /></span>
           <div>
             <h1>Bonus</h1>
             <small>Rewards center</small>
@@ -2449,7 +2379,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
           onClick={() => loadTasks({ silent: true })}
           disabled={refreshing}
         >
-          <AppIcon name="refresh" />
+          <AppIcon name="refresh" className={refreshing ? 'is-spinning' : ''} />
         </button>
       </header>
 
@@ -2468,7 +2398,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
             <span>Progress</span>
             <strong>{completedPercent}%</strong>
           </div>
-          <div className="bonus-dashboard-track">
+          <div className="bonus-dashboard-track" role="progressbar" aria-label="Bonus progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completedPercent}>
             <i style={{ width: `${completedPercent}%` }} />
           </div>
           <div className="bonus-dashboard-meta">
@@ -2480,7 +2410,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
 
       <section className="bonus-mini-stats" aria-label="Bonus summary">
         <article>
-          <span className="bonus-mini-icon"><AppIcon name="spark" /></span>
+          <span className="bonus-mini-icon"><AppIcon name="tasks" /></span>
           <div><small>Available</small><strong>{activeTasks.length}</strong></div>
         </article>
         <article>
@@ -2490,22 +2420,22 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
       </section>
 
       <div className="bonus-toolbar">
-        <div className="bonus-filter-tabs" role="tablist" aria-label="Bonus filter">
-          <button type="button" className={filter === 'active' ? 'is-active' : ''} onClick={() => setFilter('active')}>
+        <div className="bonus-filter-tabs" role="group" aria-label="Bonus filter">
+          <button type="button" aria-pressed={filter === 'active'} className={filter === 'active' ? 'is-active' : ''} onClick={() => setFilter('active')}>
             Active <span>{activeTasks.length}</span>
           </button>
-          <button type="button" className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}>
+          <button type="button" aria-pressed={filter === 'all'} className={filter === 'all' ? 'is-active' : ''} onClick={() => setFilter('all')}>
             All <span>{tasks.length}</span>
           </button>
-          <button type="button" className={filter === 'done' ? 'is-active' : ''} onClick={() => setFilter('done')}>
+          <button type="button" aria-pressed={filter === 'done'} className={filter === 'done' ? 'is-active' : ''} onClick={() => setFilter('done')}>
             Done <span>{completedTasks.length}</span>
           </button>
         </div>
       </div>
 
       {viewError ? (
-        <div className="bonus-inline-error">
-          <AppIcon name="shield" />
+        <div className="bonus-inline-error" role="alert">
+          <AppIcon name="warning" />
           <span>{viewError}</span>
           <button type="button" onClick={() => loadTasks()}>Retry</button>
         </div>
@@ -2546,8 +2476,8 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
                   <span className={`bonus-task-state is-${completed ? 'done' : waiting ? 'waiting' : ready ? 'ready' : 'new'}`}>
                     {completed ? <><AppIcon name="check" /> Done</> :
                       waiting ? <><AppIcon name="clock" /> {bonusRemaining(task.eligibleAt, now)}</> :
-                      ready ? <><AppIcon name="check" /> Ready</> :
-                      <><AppIcon name="spark" /> New</>}
+                      ready ? <><AppIcon name="ready" /> Ready</> :
+                      <>New task</>}
                   </span>
 
                   {completed ? (
@@ -2589,7 +2519,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
         </div>
       ) : (
         <div className="bonus-empty-state is-modern">
-          <span><AppIcon name={filter === 'done' ? 'check' : 'gift'} /></span>
+          <span><AppIcon name={filter === 'done' ? 'tasks' : 'ready'} /></span>
           <strong>{filter === 'done' ? 'No completed tasks yet' : 'You’re all caught up'}</strong>
           <p>{filter === 'done' ? 'Completed rewards will appear here.' : 'New bonus tasks will appear here.'}</p>
         </div>
@@ -2785,7 +2715,8 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
   return (
     <section className="screen-stack referral-view" aria-busy={loadingOverview}>
       <header className="referral-page-head">
-        <div>
+        <div className="page-title-lockup">
+          <span className="page-title-icon"><AppIcon name="referral" /></span>
           <h1>Referral</h1>
         </div>
       </header>
@@ -3709,7 +3640,7 @@ function OpeningModal({ opening, onClose, onInventory, onOpenAgain, busy }) {
             </div>
             <div className="opening-info-row compact">
               <span><AppIcon name="spark" /> Fair random</span>
-              <span><AppIcon name="gem" /> Secure result</span>
+              <span><AppIcon name="shield" /> Secure result</span>
             </div>
           </>
         ) : (

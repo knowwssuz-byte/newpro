@@ -772,6 +772,8 @@
 
 /* Gift Myst UI V2 — case rangini saqlaydigan purple-black cards */
 .caseTile {
+  grid-template-rows: minmax(154px, 1fr) auto;
+  border-radius: var(--gm-radius-lg, 22px);
   border-color: color-mix(in srgb, var(--case-accent, #8b5cf6) 48%, #3b2a54);
   background: color-mix(in srgb, var(--case-accent, #8b5cf6) 10%, #181027);
   box-shadow:
@@ -798,11 +800,28 @@
 }
 
 .caseTileFooter {
+  grid-template-columns: minmax(0,1fr);
+  padding: 12px;
+  gap: 10px;
   border-color: color-mix(in srgb, var(--case-accent, #8b5cf6) 24%, #332342);
   background: color-mix(in srgb, var(--case-accent, #8b5cf6) 8%, #1b122b);
 }
 
+.caseTileCopy h3 {
+  min-height: 36px;
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.caseTileCopy p { font-size: 11px; text-transform: none; font-weight: 500; }
+
 .caseTileOpen {
+  width: 100%;
+  min-height: 44px;
+  border-radius: var(--gm-radius-sm, 12px);
   border-color: color-mix(in srgb, var(--case-accent, #8b5cf6) 62%, rgba(255, 255, 255, 0.2));
   background: color-mix(in srgb, var(--case-accent, #8b5cf6) 76%, #7558d6);
   box-shadow: 0 8px 18px color-mix(in srgb, var(--case-accent, #8b5cf6) 22%, transparent);
