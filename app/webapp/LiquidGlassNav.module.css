@@ -1,176 +1,117 @@
 /*
- * GiftMyst bottom navigation — iOS 27 inspired isolated Liquid Glass.
- *
- * Games is deliberately promoted into its own circular glass group. The other
- * four destinations share one floating glass track. Both glass surfaces are
- * top-level siblings, so their backdrop filters never stack on each other.
- * Legacy .mobile-nav/.nav-button selectors cannot match this CSS Module.
+ * Gift Myst — refined liquid glass dock
+ * Cohesive vector icons, animated selection lens and tactile transitions.
  */
 
 .dock {
-  --orb-size: 76px;
-  --bar-height: 72px;
+  --orb-size: 70px;
+  --bar-height: 66px;
   --dock-gap: 8px;
   position: fixed;
   z-index: 9200;
   left: 50%;
-  right: auto;
   bottom: max(8px, env(safe-area-inset-bottom, 0px));
-  width: min(calc(100% - 14px), 548px);
+  width: min(calc(100% - 16px), 528px);
   height: var(--orb-size);
-  margin: 0;
-  padding: 0;
   display: flex;
   align-items: center;
   gap: var(--dock-gap);
-  overflow: visible;
   border: 0;
   background: transparent;
-  box-shadow: none;
   transform: translate3d(-50%, 0, 0);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
   user-select: none;
 }
 
-/*
- * One optical recipe for both glass groups.
- * The fill stays almost colourless: the colour users see comes from the real
- * page travelling underneath the glass, diffused into a soft ghost/aura.
- */
 .gamesOrb,
 .nav {
   position: relative;
-  box-sizing: border-box;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.30);
-  outline: 0;
+  border: 1px solid rgba(255,255,255,.16);
   background:
-    radial-gradient(120% 95% at 13% -22%, rgba(255, 255, 255, 0.115), transparent 53%),
-    radial-gradient(75% 80% at 94% 118%, rgba(255, 255, 255, 0.04), transparent 62%),
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.052) 0%,
-      rgba(255, 255, 255, 0.014) 43%,
-      rgba(255, 255, 255, 0.028) 100%
-    ),
-    rgba(255, 255, 255, 0.008);
+    linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.018)),
+    rgba(9,14,24,.56);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.40),
-    inset 1px 0 0 rgba(255, 255, 255, 0.11),
-    inset -1px 0 0 rgba(255, 255, 255, 0.075),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.085);
-  -webkit-backdrop-filter: blur(25px) saturate(188%) contrast(87%) brightness(1.075);
-  backdrop-filter: blur(25px) saturate(188%) contrast(87%) brightness(1.075);
+    inset 0 1px 0 rgba(255,255,255,.18),
+    inset 0 -1px 0 rgba(255,255,255,.025),
+    0 16px 42px rgba(0,0,0,.28);
+  -webkit-backdrop-filter: blur(28px) saturate(165%);
+  backdrop-filter: blur(28px) saturate(165%);
+}
+
+.gamesOrb::before,
+.nav::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(86% 72% at 18% 0%, rgba(255,255,255,.12), transparent 60%),
+    radial-gradient(70% 88% at 84% 110%, rgba(104,168,255,.055), transparent 70%);
+}
+
+.gamesOrb::after,
+.nav::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  top: -58%;
+  left: -32%;
+  width: 42%;
+  height: 210%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.14), transparent);
+  filter: blur(9px);
+  opacity: .3;
+  transform: rotate(8deg);
+  animation: gmGlassSweep 10s ease-in-out infinite;
 }
 
 .gamesOrb {
   flex: 0 0 var(--orb-size);
   width: var(--orb-size);
   height: var(--orb-size);
-  border-radius: 50%;
+  border-radius: 23px;
   transition:
-    transform 440ms cubic-bezier(0.16, 1.18, 0.3, 1),
-    border-color 240ms ease,
-    box-shadow 320ms ease;
-}
-
-.nav {
-  --lens-x: 0%;
-  --lens-opacity: 0;
-  flex: 1 1 auto;
-  width: auto;
-  min-width: 0;
-  height: var(--bar-height);
-  min-height: var(--bar-height);
-  padding: 4px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: stretch;
-  gap: 0;
-  border-radius: 999px;
-}
-
-/* High-frequency edge reflections that make the surface read as curved glass. */
-.gamesOrb::before,
-.nav::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  inset: 1px;
-  border-radius: inherit;
-  border-top: 1px solid rgba(255, 255, 255, 0.36);
-  border-left: 1px solid rgba(255, 255, 255, 0.115);
-  border-right: 1px solid rgba(255, 255, 255, 0.055);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.045);
-  background:
-    radial-gradient(86% 62% at 15% -8%, rgba(255, 255, 255, 0.12), transparent 66%),
-    radial-gradient(62% 55% at 91% 111%, rgba(255, 255, 255, 0.045), transparent 72%);
-  pointer-events: none;
-}
-
-/* A restrained moving caustic: visible as a reflection, never as a white stripe. */
-.gamesOrb::after,
-.nav::after {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  top: -45%;
-  left: -42%;
-  width: 68%;
-  height: 190%;
-  border-radius: 50%;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 255, 255, 0.16) 0%,
-    rgba(255, 255, 255, 0.065) 28%,
-    transparent 70%
-  );
-  filter: blur(8px);
-  opacity: 0.48;
-  transform: translate3d(-8%, 0, 0) rotate(9deg);
-  animation: glassCaustic 11s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.gamesOrb::after {
-  top: -30%;
-  left: -65%;
-  width: 92%;
-  height: 165%;
-}
-
-/* Games is a promoted, separate circular destination. */
-.orbLens {
-  position: absolute;
-  z-index: 1;
-  inset: 4px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  border-radius: 50%;
-  background:
-    radial-gradient(78% 62% at 34% 10%, rgba(255, 255, 255, 0.16), transparent 66%),
-    radial-gradient(70% 85% at 70% 112%, rgba(255, 255, 255, 0.055), transparent 68%),
-    rgba(255, 255, 255, 0.018);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.30),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.055);
-  opacity: 0;
-  transform: scale(0.72);
-  transition:
-    opacity 180ms ease,
-    transform 480ms cubic-bezier(0.16, 1.22, 0.3, 1),
-    border-color 260ms ease;
-  pointer-events: none;
+    transform 320ms cubic-bezier(.16,1,.3,1),
+    border-color 220ms ease,
+    box-shadow 240ms ease;
 }
 
 .gamesOrb[data-selected='true'] {
-  border-color: rgba(255, 255, 255, 0.40);
+  border-color: rgba(135,190,255,.36);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.48),
-    inset 1px 0 0 rgba(255, 255, 255, 0.14),
-    inset -1px 0 0 rgba(255, 255, 255, 0.08),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.095);
+    inset 0 1px 0 rgba(255,255,255,.26),
+    inset 0 -1px 0 rgba(255,255,255,.035),
+    0 16px 46px rgba(0,0,0,.28),
+    0 0 0 1px rgba(111,183,255,.08);
+}
+
+.gamesOrb:active {
+  transform: scale(.965);
+  transition-duration: 90ms;
+}
+
+.orbLens {
+  position: absolute;
+  inset: 5px;
+  z-index: 1;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.16);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.035)),
+    rgba(115,164,255,.035);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.22),
+    0 8px 24px rgba(0,0,0,.16);
+  opacity: 0;
+  transform: scale(.86);
+  transition:
+    opacity 180ms ease,
+    transform 380ms cubic-bezier(.16,1.15,.3,1);
+  pointer-events: none;
 }
 
 .gamesOrb[data-selected='true'] .orbLens {
@@ -178,36 +119,24 @@
   transform: scale(1);
 }
 
-.gamesOrb:active {
-  transform: scale(0.955);
-  transition-duration: 90ms;
-}
-
-/* The four-tab liquid lens glides only inside the shared pill. */
-.nav[data-active='inventory'] {
+.nav {
   --lens-x: 0%;
-  --lens-opacity: 1;
-}
-
-.nav[data-active='home'] {
-  --lens-x: 100%;
-  --lens-opacity: 1;
-}
-
-.nav[data-active='bonus'] {
-  --lens-x: 200%;
-  --lens-opacity: 1;
-}
-
-.nav[data-active='referral'] {
-  --lens-x: 300%;
-  --lens-opacity: 1;
-}
-
-.nav[data-active='games'],
-.nav[data-active='none'] {
   --lens-opacity: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--bar-height);
+  padding: 4px;
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  border-radius: 22px;
 }
+
+.nav[data-active='inventory'] { --lens-x: 0%; --lens-opacity: 1; }
+.nav[data-active='home'] { --lens-x: 100%; --lens-opacity: 1; }
+.nav[data-active='bonus'] { --lens-x: 200%; --lens-opacity: 1; }
+.nav[data-active='referral'] { --lens-x: 300%; --lens-opacity: 1; }
+.nav[data-active='games'],
+.nav[data-active='none'] { --lens-opacity: 0; }
 
 .selectionLens {
   position: absolute;
@@ -215,51 +144,39 @@
   top: 4px;
   bottom: 4px;
   left: 4px;
-  width: calc((100% - 8px) / 4);
-  box-sizing: border-box;
+  width: calc((100% - 8px)/4);
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.21);
-  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.17);
+  border-radius: 18px;
   background:
-    radial-gradient(85% 68% at 32% 0%, rgba(255, 255, 255, 0.17), transparent 66%),
-    radial-gradient(72% 80% at 75% 112%, rgba(255, 255, 255, 0.052), transparent 70%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.058), rgba(255, 255, 255, 0.012));
+    radial-gradient(100% 90% at 25% 0%, rgba(255,255,255,.17), transparent 58%),
+    linear-gradient(180deg, rgba(255,255,255,.105), rgba(255,255,255,.035)),
+    rgba(118,164,255,.028);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.055);
+    inset 0 1px 0 rgba(255,255,255,.23),
+    inset 0 -1px 0 rgba(255,255,255,.02),
+    0 7px 24px rgba(0,0,0,.17);
   opacity: var(--lens-opacity);
-  transform: translate3d(var(--lens-x), 0, 0) scaleX(0.94) scaleY(0.93);
-  transform-origin: 50% 50%;
+  transform: translate3d(var(--lens-x),0,0) scale(.94);
+  transform-origin: center;
   will-change: transform;
   transition:
-    transform 470ms cubic-bezier(0.16, 1.14, 0.3, 1),
-    opacity 170ms ease,
-    border-color 220ms ease;
+    transform 460ms cubic-bezier(.16,1.18,.3,1),
+    opacity 150ms ease;
   pointer-events: none;
 }
 
 .selectionLens::before {
   content: "";
   position: absolute;
-  inset: 1px;
-  border-radius: inherit;
-  border-top: 1px solid rgba(255, 255, 255, 0.31);
-  border-left: 1px solid rgba(255, 255, 255, 0.09);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.035);
-}
-
-.selectionLens::after {
-  content: "";
-  position: absolute;
-  top: 6%;
-  left: 15%;
-  width: 54%;
-  height: 8px;
+  top: 5px;
+  left: 16%;
+  width: 48%;
+  height: 7px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  filter: blur(5px);
-  opacity: 0.7;
-  transform: rotate(-5deg);
+  background: rgba(255,255,255,.13);
+  filter: blur(4px);
+  transform: rotate(-4deg);
 }
 
 .item {
@@ -268,231 +185,175 @@
   width: 100%;
   min-width: 0;
   height: 100%;
-  min-height: 0;
   margin: 0;
-  padding: 7px 2px 5px;
-  appearance: none;
-  -webkit-appearance: none;
+  padding: 6px 2px 5px;
   display: grid;
-  grid-template-rows: 29px 13px;
+  grid-template-rows: 27px 12px;
   place-items: center;
   align-content: center;
   gap: 3px;
-  overflow: hidden;
   border: 0;
-  border-radius: 999px;
+  border-radius: 17px;
   outline: 0;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(239,244,255,.54);
   background: transparent;
-  box-shadow: none;
   cursor: pointer;
-  opacity: 1;
-  transform: translate3d(0, 0, 0) scale(1);
+  transform: translate3d(0,0,0) scale(1);
   transition:
-    color 190ms ease,
-    opacity 190ms ease,
-    transform 430ms cubic-bezier(0.16, 1.2, 0.3, 1);
+    color 170ms ease,
+    transform 280ms cubic-bezier(.16,1,.3,1),
+    opacity 170ms ease;
   -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
   touch-action: manipulation;
-  user-select: none;
 }
 
 .item::before,
 .item::after,
 .homeDot {
-  content: none;
   display: none;
+  content: none;
 }
 
 .item:active {
-  transform: translate3d(0, 1px, 0) scale(0.91);
+  transform: translate3d(0,1px,0) scale(.92);
   transition-duration: 80ms;
 }
 
 .item:focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.72) !important;
-  outline-offset: -4px !important;
+  outline: 2px solid rgba(197,222,255,.7);
+  outline-offset: -4px;
 }
 
 .item:disabled {
+  opacity: .4;
   cursor: not-allowed;
-  opacity: 0.42;
 }
 
 .iconWrap {
-  width: 29px;
-  min-width: 29px;
-  height: 29px;
-  min-height: 29px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
-  overflow: visible;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  transform: translate3d(0, 0, 0) scale(1);
-  transition: transform 450ms cubic-bezier(0.16, 1.2, 0.3, 1);
+  transition: transform 360ms cubic-bezier(.16,1.1,.3,1);
   pointer-events: none;
 }
 
-.iconWrap svg {
-  width: 24px;
-  height: 24px;
-  color: currentColor;
-  stroke-width: 2.15;
-}
-
+.iconWrap svg,
 .icon {
-  width: 24px;
-  min-width: 24px;
-  height: 24px;
-  object-fit: contain;
-  opacity: 0.57;
-  filter: brightness(0) invert(1);
-  transform: none;
+  width: 23px;
+  height: 23px;
+  min-width: 23px;
+  color: currentColor;
+  opacity: .76;
+  stroke-width: 1.9;
+  filter: none;
   transition:
-    opacity 190ms ease,
-    filter 190ms ease;
+    opacity 170ms ease,
+    transform 360ms cubic-bezier(.16,1.12,.3,1),
+    filter 170ms ease;
   pointer-events: none;
-  -webkit-user-drag: none;
-  -webkit-touch-callout: none;
-  user-select: none;
 }
 
 .label {
   max-width: 100%;
   overflow: hidden;
   color: currentColor;
-  font-size: clamp(8.5px, 2.5vw, 10.5px);
-  font-weight: 610;
+  font-size: clamp(8.4px,2.4vw,10px);
+  font-weight: 590;
   line-height: 1;
-  letter-spacing: -0.018em;
+  letter-spacing: -.015em;
   text-overflow: ellipsis;
-  text-shadow: none;
   white-space: nowrap;
-  transform: translate3d(0, 0, 0);
   transition:
-    color 190ms ease,
-    transform 430ms cubic-bezier(0.16, 1.2, 0.3, 1);
+    color 170ms ease,
+    transform 320ms cubic-bezier(.16,1,.3,1),
+    opacity 170ms ease;
 }
 
 .active {
-  color: rgba(255, 255, 255, 0.99);
+  color: #fff;
 }
 
 .active .iconWrap {
-  transform: translate3d(0, -1px, 0) scale(1.075);
+  transform: translate3d(0,-1px,0) scale(1.06);
 }
 
+.active .iconWrap svg,
 .active .icon {
   opacity: 1;
+  transform: translateY(-.5px) scale(1.02);
+  filter: drop-shadow(0 3px 8px rgba(139,185,255,.16));
 }
 
 .active .label {
-  color: rgba(255, 255, 255, 1);
-  font-weight: 690;
-  transform: translate3d(0, -0.5px, 0);
+  color: #fff;
+  font-weight: 680;
+  transform: translateY(-.5px);
 }
 
-/* Home is no longer a FAB; it participates in the same four-tab glass track. */
-.center {
-  color: rgba(255, 255, 255, 0.58);
-}
-
+.center,
 .center.active {
-  color: rgba(255, 255, 255, 0.99);
+  color: inherit;
 }
 
-@keyframes glassCaustic {
-  0%,
-  100% {
-    opacity: 0.34;
-    transform: translate3d(-10%, 0, 0) rotate(9deg);
-  }
-
-  50% {
-    opacity: 0.58;
-    transform: translate3d(34%, 2%, 0) rotate(9deg);
-  }
+@keyframes gmGlassSweep {
+  0%,100% { opacity:.18; transform: translate3d(-5%,0,0) rotate(8deg); }
+  50% { opacity:.36; transform: translate3d(210%,0,0) rotate(8deg); }
 }
 
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .gamesOrb,
-  .nav {
-    background: rgba(38, 36, 43, 0.82);
-  }
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))) {
+  .gamesOrb,.nav { background: rgba(25,30,42,.94); }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .gamesOrb:hover {
-    border-color: rgba(255, 255, 255, 0.38);
-  }
-
+@media (hover:hover) and (pointer:fine) {
   .item:not(:disabled):hover {
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(255,255,255,.86);
   }
 }
 
-@media (max-width: 430px) {
+@media (max-width:430px) {
   .dock {
-    --orb-size: 74px;
-    --bar-height: 70px;
-    --dock-gap: 8px;
-    width: calc(100% - 14px);
-  }
-}
-
-@media (max-width: 350px) {
-  .dock {
-    --orb-size: 70px;
-    --bar-height: 66px;
-    --dock-gap: 6px;
+    --orb-size: 66px;
+    --bar-height: 62px;
     width: calc(100% - 12px);
+    gap: 7px;
   }
 
-  .nav {
-    padding: 3px;
+  .gamesOrb { border-radius: 21px; }
+  .nav { border-radius: 21px; }
+  .selectionLens { border-radius: 17px; }
+
+  .item {
+    grid-template-rows: 25px 11px;
+    gap: 3px;
   }
 
+  .iconWrap { width: 26px; height: 26px; }
+  .iconWrap svg,.icon { width: 21px; height: 21px; min-width: 21px; }
+  .label { font-size: 8.7px; }
+}
+
+@media (max-width:350px) {
+  .dock {
+    --orb-size: 62px;
+    --bar-height: 58px;
+    gap: 6px;
+  }
+  .nav { padding: 3px; }
   .selectionLens {
     top: 3px;
     bottom: 3px;
     left: 3px;
-    width: calc((100% - 6px) / 4);
+    width: calc((100% - 6px)/4);
   }
-
-  .item {
-    padding-right: 1px;
-    padding-left: 1px;
-    grid-template-rows: 27px 12px;
-  }
-
-  .iconWrap {
-    width: 27px;
-    min-width: 27px;
-    height: 27px;
-    min-height: 27px;
-  }
-
-  .icon {
-    width: 22px;
-    min-width: 22px;
-    height: 22px;
-  }
-
-  .label {
-    font-size: 8.1px;
-  }
+  .label { font-size: 8px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion:reduce) {
   .gamesOrb::after,
   .nav::after {
     animation: none;
   }
-
   .gamesOrb,
   .orbLens,
   .selectionLens,
