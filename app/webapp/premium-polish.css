@@ -1018,3 +1018,454 @@ body::before {
     animation-duration: 1.8s;
   }
 }
+
+
+/* =========================================================
+   PRODUCT UI FINAL PASS — compact, consistent, restrained
+   ========================================================= */
+
+:root {
+  --gm-radius-sm: 12px;
+  --gm-radius-md: 16px;
+  --gm-radius-lg: 20px;
+  --gm-gap-1: 6px;
+  --gm-gap-2: 10px;
+  --gm-gap-3: 14px;
+  --gm-gap-4: 18px;
+}
+
+.app-shell {
+  padding-top: max(8px, env(safe-area-inset-top, 0px)) !important;
+}
+
+.app-main,
+.screen-stack,
+.bonus-view,
+.referral-view {
+  gap: 12px !important;
+}
+
+.screen-stack,
+.bonus-view,
+.referral-view {
+  padding-inline: 10px !important;
+}
+
+.page-header,
+.games-page-header {
+  min-height: 0 !important;
+  padding: 12px 14px !important;
+  border-radius: var(--gm-radius-md) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.page-header h1,
+.games-page-header h1 {
+  margin: 0 !important;
+  font-size: 20px !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.035em !important;
+}
+
+.page-header p,
+.games-page-header p {
+  display: none !important;
+}
+
+.ghost-back {
+  width: 34px !important;
+  min-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 11px !important;
+  background: rgba(255,255,255,.045) !important;
+  color: rgba(244,247,251,.86) !important;
+  font-size: 20px !important;
+  line-height: 1 !important;
+}
+
+.premium-card,
+.inventory-card,
+.profile-card,
+.referral-reward-card,
+.referral-overview-card,
+.bonus-compact-summary {
+  border-radius: var(--gm-radius-lg) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.055),
+    0 10px 28px rgba(3,8,27,.14) !important;
+}
+
+/* Home */
+.premium-home {
+  padding-top: 6px !important;
+}
+
+.premium-home > section:first-child {
+  margin-bottom: 10px !important;
+}
+
+.premium-home .cases-section {
+  padding-bottom: 2px !important;
+}
+
+.premium-home .section-title-row {
+  margin-bottom: 8px !important;
+}
+
+.premium-cases-grid {
+  grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  gap: 9px !important;
+}
+
+/* Inventory */
+.inventory-list {
+  display: grid !important;
+  gap: 9px !important;
+}
+
+.inventory-card {
+  min-height: 0 !important;
+  padding: 11px !important;
+  gap: 10px !important;
+}
+
+.inventory-card .gift-media {
+  width: 56px !important;
+  min-width: 56px !important;
+  height: 56px !important;
+}
+
+.inventory-card h3 {
+  margin: 3px 0 2px !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+}
+
+.inventory-card p {
+  max-width: 100% !important;
+  margin: 0 !important;
+  color: var(--gm-muted) !important;
+  font-size: 10px !important;
+  line-height: 1.3 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 1 !important;
+  -webkit-box-orient: vertical !important;
+  overflow: hidden !important;
+}
+
+.status-badge {
+  min-height: 20px !important;
+  padding: 0 7px !important;
+  font-size: 8px !important;
+  border-radius: 999px !important;
+  text-transform: capitalize !important;
+}
+
+.primary-btn,
+.ghost-btn {
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  border-radius: 11px !important;
+  font-size: 11px !important;
+}
+
+/* Bonus */
+.bonus-page-head {
+  min-height: 44px !important;
+  padding: 2px 2px !important;
+  align-items: center !important;
+}
+
+.bonus-page-head h1 {
+  font-size: 24px !important;
+}
+
+.bonus-page-head p,
+.bonus-page-head > div > span:not(.bonus-title-icon) {
+  display: none !important;
+}
+
+.bonus-title-lockup {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+}
+
+.bonus-title-icon {
+  width: 34px !important;
+  height: 34px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 11px !important;
+  background: rgba(255,255,255,.04) !important;
+}
+
+.bonus-refresh-button,
+.referral-refresh-btn {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  min-height: 34px !important;
+  border-radius: 11px !important;
+}
+
+.bonus-compact-summary {
+  padding: 13px 14px !important;
+  min-height: 0 !important;
+}
+
+.bonus-section-title {
+  margin-top: 1px !important;
+}
+
+.bonus-section-title h2 {
+  font-size: 15px !important;
+}
+
+.bonus-task-list {
+  gap: 8px !important;
+}
+
+.bonus-task-card {
+  min-height: 0 !important;
+  padding: 11px !important;
+  gap: 9px !important;
+  border-radius: 16px !important;
+}
+
+.bonus-task-icon {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+}
+
+.bonus-task-copy > span {
+  font-size: 8px !important;
+}
+
+.bonus-task-copy strong {
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+
+.bonus-task-copy small {
+  font-size: 9.5px !important;
+  line-height: 1.25 !important;
+}
+
+.bonus-task-action-wrap {
+  gap: 6px !important;
+}
+
+.bonus-task-button {
+  min-height: 33px !important;
+  padding: 0 10px !important;
+  border-radius: 10px !important;
+  font-size: 9px !important;
+}
+
+/* Referral */
+.referral-page-head {
+  min-height: 44px !important;
+  padding: 2px 2px !important;
+  align-items: center !important;
+}
+
+.referral-page-head h1 {
+  margin: 0 !important;
+  font-size: 24px !important;
+  line-height: 1 !important;
+}
+
+.referral-page-head > div > span,
+.referral-secure-pill {
+  display: none !important;
+}
+
+.referral-reward-card {
+  padding: 16px !important;
+}
+
+.referral-reward-top {
+  min-height: 0 !important;
+  gap: 12px !important;
+}
+
+.referral-reward-copy h2 {
+  margin: 0 0 10px !important;
+  font-size: 20px !important;
+  line-height: 1.08 !important;
+}
+
+.referral-reward-kicker,
+.referral-trust-strip,
+.referral-flow {
+  display: none !important;
+}
+
+.referral-reward-art {
+  transform: scale(.82) !important;
+  transform-origin: center right !important;
+}
+
+.referral-primary-share {
+  min-height: 42px !important;
+  border-radius: 13px !important;
+}
+
+.referral-inline-link {
+  min-height: 38px !important;
+  border-radius: 12px !important;
+  font-size: 9.5px !important;
+}
+
+.referral-overview-card {
+  padding: 10px !important;
+  gap: 7px !important;
+}
+
+.referral-overview-stat {
+  min-height: 68px !important;
+  padding: 10px !important;
+  border-radius: 14px !important;
+}
+
+.referral-overview-stat strong {
+  font-size: 18px !important;
+}
+
+.referral-friends-head {
+  margin: 0 2px 7px !important;
+}
+
+.referral-friends-head h2 {
+  font-size: 15px !important;
+}
+
+.referral-friends-list {
+  gap: 7px !important;
+}
+
+.referral-friend-row {
+  min-height: 58px !important;
+  padding: 9px 10px !important;
+  border-radius: 14px !important;
+}
+
+/* Profile */
+.profile-card {
+  padding: 13px !important;
+  gap: 11px !important;
+}
+
+.profile-card .home-avatar {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.profile-card h1 {
+  margin: 0 0 2px !important;
+  font-size: 17px !important;
+}
+
+.profile-card p {
+  margin: 0 0 4px !important;
+  color: var(--gm-muted) !important;
+  font-size: 10px !important;
+}
+
+.profile-card strong {
+  font-size: 12px !important;
+}
+
+/* Empty/error states */
+.empty-state,
+.referral-empty-friends,
+.bonus-empty-state,
+.referral-load-error,
+.bonus-inline-error {
+  min-height: 120px !important;
+  padding: 16px !important;
+  border-radius: 16px !important;
+}
+
+.empty-state h3,
+.referral-empty-friends strong,
+.bonus-empty-state strong {
+  font-size: 14px !important;
+}
+
+.empty-state p,
+.referral-empty-friends p,
+.bonus-empty-state p {
+  max-width: 260px !important;
+  margin: 4px auto 0 !important;
+  font-size: 10px !important;
+  line-height: 1.35 !important;
+}
+
+/* Navigation: calmer active state, slightly tighter labels */
+nav[aria-label="Bottom navigation"] button[data-nav] {
+  transition: transform .14s ease, background .14s ease, opacity .14s ease !important;
+}
+
+nav[aria-label="Bottom navigation"] button[data-nav][aria-current="page"] {
+  background: rgba(255,255,255,.065) !important;
+}
+
+nav[aria-label="Bottom navigation"] button[data-nav] strong {
+  opacity: .72 !important;
+}
+
+nav[aria-label="Bottom navigation"] button[data-nav][aria-current="page"] strong {
+  opacity: 1 !important;
+}
+
+/* Restrain decorative effects that make the UI feel busy. */
+.premium-card::before,
+.page-header::before,
+.profile-card::before,
+.inventory-card::before {
+  opacity: .22 !important;
+}
+
+@media (max-width: 420px) {
+  .screen-stack,
+  .bonus-view,
+  .referral-view {
+    padding-inline: 8px !important;
+  }
+
+  .premium-cases-grid {
+    gap: 8px !important;
+  }
+
+  .referral-reward-art {
+    display: none !important;
+  }
+
+  .referral-reward-top {
+    grid-template-columns: 1fr !important;
+  }
+
+  .referral-overview-card {
+    grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  }
+
+  .inventory-card {
+    grid-template-columns: 56px minmax(0,1fr) !important;
+  }
+
+  .inventory-card > button {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+  }
+}
