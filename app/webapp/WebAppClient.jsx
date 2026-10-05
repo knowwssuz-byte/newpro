@@ -2617,7 +2617,6 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
     </section>
   );
 }
-}
 
 function referralDate(value) {
   if (!value) return '—';
