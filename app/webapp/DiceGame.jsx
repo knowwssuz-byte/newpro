@@ -210,6 +210,7 @@ export default function DiceGame({
       .then((data) => {
         if (cancelled) return;
         if (data?.config) setConfig({ ...DEFAULT_CONFIG, ...data.config });
+        if (Array.isArray(data?.recent)) setRecent(data.recent);
         if (Number.isFinite(Number(data?.balance))) onBalanceChange?.(data.balance);
       })
       .catch(() => {});
@@ -259,7 +260,7 @@ export default function DiceGame({
     setBet(normalizedBet);
     setRolling(true);
     setSettling(false);
-    motionRef.current = { virtual: 50, lastAt: 0, frame: null, braking: null, fallback: null };
+    motionRef.current = { virtual: Number(result?.roll ?? 50), lastAt: 0, frame: null, braking: null, fallback: null };
     setResult(null);
     setLocalError('');
     onRoundStateChange?.(true);
@@ -319,7 +320,7 @@ export default function DiceGame({
       <div className={styles.recent} aria-label="Oxirgi natijalar">
         {recent.length ? recent.map((item) => (
           <span key={item.id} data-win={item.won ? 'true' : 'false'}>{Number(item.roll).toFixed(2)}</span>
-        )) : <><span>58.74</span><span>96.54</span><span>51.19</span><span>11.19</span></>}
+        )) : <span>Hozircha raundlar yo‘q</span>}
       </div>
 
       <section className={styles.arena}>
@@ -333,7 +334,7 @@ export default function DiceGame({
           <span className={styles.targetMarker}><b>{target}</b></span>
           {result && !rolling ? <span className={styles.rollMarker} data-win={result.won ? 'true' : 'false'}><i>{Number(result.roll).toFixed(2)}</i></span> : null}
           {rolling ? (
-            <span ref={ballRef} className={styles.movingMarker} aria-hidden="true"><i /></span>
+            <span ref={ballRef} className={styles.movingMarker} style={{ left: `${reflectTrackPosition(motionRef.current?.virtual ?? 50)}%` }} aria-hidden="true"><i /></span>
           ) : null}
           <input
             type="range"
