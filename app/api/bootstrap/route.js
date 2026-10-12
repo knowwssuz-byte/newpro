@@ -38,6 +38,23 @@ async function fetchCases(supabase, { onlyActive = false } = {}) {
   throw new Error(result.error.message);
 }
 
+// Weight-based draws are normalized to truthful percentages for player UI.
+function giftsWithActualOdds(gifts) {
+  const totals = new Map();
+  for (const gift of gifts) {
+    const weight = Math.max(0, Number(gift.real_chance ?? gift.chance) || 0);
+    if (gift.is_active === false || Number(gift.stock) <= 0) continue;
+    totals.set(gift.case_id, (totals.get(gift.case_id) || 0) + weight);
+  }
+  return gifts.map((gift) => {
+    const total = totals.get(gift.case_id) || 0;
+    const weight = gift.is_active === false || Number(gift.stock) <= 0
+      ? 0 : Math.max(0, Number(gift.real_chance ?? gift.chance) || 0);
+    const percent = total > 0 ? Math.round(weight / total * 10000) / 100 : 0;
+    return { ...gift, chance: percent, real_chance: percent };
+  });
+}
+
 export async function POST(request) {
   try {
     const auth = await readTelegramRequest(request);
@@ -90,7 +107,7 @@ export async function POST(request) {
       telegramUser: auth.telegramUser,
       isAdmin: auth.isAdmin,
       cases,
-      gifts: giftsResult.data || [],
+      gifts: auth.isAdmin ? (giftsResult.data || []) : giftsWithActualOdds(giftsResult.data || []),
       history: historyResult.data || [],
       withdrawals: withdrawResult.data || [],
       featureSettings,
