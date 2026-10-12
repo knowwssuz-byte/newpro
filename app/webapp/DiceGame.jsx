@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ChevronLeft, ShieldCheck, TrendingDown, TrendingUp } from 'lucide-react';
+import { ChevronLeft, TrendingDown, TrendingUp } from 'lucide-react';
 import styles from './DiceGame.module.css';
 
 const DEFAULT_CONFIG = {
@@ -15,6 +15,28 @@ const DEFAULT_CONFIG = {
   rollDurationMs: 1400,
 };
 const QUICK_BETS = [10, 25, 50, 100];
+const CRUISE_SPEED = 0.24; // track percentage points per millisecond
+
+function reflectTrackPosition(distance) {
+  const remainder = ((distance % 200) + 200) % 200;
+  return remainder <= 100 ? remainder : 200 - remainder;
+}
+
+function brakingDestination(start, roll, duration) {
+  const idealTravel = Math.max(170, duration * 0.13);
+  const candidates = [];
+  for (const landing of [roll, 200 - roll]) {
+    const firstLap = Math.ceil((start + 145 - landing) / 200);
+    for (let lap = firstLap; lap < firstLap + 4; lap += 1) {
+      const destination = landing + lap * 200;
+      if (destination > start + 145) candidates.push(destination);
+    }
+  }
+  return candidates.sort((a, b) =>
+    Math.abs(a - start - idealTravel) - Math.abs(b - start - idealTravel)
+  )[0] ?? start + idealTravel;
+}
+
 
 const STAR_FORMATTER = new Intl.NumberFormat('uz-UZ', {
   maximumFractionDigits: 0,
@@ -83,12 +105,11 @@ export default function DiceGame({
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [rolling, setRolling] = useState(false);
   const [settling, setSettling] = useState(false);
-  const [pendingResult, setPendingResult] = useState(null);
   const [result, setResult] = useState(null);
   const [recent, setRecent] = useState([]);
   const [localError, setLocalError] = useState('');
-  const settleResolveRef = useRef(null);
-  const settleFallbackRef = useRef(null);
+  const ballRef = useRef(null);
+  const motionRef = useRef(null);
 
   const balance = Math.max(0, safeInteger(profile?.balance));
   const minTarget = mode === 'higher'
@@ -104,41 +125,82 @@ export default function DiceGame({
   );
   const possiblePayout = Math.max(bet + 1, Math.floor(bet * multiplier));
   const sliderFill = ((target - minTarget) / Math.max(1, maxTarget - minTarget)) * 100;
-  const activeRoll = pendingResult?.roll ?? result?.roll ?? target;
+  const activeRoll = result?.roll ?? target;
 
-  const finishSettlingAnimation = useCallback(() => {
-    const resolve = settleResolveRef.current;
-    if (!resolve) return;
+  // One continuous ball from first motion until the server result is reached.
+  // The final number is used for the destination, never for the moving ball color.
+  useEffect(() => {
+    if (!rolling) return undefined;
+    const motion = motionRef.current;
+    if (!motion) return undefined;
+    let active = true;
+    const tick = (now) => {
+      if (!active) return;
+      const elapsed = motion.lastAt ? Math.min(50, now - motion.lastAt) : 0;
+      motion.lastAt = now;
+      if (motion.braking) {
+        const { from, to, at, duration } = motion.braking;
+        const t = clamp((now - at) / duration, 0, 1);
+        motion.virtual = from + (to - from) * (1 - Math.pow(1 - t, 2.1));
+      } else {
+        motion.virtual += Math.max(0, elapsed) * CRUISE_SPEED;
+      }
+      const position = reflectTrackPosition(motion.virtual);
+      if (ballRef.current) {
+        ballRef.current.style.left = position + '%';
+        ballRef.current.style.setProperty('--spin', (motion.virtual * 3.8) + 'deg');
+      }
+      if (motion.braking && now >= motion.braking.at + motion.braking.duration) {
+        const complete = motion.braking.resolve;
+        motion.braking = null;
+        window.clearTimeout(motion.fallback);
+        motion.fallback = null;
+        complete();
+        return;
+      }
+      motion.frame = window.requestAnimationFrame(tick);
+    };
+    motion.frame = window.requestAnimationFrame(tick);
+    return () => {
+      active = false;
+      window.cancelAnimationFrame(motion.frame);
+      if (motion.fallback) window.clearTimeout(motion.fallback);
+      motionRef.current = null;
+    };
+  }, [rolling]);
 
-    settleResolveRef.current = null;
-    if (settleFallbackRef.current) {
-      window.clearTimeout(settleFallbackRef.current);
-      settleFallbackRef.current = null;
-    }
-    resolve();
-  }, []);
-
-  const waitForSettlingAnimation = useCallback((durationMs) => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+  const waitForSettlingAnimation = useCallback((durationMs, rollValue) => {
+    const motion = motionRef.current;
+    if (!motion || window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches) {
       return Promise.resolve();
     }
-
+    const duration = clamp(Number(durationMs) || 1400, 800, 2400);
+    const roll = clamp(Number(rollValue) || 0, 0, 99.99);
     return new Promise((resolve) => {
-      settleResolveRef.current = resolve;
-      settleFallbackRef.current = window.setTimeout(
-        finishSettlingAnimation,
-        Math.max(0, Number(durationMs) || 0) + 500
-      );
+      const to = brakingDestination(motion.virtual, roll, duration);
+      let completed = false;
+      const finish = () => {
+        if (completed) return;
+        completed = true;
+        motion.virtual = to;
+        motion.braking = null;
+        if (ballRef.current) ballRef.current.style.left = roll + '%';
+        resolve();
+      };
+      motion.braking = {
+        from: motion.virtual, to, at: performance.now(), duration, resolve: finish,
+      };
+      // Browsers pause requestAnimationFrame in background tabs.
+      motion.fallback = window.setTimeout(finish, duration + 550);
     });
-  }, [finishSettlingAnimation]);
+  }, []);
 
   useEffect(() => () => {
     onRoundStateChange?.(false);
-    if (settleFallbackRef.current) {
-      window.clearTimeout(settleFallbackRef.current);
-      settleFallbackRef.current = null;
-    }
-    settleResolveRef.current = null;
+    const motion = motionRef.current;
+    if (motion?.frame) window.cancelAnimationFrame(motion.frame);
+    if (motion?.fallback) window.clearTimeout(motion.fallback);
+    motionRef.current = null;
   }, [onRoundStateChange]);
 
   useEffect(() => {
@@ -197,7 +259,7 @@ export default function DiceGame({
     setBet(normalizedBet);
     setRolling(true);
     setSettling(false);
-    setPendingResult(null);
+    motionRef.current = { virtual: 50, lastAt: 0, frame: null, braking: null, fallback: null };
     setResult(null);
     setLocalError('');
     onRoundStateChange?.(true);
@@ -219,9 +281,8 @@ export default function DiceGame({
       const nextResult = data?.result;
       if (!nextResult) throw new Error('Dice natijasi olinmadi.');
 
-      setPendingResult(nextResult);
       setSettling(true);
-      await waitForSettlingAnimation(nextConfig.rollDurationMs);
+      await waitForSettlingAnimation(nextConfig.rollDurationMs, nextResult.roll);
 
       setResult(nextResult);
       setRecent((items) => [nextResult, ...items].slice(0, 6));
@@ -236,7 +297,6 @@ export default function DiceGame({
       setLocalError(error?.message || 'Dice o‘yinida xatolik yuz berdi.');
       tg?.HapticFeedback?.notificationOccurred?.('error');
     } finally {
-      setPendingResult(null);
       setSettling(false);
       setRolling(false);
       onRoundStateChange?.(false);
@@ -272,14 +332,8 @@ export default function DiceGame({
           <div className={styles.track} />
           <span className={styles.targetMarker}><b>{target}</b></span>
           {result && !rolling ? <span className={styles.rollMarker} data-win={result.won ? 'true' : 'false'}><i>{Number(result.roll).toFixed(2)}</i></span> : null}
-          {rolling && !settling ? <span className={styles.rollingMarker} /> : null}
-          {rolling && settling ? (
-            <span
-              key={pendingResult?.id || 'settling'}
-              className={styles.settlingMarker}
-              data-win={pendingResult?.won ? 'true' : 'false'}
-              onAnimationEnd={finishSettlingAnimation}
-            />
+          {rolling ? (
+            <span ref={ballRef} className={styles.movingMarker} aria-hidden="true"><i /></span>
           ) : null}
           <input
             type="range"
@@ -345,7 +399,6 @@ export default function DiceGame({
         <button type="button" className={styles.playButton} onClick={play} disabled={rolling || !config.enabled || balance < config.minBet}>
           {!config.enabled ? 'O‘YIN VAQTINCHA O‘CHIRILGAN' : rolling ? <><span className={styles.buttonDice} /> {settling ? 'SEKINLASHMOQDA...' : 'NATIJA ANIQLANMOQDA...'}</> : <>{starIcon(styles.buttonStar)} {formatStars(bet)} STARS BILAN O‘YNASH</>}
         </button>
-        <div className={styles.security}><ShieldCheck /> Natija serverdagi xavfsiz random orqali yaratiladi</div>
       </section>
     </section>
   );
