@@ -298,6 +298,7 @@ export default function AdminClient() {
     emptyDepositSettings
   );
   const [diceSettings, setDiceSettings] = useState(emptyDiceSettings);
+  const [diceStats, setDiceStats] = useState(null);
   const [depositDrafts, setDepositDrafts] = useState({});
   const [bonusTasks, setBonusTasks] = useState([]);
   const [bonusStats, setBonusStats] = useState({
@@ -369,6 +370,7 @@ export default function AdminClient() {
       ...emptyDiceSettings,
       ...(data.diceSettings || {}),
     });
+    setDiceStats(data.diceStats || null);
     setBonusTasks(data.bonusTasks || []);
     setBonusStats((current) => ({
       ...current,
@@ -903,6 +905,11 @@ export default function AdminClient() {
         ...data.depositSettings,
       });
     }
+  }
+
+  async function refreshDiceStats() {
+    const data = await run(() => callAdmin('dice_stats'));
+    if (data) setDiceStats(data.diceStats || null);
   }
 
   async function saveDiceSettings(event) {
@@ -1497,6 +1504,51 @@ export default function AdminClient() {
                 />
                 <b />
               </label>
+            </div>
+
+            <div className="dice-admin-live">
+              <div className="dice-admin-live-heading">
+                <div>
+                  <span>REAL RAUNDLAR STATISTIKASI</span>
+                  <h3>Dice natijalari</h3>
+                  <p>Faqat bazaga muvaffaqiyatli saqlangan raundlar hisoblanadi. Avvalgi o‘yinlar bu yerga kiritilmaydi.</p>
+                </div>
+                <button type="button" onClick={refreshDiceStats} disabled={busy}>
+                  {busy ? 'Yuklanmoqda…' : 'Yangilash'}
+                </button>
+              </div>
+              {diceStats ? (
+                <>
+                  <div className="dice-admin-metrics">
+                    <article><span>JAMI RAUNDLAR</span><strong>{money(diceStats.totalRounds)}</strong><small>{money(diceStats.uniquePlayers)} nafar o‘yinchi</small></article>
+                    <article><span>YUTGAN RAUNDLAR</span><strong>{money(diceStats.winningRounds)}</strong><small>{Number(diceStats.totalRounds) ? (100 * Number(diceStats.winningRounds) / Number(diceStats.totalRounds)).toFixed(1) : '0.0'}% win rate</small></article>
+                    <article><span>JAMI STAVKA</span><strong>{money(diceStats.totalWagered)} ⭐</strong><small>O‘rtacha {money(diceStats.averageBet)} ⭐</small></article>
+                    <article><span>JAMI TO‘LOV</span><strong>{money(diceStats.totalPaid)} ⭐</strong><small>Yutuqlarga berilgan</small></article>
+                    <article><span>PLATFORMA NET</span><strong>{money(diceStats.netProfit)} ⭐</strong><small>Stavkalar − to‘lovlar</small></article>
+                    <article><span>BUGUN • UZ VAQTI</span><strong>{money(diceStats.todayRounds)} raund</strong><small>Stavka {money(diceStats.todayWagered)} ⭐ · net {money(diceStats.todayNet)} ⭐</small></article>
+                  </div>
+                  <div className="dice-admin-history">
+                    <div className="dice-admin-history-head"><h3>Oxirgi 25 ta raund</h3><span>Eng yangilari birinchi</span></div>
+                    <div className="dice-admin-table-scroll">
+                      <table>
+                        <thead><tr><th>O‘yinchi</th><th>Tanlov</th><th>Natija</th><th>Stavka</th><th>To‘lov</th><th>Vaqt</th></tr></thead>
+                        <tbody>
+                          {(diceStats.recent || []).length ? (diceStats.recent || []).map((round) => (
+                            <tr key={round.id}>
+                              <td><strong>{round.player}</strong><small>ID: {round.user_id}</small></td>
+                              <td>{round.mode === 'higher' ? 'BALAND' : 'PAST'} {round.target}</td>
+                              <td><span className={round.won ? 'dice-admin-win' : 'dice-admin-loss'}>{Number(round.roll).toFixed(2)} · {round.won ? 'YUTDI' : 'YUTQAZDI'}</span></td>
+                              <td>{money(round.bet)} ⭐</td>
+                              <td>{money(round.payout)} ⭐</td>
+                              <td>{adminDate(round.created_at)}</td>
+                            </tr>
+                          )) : <tr><td colSpan={6}>Hozircha yozilgan Dice raundi yo‘q.</td></tr>}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              ) : <p className="dice-admin-empty">Statistika hali yuklanmagan. «Yangilash» tugmasini bosing.</p>}
             </div>
 
             <div className="dice-admin-stats">

@@ -143,6 +143,15 @@ async function normalizeCaseOrder(supabase, cases = []) {
   return sorted;
 }
 
+async function getDiceStats(supabase) {
+  const { data, error } = await supabase.rpc('dice_admin_overview');
+  if (error) {
+    if (error.code === 'PGRST202') return null;
+    throw error;
+  }
+  return data || null;
+}
+
 async function bootstrap(supabase) {
   const [
     cases,
@@ -154,6 +163,7 @@ async function bootstrap(supabase) {
     deposits,
     depositSettings,
     diceSettings,
+    diceStats,
     bonusTasks,
     bonusProgress,
   ] = await Promise.all([
@@ -186,6 +196,7 @@ async function bootstrap(supabase) {
     ),
     getDepositSettings(supabase),
     getDiceSettings(supabase),
+    getDiceStats(supabase),
     getBonusTasks(supabase, { includeInactive: true }),
     safeSelect(
       supabase,
@@ -212,6 +223,7 @@ async function bootstrap(supabase) {
     deposits,
     depositSettings: depositSettingsForClient(depositSettings),
     diceSettings: diceSettingsForClient(diceSettings),
+    diceStats,
     bonusTasks,
     bonusStats: {
       totalTasks: bonusTasks.length,
@@ -517,6 +529,10 @@ export async function POST(request) {
     if (action === 'bootstrap') {
       const data = await bootstrap(supabase);
       return json({ ok: true, ...data });
+    }
+
+    if (action === 'dice_stats') {
+      return json({ ok: true, diceStats: await getDiceStats(supabase) });
     }
 
     if (action === 'dice_settings_update') {

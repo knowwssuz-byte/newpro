@@ -27,15 +27,20 @@ function mapError(error) {
     return { status: 400, message: 'Balans yetarli emas.' };
   }
 
-  if (message.includes('BALANCE_CONFLICT')) {
-    return { status: 409, message: 'Balans yangilandi. Qayta urinib ko‘ring.' };
+  if (message.includes('INVALID_DICE_')) {
+    return { status: 400, message: 'Dice ma’lumotlari noto‘g‘ri.' };
+  }
+
+  if (error?.code === 'PGRST202' || message.includes('dice_play_atomic')) {
+    return { status: 503, message: 'Dice vaqtincha mavjud emas.' };
   }
 
   if (message.includes('USER_BANNED')) {
     return { status: 403, message: 'Siz bloklangansiz.' };
   }
 
-  return { status: 500, message };
+  console.error('Dice settlement failed', { code: error?.code, message });
+  return { status: 500, message: 'Dice server xatosi. Qayta urinib ko‘ring.' };
 }
 
 function makeOutcome({ mode, target, bet, settings }) {
@@ -63,34 +68,22 @@ function makeOutcome({ mode, target, bet, settings }) {
   };
 }
 
-async function settleBalance(supabase, userId, bet, payout) {
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    const { data: currentUser, error: readError } = await supabase
-      .from('users')
-      .select('id,balance,is_banned')
-      .eq('id', userId)
-      .single();
-
-    if (readError) throw readError;
-    if (currentUser?.is_banned) throw new Error('USER_BANNED');
-
-    const currentBalance = Math.max(0, number(currentUser?.balance));
-    if (currentBalance < bet) throw new Error('INSUFFICIENT_BALANCE');
-
-    const nextBalance = currentBalance - bet + payout;
-    const { data: updatedUser, error: updateError } = await supabase
-      .from('users')
-      .update({ balance: nextBalance })
-      .eq('id', userId)
-      .eq('balance', currentBalance)
-      .select('id,balance')
-      .maybeSingle();
-
-    if (updateError) throw updateError;
-    if (updatedUser) return Math.max(0, number(updatedUser.balance, nextBalance));
-  }
-
-  throw new Error('BALANCE_CONFLICT');
+// Settlement and the audit record must commit together; no partial balances.
+async function settleBalance(supabase, userId, outcome) {
+  const { data, error } = await supabase.rpc('dice_play_atomic', {
+    p_id: outcome.id,
+    p_user_id: userId,
+    p_mode: outcome.mode,
+    p_target: outcome.target,
+    p_roll: outcome.roll,
+    p_won: outcome.won,
+    p_bet: outcome.bet,
+    p_payout: outcome.payout,
+    p_multiplier: outcome.multiplier,
+    p_chance: outcome.chancePercent,
+  });
+  if (error) throw error;
+  return number(data);
 }
 
 export async function POST(request) {
@@ -107,10 +100,22 @@ export async function POST(request) {
     ]);
 
     if (action === 'state') {
+      const { data: rounds, error: roundsError } = await supabase
+        .from('dice_rounds')
+        .select('id,mode,target,roll,won,bet,payout,created_at')
+        .eq('user_id', Number(auth.telegramUser.id))
+        .order('created_at', { ascending: false })
+        .limit(6);
+      if (roundsError) throw roundsError;
       return Response.json({
         ok: true,
         balance: Math.max(0, number(dbUser.balance)),
         config: publicConfig(settings),
+        recent: (rounds || []).map((round) => ({
+          ...round,
+          profit: number(round.payout) - number(round.bet),
+          playedAt: round.created_at,
+        })),
       });
     }
 
@@ -149,8 +154,7 @@ export async function POST(request) {
     const balance = await settleBalance(
       supabase,
       Number(auth.telegramUser.id),
-      outcome.bet,
-      outcome.payout
+      outcome
     );
 
     return Response.json({
