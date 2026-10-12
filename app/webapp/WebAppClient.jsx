@@ -99,10 +99,14 @@ function warmImageCacheFromData(...groups) {
     }
   };
 
-  // Birinchi ko'rinadigan rasmlar darhol qizdiriladi.
-  urls.slice(0, 18).forEach((url) => loadOne(url, true));
+  // A slow Telegram WebView should not request dozens of off-screen images.
+  const connection = window.navigator?.connection;
+  const isSlowNetwork = Boolean(connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ''));
+  const eagerCount = isSlowNetwork ? 3 : 8;
+  const totalCount = isSlowNetwork ? 8 : 32;
+  urls.slice(0, eagerCount).forEach((url) => loadOne(url, true));
 
-  const rest = urls.slice(18, 72);
+  const rest = urls.slice(eagerCount, totalCount);
   if (!rest.length) return;
 
   const warmRest = () => rest.forEach((url) => loadOne(url, false));
