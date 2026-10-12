@@ -44,7 +44,8 @@ function makeOutcome({ mode, target, bet, settings }) {
     ((100 - settings.houseEdgePercent) / chancePercent) * 100
   ) / 100;
   const roll = crypto.randomInt(0, 10000) / 100;
-  const won = mode === 'higher' ? roll > target : roll < target;
+  // Uniform 0.01-point outcomes: inclusive threshold matches the published odds.
+  const won = mode === 'higher' ? roll >= target : roll < target;
   const payout = won ? Math.max(bet + 1, Math.floor(bet * multiplier)) : 0;
 
   return {
