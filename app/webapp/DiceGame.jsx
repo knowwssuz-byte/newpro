@@ -302,7 +302,7 @@ export default function DiceGame({
       setRolling(false);
       onRoundStateChange?.(false);
     }
-  }, [apiPost, balance, bet, config, mode, onBalanceChange, onRoundStateChange, onToast, rolling, target, tg, waitForSettlingAnimation]);
+  }, [apiPost, balance, bet, config, mode, onBalanceChange, onRoundStateChange, onToast, result, rolling, target, tg, waitForSettlingAnimation]);
 
   return (
     <section className={styles.root} aria-busy={rolling}>
