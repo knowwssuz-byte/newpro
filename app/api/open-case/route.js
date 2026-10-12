@@ -116,6 +116,17 @@ function mapRpcError(error) {
   return { message, status: 500 };
 }
 
+function disclosedPool(gifts) {
+  const available = gifts.map(publicGift);
+  const total = available.reduce((sum, gift) =>
+    sum + (gift.is_active !== false && gift.stock > 0 ? realChance(gift) : 0), 0);
+  return available.map((gift) => {
+    const weight = gift.is_active !== false && gift.stock > 0 ? realChance(gift) : 0;
+    const percent = total > 0 ? Math.round(weight / total * 10000) / 100 : 0;
+    return { ...gift, chance: percent, real_chance: percent };
+  });
+}
+
 function formatRpcResponse(payload) {
   const data = payload || {};
   const gift = data.gift || null;
@@ -126,19 +137,21 @@ function formatRpcResponse(payload) {
   const totalChance = toNumber(data.totalChance ?? data.total_chance);
   const poolSize = toNumber(data.poolSize ?? data.pool_size);
 
+  const oddsPool = disclosedPool(Array.isArray(data.reelPool || data.reel_pool)
+    ? (data.reelPool || data.reel_pool) : []);
+  const winner = oddsPool.find((item) => item.id === gift?.id) || publicGift(gift);
+
   return {
     ok: true,
     case: data.case || null,
-    gift: publicGift(gift),
+    gift: winner,
     balance: balanceAfter,
     balanceBefore,
     balanceAfter,
     price: toNumber(data.price),
     rewardAmount,
     history,
-    reelPool: Array.isArray(data.reelPool || data.reel_pool)
-      ? (data.reelPool || data.reel_pool).map(publicGift)
-      : [],
+    reelPool: oddsPool,
     opening: {
       totalChance,
       poolSize,

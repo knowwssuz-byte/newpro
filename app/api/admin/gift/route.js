@@ -135,7 +135,8 @@ export async function POST(request) {
       const rewardType = normalizeRewardType(type);
       const cleanValue = cleanText(value);
       const numericChance = visibleChance(chance);
-      const numericRealChance = realChanceValue(real_chance, numericChance);
+      // One configured weight is used for both display and prize drawing.
+      const numericRealChance = numericChance;
       const numericStock = Math.floor(toNumber(stock));
       const cleanImage = cleanText(image_url);
       const cleanAnimation = cleanText(animation_url);
@@ -202,8 +203,12 @@ export async function POST(request) {
       if (title !== undefined) updates.title = cleanText(title);
       if (type !== undefined) updates.type = normalizeRewardType(type);
       if (value !== undefined) updates.value = cleanText(value);
-      if (chance !== undefined) updates.chance = visibleChance(chance);
-      if (real_chance !== undefined) updates.real_chance = realChanceValue(real_chance, updates.chance ?? currentGift.chance);
+      if (chance !== undefined || real_chance !== undefined) {
+        const nextChance = visibleChance(chance ?? real_chance);
+        if (nextChance > 100) return jsonError('Chance 100 dan oshmasligi kerak');
+        updates.chance = nextChance;
+        updates.real_chance = nextChance;
+      }
       if (stock !== undefined) updates.stock = Math.max(0, Math.floor(toNumber(stock)));
       if (image_url !== undefined) updates.image_url = cleanText(image_url) || null;
       if (animation_url !== undefined) updates.animation_url = null;

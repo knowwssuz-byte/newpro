@@ -1208,3 +1208,30 @@ body::before {
   .bonus-dashboard-track i, .bonus-filter-tabs button { transition: none; }
   .app-shell .is-spinning { animation: none !important; }
 }
+
+
+/* 2026-10-12: scoped accessibility & responsive reliability hardening. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+button, a, [role="button"] { touch-action: manipulation; }
+button:focus-visible, a:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible, [role="button"]:focus-visible {
+  outline: 2px solid var(--gm-accent-2, #67a7ff);
+  outline-offset: 3px;
+}
+.app-shell { min-width: 0; }
+.app-main, .home-view, .premium-home { min-width: 0; }
+.app-main img, .app-main video { max-width: 100%; }
+@media (max-width: 380px) {
+  .global-balance-bar { padding-inline: 7px !important; }
+  .global-balance-bar .home-balance-copy strong { font-size: 15px !important; }
+  .global-balance-bar .deposit-button { padding-inline: 9px !important; }
+  .premium-home { padding-inline: 9px !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-frame *, .app-frame *::before, .app-frame *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
