@@ -100,10 +100,22 @@ export async function POST(request) {
     ]);
 
     if (action === 'state') {
+      const { data: rounds, error: roundsError } = await supabase
+        .from('dice_rounds')
+        .select('id,mode,target,roll,won,bet,payout,created_at')
+        .eq('user_id', Number(auth.telegramUser.id))
+        .order('created_at', { ascending: false })
+        .limit(6);
+      if (roundsError) throw roundsError;
       return Response.json({
         ok: true,
         balance: Math.max(0, number(dbUser.balance)),
         config: publicConfig(settings),
+        recent: (rounds || []).map((round) => ({
+          ...round,
+          profit: number(round.payout) - number(round.bet),
+          playedAt: round.created_at,
+        })),
       });
     }
 
