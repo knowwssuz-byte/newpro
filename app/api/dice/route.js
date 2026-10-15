@@ -149,6 +149,10 @@ export async function POST(request) {
       );
     }
 
+    if (getDicePayout(bet, chancePercent, settings.houseEdgePercent, true) <= bet) {
+      return jsonError('Bu stavka va ehtimol bilan foydali yutuq yo‘q. Stavkani oshiring yoki ehtimolni pasaytiring.', 400);
+    }
+
     const outcome = makeOutcome({ mode, target, bet, settings });
     const balance = await settleBalance(
       supabase,
