@@ -13860,3 +13860,59 @@ body {
   .bonus-admin-reward { grid-column: 2; }
   .bonus-admin-task-actions { grid-column: 1 / -1; }
 }
+
+/* Deposit promo code administration */
+.promo-admin-section {
+  grid-column: 1 / -1;
+  display: grid; gap: 15px; min-width: 0; padding: 18px;
+  border: 1px solid rgba(147,119,247,.2);
+  border-radius: 20px;
+  background: radial-gradient(circle at 100% 0%,rgba(110,64,191,.12),transparent 38%),rgba(12,16,30,.92);
+}
+.promo-admin-head span { font-size: 10px; letter-spacing: .13em; color: #b69dfc; font-weight: 900; }
+.promo-admin-head h2 { margin: 4px 0; font-size: 19px; color: #fff; }
+.promo-admin-head p { margin: 0; color: rgba(211,220,239,.64); font-size: 12px; }
+.promo-admin-form { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 11px; align-items: end; }
+.promo-admin-form label { display: grid; gap: 5px; color: #cbd5e1; font-size: 11px; font-weight: 750; min-width: 0; }
+.promo-admin-form input:not([type=checkbox]) {
+  width: 100%; min-width: 0; height: 40px; padding: 0 10px;
+  border: 1px solid rgba(159,177,219,.23); border-radius: 10px;
+  background: rgba(5,10,24,.8); color: #fff; font: inherit;
+}
+.promo-admin-form input:focus { outline: 2px solid rgba(153,112,247,.5); outline-offset: 1px; }
+.promo-admin-form .promo-admin-check { display: flex; align-items: center; gap: 8px; height: 40px; }
+.promo-admin-check input { width: 17px; height: 17px; accent-color: #9470f7; }
+.promo-admin-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.promo-admin-actions button, .promo-admin-item-actions button {
+  min-height: 36px; padding: 7px 13px; border-radius: 10px;
+  border: 1px solid rgba(144,119,234,.22);
+  background: rgba(144,119,234,.11); color: #f1ebff;
+  font-size: 11px; font-weight: 800; cursor: pointer;
+}
+.promo-admin-actions button[type=submit] { background: #7754dc; border-color: #9876eb; color: #fff; }
+.promo-admin-actions button:disabled, .promo-admin-item-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.promo-admin-list { display: grid; gap: 7px; }
+.promo-admin-item {
+  display: grid; grid-template-columns: minmax(110px,1fr) auto auto auto;
+  align-items: center; gap: 11px; min-width: 0; padding: 10px 12px;
+  border: 1px solid rgba(156,163,199,.12); border-radius: 12px; background: rgba(255,255,255,.027);
+}
+.promo-admin-item-name, .promo-admin-usage { display: grid; gap: 3px; }
+.promo-admin-item-name strong { color: #fff; font-size: 13px; }
+.promo-admin-item small { color: rgba(212,221,240,.58); font-size: 10px; }
+.promo-admin-usage strong { color: #e5deff; font-size: 13px; font-variant-numeric: tabular-nums; }
+.promo-status-on, .promo-status-off { border-radius: 7px; padding: 5px 8px; font-size: 10px; font-weight: 800; }
+.promo-status-on { background: rgba(52,211,153,.12); color: #6ee7b7; }
+.promo-status-off { background: rgba(250,112,112,.1); color: #fca5a5; }
+.promo-admin-item-actions { display: flex; gap: 5px; }
+.promo-admin-empty { margin: 0; padding: 13px; color: #a6a4bc; font-size: 12px; }
+@media (max-width: 900px) {
+  .promo-admin-form { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .promo-admin-item { grid-template-columns: minmax(0,1fr) auto; }
+  .promo-admin-item-actions { grid-column: 1/-1; }
+}
+@media (max-width: 480px) {
+  .promo-admin-section { padding: 12px; border-radius: 15px; }
+  .promo-admin-form { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .promo-admin-form label:first-child, .promo-admin-form label:nth-child(5), .promo-admin-actions { grid-column: 1/-1; }
+}
