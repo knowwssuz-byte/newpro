@@ -12,7 +12,7 @@ create table if not exists public.balance_adjustment_ledger (
 create index if not exists balance_adjustment_ledger_user_idx on public.balance_adjustment_ledger(user_id, created_at desc);
 alter table public.balance_adjustment_ledger enable row level security;
 revoke all on table public.balance_adjustment_ledger from anon, authenticated;
-grant select,insert to service_role on table public.balance_adjustment_ledger;
+grant select,insert on table public.balance_adjustment_ledger to service_role;
 
 create or replace function public.admin_balance_adjust_atomic(
  p_user_id bigint, p_delta numeric, p_operation_id uuid, p_reason text default 'admin'
@@ -52,7 +52,7 @@ create table if not exists public.bonus_claim_ledger (
 create index if not exists bonus_claim_ledger_user_idx on public.bonus_claim_ledger(user_id,claimed_at desc);
 alter table public.bonus_claim_ledger enable row level security;
 revoke all on table public.bonus_claim_ledger from anon,authenticated;
-grant select,insert to service_role on table public.bonus_claim_ledger;
+grant select,insert on table public.bonus_claim_ledger to service_role;
 
 create or replace function public.bonus_claim_atomic(p_user_id bigint, p_task_id text, p_reward integer)
 returns jsonb language plpgsql security definer set search_path='' as $fn$
@@ -118,7 +118,7 @@ begin
   union
   select r.user_id from public.deposit_promo_redemptions r where r.promo_id=v_promo.id
  ) occupied;
- if not found and v_occupied>=v_promo.max_users then raise exception 'PROMO_LIMIT_REACHED'; end if;
+
  if v_activation.id is null then
   if not p_activate then raise exception 'PROMO_NOT_ACTIVATED'; end if;
   if v_occupied>=v_promo.max_users then raise exception 'PROMO_LIMIT_REACHED'; end if;
