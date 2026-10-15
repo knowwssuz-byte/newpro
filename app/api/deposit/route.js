@@ -122,8 +122,8 @@ function publicDeposit(deposit) {
   return result;
 }
 
-async function fetchUserState(supabase, userId, settings = null) {
-  const [userResult, depositsResult, resolvedSettings] = await Promise.all([
+async function fetchUserState(supabase, userId, settings = null, includePromo = false) {
+  const [userResult, depositsResult, resolvedSettings, promoResult] = await Promise.all([
     supabase.from('users').select('id,balance').eq('id', userId).single(),
     supabase
       .from('deposit_transactions')
@@ -134,8 +134,12 @@ async function fetchUserState(supabase, userId, settings = null) {
       .order('created_at', { ascending: false })
       .limit(HISTORY_LIMIT),
     settings ? Promise.resolve(settings) : getDepositSettings(supabase),
+    includePromo
+      ? supabase.rpc('deposit_promo_current', { p_user_id: userId })
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
+  if (promoResult.error) console.warn('[deposit:promo-session]', promoResult.error.code);
   if (userResult.error) throw userResult.error;
   if (depositsResult.error) throwDepositError(depositsResult.error);
 
@@ -143,6 +147,7 @@ async function fetchUserState(supabase, userId, settings = null) {
     balance: Math.max(0, toNumber(userResult.data?.balance)),
     settings: depositSettingsForClient(resolvedSettings),
     deposits: (depositsResult.data || []).map(publicDeposit),
+    ...(includePromo && !promoResult.error ? { promoSession: promoResult.data || null } : {}),
   };
 }
 
@@ -767,7 +772,7 @@ export async function POST(request) {
     if (action === 'state') {
       return Response.json({
         ok: true,
-        ...(await fetchUserState(supabase, userId, settings)),
+        ...(await fetchUserState(supabase, userId, settings, Boolean(body.includePromo))),
       });
     }
 
