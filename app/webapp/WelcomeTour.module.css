@@ -42,4 +42,4 @@
 .skip:focus-visible,.next:focus-visible,.dots button:focus-visible{outline:2px solid #d9bdff;outline-offset:3px}
 @keyframes tourReveal{from{transform:translateY(8px);opacity:.3}to{transform:translateY(0);opacity:1}}
 @media (max-height:670px){.sheet{min-height:0}.art{min-height:118px;max-height:160px}.orb{width:85px;height:85px;font-size:53px;border-radius:26px}.ringOuter{width:158px;height:158px}.ringInner{width:120px;height:120px}.points{gap:6px;margin:11px 0 12px}}
-@media (prefers-reduced-motion:reduce){.copy{animation:none}*,*::before,*::after{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.copy{animation:none}.overlay *,.overlay *::before,.overlay *::after{transition:none!important}}
