@@ -293,6 +293,7 @@ export default function DepositView({
   const mountedRef = useRef(false);
   const pollBusyRef = useRef(false);
   const manifestCheckRef = useRef(null);
+  const promoRestoredRef = useRef(false);
   useEffect(() => {
     if (!promo?.expiresAt) return undefined;
     const timer = window.setInterval(() => setPromoNow(Date.now()), 1000);
@@ -305,6 +306,14 @@ export default function DepositView({
 
       if (data.settings) setSettings(data.settings);
       if (Array.isArray(data.deposits)) setDeposits(data.deposits);
+      if (Object.hasOwn(data, 'promoSession') && !promoRestoredRef.current) {
+        promoRestoredRef.current = true;
+        if (data.promoSession?.code) {
+          setPromo((current) => current || { ...data.promoSession, method: 'stars' });
+          setPromoInput((current) => current || data.promoSession.code);
+          setPromoNow(Date.now());
+        }
+      }
 
       if (data.balance != null) {
         const nextBalance = Math.max(0, number(data.balance));
@@ -322,7 +331,7 @@ export default function DepositView({
       try {
         const data = await apiPost(
           '/api/deposit',
-          { action: 'state' },
+          { action: 'state', includePromo: true },
           { timeoutMs: 12_000 }
         );
         applyState(data);
