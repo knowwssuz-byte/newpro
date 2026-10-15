@@ -123,7 +123,7 @@ export default function DiceGame({
     () => Math.floor(((100 - config.houseEdgePercent) / chance) * 100) / 100,
     [chance, config.houseEdgePercent]
   );
-  const possiblePayout = Math.max(bet + 1, Math.floor(bet * multiplier));
+  const possiblePayout = Math.floor(bet * multiplier);
   const sliderFill = ((target - minTarget) / Math.max(1, maxTarget - minTarget)) * 100;
   const activeRoll = result?.roll ?? target;
 
