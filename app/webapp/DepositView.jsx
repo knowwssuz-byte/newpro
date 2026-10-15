@@ -306,7 +306,7 @@ export default function DepositView({
 
       if (data.settings) setSettings(data.settings);
       if (Array.isArray(data.deposits)) setDeposits(data.deposits);
-      if (Object.hasOwn(data, 'promoSession') && !promoRestoredRef.current) {
+      if (Object.prototype.hasOwnProperty.call(data, 'promoSession') && !promoRestoredRef.current) {
         promoRestoredRef.current = true;
         if (data.promoSession?.code) {
           setPromo((current) => current || { ...data.promoSession, method: 'stars' });
@@ -580,6 +580,12 @@ export default function DepositView({
   const promoUsable = Boolean(promo) && !promoExpired && !promoWrongMethod && !promoMinRequired;
   const appliedPromoCode = promoUsable ? promo.code : '';
   const promoNeedsAttention = Boolean(promo) && !promoUsable;
+  const existingPromoTonInvoice = Boolean(
+    pendingTon && promo && pendingTon.promoCode === promo.code &&
+    ['pending', 'confirming'].includes(pendingTon.status)
+  );
+  // An invoice already reserved before expiry keeps its bonus and may finish.
+  const promoBlocksTonPayment = promoNeedsAttention && !existingPromoTonInvoice;
 
   async function payWithStars(event) {
     event.preventDefault();
@@ -656,6 +662,11 @@ export default function DepositView({
     event.preventDefault();
 
     await runAction('ton', async () => {
+      if (promoBlocksTonPayment) {
+        throw new Error(promoExpired
+          ? 'Promokodning 6 soati tugadi. Yangi to‘lov uchun uni olib tashlang.'
+          : 'Promokod uchun minimal depozit miqdori yetarli emas.');
+      }
       if (!tonConnectionRestored) {
         setNotice('Wallet ulanishi tiklanmoqda. Bir soniya kuting.');
         return;
@@ -778,6 +789,11 @@ export default function DepositView({
 
   async function createManualTonInvoice() {
     await runAction('ton-manual', async () => {
+      if (promoBlocksTonPayment) {
+        throw new Error(promoExpired
+          ? 'Promokod muddati tugagan. Yangi to‘lov uchun uni olib tashlang.'
+          : 'Promokod uchun minimal depozit miqdori yetarli emas.');
+      }
       if (pendingTon?.status === 'confirming') {
         setNotice(
           'TON Connect to‘lovi tekshirilmoqda. Takroriy transfer yubormang.'
@@ -998,7 +1014,7 @@ export default function DepositView({
                 aria-label="Promokodni olib tashlash">×</button>
             </div>
           ) : null}
-          <p className={styles.promoHelp}>Promokod birinchi qo‘llangandan boshlab 6 soat amal qiladi. Qayta kiritish vaqtni uzaytirmaydi.</p>
+          <p className={styles.promoHelp}>6 soat ichida depozitni boshlang. Qayta kiritish vaqtni uzaytirmaydi; vaqtida yaratilgan invoice bonusi saqlanadi.</p>
         </div>
       ) : null}
 
@@ -1174,7 +1190,7 @@ export default function DepositView({
                   className={`${styles.primaryButton} ${styles.tonButton}`}
                   disabled={
                     Boolean(busy) ||
-                    promoNeedsAttention ||
+                    promoBlocksTonPayment ||
                     !tonConnectionRestored ||
                     pendingTon?.status === 'confirming'
                   }
@@ -1201,7 +1217,7 @@ export default function DepositView({
                       createManualTonInvoice();
                     }
                   }}
-                  disabled={Boolean(busy) || promoNeedsAttention || pendingTon?.status === 'confirming'}
+                  disabled={Boolean(busy) || (promoBlocksTonPayment && !liveTonDeposit) || pendingTon?.status === 'confirming'}
                 >
                   {busy === 'ton-manual'
                     ? 'Manual invoice tayyorlanmoqda...'
