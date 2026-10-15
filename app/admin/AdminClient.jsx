@@ -285,6 +285,8 @@ export default function AdminClient() {
   const [cases, setCases] = useState([]);
   const [gifts, setGifts] = useState([]);
   const [giftLibrary, setGiftLibrary] = useState([]);
+  const [giftSyncResult, setGiftSyncResult] = useState(null);
+  const [giftSyncUserId, setGiftSyncUserId] = useState('');
   const [users, setUsers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [featureSettings, setFeatureSettings] = useState({});
@@ -736,6 +738,16 @@ export default function AdminClient() {
 
     await run(() => callAdmin('case_delete', { caseId }), 'Case o‘chirildi');
     await bootstrap();
+  }
+
+  async function syncOwnedGifts() {
+    const result = await run(
+      () => callAdmin('gift_owned_sync', { userId: giftSyncUserId.trim() || undefined }),
+      'Telegram giftlar avtomatik yuklandi ✅'
+    );
+    if (!result) return;
+    setGiftSyncResult(result.sync || null);
+    applyBootstrap(result);
   }
 
   async function createLibraryGift(event) {
@@ -1639,6 +1651,27 @@ export default function AdminClient() {
 
         {tab === 'library' ? (
           <section className="browser-admin-grid manual-library-layout">
+            <div className="browser-admin-form" style={{gridColumn:'1 / -1',display:'grid',gap:12}}>
+              <div className="admin-form-heading">
+                <span>TELEGRAM ACCOUNT SYNC</span>
+                <h2>Hisobimdagi barcha giftlarni avtomatik olish</h2>
+                <p>Telegram Bot API’dan haqiqiy gift nusxalari olinadi. Ko‘p gift bo‘lsa, tugmani yana bosish qolgan sahifalarni davom ettiradi. Gift katalogi darhol yangilanadi, stock esa haqiqiy yetkazish tasdiqlanmaguncha o‘zgarmaydi.</p>
+              </div>
+              <div className="browser-admin-two">
+                <label><span>Telegram admin ID (ixtiyoriy)</span><input type="text" inputMode="numeric" value={giftSyncUserId} onChange={(event) => setGiftSyncUserId(event.target.value.replace(/[^0-9]/g,''))} placeholder="Asosiy admin ID avtomatik olinadi" /></label>
+                <div style={{display:'flex',alignItems:'end'}}>
+                  <button type="button" onClick={syncOwnedGifts} disabled={busy}>{busy?'Sinxronlanmoqda...':'🎁 Telegramdan hammasini yuklash'}</button>
+                </div>
+              </div>
+              {giftSyncResult ? (
+                <p role="status" style={{fontSize:13}}>
+                  Telegramdagi jami: <b>{giftSyncResult.telegramReported}</b> · Baza: <b>{giftSyncResult.tracked}</b> ·
+                  Shu urinishda: <b>{giftSyncResult.imported}</b> ·
+                  {giftSyncResult.hasMore ? ' Davomi bor — shu tugmani qayta bosing.' : ' Ro‘yxat tugadi ✅'}
+                </p>
+              ) : null}
+              <small className="manual-field-note">Botda ham /syncgifts buyrug‘i bor. Barcha giftlarni alohida link bilan qo‘shish shart emas.</small>
+            </div>
             <form className="browser-admin-form manual-upload-form" onSubmit={createLibraryGift}>
               <div className="admin-form-heading">
                 <span>Telegram NFT importer</span>
