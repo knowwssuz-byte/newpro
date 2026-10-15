@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
@@ -23,29 +24,17 @@ export async function POST(request) {
     }
 
     if (action === 'add_balance') {
-      if (!userId) return jsonError('userId kerak');
-
-      const addAmount = Number(amount || 0);
-      if (!Number.isFinite(addAmount) || addAmount === 0) return jsonError('amount noto‘g‘ri');
-
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
-        .single();
-
-      if (userError || !user) return jsonError('User topilmadi', 404);
-
-      const newBalance = Number(user.balance || 0) + addAmount;
-
-      const { data, error } = await supabase
-        .from('users')
-        .update({ balance: newBalance })
-        .eq('id', userId)
-        .select('*')
-        .single();
-
-      if (error) throw new Error(error.message);
+      const uid = Number(userId);
+      const delta = Number(amount);
+      if (!Number.isSafeInteger(uid) || !Number.isSafeInteger(delta) || delta === 0 || Math.abs(delta) > 1000000)
+        return jsonError('User ID yoki butun Stars miqdori noto‘g‘ri.', 400);
+      const operationId = /^[0-9a-f-]{36}$/i.test(String(auth.body?.operationId || ''))
+        ? String(auth.body.operationId) : crypto.randomUUID();
+      const { data, error } = await supabase.rpc('admin_balance_adjust_atomic', {
+        p_user_id: uid, p_delta: delta, p_operation_id: operationId,
+        p_reason: 'telegram-admin',
+      });
+      if (error) throw error;
       return Response.json({ ok: true, user: data });
     }
 
