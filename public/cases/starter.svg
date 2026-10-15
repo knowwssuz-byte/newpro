@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 470" role="img" aria-label="STARTER loot chest artwork">
+<defs>
+ <radialGradient id="a"><stop stop-color="#39dbff" stop-opacity=".38"/><stop offset=".55" stop-color="#1255c4" stop-opacity=".10"/><stop offset="1" stop-color="#1255c4" stop-opacity="0"/></radialGradient>
+ <linearGradient id="lid" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#a0f4ff"/><stop offset=".28" stop-color="#39dbff"/><stop offset=".78" stop-color="#1255c4"/><stop offset="1" stop-color="#a0f4ff"/></linearGradient>
+ <linearGradient id="left" x1="0" y1="0" x2=".8" y2="1"><stop stop-color="#1255c4"/><stop offset="1" stop-color="#0b122a"/></linearGradient>
+ <linearGradient id="right" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#39dbff"/><stop offset=".33" stop-color="#1255c4"/><stop offset="1" stop-color="#080f20"/></linearGradient>
+ <linearGradient id="band" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff" stop-opacity=".95"/><stop offset=".28" stop-color="#a0f4ff"/><stop offset=".58" stop-color="#39dbff"/><stop offset="1" stop-color="#1255c4"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="170%" height="190%"><feGaussianBlur stdDeviation="12"/></filter>
+</defs>
+<ellipse cx="313" cy="267" rx="296" ry="194" fill="url(#a)"/>
+<ellipse cx="311" cy="406" rx="180" ry="23" fill="#1255c4" opacity=".4" filter="url(#shadow)"/>
+<g opacity=".76" fill="#a0f4ff">
+ <path d="M76 131l6 18 18 6-18 6-6 18-6-18-18-6 18-6z"/>
+ <path d="M535 88l4 14 14 4-14 4-4 14-4-14-14-4 14-4z"/>
+ <path d="M491 352l5 14 14 5-14 5-5 14-5-14-14-5 14-5z"/>
+ <circle cx="130" cy="84" r="3"/><circle cx="471" cy="66" r="3"/><circle cx="545" cy="240" r="3"/><circle cx="73" cy="332" r="3"/>
+</g>
+<g stroke-linejoin="round">
+ <path d="M120 214L310 133L501 214L310 292Z" fill="url(#lid)" stroke="#a0f4ff" stroke-width="7"/>
+ <path d="M120 214L310 292V409L120 327Z" fill="url(#left)" stroke="#39dbff" stroke-width="8"/>
+ <path d="M310 292L501 214V327L310 409Z" fill="url(#right)" stroke="#a0f4ff" stroke-width="8"/>
+ <path d="M130 218L308 284L488 218" fill="none" stroke="#0c1538" stroke-opacity=".6" stroke-width="8"/>
+ <path d="M120 251L310 331L501 251" fill="none" stroke="#a0f4ff" stroke-width="16" opacity=".93"/>
+ <path d="M165 234L165 345M455 234L455 349" fill="none" stroke="url(#band)" stroke-width="16"/>
+ <path d="M310 294V405" fill="none" stroke="#39dbff" stroke-width="12"/>
+ <path d="M270 146L270 279M348 146L348 279" fill="none" stroke="#a0f4ff" stroke-width="17" opacity=".86"/>
+ <path d="M164 202L310 143L457 203" fill="none" stroke="#fff" stroke-width="4" opacity=".58"/>
+ <path d="M131 326L309 402L491 326" fill="none" stroke="#a0f4ff" stroke-width="4" opacity=".65"/>
+</g>
+<g transform="translate(310 310)">
+ <circle r="75" fill="#05101f" stroke="#a0f4ff" stroke-width="10"/>
+ <circle r="65" fill="#1255c4" opacity=".92" stroke="#39dbff" stroke-width="5"/>
+ <circle r="56" fill="#1255c4" opacity=".55"/>
+ <circle r="49" fill="none" stroke="#a0f4ff" stroke-opacity=".4" stroke-width="2"/>
+ <g transform="scale(.69)"><path d='M-42 10L44 -28L18 46L-6 20L-22 37L-22 12Z' fill='#bdfaff'/><path d='M-6 20L44 -28L-22 12' fill='none' stroke='#073265' stroke-width='5'/></g>
+</g>
+<g stroke="#a0f4ff" opacity=".8" fill="none" stroke-width="3"><path d="M175 150h45m-23-22v45"/><path d="M447 143h36m-18-18v36"/></g>
+</svg>
