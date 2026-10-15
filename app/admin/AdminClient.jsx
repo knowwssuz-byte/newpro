@@ -300,6 +300,11 @@ export default function AdminClient() {
   const [diceSettings, setDiceSettings] = useState(emptyDiceSettings);
   const [diceStats, setDiceStats] = useState(null);
   const [depositDrafts, setDepositDrafts] = useState({});
+  const [promoCodes, setPromoCodes] = useState([]);
+  const [promoForm, setPromoForm] = useState({
+    id: '', code: '', bonusPercent: 10, maxUsers: 100,
+    minCredit: 0, enabled: true, expiresAt: '',
+  });
   const [bonusTasks, setBonusTasks] = useState([]);
   const [bonusStats, setBonusStats] = useState({
     totalTasks: 0,
@@ -362,6 +367,7 @@ export default function AdminClient() {
     setGiftLibrary(data.giftLibrary || []);
     setFeatureSettings(data.featureSettings || {});
     setDeposits(data.deposits || []);
+    setPromoCodes(data.promoCodes || []);
     setDepositSettings({
       ...emptyDepositSettings,
       ...(data.depositSettings || {}),
@@ -634,6 +640,7 @@ export default function AdminClient() {
     setRocketControl(null);
     setRocketConnection('idle');
     setDeposits([]);
+    setPromoCodes([]);
     setDepositSettings(emptyDepositSettings);
     setDepositDrafts({});
     setBonusTasks([]);
@@ -905,6 +912,30 @@ export default function AdminClient() {
         ...data.depositSettings,
       });
     }
+  }
+
+  async function savePromo(event) {
+    event.preventDefault();
+    const result = await run(() => callAdmin('promo_save', { promo: promoForm }), 'Promokod saqlandi ✅');
+    if (result?.promoCodes) {
+      setPromoCodes(result.promoCodes);
+      setPromoForm({ id: '', code: '', bonusPercent: 10, maxUsers: 100, minCredit: 0, enabled: true, expiresAt: '' });
+    }
+  }
+
+  async function togglePromo(promo) {
+    const result = await run(() => callAdmin('promo_toggle', {
+      promoId: promo.id, enabled: !promo.enabled,
+    }), 'Promokod holati yangilandi ✅');
+    if (result?.promoCodes) setPromoCodes(result.promoCodes);
+  }
+
+  function editPromo(promo) {
+    setPromoForm({
+      id: promo.id, code: promo.code, bonusPercent: promo.bonusPercent,
+      maxUsers: promo.maxUsers, minCredit: promo.minCredit || 0,
+      enabled: promo.enabled, expiresAt: promo.expiresAt ? promo.expiresAt.slice(0, 16) : '',
+    });
   }
 
   async function refreshDiceStats() {
@@ -2160,6 +2191,58 @@ export default function AdminClient() {
                   {busy ? 'Saqlanmoqda...' : 'Deposit sozlamalarini saqlash'}
                 </button>
               </form>
+
+              <section className="promo-admin-section">
+                <div className="promo-admin-head">
+                  <div><span>DEPOSIT BONUS</span><h2>Promokod boshqaruvi</h2>
+                    <p>Koddan nechta odam foydalanishi va depozitga necha foiz bonus olishini belgilang.</p></div>
+                </div>
+                <form className="promo-admin-form" onSubmit={savePromo}>
+                  <label>Kod
+                    <input required minLength={4} maxLength={32} placeholder="MASALAN: BONUS20"
+                      value={promoForm.code} onChange={(e) => setPromoForm({ ...promoForm, code: e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '') })} />
+                  </label>
+                  <label>Bonus, %
+                    <input required type="number" min="1" max="100" step=".01" value={promoForm.bonusPercent}
+                      onChange={(e) => setPromoForm({ ...promoForm, bonusPercent: e.target.value })} />
+                  </label>
+                  <label>Odamlar limiti
+                    <input required type="number" min="1" max="1000000" step="1" value={promoForm.maxUsers}
+                      onChange={(e) => setPromoForm({ ...promoForm, maxUsers: e.target.value })} />
+                  </label>
+                  <label>Min. balans (Stars)
+                    <input type="number" min="0" step="1" value={promoForm.minCredit}
+                      onChange={(e) => setPromoForm({ ...promoForm, minCredit: e.target.value })} />
+                  </label>
+                  <label>Muddati (ixtiyoriy)
+                    <input type="datetime-local" value={promoForm.expiresAt}
+                      onChange={(e) => setPromoForm({ ...promoForm, expiresAt: e.target.value })} />
+                  </label>
+                  <label className="promo-admin-check">
+                    <input type="checkbox" checked={promoForm.enabled} onChange={(e) => setPromoForm({ ...promoForm, enabled: e.target.checked })} />
+                    Faol
+                  </label>
+                  <div className="promo-admin-actions">
+                    <button type="submit" disabled={busy}>{busy ? 'Saqlanmoqda...' : promoForm.id ? 'O‘zgarishlarni saqlash' : '+ Promokod qo‘shish'}</button>
+                    {promoForm.id ? <button type="button" onClick={() => setPromoForm({
+                      id: '', code: '', bonusPercent: 10, maxUsers: 100, minCredit: 0, enabled: true, expiresAt: '',
+                    })}>Bekor qilish</button> : null}
+                  </div>
+                </form>
+                <div className="promo-admin-list">
+                  {promoCodes.length ? promoCodes.map((promo) => (
+                    <div className="promo-admin-item" key={promo.id}>
+                      <div className="promo-admin-item-name"><strong>{promo.code}</strong><small>+{promo.bonusPercent}% · minimum {money(promo.minCredit)} ⭐</small></div>
+                      <div className="promo-admin-usage"><strong>{promo.used}/{promo.maxUsers}</strong><small>{promo.completed} ta ishlatilgan</small></div>
+                      <span className={promo.enabled ? 'promo-status-on' : 'promo-status-off'}>{promo.enabled ? 'Faol' : 'O‘chirilgan'}</span>
+                      <div className="promo-admin-item-actions">
+                        <button type="button" disabled={busy} onClick={() => editPromo(promo)}>Tahrir</button>
+                        <button type="button" disabled={busy} onClick={() => togglePromo(promo)}>{promo.enabled ? 'O‘chirish' : 'Yoqish'}</button>
+                      </div>
+                    </div>
+                  )) : <p className="promo-admin-empty">Hozircha promokod yo‘q. Yuqoridagi shakldan birinchisini qo‘shing.</p>}
+                </div>
+              </section>
 
               <section className="deposit-admin-ledger">
                 <div className="deposit-admin-ledger-head">
