@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { syncOwnedTelegramGifts } from '@/lib/telegramGiftSync';
+import { syncOwnedTelegramGifts, syncAvailableTelegramGifts } from '@/lib/telegramGiftSync';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -546,8 +546,11 @@ export async function POST(request) {
       if (!allowedIds.includes(ownerId)) {
         return json({ ok: false, error: 'Faqat ro‘yxatdagi admin Telegram akkaunti sinxronlanadi.' }, 403);
       }
-      const result = await syncOwnedTelegramGifts(Number(ownerId));
-      return json({ ok: true, sync: result, ...(await bootstrap(supabase)) });
+      const [available, result] = await Promise.all([
+        syncAvailableTelegramGifts().catch((error) => ({ error: String(error.message || error) })),
+        syncOwnedTelegramGifts(Number(ownerId)),
+      ]);
+      return json({ ok: true, sync: { ...result, available }, ...(await bootstrap(supabase)) });
     }
 
     if (action === 'bootstrap') {
