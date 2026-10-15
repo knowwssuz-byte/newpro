@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { getDiceMultiplier, getDicePayout } from '@/lib/diceMath.mjs';
 import { diceSettingsForClient, getDiceSettings } from '@/lib/diceSettings';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
@@ -45,13 +46,11 @@ function mapError(error) {
 
 function makeOutcome({ mode, target, bet, settings }) {
   const chancePercent = mode === 'higher' ? 100 - target : target;
-  const multiplier = Math.floor(
-    ((100 - settings.houseEdgePercent) / chancePercent) * 100
-  ) / 100;
+  const multiplier = getDiceMultiplier(chancePercent, settings.houseEdgePercent);
   const roll = crypto.randomInt(0, 10000) / 100;
   // Uniform 0.01-point outcomes: inclusive threshold matches the published odds.
   const won = mode === 'higher' ? roll >= target : roll < target;
-  const payout = won ? Math.max(bet + 1, Math.floor(bet * multiplier)) : 0;
+  const payout = getDicePayout(bet, chancePercent, settings.houseEdgePercent, won);
 
   return {
     id: crypto.randomUUID(),
