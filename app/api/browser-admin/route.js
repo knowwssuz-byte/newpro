@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { syncOwnedTelegramGifts } from '@/lib/telegramGiftSync';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -537,6 +538,17 @@ export async function POST(request) {
     assertAdmin(request, body);
 
     const action = body.action;
+
+    if (action === 'gift_owned_sync') {
+      const allowedIds = String(process.env.ADMIN_IDS || '').split(',')
+        .map((id) => id.trim()).filter((id) => /^\d+$/.test(id));
+      const ownerId = String(body.userId || allowedIds[0] || '').trim();
+      if (!allowedIds.includes(ownerId)) {
+        return json({ ok: false, error: 'Faqat ro‘yxatdagi admin Telegram akkaunti sinxronlanadi.' }, 403);
+      }
+      const result = await syncOwnedTelegramGifts(Number(ownerId));
+      return json({ ok: true, sync: result, ...(await bootstrap(supabase)) });
+    }
 
     if (action === 'bootstrap') {
       const data = await bootstrap(supabase);
