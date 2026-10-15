@@ -145,6 +145,8 @@ async function normalizeCaseOrder(supabase, cases = []) {
 }
 
 async function listPromoCodes(supabase) {
+  const cleanup = await supabase.rpc('deposit_promo_cleanup');
+  if (cleanup.error) throw cleanup.error;
   const { data, error } = await supabase.rpc('deposit_promo_admin_list');
   if (error) throw error;
   return Array.isArray(data) ? data : [];
