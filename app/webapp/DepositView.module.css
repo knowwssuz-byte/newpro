@@ -3700,3 +3700,36 @@
   .promoArea { padding: 9px; }
   .methodCard { min-height: 60px; }
 }
+
+
+/* Six-hour promo clock: readable on all mobile widths, no layout jump */
+.promoStatusMain { min-width: 0; display: grid; gap: 3px; flex: 1 1 110px; }
+.promoStatusMain strong { font-size: 11px; overflow-wrap: anywhere; color: #dcffe8; }
+.promoStatusMain span { font-size: 10px; color: rgba(190,252,212,.83); }
+.promoSuccess { flex-wrap: nowrap; align-items: center; gap: 10px; }
+.promoClock {
+  display: grid; gap: 1px; flex: 0 0 auto; text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.promoClock small { color: rgba(212,222,236,.65); font-size: 9px; white-space: nowrap; }
+.promoClock b {
+  color: #fff; font-size: 13px; font-weight: 900;
+  letter-spacing: .045em; white-space: nowrap;
+}
+.promoRemove {
+  flex: 0 0 24px; min-height: 29px; width: 24px;
+  display: grid; place-items: center;
+  border: 0; background: transparent; color: rgba(234,241,253,.65);
+  font-size: 20px; cursor: pointer;
+}
+.promoInvalid .promoStatusMain strong, .promoInvalid .promoStatusMain span,
+.promoInvalid .promoClock b { color: #ffb9c7; }
+.promoHelp { margin: 7px 0 0; color: rgba(220,224,241,.55); font-size: 9px; line-height: 1.45; }
+.promoEntry input:focus-visible, .promoEntry button:focus-visible, .promoRemove:focus-visible {
+  outline: 2px solid rgba(208,196,255,.8); outline-offset: 2px;
+}
+@media (max-width: 360px) {
+  .promoSuccess { gap: 5px; }
+  .promoClock b { font-size: 11px; letter-spacing: 0; }
+  .promoRemove { width: 20px; flex-basis: 20px; }
+}
