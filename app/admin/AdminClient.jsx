@@ -285,6 +285,10 @@ export default function AdminClient() {
   const [cases, setCases] = useState([]);
   const [gifts, setGifts] = useState([]);
   const [giftLibrary, setGiftLibrary] = useState([]);
+  const [giftLibrarySearch, setGiftLibrarySearch] = useState('');
+  const [giftLibraryLimit, setGiftLibraryLimit] = useState(48);
+  const [giftSyncResult, setGiftSyncResult] = useState(null);
+  const [giftSyncUserId, setGiftSyncUserId] = useState('');
   const [users, setUsers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [featureSettings, setFeatureSettings] = useState({});
@@ -736,6 +740,16 @@ export default function AdminClient() {
 
     await run(() => callAdmin('case_delete', { caseId }), 'Case o‘chirildi');
     await bootstrap();
+  }
+
+  async function syncOwnedGifts() {
+    const result = await run(
+      () => callAdmin('gift_owned_sync', { userId: giftSyncUserId.trim() || undefined }),
+      'Telegram giftlar avtomatik yuklandi ✅'
+    );
+    if (!result) return;
+    setGiftSyncResult(result.sync || null);
+    applyBootstrap(result);
   }
 
   async function createLibraryGift(event) {
@@ -1639,6 +1653,27 @@ export default function AdminClient() {
 
         {tab === 'library' ? (
           <section className="browser-admin-grid manual-library-layout">
+            <div className="browser-admin-form" style={{gridColumn:'1 / -1',display:'grid',gap:12}}>
+              <div className="admin-form-heading">
+                <span>TELEGRAM ACCOUNT SYNC</span>
+                <h2>Hisobimdagi barcha giftlarni avtomatik olish</h2>
+                <p>Telegram Bot API’dan haqiqiy gift nusxalari olinadi. Ko‘p gift bo‘lsa, tugmani yana bosish qolgan sahifalarni davom ettiradi. Gift katalogi darhol yangilanadi, stock esa haqiqiy yetkazish tasdiqlanmaguncha o‘zgarmaydi.</p>
+              </div>
+              <div className="browser-admin-two">
+                <label><span>Telegram admin ID (ixtiyoriy)</span><input type="text" inputMode="numeric" value={giftSyncUserId} onChange={(event) => setGiftSyncUserId(event.target.value.replace(/[^0-9]/g,''))} placeholder="Asosiy admin ID avtomatik olinadi" /></label>
+                <div style={{display:'flex',alignItems:'end'}}>
+                  <button type="button" onClick={syncOwnedGifts} disabled={busy}>{busy?'Sinxronlanmoqda...':'🎁 Telegramdan hammasini yuklash'}</button>
+                </div>
+              </div>
+              {giftSyncResult ? (
+                <p role="status" style={{fontSize:13}}>
+                  Telegramdagi jami: <b>{giftSyncResult.telegramReported}</b> · Baza: <b>{giftSyncResult.tracked}</b> ·
+                  Shu urinishda: <b>{giftSyncResult.imported}</b> ·
+                  {giftSyncResult.hasMore ? ' Davomi bor — shu tugmani qayta bosing.' : ' Ro‘yxat tugadi ✅'}
+                </p>
+              ) : null}
+              <small className="manual-field-note">Botda ham /syncgifts buyrug‘i bor. Barcha giftlarni alohida link bilan qo‘shish shart emas.</small>
+            </div>
             <form className="browser-admin-form manual-upload-form" onSubmit={createLibraryGift}>
               <div className="admin-form-heading">
                 <span>Telegram NFT importer</span>
@@ -1660,8 +1695,15 @@ export default function AdminClient() {
               <button type="submit" disabled={busy || !libraryForm.gift_url}>{busy ? 'Telegramdan olinmoqda...' : 'Linkdan giftni olish'}</button>
             </form>
 
+            <div style={{gridColumn:'1 / -1',margin:'8px 0'}}>
+              <input type="search" value={giftLibrarySearch}
+                placeholder={`Gift qidirish · ${giftLibrary.length} ta`} aria-label="Giftlarni qidirish"
+                onChange={(event) => { setGiftLibrarySearch(event.target.value); setGiftLibraryLimit(48); }}
+                style={{width:'100%',minHeight:44,background:'#1d1a32',color:'#fff',border:'1px solid #44375d',borderRadius:12,padding:'8px 14px'}} />
+            </div>
             <div className="manual-library-grid">
-              {giftLibrary.length ? giftLibrary.map((gift) => (
+              {giftLibrary.filter((g) => (g.title+' '+(g.slug||'')).toLocaleLowerCase().includes(giftLibrarySearch.toLocaleLowerCase())).length ?
+                giftLibrary.filter((g) => (g.title+' '+(g.slug||'')).toLocaleLowerCase().includes(giftLibrarySearch.toLocaleLowerCase())).slice(0,giftLibraryLimit).map((gift) => (
                 <div className="manual-library-card image-only-library-card" key={gift.id} style={{ '--manual-card-bg': gift.background_value || 'linear-gradient(135deg,#7c3aed,#111827)' }}>
                   <div className="manual-library-media">
                     <GiftImage gift={gift} />
@@ -1682,10 +1724,14 @@ export default function AdminClient() {
                 <div className="telegram-import-empty manual-empty">
                   <span>🎁</span>
                   <h3>Gift baza bo‘sh</h3>
-                  <p>Telegram NFT linkini kiriting. Gift animatsiyasi va metadata avtomatik olinadi.</p>
+                  <p>Telegramdan sinxronlang yoki NFT linkini kiriting.</p>
                 </div>
               )}
             </div>
+            {giftLibrary.filter((g) => (g.title+' '+(g.slug||'')).toLocaleLowerCase().includes(giftLibrarySearch.toLocaleLowerCase())).length > giftLibraryLimit ? (
+              <button type="button" onClick={() => setGiftLibraryLimit((n) => n + 48)}
+                style={{gridColumn:'1 / -1',minHeight:44,width:'100%'}}>Yana 48 ta giftni ko‘rsatish ↓</button>
+            ) : null}
           </section>
         ) : null}
 
