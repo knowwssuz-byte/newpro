@@ -2590,9 +2590,10 @@ function referralStatus(status) {
 
 function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceChange }) {
   const [copied, setCopied] = useState(false);
-  const [overview, setOverview] = useState(null);
-  const [loadingOverview, setLoadingOverview] = useState(true);
+  const [overview, setOverview] = useState(() => readReferralCache(telegramUser?.id || profile?.id));
+  const [loadingOverview, setLoadingOverview] = useState(() => !readReferralCache(telegramUser?.id || profile?.id));
   const [refreshingOverview, setRefreshingOverview] = useState(false);
+  const loadInFlightRef = useRef(false);
   const [overviewError, setOverviewError] = useState('');
 
   const botUsername = (process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'GiftMystBot').replace('@', '');
@@ -2617,7 +2618,8 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
 
   const loadOverview = useCallback(
     async ({ silent = false } = {}) => {
-      if (!apiPost) return;
+      if (!apiPost || loadInFlightRef.current) return;
+      loadInFlightRef.current = true;
 
       if (silent) {
         setRefreshingOverview(true);
@@ -2634,6 +2636,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
       } catch (error) {
         setOverviewError(error?.message || 'Referal statistikasi yuklanmadi.');
       } finally {
+        loadInFlightRef.current = false;
         setLoadingOverview(false);
         setRefreshingOverview(false);
       }
@@ -2659,10 +2662,10 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
 
     const refreshTimer = window.setInterval(() => {
       if (!document.hidden) loadOverview({ silent: true });
-    }, 60_000);
+    }, 120_000);
 
     const handleVisibility = () => {
-      if (!document.hidden) loadOverview({ silent: true });
+      if (!document.hidden && !readReferralCache(userId)) loadOverview({ silent: true });
     };
 
     document.addEventListener('visibilitychange', handleVisibility);
