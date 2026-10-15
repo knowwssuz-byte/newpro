@@ -1345,8 +1345,13 @@ export default function WebAppClient() {
 
   if (loading) {
     return (
-      <div className="initial-loader-screen">
-        <div className="spinner" role="status" aria-label="Gift Myst yuklanmoqda" />
+      <div className="initial-loader-screen" role="status" aria-live="polite" aria-label="Gift Myst yuklanmoqda">
+        <div className="preload-brand">
+          <span className="preload-brand-mark">✦</span>
+          <strong>GIFT MYST</strong>
+          <span>Telegram Mini App</span>
+        </div>
+        <div className="spinner" aria-hidden="true" />
       </div>
     );
   }
@@ -1768,6 +1773,7 @@ function HomeGameBanner({
         sizes="(max-width: 590px) 100vw, 560px"
         priority={!isPvp}
         loading={isPvp ? 'lazy' : 'eager'}
+        unoptimized
         draggable={false}
       />
 
