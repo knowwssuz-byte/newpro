@@ -733,6 +733,11 @@ export async function POST(request) {
       return json({ ok: true, rocket });
     }
 
+    // Live outcomes are not editable by administrators. Allow observation only.
+    if (['rocket_set_bias','rocket_set_next','rocket_reset_next','rocket_launch_now','rocket_force_crash'].includes(action)) {
+      return json({ ok: false, error: 'Rocket natijalari avtomatik hisoblanadi. Qo‘lda o‘zgartirish o‘chirilgan.' }, 403);
+    }
+
     if (action === 'rocket_set_bias') {
       const biasMode = clean(body.biasMode).toLowerCase();
 
