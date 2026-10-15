@@ -1046,29 +1046,16 @@ export async function POST(request) {
     if (action === 'user_add_balance') {
       const userId = Number(body.userId);
       const amount = Number(body.amount);
-
-      if (!Number.isFinite(userId) || !Number.isFinite(amount)) {
-        return json({ ok: false, error: 'User ID yoki amount noto‘g‘ri.' }, 400);
+      if (!Number.isSafeInteger(userId) || !Number.isSafeInteger(amount) || amount === 0 || Math.abs(amount) > 1000000) {
+        return json({ ok: false, error: 'Miqdor butun son va 1–1 000 000 oralig‘ida bo‘lsin.' }, 400);
       }
-
-      const { data: user, error: readError } = await supabase
-        .from('users')
-        .select('id,balance')
-        .eq('id', userId)
-        .single();
-
-      if (readError) throw readError;
-
-      const nextBalance = Number(user.balance || 0) + amount;
-      const { data, error } = await supabase
-        .from('users')
-        .update({ balance: nextBalance })
-        .eq('id', userId)
-        .select('*')
-        .single();
-
+      const operationId = /^[0-9a-f-]{36}$/i.test(String(body.operationId || ''))
+        ? String(body.operationId) : crypto.randomUUID();
+      const { data, error } = await supabase.rpc('admin_balance_adjust_atomic', {
+        p_user_id: userId, p_delta: amount, p_operation_id: operationId,
+        p_reason: 'browser-admin',
+      });
       if (error) throw error;
-
       return json({ ok: true, user: data });
     }
 
