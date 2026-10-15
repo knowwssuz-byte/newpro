@@ -286,15 +286,19 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
     },
   };
 
-  // DB insert va Telegram invoice link bir-biridan mustaqil. Ikkalasini
-  // parallel kutish tugma bosilgandagi ortiqcha ketma-ket kechikishni oladi.
-  const [insertOutcome, invoiceOutcome] = await Promise.allSettled([
-    supabase
-      .from('deposit_transactions')
-      .insert(row)
-      .select('*')
-      .single(),
-    telegramApi('createInvoiceLink', {
+  // First reserve the payment in DB. Never expose a payable Telegram invoice
+  // for a transaction rejected by the promo trigger (expired/used/full).
+  const { data: deposit, error: insertError } = await supabase
+    .from('deposit_transactions')
+    .insert(row)
+    .select('*')
+    .single();
+  if (insertError) throwDepositError(insertError);
+  if (!deposit) throw new Error('Stars deposit bazada yaratilmadi.');
+
+  let invoiceLink;
+  try {
+    invoiceLink = await telegramApi('createInvoiceLink', {
       title: 'Gift Myst balance',
       description: `${amount} Stars balansga avtomatik qo‘shiladi`,
       payload,
@@ -305,24 +309,8 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
           amount,
         },
       ],
-    }, { timeoutMs: 8_000 }),
-  ]);
-
-  const insertResult =
-    insertOutcome.status === 'fulfilled'
-      ? insertOutcome.value
-      : { data: null, error: insertOutcome.reason };
-  const deposit = insertResult.data;
-  const insertError = insertResult.error;
-
-  if (insertError) throwDepositError(insertError);
-  if (!deposit) {
-    throw new Error('Stars deposit bazada yaratilmadi.');
-  }
-
-  if (invoiceOutcome.status === 'rejected') {
-    const error = invoiceOutcome.reason;
-
+    }, { timeoutMs: 8_000 });
+  } catch (error) {
     await supabase
       .from('deposit_transactions')
       .update({
@@ -338,7 +326,7 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
 
   return {
     deposit: publicDeposit(deposit),
-    invoiceLink: invoiceOutcome.value,
+    invoiceLink,
   };
 }
 
@@ -783,7 +771,7 @@ export async function POST(request) {
       });
     }
 
-    if (action === 'promo_preview') {
+    if (action === 'promo_activate' || action === 'promo_preview') {
       const method = clean(body.method).toLowerCase();
       if (!['stars', 'ton'].includes(method)) return jsonError('To‘lov usuli noto‘g‘ri.', 400);
       const creditAmount = method === 'stars'
@@ -791,6 +779,7 @@ export async function POST(request) {
         : Math.floor(toNumber(body.amount) * Number(settings.tonStarsRate));
       const promo = await previewDepositPromo(supabase, {
         code: body.promoCode, userId, creditAmount, method,
+        activate: action === 'promo_activate',
       });
       return Response.json({ ok: true, promo });
     }
