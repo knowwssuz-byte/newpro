@@ -1083,11 +1083,12 @@ export async function POST(request) {
         .from('withdraw_requests')
         .update({ status })
         .eq('id', body.requestId)
+        .eq('status', 'pending')
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-
+      if (!data) return json({ ok: false, error: 'So‘rov allaqachon ko‘rib chiqilgan.' }, 409);
       return json({ ok: true, withdrawal: data });
     }
 
