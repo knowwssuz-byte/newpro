@@ -2338,7 +2338,7 @@ export default function AdminClient() {
                   {promoCodes.length ? promoCodes.map((promo) => (
                     <div className="promo-admin-item" key={promo.id}>
                       <div className="promo-admin-item-name"><strong>{promo.code}</strong><small>+{promo.bonusPercent}% · minimum {money(promo.minCredit)} ⭐</small></div>
-                      <div className="promo-admin-usage"><strong>{promo.used}/{promo.maxUsers}</strong><small>{promo.completed} ta ishlatilgan</small></div>
+                      <div className="promo-admin-usage"><strong>{promo.used}/{promo.maxUsers}</strong><small>{promo.active || 0} ta faol · {promo.completed} ta ishlatilgan</small></div>
                       <span className={promo.enabled ? 'promo-status-on' : 'promo-status-off'}>{promo.enabled ? 'Faol' : 'O‘chirilgan'}</span>
                       <div className="promo-admin-item-actions">
                         <button type="button" disabled={busy} onClick={() => editPromo(promo)}>Tahrir</button>
