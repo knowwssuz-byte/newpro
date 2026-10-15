@@ -124,6 +124,7 @@ export default function DiceGame({
     [chance, config.houseEdgePercent]
   );
   const possiblePayout = Math.floor(bet * multiplier);
+  const profitableWin = possiblePayout > bet;
   const sliderFill = ((target - minTarget) / Math.max(1, maxTarget - minTarget)) * 100;
   const activeRoll = result?.roll ?? target;
 
@@ -251,6 +252,10 @@ export default function DiceGame({
     if (rolling) return;
 
     const normalizedBet = clamp(safeInteger(bet, config.minBet), config.minBet, config.maxBet);
+    if (Math.floor(normalizedBet * multiplier) <= normalizedBet) {
+      setLocalError('Ushbu stavka va ehtimolda yutuq qo‘shimcha Stars bermaydi. Stavkani oshiring yoki ehtimolni kamaytiring.');
+      return;
+    }
     if (normalizedBet > balance) {
       setLocalError('Balans yetarli emas. Stavkani kamaytiring.');
       tg?.HapticFeedback?.notificationOccurred?.('error');
@@ -396,8 +401,9 @@ export default function DiceGame({
           {QUICK_BETS.map((amount) => <button key={amount} type="button" onClick={() => updateBet(amount)} disabled={rolling || amount > balance || amount < config.minBet}>{amount}</button>)}
           <button type="button" onClick={() => updateBet(Math.min(balance, config.maxBet))} disabled={rolling || balance < config.minBet}>MAX</button>
         </div>
+        {!profitableWin && !rolling ? <p className={styles.error}>Bu shartlarda yutuq foyda bermaydi. Stavka yoki ehtimolni o‘zgartiring.</p> : null}
         {localError ? <p className={styles.error}>{localError}</p> : null}
-        <button type="button" className={styles.playButton} onClick={play} disabled={rolling || !config.enabled || balance < config.minBet}>
+        <button type="button" className={styles.playButton} onClick={play} disabled={rolling || !config.enabled || balance < config.minBet || !profitableWin}>
           {!config.enabled ? 'O‘YIN VAQTINCHA O‘CHIRILGAN' : rolling ? <><span className={styles.buttonDice} /> {settling ? 'SEKINLASHMOQDA...' : 'NATIJA ANIQLANMOQDA...'}</> : <>{starIcon(styles.buttonStar)} {formatStars(bet)} STARS BILAN O‘YNASH</>}
         </button>
       </section>
