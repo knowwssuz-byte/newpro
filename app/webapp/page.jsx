@@ -38,11 +38,15 @@ export default async function WebAppPage() {
   ).trim();
 
   return (
-    <TonConnectProvider
-      manifestUrl={`${origin}/api/tonconnect-manifest?v=3`}
-      twaReturnUrl={configuredReturnUrl}
-    >
-      <WebAppClient />
-    </TonConnectProvider>
+    <>
+      {/* 38 KB static WebP is available before Telegram bootstrap completes. */}
+      <link rel="preload" as="image" type="image/webp" href="/feature/game-banners/rocket-v41.webp" />
+      <TonConnectProvider
+        manifestUrl={`${origin}/api/tonconnect-manifest?v=3`}
+        twaReturnUrl={configuredReturnUrl}
+      >
+        <WebAppClient />
+      </TonConnectProvider>
+    </>
   );
 }

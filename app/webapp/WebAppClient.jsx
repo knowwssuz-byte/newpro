@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import AppIcon from './AppIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
 import liquidNavStyles from './LiquidGlassNav.module.css';
@@ -11,6 +12,8 @@ import DepositView from './DepositView';
 import RocketGame from './RocketGame';
 import DiceGame, { DiceLobbyCard } from './DiceGame';
 
+const WelcomeTour = dynamic(() => import('./WelcomeTour'), { ssr: false });
+const WELCOME_VERSION = 'v1';
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
 
@@ -102,8 +105,8 @@ function warmImageCacheFromData(...groups) {
   // A slow Telegram WebView should not request dozens of off-screen images.
   const connection = window.navigator?.connection;
   const isSlowNetwork = Boolean(connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ''));
-  const eagerCount = isSlowNetwork ? 3 : 8;
-  const totalCount = isSlowNetwork ? 8 : 32;
+  const eagerCount = isSlowNetwork ? 1 : 2;
+  const totalCount = isSlowNetwork ? 3 : 9;
   urls.slice(0, eagerCount).forEach((url) => loadOne(url, true));
 
   const rest = urls.slice(eagerCount, totalCount);
@@ -485,6 +488,7 @@ export default function WebAppClient() {
   const [tab, setTab] = useState('home');
   const [adminTab, setAdminTab] = useState('cases');
   const [loading, setLoading] = useState(true);
+  const [showWelcomeTour, setShowWelcomeTour] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [toast, setToast] = useState('');
@@ -521,6 +525,7 @@ export default function WebAppClient() {
   const diceReturnTabRef = useRef('games');
   const depositReturnTabRef = useRef('home');
   const hasBootstrappedRef = useRef(false);
+  const tourUserIdRef = useRef('');
   const referralTrackedRef = useRef(false);
   const mountedRef = useRef(false);
 
@@ -539,16 +544,35 @@ export default function WebAppClient() {
   );
 
   useEffect(() => {
+    // The two homepage banners use next/image's optimized URLs, so do not
+    // prefetch the original uncompressed images in parallel.
     warmImageCacheFromData(
-      '/feature/premium-arcade/rocket-launch-deck-bg-v16.webp',
-      '/feature/premium-arcade/rocket-premium-static-v16.png',
-      '/feature/premium-arcade/pvp-golden-arena-bg-v16.webp',
-      '/feature/premium-arcade/pvp-premium-static-v16.png',
-      activeCases.slice(0, 8),
-      gifts.slice(0, 42),
-      selectedCase ? giftsByCase[selectedCase.id] || [] : []
+      activeCases.slice(0, 3),
+      selectedCase ? (giftsByCase[selectedCase.id] || []).slice(0, 6) : []
     );
-  }, [activeCases, gifts, giftsByCase, selectedCase]);
+  }, [activeCases, giftsByCase, selectedCase]);
+
+  useEffect(() => {
+    if (loading || !profile?.id) return;
+    const id = String(profile.id);
+    if (tourUserIdRef.current === id) return;
+    tourUserIdRef.current = id;
+    try {
+      setShowWelcomeTour(window.localStorage.getItem(`gift_myst_welcome_${WELCOME_VERSION}_${id}`) !== 'done');
+    } catch {
+      setShowWelcomeTour(true);
+    }
+  }, [loading, profile?.id]);
+
+  const finishWelcomeTour = useCallback(() => {
+    const id = tourUserIdRef.current;
+    if (id) {
+      try {
+        window.localStorage.setItem(`gift_myst_welcome_${WELCOME_VERSION}_${id}`, 'done');
+      } catch {}
+    }
+    setShowWelcomeTour(false);
+  }, []);
 
   const showToast = useCallback((message) => {
     if (toastTimerRef.current) {
@@ -658,7 +682,6 @@ export default function WebAppClient() {
   const applyBootstrapData = useCallback((data, { cache = true } = {}) => {
     if (!data) return;
 
-    warmImageCacheFromData(data.cases || [], data.gifts || [], data.history || []);
     setProfile(data.user || null);
     setTelegramUser(data.telegramUser || null);
     setIsAdmin(Boolean(data.isAdmin));
@@ -1322,8 +1345,13 @@ export default function WebAppClient() {
 
   if (loading) {
     return (
-      <div className="initial-loader-screen">
-        <div className="spinner" role="status" aria-label="Gift Myst yuklanmoqda" />
+      <div className="initial-loader-screen" role="status" aria-live="polite" aria-label="Gift Myst yuklanmoqda">
+        <div className="preload-brand">
+          <span className="preload-brand-mark">✦</span>
+          <strong>GIFT MYST</strong>
+          <span>Telegram Mini App</span>
+        </div>
+        <div className="spinner" aria-hidden="true" />
       </div>
     );
   }
@@ -1341,6 +1369,7 @@ export default function WebAppClient() {
   return (
     <div className="app-frame">
       <div className="app-shell">
+        {showWelcomeTour ? <WelcomeTour onFinish={finishWelcomeTour} /> : null}
 
 
         {toast ? <div className="toast" role="status">{toast}</div> : null}
@@ -1702,8 +1731,7 @@ function PromoImageCard({
           width={768}
           height={1152}
           sizes="(max-width: 590px) 46vw, 240px"
-          priority
-          unoptimized
+          loading="lazy"
           draggable={false}
           onError={() => setFailed(true)}
         />
@@ -1743,7 +1771,8 @@ function HomeGameBanner({
         width={1600}
         height={800}
         sizes="(max-width: 590px) 100vw, 560px"
-        priority
+        priority={!isPvp}
+        loading={isPvp ? 'lazy' : 'eager'}
         unoptimized
         draggable={false}
       />
@@ -1935,6 +1964,8 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
             src={caseItem.image_url}
             alt=""
             loading="lazy"
+            decoding="async"
+            fetchPriority="low"
           />
         ) : (
           <span className={caseOpeningStyles.caseTileFallback}>

@@ -55,10 +55,12 @@ export async function POST(request) {
         .from('withdraw_requests')
         .update({ status, admin_note: admin_note || null })
         .eq('id', requestId)
+        .eq('status', 'pending')
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw new Error(error.message);
+      if (!data) return jsonError('So‘rov allaqachon ko‘rib chiqilgan yoki topilmadi.', 409);
       return Response.json({ ok: true, request: data });
     }
 

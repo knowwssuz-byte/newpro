@@ -13916,3 +13916,17 @@ body {
   .promo-admin-form { grid-template-columns: 1fr 1fr; gap: 9px; }
   .promo-admin-form label:first-child, .promo-admin-form label:nth-child(5), .promo-admin-actions { grid-column: 1/-1; }
 }
+
+/* First-paint brand requires no external image download */
+.initial-loader-screen .preload-brand {
+ display: flex; flex-direction:column; align-items:center; gap:6px;
+ margin-bottom:20px; color:#faf9ff; text-align:center;
+}
+.initial-loader-screen .preload-brand-mark {
+ display:grid;place-items:center;width:60px;height:60px;margin-bottom:10px;
+ border-radius:20px;font-size:38px;font-weight:850;
+ background:linear-gradient(130deg,#a781fb,#5932c0);
+ box-shadow:0 12px 42px rgba(114,68,213,.34);
+}
+.initial-loader-screen .preload-brand strong{font-size:18px;letter-spacing:.22em;font-weight:950}
+.initial-loader-screen .preload-brand>span:last-child{font-size:10px;letter-spacing:.1em;color:#aaabc5}

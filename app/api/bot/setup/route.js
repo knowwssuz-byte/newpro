@@ -14,7 +14,9 @@ export async function GET(request) {
     String(process.env.BOT_SETUP_SECRET || '').trim() ||
     String(process.env.BOT_WEBHOOK_SECRET || '').trim();
 
-  if (expectedSecret && secret !== expectedSecret) {
+  // Never allow a public webhook reconfiguration endpoint without a secret.
+  if (!expectedSecret) return json({ ok: false, error: 'Bot setup kaliti sozlanmagan.' }, 503);
+  if (secret !== expectedSecret) {
     return json({ ok: false, error: 'Setup secret noto‘g‘ri' }, 401);
   }
 

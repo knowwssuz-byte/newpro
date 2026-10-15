@@ -18,12 +18,15 @@ export async function GET() {
 export async function POST(request) {
   const expectedSecret = String(process.env.BOT_WEBHOOK_SECRET || '').trim();
 
-  if (expectedSecret) {
-    const incomingSecret = request.headers.get('x-telegram-bot-api-secret-token') || '';
-
-    if (incomingSecret !== expectedSecret) {
-      return json({ ok: false, error: 'Webhook secret noto‘g‘ri' }, 401);
-    }
+  // Fail closed: a deployment without a webhook secret must not accept
+  // forged Telegram payment updates.
+  if (!expectedSecret) {
+    console.error('[bot:webhook] BOT_WEBHOOK_SECRET not configured');
+    return json({ ok: false, error: 'Webhook sozlanmagan' }, 503);
+  }
+  const incomingSecret = request.headers.get('x-telegram-bot-api-secret-token') || '';
+  if (incomingSecret !== expectedSecret) {
+    return json({ ok: false, error: 'Webhook secret noto‘g‘ri' }, 401);
   }
 
   let update = null;

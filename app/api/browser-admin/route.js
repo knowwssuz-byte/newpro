@@ -656,11 +656,10 @@ export async function POST(request) {
         updated_at: new Date().toISOString(),
       };
       if (id) {
-        const { count, error: countError } = await supabase.from('deposit_promo_redemptions')
-          .select('id', { count: 'exact', head: true }).eq('promo_id', id);
-        if (countError) throw countError;
-        if (maxUsers < Number(count || 0))
-          return json({ ok: false, error: 'Limit hozir foydalanayotgan odamlar sonidan kam bo‘lolmaydi.' }, 400);
+        const occupiedSlots = (await listPromoCodes(supabase)).find((item) => item.id === id);
+        if (!occupiedSlots) return json({ ok: false, error: 'Promokod topilmadi.' }, 404);
+        if (maxUsers < Number(occupiedSlots.used || 0))
+          return json({ ok: false, error: 'Limit kodni faollashtirgan yoki ishlatgan odamlar sonidan kam bo‘lolmaydi.' }, 400);
         const { error } = await supabase.from('deposit_promo_codes').update(row).eq('id', id);
         if (error) throw error;
       } else {
@@ -731,6 +730,11 @@ export async function POST(request) {
       );
 
       return json({ ok: true, rocket });
+    }
+
+    // Live outcomes are not editable by administrators. Allow observation only.
+    if (['rocket_set_bias','rocket_set_next','rocket_reset_next','rocket_launch_now','rocket_force_crash'].includes(action)) {
+      return json({ ok: false, error: 'Rocket natijalari avtomatik hisoblanadi. Qo‘lda o‘zgartirish o‘chirilgan.' }, 403);
     }
 
     if (action === 'rocket_set_bias') {
@@ -1046,29 +1050,16 @@ export async function POST(request) {
     if (action === 'user_add_balance') {
       const userId = Number(body.userId);
       const amount = Number(body.amount);
-
-      if (!Number.isFinite(userId) || !Number.isFinite(amount)) {
-        return json({ ok: false, error: 'User ID yoki amount noto‘g‘ri.' }, 400);
+      if (!Number.isSafeInteger(userId) || !Number.isSafeInteger(amount) || amount === 0 || Math.abs(amount) > 1000000) {
+        return json({ ok: false, error: 'Miqdor butun son va 1–1 000 000 oralig‘ida bo‘lsin.' }, 400);
       }
-
-      const { data: user, error: readError } = await supabase
-        .from('users')
-        .select('id,balance')
-        .eq('id', userId)
-        .single();
-
-      if (readError) throw readError;
-
-      const nextBalance = Number(user.balance || 0) + amount;
-      const { data, error } = await supabase
-        .from('users')
-        .update({ balance: nextBalance })
-        .eq('id', userId)
-        .select('*')
-        .single();
-
+      const operationId = /^[0-9a-f-]{36}$/i.test(String(body.operationId || ''))
+        ? String(body.operationId) : crypto.randomUUID();
+      const { data, error } = await supabase.rpc('admin_balance_adjust_atomic', {
+        p_user_id: userId, p_delta: amount, p_operation_id: operationId,
+        p_reason: 'browser-admin',
+      });
       if (error) throw error;
-
       return json({ ok: true, user: data });
     }
 
@@ -1096,11 +1087,12 @@ export async function POST(request) {
         .from('withdraw_requests')
         .update({ status })
         .eq('id', body.requestId)
+        .eq('status', 'pending')
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-
+      if (!data) return json({ ok: false, error: 'So‘rov allaqachon ko‘rib chiqilgan.' }, 409);
       return json({ ok: true, withdrawal: data });
     }
 
