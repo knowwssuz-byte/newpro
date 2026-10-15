@@ -916,7 +916,11 @@ export default function AdminClient() {
 
   async function savePromo(event) {
     event.preventDefault();
-    const result = await run(() => callAdmin('promo_save', { promo: promoForm }), 'Promokod saqlandi ✅');
+    const promoData = {
+      ...promoForm,
+      expiresAt: promoForm.expiresAt ? new Date(promoForm.expiresAt).toISOString() : null,
+    };
+    const result = await run(() => callAdmin('promo_save', { promo: promoData }), 'Promokod saqlandi ✅');
     if (result?.promoCodes) {
       setPromoCodes(result.promoCodes);
       setPromoForm({ id: '', code: '', bonusPercent: 10, maxUsers: 100, minCredit: 0, enabled: true, expiresAt: '' });
@@ -931,10 +935,14 @@ export default function AdminClient() {
   }
 
   function editPromo(promo) {
+    const expiresDate = promo.expiresAt ? new Date(promo.expiresAt) : null;
+    const localExpiresAt = expiresDate && !Number.isNaN(expiresDate.getTime())
+      ? new Date(expiresDate.getTime() - expiresDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
+      : '';
     setPromoForm({
       id: promo.id, code: promo.code, bonusPercent: promo.bonusPercent,
       maxUsers: promo.maxUsers, minCredit: promo.minCredit || 0,
-      enabled: promo.enabled, expiresAt: promo.expiresAt ? promo.expiresAt.slice(0, 16) : '',
+      enabled: promo.enabled, expiresAt: localExpiresAt,
     });
   }
 
