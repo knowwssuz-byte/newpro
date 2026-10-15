@@ -1363,152 +1363,31 @@ export default function AdminClient() {
                       </span>
                     </div>
 
-                    <div className="rocket-admin-actions">
-                      <button
-                        type="button"
-                        className="rocket-admin-launch"
-                        onClick={launchRocketNow}
-                        disabled={
-                          currentRocketRound.status !== 'betting' ||
-                          Boolean(rocketActionBusy)
-                        }
-                      >
-                        {rocketActionBusy === 'rocket_launch_now'
-                          ? 'Uchirilmoqda...'
-                          : 'Hozir uchirish'}
-                      </button>
-                      <button
-                        type="button"
-                        className="rocket-admin-crash"
-                        onClick={forceRocketCrash}
-                        disabled={
-                          currentRocketRound.status !== 'flying' ||
-                          Boolean(rocketActionBusy)
-                        }
-                      >
-                        {rocketActionBusy === 'rocket_force_crash'
-                          ? 'Portlatilmoqda...'
-                          : 'Hozir portlatish'}
-                      </button>
-                    </div>
+                    <p className="rocket-admin-warning">
+                      Raundlar server tomonidan avtomatik boshqariladi.
+                      Natijani qo‘lda o‘zgartirish o‘chirilgan.
+                    </p>
                   </section>
 
-                  <form
-                    className="rocket-admin-panel"
-                    onSubmit={saveNextRocketMultiplier}
-                  >
+                  <section className="rocket-admin-panel">
                     <div className="rocket-admin-panel-head">
-                      <div>
-                        <span>NEXT ROUND</span>
-                        <h3>Keyingi koeffitsiyent</h3>
-                      </div>
-                      <span className="rocket-admin-next-value">
-                        {rocketMultiplier(
-                          nextRocketRound?.crashMultiplier
-                        )}
-                      </span>
+                      <div><span>NEXT ROUND</span><h3>Keyingi raund</h3></div>
+                      <span className="rocket-admin-next-value">AUTO</span>
                     </div>
-
-                    <label className="rocket-admin-input">
-                      <span>1.00x–1000.00x</span>
-                      <div>
-                        <input
-                          id="rocket-next-multiplier"
-                          type="number"
-                          min="1"
-                          max="1000"
-                          step="0.01"
-                          inputMode="decimal"
-                          value={rocketNextMultiplier}
-                          onChange={(event) =>
-                            setRocketNextMultiplier(event.target.value)
-                          }
-                          required
-                        />
-                        <b>x</b>
-                      </div>
-                    </label>
-
                     <p className="rocket-admin-plan-note">
-                      Hozirgi reja:{' '}
-                      <strong>
-                        {rocketSourceLabel(
-                          nextRocketRound?.outcomeSource
-                        )}
-                      </strong>{' '}
-                      · {nextRocketRound?.biasMode || rocketBiasMode}
+                      Tasodifiy server algoritmi · admin natijaga aralasha olmaydi.
                     </p>
-
-                    <div className="rocket-admin-actions">
-                      <button
-                        type="submit"
-                        disabled={Boolean(rocketActionBusy)}
-                      >
-                        {rocketActionBusy === 'rocket_set_next'
-                          ? 'Saqlanmoqda...'
-                          : 'Keyingi natijani saqlash'}
-                      </button>
-                      <button
-                        type="button"
-                        className="rocket-admin-secondary"
-                        onClick={resetNextRocketMultiplier}
-                        disabled={Boolean(rocketActionBusy)}
-                      >
-                        Avtomatik qilish
-                      </button>
-                    </div>
-                  </form>
+                  </section>
                 </div>
 
                 <section className="rocket-admin-panel rocket-admin-bias">
                   <div className="rocket-admin-panel-head">
-                    <div>
-                      <span>AUTOMATIC DISTRIBUTION</span>
-                      <h3>Koeffitsiyentlar yo‘nalishi</h3>
-                    </div>
-                    <span className="rocket-admin-next-value">
-                      {rocketBiasMode.toUpperCase()}
-                    </span>
+                    <div><span>AUTOMATIC DISTRIBUTION</span><h3>Ochiq, standart rejim</h3></div>
+                    <span className="rocket-admin-next-value">STANDARD</span>
                   </div>
-
-                  <div className="rocket-admin-bias-options">
-                    {[
-                      [
-                        'low',
-                        'Pastroq',
-                        'Past koeffitsiyentlar ko‘proq chiqadi.',
-                      ],
-                      [
-                        'standard',
-                        'Standart',
-                        '2% edge bilan tabiiy inverse taqsimot.',
-                      ],
-                      [
-                        'high',
-                        'Yuqoriroq',
-                        'Yuqori koeffitsiyentlar ko‘proq chiqadi.',
-                      ],
-                    ].map(([id, title, description]) => (
-                      <button
-                        type="button"
-                        key={id}
-                        className={
-                          rocketBiasMode === id ? 'is-active' : ''
-                        }
-                        onClick={() => setRocketBias(id)}
-                        disabled={Boolean(rocketActionBusy)}
-                      >
-                        <i />
-                        <strong>{title}</strong>
-                        <span>{description}</span>
-                      </button>
-                    ))}
-                  </div>
-
                   <p className="rocket-admin-warning">
-                    Rejim o‘zgarsa, faqat avtomatik keyingi reja qayta
-                    hisoblanadi. Qo‘lda belgilangan keyingi koeffitsiyent
-                    o‘zgarmaydi.
+                    Koeffitsiyentlar serverda hisoblanadi. Past/baland bias,
+                    oldindan natija belgilash va majburiy portlatish taqiqlangan.
                   </p>
                 </section>
               </>
