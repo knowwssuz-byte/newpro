@@ -1506,7 +1506,7 @@ export default function AdminClient() {
                 </div>
 
                 <div className="browser-admin-two">
-                  <label><span>Minimal stavka</span><input type="number" min="1" max="100000" value={diceSettings.minBet} onChange={(event) => setDiceSettings({ ...diceSettings, minBet: event.target.value })} /></label>
+                  <label><span>Minimal stavka</span><input type="number" min="10" max="100000" value={diceSettings.minBet} onChange={(event) => setDiceSettings({ ...diceSettings, minBet: event.target.value })} /></label>
                   <label><span>Maksimal stavka</span><input type="number" min="1" max="1000000" value={diceSettings.maxBet} onChange={(event) => setDiceSettings({ ...diceSettings, maxBet: event.target.value })} /></label>
                 </div>
 
