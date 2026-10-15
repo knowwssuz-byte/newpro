@@ -279,6 +279,10 @@ export default function DepositView({
   const [tonAmount, setTonAmount] = useState('1');
   const [giftUrl, setGiftUrl] = useState('');
   const [giftNote, setGiftNote] = useState('');
+  const [promoInput, setPromoInput] = useState('');
+  const [promo, setPromo] = useState(null);
+  const [promoError, setPromoError] = useState('');
+  const [showHistory, setShowHistory] = useState(false);
   const [tonTransferLink, setTonTransferLink] = useState('');
   const [tonFallbackOpen, setTonFallbackOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -523,6 +527,29 @@ export default function DepositView({
     }
   }
 
+  async function applyPromo(event) {
+    event.preventDefault();
+    if (!promoInput.trim() || busy) return;
+    setBusy('promo');
+    setPromoError('');
+    setPromo(null);
+    try {
+      const data = await apiPost('/api/deposit', {
+        action: 'promo_preview',
+        method,
+        amount: method === 'stars' ? Number(starsAmount) : Number(tonAmount),
+        promoCode: promoInput,
+      }, { timeoutMs: 10_000 });
+      setPromo({ ...data.promo, method });
+    } catch (promoLoadError) {
+      setPromoError(promoLoadError?.message || 'Promokod tekshiruvi amalga oshmadi.');
+    } finally {
+      if (mountedRef.current) setBusy('');
+    }
+  }
+
+  const appliedPromoCode = promo?.method === method ? promo.code : '';
+
   async function payWithStars(event) {
     event.preventDefault();
 
@@ -532,6 +559,7 @@ export default function DepositView({
         {
           action: 'create_stars',
           amount: Number(starsAmount),
+          promoCode: appliedPromoCode,
         },
         { timeoutMs: 10_000 }
       );
@@ -619,6 +647,7 @@ export default function DepositView({
         {
           action: 'create_ton',
           amount: tonAmount,
+          promoCode: appliedPromoCode,
           flow: 'ton_connect',
           senderAddress: tonAddress,
           network: tonWallet.account?.chain,
@@ -725,6 +754,7 @@ export default function DepositView({
         {
           action: 'create_ton',
           amount: tonAmount,
+          promoCode: appliedPromoCode,
           flow: 'manual',
         },
         { timeoutMs: 15_000 }
@@ -812,6 +842,10 @@ export default function DepositView({
     0,
     Math.floor(number(tonAmount) * number(settings?.tonStarsRate))
   );
+  const baseCredit = method === 'stars' ? Math.max(0, number(starsAmount)) : expectedTonCredit;
+  const promoBonus = promo?.method === method && baseCredit >= number(promo.minCredit)
+    ? Math.floor(baseCredit * number(promo.bonusPercent) / 100)
+    : 0;
 
   return (
     <section className={styles.page}>
@@ -831,14 +865,7 @@ export default function DepositView({
         </div>
       </header>
 
-      <div className={styles.secureStrip}>
-        <span className={styles.secureIcon}><ShieldIcon /></span>
-        <div>
-          <strong>Xavfsiz deposit</strong>
-          <span>Server himoyasi · har bir to‘lov faqat bir marta hisoblanadi</span>
-        </div>
-        <em>LIVE</em>
-      </div>
+      <div className={styles.compactSecurity}><ShieldIcon /> To‘lov tasdiqlangach balans avtomatik yangilanadi</div>
 
       {error ? (
         <div className={styles.alert} role="alert">
@@ -885,6 +912,8 @@ export default function DepositView({
             aria-pressed={method === item.id}
             onClick={() => {
               setMethod(item.id);
+              setPromo(null);
+              setPromoError('');
               setError('');
               setNotice('');
             }}
@@ -902,6 +931,27 @@ export default function DepositView({
         <div className={styles.loadingCard}>
           <span />
           <p>Deposit tizimi sinxronlanmoqda...</p>
+        </div>
+      ) : null}
+
+      {!loading && method !== 'gift' ? (
+        <div className={styles.promoArea}>
+          <form className={styles.promoForm} onSubmit={applyPromo}>
+            <label htmlFor="deposit-promocode">PROMOKOD <span>ixtiyoriy</span></label>
+            <div className={styles.promoEntry}>
+              <input id="deposit-promocode" placeholder="Kodni kiriting" autoComplete="off"
+                value={promoInput} maxLength={32}
+                onChange={(e) => { setPromoInput(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '')); setPromo(null); setPromoError(''); }} />
+              <button type="submit" disabled={Boolean(busy) || !promoInput.trim()}>{busy === 'promo' ? '...' : 'Qo‘llash'}</button>
+            </div>
+          </form>
+          {promoError ? <p className={styles.promoError} role="alert">{promoError}</p> : null}
+          {promo?.method === method ? (
+            <div className={styles.promoSuccess}><span>✓ {promo.code} · +{promo.bonusPercent}%</span>
+              <strong>+{formatBalance(promoBonus)} ⭐ bonus</strong>
+              <button type="button" onClick={() => { setPromo(null); setPromoInput(''); }} aria-label="Promokodni olib tashlash">×</button>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -929,7 +979,7 @@ export default function DepositView({
               step="1"
               inputMode="numeric"
               value={starsAmount}
-              onChange={(event) => setStarsAmount(event.target.value)}
+              onChange={(event) => { setStarsAmount(event.target.value); setPromo(null); }}
               aria-label="Stars amount"
               required
             />
@@ -946,7 +996,7 @@ export default function DepositView({
                 type="button"
                 key={item}
                 className={Number(starsAmount) === item ? styles.selectedPreset : ''}
-                onClick={() => setStarsAmount(String(item))}
+                onClick={() => { setStarsAmount(String(item)); setPromo(null); }}
               >
                 {item}
               </button>
@@ -955,7 +1005,7 @@ export default function DepositView({
 
           <div className={styles.summary}>
             <span>Siz olasiz</span>
-            <strong><StarsMark small /> {formatBalance(starsAmount)}</strong>
+            <strong><StarsMark small /> {formatBalance(number(starsAmount) + promoBonus)}</strong>
           </div>
 
           <button
@@ -1043,7 +1093,7 @@ export default function DepositView({
                     step="0.000000001"
                     inputMode="decimal"
                     value={tonAmount}
-                    onChange={(event) => setTonAmount(event.target.value)}
+                    onChange={(event) => { setTonAmount(event.target.value); setPromo(null); }}
                     aria-label="TON amount"
                     required
                   />
@@ -1060,7 +1110,7 @@ export default function DepositView({
                       type="button"
                       key={item}
                       className={Number(tonAmount) === item ? styles.selectedPreset : ''}
-                      onClick={() => setTonAmount(String(item))}
+                      onClick={() => { setTonAmount(String(item)); setPromo(null); }}
                     >
                       {item}
                     </button>
@@ -1069,7 +1119,7 @@ export default function DepositView({
 
                 <div className={styles.summary}>
                   <span>Taxminiy balans</span>
-                  <strong><StarsMark small /> {formatBalance(expectedTonCredit)}</strong>
+                  <strong><StarsMark small /> {formatBalance(expectedTonCredit + promoBonus)}</strong>
                 </div>
 
                 <button
@@ -1252,12 +1302,12 @@ export default function DepositView({
             <span>ACTIVITY</span>
             <h3>Oxirgi depositlar</h3>
           </div>
-          <button type="button" onClick={() => loadState()} disabled={loading}>
-            Yangilash
+          <button type="button" onClick={() => setShowHistory((value) => !value)}>
+            {showHistory ? 'Yopish' : 'Ko‘rish'}
           </button>
         </div>
 
-        {deposits.length ? (
+        {showHistory && deposits.length ? (
           <div className={styles.historyList}>
             {deposits.slice(0, 8).map((deposit) => {
               const status = statusMeta(deposit.status);
@@ -1281,13 +1331,13 @@ export default function DepositView({
               );
             })}
           </div>
-        ) : (
+        ) : showHistory ? (
           <div className={styles.emptyHistory}>
             <span>◎</span>
             <strong>Hali deposit yo‘q</strong>
             <p>Birinchi to‘lovingiz shu yerda ko‘rinadi.</p>
           </div>
-        )}
+        ) : null}
       </section>
     </section>
   );
