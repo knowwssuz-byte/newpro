@@ -656,11 +656,10 @@ export async function POST(request) {
         updated_at: new Date().toISOString(),
       };
       if (id) {
-        const { count, error: countError } = await supabase.from('deposit_promo_redemptions')
-          .select('id', { count: 'exact', head: true }).eq('promo_id', id);
-        if (countError) throw countError;
-        if (maxUsers < Number(count || 0))
-          return json({ ok: false, error: 'Limit hozir foydalanayotgan odamlar sonidan kam bo‘lolmaydi.' }, 400);
+        const occupiedSlots = (await listPromoCodes(supabase)).find((item) => item.id === id);
+        if (!occupiedSlots) return json({ ok: false, error: 'Promokod topilmadi.' }, 404);
+        if (maxUsers < Number(occupiedSlots.used || 0))
+          return json({ ok: false, error: 'Limit kodni faollashtirgan yoki ishlatgan odamlar sonidan kam bo‘lolmaydi.' }, 400);
         const { error } = await supabase.from('deposit_promo_codes').update(row).eq('id', id);
         if (error) throw error;
       } else {
