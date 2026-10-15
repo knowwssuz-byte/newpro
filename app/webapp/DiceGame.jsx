@@ -7,7 +7,7 @@ import styles from './DiceGame.module.css';
 
 const DEFAULT_CONFIG = {
   enabled: true,
-  minBet: 1,
+  minBet: 10,
   maxBet: 10000,
   minWinChance: 5,
   maxWinChance: 85,
