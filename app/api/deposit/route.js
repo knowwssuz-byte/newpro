@@ -122,8 +122,8 @@ function publicDeposit(deposit) {
   return result;
 }
 
-async function fetchUserState(supabase, userId, settings = null) {
-  const [userResult, depositsResult, resolvedSettings] = await Promise.all([
+async function fetchUserState(supabase, userId, settings = null, includePromo = false) {
+  const [userResult, depositsResult, resolvedSettings, promoResult] = await Promise.all([
     supabase.from('users').select('id,balance').eq('id', userId).single(),
     supabase
       .from('deposit_transactions')
@@ -134,8 +134,12 @@ async function fetchUserState(supabase, userId, settings = null) {
       .order('created_at', { ascending: false })
       .limit(HISTORY_LIMIT),
     settings ? Promise.resolve(settings) : getDepositSettings(supabase),
+    includePromo
+      ? supabase.rpc('deposit_promo_current', { p_user_id: userId })
+      : Promise.resolve({ data: null, error: null }),
   ]);
 
+  if (promoResult.error) console.warn('[deposit:promo-session]', promoResult.error.code);
   if (userResult.error) throw userResult.error;
   if (depositsResult.error) throwDepositError(depositsResult.error);
 
@@ -143,6 +147,7 @@ async function fetchUserState(supabase, userId, settings = null) {
     balance: Math.max(0, toNumber(userResult.data?.balance)),
     settings: depositSettingsForClient(resolvedSettings),
     deposits: (depositsResult.data || []).map(publicDeposit),
+    ...(includePromo && !promoResult.error ? { promoSession: promoResult.data || null } : {}),
   };
 }
 
@@ -286,15 +291,19 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
     },
   };
 
-  // DB insert va Telegram invoice link bir-biridan mustaqil. Ikkalasini
-  // parallel kutish tugma bosilgandagi ortiqcha ketma-ket kechikishni oladi.
-  const [insertOutcome, invoiceOutcome] = await Promise.allSettled([
-    supabase
-      .from('deposit_transactions')
-      .insert(row)
-      .select('*')
-      .single(),
-    telegramApi('createInvoiceLink', {
+  // First reserve the payment in DB. Never expose a payable Telegram invoice
+  // for a transaction rejected by the promo trigger (expired/used/full).
+  const { data: deposit, error: insertError } = await supabase
+    .from('deposit_transactions')
+    .insert(row)
+    .select('*')
+    .single();
+  if (insertError) throwDepositError(insertError);
+  if (!deposit) throw new Error('Stars deposit bazada yaratilmadi.');
+
+  let invoiceLink;
+  try {
+    invoiceLink = await telegramApi('createInvoiceLink', {
       title: 'Gift Myst balance',
       description: `${amount} Stars balansga avtomatik qo‘shiladi`,
       payload,
@@ -305,24 +314,8 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
           amount,
         },
       ],
-    }, { timeoutMs: 8_000 }),
-  ]);
-
-  const insertResult =
-    insertOutcome.status === 'fulfilled'
-      ? insertOutcome.value
-      : { data: null, error: insertOutcome.reason };
-  const deposit = insertResult.data;
-  const insertError = insertResult.error;
-
-  if (insertError) throwDepositError(insertError);
-  if (!deposit) {
-    throw new Error('Stars deposit bazada yaratilmadi.');
-  }
-
-  if (invoiceOutcome.status === 'rejected') {
-    const error = invoiceOutcome.reason;
-
+    }, { timeoutMs: 8_000 });
+  } catch (error) {
     await supabase
       .from('deposit_transactions')
       .update({
@@ -338,7 +331,7 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
 
   return {
     deposit: publicDeposit(deposit),
-    invoiceLink: invoiceOutcome.value,
+    invoiceLink,
   };
 }
 
@@ -779,11 +772,11 @@ export async function POST(request) {
     if (action === 'state') {
       return Response.json({
         ok: true,
-        ...(await fetchUserState(supabase, userId, settings)),
+        ...(await fetchUserState(supabase, userId, settings, Boolean(body.includePromo))),
       });
     }
 
-    if (action === 'promo_preview') {
+    if (action === 'promo_activate' || action === 'promo_preview') {
       const method = clean(body.method).toLowerCase();
       if (!['stars', 'ton'].includes(method)) return jsonError('To‘lov usuli noto‘g‘ri.', 400);
       const creditAmount = method === 'stars'
@@ -791,6 +784,7 @@ export async function POST(request) {
         : Math.floor(toNumber(body.amount) * Number(settings.tonStarsRate));
       const promo = await previewDepositPromo(supabase, {
         code: body.promoCode, userId, creditAmount, method,
+        activate: action === 'promo_activate',
       });
       return Response.json({ ok: true, promo });
     }
