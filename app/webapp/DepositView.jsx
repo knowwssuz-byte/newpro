@@ -282,6 +282,7 @@ export default function DepositView({
   const [promoInput, setPromoInput] = useState('');
   const [promo, setPromo] = useState(null);
   const [promoError, setPromoError] = useState('');
+  const [promoNow, setPromoNow] = useState(() => Date.now());
   const [showHistory, setShowHistory] = useState(false);
   const [tonTransferLink, setTonTransferLink] = useState('');
   const [tonFallbackOpen, setTonFallbackOpen] = useState(false);
@@ -292,6 +293,11 @@ export default function DepositView({
   const mountedRef = useRef(false);
   const pollBusyRef = useRef(false);
   const manifestCheckRef = useRef(null);
+  useEffect(() => {
+    if (!promo?.expiresAt) return undefined;
+    const timer = window.setInterval(() => setPromoNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [promo?.expiresAt]);
 
   const applyState = useCallback(
     (data) => {
@@ -535,12 +541,13 @@ export default function DepositView({
     setPromo(null);
     try {
       const data = await apiPost('/api/deposit', {
-        action: 'promo_preview',
+        action: 'promo_activate',
         method,
         amount: method === 'stars' ? Number(starsAmount) : Number(tonAmount),
         promoCode: promoInput,
       }, { timeoutMs: 10_000 });
       setPromo({ ...data.promo, method });
+      setPromoNow(Date.now());
     } catch (promoLoadError) {
       setPromoError(promoLoadError?.message || 'Promokod tekshiruvi amalga oshmadi.');
     } finally {
@@ -548,12 +555,32 @@ export default function DepositView({
     }
   }
 
-  const appliedPromoCode = promo?.method === method ? promo.code : '';
+  const promoExpiry = promo?.expiresAt ? Date.parse(promo.expiresAt) : 0;
+  const promoRemainingMs = Math.max(0, promoExpiry - promoNow);
+  const promoExpired = Boolean(promo) && promoRemainingMs <= 0;
+  const promoTimeText = [Math.floor(promoRemainingMs / 3_600_000),
+    Math.floor((promoRemainingMs % 3_600_000) / 60_000),
+    Math.floor((promoRemainingMs % 60_000) / 1000)]
+    .map((part) => String(part).padStart(2, '0')).join(':');
+  const promoWrongMethod = Boolean(promo) && promo.method !== method;
+  const promoMinRequired = Boolean(promo) && (
+    method === 'stars'
+      ? number(starsAmount) < number(promo.minCredit)
+      : Math.floor(number(tonAmount) * number(settings?.tonStarsRate)) < number(promo.minCredit)
+  );
+  const promoUsable = Boolean(promo) && !promoExpired && !promoWrongMethod && !promoMinRequired;
+  const appliedPromoCode = promoUsable ? promo.code : '';
+  const promoNeedsAttention = Boolean(promo) && !promoUsable;
 
   async function payWithStars(event) {
     event.preventDefault();
 
     await runAction('stars', async () => {
+      if (promoNeedsAttention) {
+        throw new Error(promoExpired
+          ? 'Promokodning 6 soati tugadi. Promokodni olib tashlang.'
+          : 'Promokod uchun belgilangan minimal depozit miqdorini kiriting.');
+      }
       const data = await apiPost(
         '/api/deposit',
         {
@@ -843,7 +870,7 @@ export default function DepositView({
     Math.floor(number(tonAmount) * number(settings?.tonStarsRate))
   );
   const baseCredit = method === 'stars' ? Math.max(0, number(starsAmount)) : expectedTonCredit;
-  const promoBonus = promo?.method === method && baseCredit >= number(promo.minCredit)
+  const promoBonus = promoUsable
     ? Math.floor(baseCredit * number(promo.bonusPercent) / 100)
     : 0;
 
@@ -946,12 +973,23 @@ export default function DepositView({
             </div>
           </form>
           {promoError ? <p className={styles.promoError} role="alert">{promoError}</p> : null}
-          {promo?.method === method ? (
-            <div className={styles.promoSuccess}><span>✓ {promo.code} · +{promo.bonusPercent}%</span>
-              <strong>+{formatBalance(promoBonus)} ⭐ bonus</strong>
-              <button type="button" onClick={() => { setPromo(null); setPromoInput(''); }} aria-label="Promokodni olib tashlash">×</button>
+          {promo && promo.method === method ? (
+            <div className={`${styles.promoSuccess} ${promoNeedsAttention ? styles.promoInvalid : ''}`}>
+              <div className={styles.promoStatusMain}>
+                <strong>✓ {promo.code} · +{promo.bonusPercent}%</strong>
+                <span>{promoExpired ? 'Muddati tugadi' : promoMinRequired
+                  ? `Kamida ${formatBalance(promo.minCredit)} Stars to‘ldiring`
+                  : `Bonus: +${formatBalance(promoBonus)} ⭐`}</span>
+              </div>
+              <div className={styles.promoClock} aria-live="off">
+                <small>Qolgan vaqt</small><b>{promoTimeText}</b>
+              </div>
+              <button type="button" className={styles.promoRemove}
+                onClick={() => { setPromo(null); setPromoInput(''); }}
+                aria-label="Promokodni olib tashlash">×</button>
             </div>
           ) : null}
+          <p className={styles.promoHelp}>Promokod birinchi qo‘llangandan boshlab 6 soat amal qiladi. Qayta kiritish vaqtni uzaytirmaydi.</p>
         </div>
       ) : null}
 
@@ -979,7 +1017,7 @@ export default function DepositView({
               step="1"
               inputMode="numeric"
               value={starsAmount}
-              onChange={(event) => { setStarsAmount(event.target.value); setPromo(null); }}
+              onChange={(event) => setStarsAmount(event.target.value)}
               aria-label="Stars amount"
               required
             />
@@ -996,7 +1034,7 @@ export default function DepositView({
                 type="button"
                 key={item}
                 className={Number(starsAmount) === item ? styles.selectedPreset : ''}
-                onClick={() => { setStarsAmount(String(item)); setPromo(null); }}
+                onClick={() => setStarsAmount(String(item))}
               >
                 {item}
               </button>
@@ -1011,7 +1049,7 @@ export default function DepositView({
           <button
             type="submit"
             className={`${styles.primaryButton} ${styles.starsButton}`}
-            disabled={Boolean(busy) || !settings?.starsConfigured}
+            disabled={Boolean(busy) || !settings?.starsConfigured || promoNeedsAttention}
           >
             {busy === 'stars' ? <span className={styles.buttonSpinner} /> : <StarsMark small />}
             <span>{busy === 'stars' ? 'Invoice ochilmoqda...' : 'Telegram Stars bilan to‘lash'}</span>
@@ -1093,7 +1131,7 @@ export default function DepositView({
                     step="0.000000001"
                     inputMode="decimal"
                     value={tonAmount}
-                    onChange={(event) => { setTonAmount(event.target.value); setPromo(null); }}
+                    onChange={(event) => setTonAmount(event.target.value)}
                     aria-label="TON amount"
                     required
                   />
@@ -1110,7 +1148,7 @@ export default function DepositView({
                       type="button"
                       key={item}
                       className={Number(tonAmount) === item ? styles.selectedPreset : ''}
-                      onClick={() => { setTonAmount(String(item)); setPromo(null); }}
+                      onClick={() => setTonAmount(String(item))}
                     >
                       {item}
                     </button>
@@ -1127,6 +1165,7 @@ export default function DepositView({
                   className={`${styles.primaryButton} ${styles.tonButton}`}
                   disabled={
                     Boolean(busy) ||
+                    promoNeedsAttention ||
                     !tonConnectionRestored ||
                     pendingTon?.status === 'confirming'
                   }
@@ -1153,7 +1192,7 @@ export default function DepositView({
                       createManualTonInvoice();
                     }
                   }}
-                  disabled={Boolean(busy) || pendingTon?.status === 'confirming'}
+                  disabled={Boolean(busy) || promoNeedsAttention || pendingTon?.status === 'confirming'}
                 >
                   {busy === 'ton-manual'
                     ? 'Manual invoice tayyorlanmoqda...'
@@ -1318,6 +1357,7 @@ export default function DepositView({
                   <div className={styles.historyCopy}>
                     <strong>{methodName(deposit.method)}</strong>
                     <span>{dateTime(deposit.createdAt)} · {deposit.giftTitle || (deposit.method === 'gift' ? 'Gift tekshiruvi' : `${formatTon(deposit.payAmount)} ${deposit.payCurrency}`)}</span>
+                    {deposit.promoCode ? <small>Promokod: {deposit.promoCode}</small> : null}
                     {deposit.adminNote ? <small>{deposit.adminNote}</small> : null}
                   </div>
                   <div className={styles.historyValue}>
