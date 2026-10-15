@@ -12,6 +12,7 @@ import {
   normalizeTonAddress,
 } from '@/lib/tonDeposits';
 import { telegramApi } from '@/lib/telegramBot';
+import { normalizePromoCode, previewDepositPromo, promoErrorMessage } from '@/lib/depositPromo';
 import { createStarsInvoicePayload } from '@/lib/starsInvoices';
 import {
   ensureUser,
@@ -58,6 +59,8 @@ function depositSqlMissing(error) {
 }
 
 function throwDepositError(error) {
+  const promoMessage = promoErrorMessage(error);
+  if (promoMessage) throw new Error(promoMessage);
   if (depositSqlMissing(error)) {
     throw new Error(
       'Deposit SQL o‘rnatilmagan. Supabase’da sql/deposit-system.sql faylini to‘liq Run qiling.'
@@ -82,6 +85,7 @@ function publicDeposit(deposit) {
     payCurrency: deposit.pay_currency,
     payAmount: toNumber(deposit.pay_amount),
     creditAmount: toNumber(deposit.credit_amount),
+    promoCode: metadata.promoCode || '',
     tonWallet: deposit.ton_wallet || '',
     tonMemo: deposit.ton_memo || '',
     giftUrl: deposit.gift_url || '',
@@ -251,6 +255,8 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
   }
 
   const amount = validateStarsAmount(body.amount, settings);
+  const promoCode = normalizePromoCode(body.promoCode);
+  if (promoCode) await previewDepositPromo(supabase, { code: promoCode, userId, creditAmount: amount, method: 'stars' });
   const depositId = crypto.randomUUID();
   const expiresAt = new Date(
     Date.now() + STARS_INVOICE_TTL_MS
@@ -273,6 +279,7 @@ async function createStarsDeposit({ supabase, userId, body, settings }) {
     expires_at: expiresAt,
     metadata: {
       version: 2,
+      ...(promoCode ? { promoCode } : {}),
       source: 'webapp',
       invoiceCreatedAt: new Date().toISOString(),
       fastPreCheckout: true,
@@ -362,6 +369,11 @@ async function createTonDeposit({ supabase, userId, body, settings }) {
   if (activeError) throwDepositError(activeError);
 
   if (activeDeposit) {
+    const requestedPromoCode = normalizePromoCode(body.promoCode);
+    const activePromoCode = normalizePromoCode(activeDeposit.metadata?.promoCode);
+    if (requestedPromoCode && requestedPromoCode !== activePromoCode) {
+      throw new Error('Avvalgi TON invoice hali faol. Uni yakunlang yoki muddati tugashini kuting.');
+    }
     const activeExpiresAt = new Date(
       activeDeposit.expires_at || 0
     ).getTime();
@@ -425,6 +437,8 @@ async function createTonDeposit({ supabase, userId, body, settings }) {
   if (creditAmount < 1) {
     throw new Error('Bu TON miqdori uchun balans 1 Starsdan kam chiqmoqda.');
   }
+  const promoCode = normalizePromoCode(body.promoCode);
+  if (promoCode) await previewDepositPromo(supabase, { code: promoCode, userId, creditAmount, method: 'ton' });
 
   const expiresAt = new Date(
     Date.now() + settings.tonExpiryMinutes * 60_000
@@ -442,6 +456,7 @@ async function createTonDeposit({ supabase, userId, body, settings }) {
     expires_at: expiresAt,
     metadata: {
       version: 1,
+      ...(promoCode ? { promoCode } : {}),
       source: 'webapp',
       amountNano: nano.toString(),
       starsRate: settings.tonStarsRate,
@@ -768,6 +783,18 @@ export async function POST(request) {
       });
     }
 
+    if (action === 'promo_preview') {
+      const method = clean(body.method).toLowerCase();
+      if (!['stars', 'ton'].includes(method)) return jsonError('To‘lov usuli noto‘g‘ri.', 400);
+      const creditAmount = method === 'stars'
+        ? validateStarsAmount(body.amount, settings)
+        : Math.floor(toNumber(body.amount) * Number(settings.tonStarsRate));
+      const promo = await previewDepositPromo(supabase, {
+        code: body.promoCode, userId, creditAmount, method,
+      });
+      return Response.json({ ok: true, promo });
+    }
+
     if (action === 'create_stars') {
       result = await createStarsDeposit({
         supabase,
@@ -856,7 +883,8 @@ export async function POST(request) {
       message.includes('noto‘g‘ri') ||
       message.includes('avval') ||
       message.includes('sozlanmagan') ||
-      message.includes('o‘chirilgan')
+      message.includes('o‘chirilgan') ||
+      /promokod|depozit summasi|invoice hali faol/i.test(message)
         ? 400
         : 500;
 

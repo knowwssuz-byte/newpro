@@ -22,6 +22,7 @@ import {
   normalizeBonusTask,
 } from '@/lib/bonusTasks';
 import { normalizeTonAddress } from '@/lib/tonDeposits';
+import { normalizePromoCode } from '@/lib/depositPromo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -143,6 +144,14 @@ async function normalizeCaseOrder(supabase, cases = []) {
   return sorted;
 }
 
+async function listPromoCodes(supabase) {
+  const cleanup = await supabase.rpc('deposit_promo_cleanup');
+  if (cleanup.error) throw cleanup.error;
+  const { data, error } = await supabase.rpc('deposit_promo_admin_list');
+  if (error) throw error;
+  return Array.isArray(data) ? data : [];
+}
+
 async function getDiceStats(supabase) {
   const { data, error } = await supabase.rpc('dice_admin_overview');
   if (error) {
@@ -166,6 +175,7 @@ async function bootstrap(supabase) {
     diceStats,
     bonusTasks,
     bonusProgress,
+    promoCodes,
   ] = await Promise.all([
     fetchCasesForAdmin(supabase),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').order('created_at', { ascending: false })),
@@ -207,6 +217,7 @@ async function bootstrap(supabase) {
         .like('key', 'bonus_progress_%')
         .limit(1000)
     ),
+    listPromoCodes(supabase),
   ]);
 
   const completedProgress = (bonusProgress || []).filter(
@@ -221,6 +232,7 @@ async function bootstrap(supabase) {
     giftLibrary,
     featureSettings: Object.fromEntries((featureRows || []).map((item) => [item.key, item.value || {}])),
     deposits,
+    promoCodes,
     depositSettings: depositSettingsForClient(depositSettings),
     diceSettings: diceSettingsForClient(diceSettings),
     diceStats,
@@ -620,6 +632,51 @@ export async function POST(request) {
         ok: true,
         depositSettings: depositSettingsForClient(settings),
       });
+    }
+
+    if (action === 'promo_save') {
+      const input = body.promo || {};
+      const code = normalizePromoCode(input.code);
+      const bonusPercent = Number(input.bonusPercent);
+      const maxUsers = Number(input.maxUsers);
+      const minCredit = Number(input.minCredit || 0);
+      const id = clean(input.id);
+      if (!code || !Number.isFinite(bonusPercent) || bonusPercent <= 0 || bonusPercent > 100)
+        return json({ ok: false, error: 'Promokod va bonus foizi (1–100%) kerak.' }, 400);
+      if (!Number.isSafeInteger(maxUsers) || maxUsers < 1 || maxUsers > 1000000)
+        return json({ ok: false, error: 'Foydalanuvchilar limiti 1–1000000 oralig‘ida bo‘lsin.' }, 400);
+      if (!Number.isFinite(minCredit) || minCredit < 0)
+        return json({ ok: false, error: 'Minimal depozit noto‘g‘ri.' }, 400);
+      const expiresAt = input.expiresAt ? new Date(input.expiresAt) : null;
+      if (expiresAt && (Number.isNaN(expiresAt.getTime()) || expiresAt.getTime() <= Date.now()))
+        return json({ ok: false, error: 'Promokod tugash vaqti kelajakda bo‘lishi kerak.' }, 400);
+      const row = {
+        code, bonus_percent: bonusPercent, max_users: maxUsers, min_credit: minCredit,
+        enabled: input.enabled !== false, expires_at: expiresAt?.toISOString() || null,
+        updated_at: new Date().toISOString(),
+      };
+      if (id) {
+        const { count, error: countError } = await supabase.from('deposit_promo_redemptions')
+          .select('id', { count: 'exact', head: true }).eq('promo_id', id);
+        if (countError) throw countError;
+        if (maxUsers < Number(count || 0))
+          return json({ ok: false, error: 'Limit hozir foydalanayotgan odamlar sonidan kam bo‘lolmaydi.' }, 400);
+        const { error } = await supabase.from('deposit_promo_codes').update(row).eq('id', id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('deposit_promo_codes').insert(row);
+        if (error) throw error;
+      }
+      return json({ ok: true, promoCodes: await listPromoCodes(supabase) });
+    }
+
+    if (action === 'promo_toggle') {
+      const id = clean(body.promoId);
+      if (!/^[0-9a-f-]{36}$/i.test(id)) return json({ ok: false, error: 'Promokod ID noto‘g‘ri.' }, 400);
+      const { error } = await supabase.from('deposit_promo_codes')
+        .update({ enabled: Boolean(body.enabled), updated_at: new Date().toISOString() }).eq('id', id);
+      if (error) throw error;
+      return json({ ok: true, promoCodes: await listPromoCodes(supabase) });
     }
 
     if (action === 'deposit_resolve') {
