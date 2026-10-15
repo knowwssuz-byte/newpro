@@ -3631,3 +3631,72 @@
     height: 28px;
   }
 }
+
+/* Compact deposit layout and promotional bonus entry */
+.compactSecurity {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 4px 6px;
+  color: rgba(196, 220, 213, .72);
+  font-size: 10px;
+  font-weight: 650;
+}
+.compactSecurity svg { width: 14px; height: 14px; flex: 0 0 14px; color: #56d99a; }
+.page { max-width: 520px; }
+.methodGrid { gap: 7px; margin: 5px 0 9px; }
+.methodCard { min-height: 62px; border-radius: 14px; padding: 6px 4px; gap: 1px; }
+.methodCard .starsMark, .methodCard .tonMark, .methodCard .giftMark {
+  width: 27px; height: 27px; border-radius: 9px;
+}
+.methodCard .starsMark img, .methodCard .tonMark img, .methodCard .giftMark img {
+  width: 100%; height: 100%; object-fit: contain;
+}
+.methodCard em { display: none; }
+.methodCard strong { font-size: 12px; }
+.methodCard small { font-size: 8px; }
+.promoArea {
+  margin: 0 0 9px;
+  padding: 10px 12px;
+  border: 1px solid rgba(167,139,250,.22);
+  border-radius: 15px;
+  background: linear-gradient(120deg,rgba(91,47,148,.17),rgba(17,24,39,.72));
+}
+.promoForm { display: grid; gap: 7px; }
+.promoForm > label {
+  display: flex; justify-content: space-between;
+  color: #d9ceff; font-size: 10px; font-weight: 900; letter-spacing: .06em;
+}
+.promoForm > label span { color: rgba(226,232,240,.45); font-weight: 650; text-transform: none; letter-spacing: 0; }
+.promoEntry { display: grid; grid-template-columns: minmax(0,1fr) 88px; gap: 7px; }
+.promoEntry input {
+  width: 100%; min-width: 0; min-height: 37px; padding: 7px 11px;
+  border: 1px solid rgba(167,139,250,.23);
+  border-radius: 10px; color: #fff; background: rgba(4,7,20,.66);
+  font: inherit; font-size: 12px; font-weight: 800; text-transform: uppercase;
+}
+.promoEntry input:focus { outline: 2px solid rgba(167,139,250,.36); outline-offset: 1px; }
+.promoEntry button {
+  min-height: 37px; border: 0; border-radius: 10px;
+  background: linear-gradient(135deg,#8b5cf6,#6144ce);
+  color: white; font-size: 11px; font-weight: 850; cursor: pointer;
+}
+.promoEntry button:disabled { opacity: .48; }
+.promoError { color: #ff9caa; margin: 6px 2px 0; font-size: 10px; line-height: 1.4; }
+.promoSuccess {
+  display: flex; gap: 6px; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; padding-top: 8px; color: #86efac; font-size: 10px;
+}
+.promoSuccess strong { color: #e9fff0; font-size: 11px; }
+.promoSuccess button { border: 0; padding: 0 4px; background: transparent; color: #fff; font-size: 20px; cursor: pointer; }
+.history { padding: 10px 12px; }
+.historyHeading { margin-bottom: 0; }
+.historyList { margin-top: 9px; }
+.panel { padding: 12px; }
+.panelHeading { margin-bottom: 7px; }
+.presetRow { margin-top: 6px; margin-bottom: 6px; gap: 5px; }
+@media (max-width: 420px) {
+  .page { padding-left: 8px; padding-right: 8px; }
+  .promoArea { padding: 9px; }
+  .methodCard { min-height: 60px; }
+}
