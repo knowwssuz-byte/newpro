@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ChevronLeft, TrendingDown, TrendingUp } from 'lucide-react';
 import styles from './DiceGame.module.css';
+import StarIcon from './StarIcon';
 
 const DEFAULT_CONFIG = {
   enabled: true,
@@ -57,14 +58,7 @@ function formatStars(value) {
 
 function starIcon(className = '') {
   return (
-    <Image
-      className={className}
-      src="/currency/stars.png"
-      alt=""
-      width={32}
-      height={32}
-      draggable={false}
-    />
+    <StarIcon variant="nova" size={32} className={className} />
   );
 }
 

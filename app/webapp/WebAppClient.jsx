@@ -11,6 +11,9 @@ import gameCardStyles from './PremiumGameCards.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
 import DiceGame, { DiceLobbyCard } from './DiceGame';
+import StarIcon from './StarIcon';
+import SettingsPanel from './SettingsPanel';
+import settingsStyles from './SettingsPanel.module.css';
 import inventoryStyles from './Inventory.module.css';
 import { getInventoryRows } from '@/lib/inventory.mjs';
 
@@ -18,6 +21,8 @@ const WelcomeTour = dynamic(() => import('./WelcomeTour'), { ssr: false });
 const WELCOME_VERSION = 'v1';
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
+const UI_SETTINGS_KEY = 'giftmyst_ui_preferences_v2';
+const DEFAULT_UI_SETTINGS = { sound: true, haptic: true, effects: true };
 
 const emptyCaseForm = {
   title: '',
@@ -424,25 +429,22 @@ function getWinningIndexFromReel(reel = []) {
   return Math.max(0, reel.length - 9);
 }
 
-function coinIcon() {
+function coinIcon(variant = 'gold') {
   return (
     <span className="coin-icon stars-currency-icon" aria-hidden="true">
-      <Image
-        src="/currency/stars.png"
-        alt=""
-        width={31}
-        height={31}
-        draggable={false}
-      />
+      <StarIcon variant={variant} size={31} />
     </span>
   );
 }
 
-function playNavFeedback(app) {
-  try {
-    app?.HapticFeedback?.impactOccurred?.('light');
-    window.setTimeout(() => app?.HapticFeedback?.selectionChanged?.(), 34);
-  } catch {}
+function playNavFeedback(app, settings = DEFAULT_UI_SETTINGS) {
+  if (settings.haptic) {
+    try {
+      app?.HapticFeedback?.impactOccurred?.('light');
+      window.setTimeout(() => app?.HapticFeedback?.selectionChanged?.(), 34);
+    } catch {}
+  }
+  if (!settings.sound) return;
 
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -488,6 +490,9 @@ export default function WebAppClient() {
   const [initData, setInitData] = useState('');
   const [startParam, setStartParam] = useState('');
   const [tab, setTab] = useState('home');
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [uiSettings, setUiSettings] = useState(DEFAULT_UI_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [adminTab, setAdminTab] = useState('cases');
   const [loading, setLoading] = useState(true);
   const [showWelcomeTour, setShowWelcomeTour] = useState(false);
@@ -532,6 +537,26 @@ export default function WebAppClient() {
   const referralTrackedRef = useRef(false);
   const mountedRef = useRef(false);
 
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(window.localStorage.getItem(UI_SETTINGS_KEY) || 'null');
+      if (stored && typeof stored === 'object') {
+        setUiSettings({
+          sound: stored.sound !== false,
+          haptic: stored.haptic !== false,
+          effects: stored.effects !== false,
+        });
+      }
+    } catch {}
+    setSettingsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    try { window.localStorage.setItem(UI_SETTINGS_KEY, JSON.stringify(uiSettings)); } catch {}
+  }, [uiSettings, settingsLoaded]);
+
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
   const giftsByCase = useMemo(() => groupGiftsByCase(gifts), [gifts]);
   const activeCases = useMemo(() => sortCasesForDisplay(cases.filter((item) => item.is_active !== false)), [cases]);
 
@@ -720,12 +745,14 @@ export default function WebAppClient() {
 
       try {
         const data = await apiPost('/api/bootstrap');
-        if (!mountedRef.current) return;
+        if (!mountedRef.current) return false;
         applyBootstrapData(data);
+        return true;
       } catch (err) {
         if (mountedRef.current) {
           setError(err.message || 'Ma’lumot yuklashda xatolik');
         }
+        return false;
       } finally {
         if (mountedRef.current) {
           setLoading(false);
@@ -1394,9 +1421,22 @@ export default function WebAppClient() {
     : 'none';
 
   return (
-    <div className="app-frame">
+    <div className="app-frame" data-ui-effects={uiSettings.effects ? 'on' : 'off'}>
       <div className="app-shell">
         {showWelcomeTour ? <WelcomeTour onFinish={finishWelcomeTour} /> : null}
+        {settingsOpen ? (
+          <SettingsPanel
+            onClose={closeSettings}
+            settings={uiSettings}
+            onChange={setUiSettings}
+            telegramUser={telegramUser}
+            profile={profile}
+            onRefresh={async () => {
+              const refreshed = await loadApp({ silent: true });
+              showToast(refreshed ? 'Ma’lumotlar yangilandi' : 'Ma’lumotlarni yangilab bo‘lmadi');
+            }}
+          />
+        ) : null}
 
 
         {toast ? <div className="toast" role="status">{toast}</div> : null}
@@ -1417,6 +1457,7 @@ export default function WebAppClient() {
             profile={profile}
             profilePhotoUrl={profilePhotoUrl}
             onDeposit={() => openDeposit(tab)}
+            onSettings={() => setSettingsOpen(true)}
           />
         ) : null}
 
@@ -1568,7 +1609,7 @@ export default function WebAppClient() {
                   disabled={isCaseOpening || rocketRoundActive || diceRoundActive}
                   onClick={() => {
                     if (isCaseOpening || rocketRoundActive || diceRoundActive) return;
-                    playNavFeedback(tg);
+                    playNavFeedback(tg, uiSettings);
                     setOpening(null);
                     setSelectedCase(null);
                     setTab(item.id);
@@ -1630,6 +1671,7 @@ function GlobalBalanceBar({
   profile,
   profilePhotoUrl,
   onDeposit,
+  onSettings,
 }) {
   const avatarUrl = profilePhotoUrl || telegramUser?.photo_url || '';
 
@@ -1655,6 +1697,10 @@ function GlobalBalanceBar({
               )}
             </div>
           </div>
+
+          <button type="button" className={settingsStyles.gear} onClick={onSettings} aria-label="Sozlamalarni ochish" title="Sozlamalar">
+            <AppIcon name="settings" />
+          </button>
 
           <div className="home-balance-copy" aria-label="Balance">
             <strong>
@@ -2262,7 +2308,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
                   <h3 className={inventoryStyles.title} title={gift?.title || ''}>{gift?.title || 'Collectible Gift'}</h3>
                   <p className={inventoryStyles.subtitle} title={caseItem?.title || ''}>{caseItem?.title || 'Mystery case'}</p>
                   <div className={inventoryStyles.priceRow}>
-                    <img src="/currency/stars.png" alt="" aria-hidden="true" width="17" height="17" />
+                    <StarIcon variant="royal" size={17} />
                     <span>{price > 0 ? formatPrice(price) : '—'}</span>
                     <span className={inventoryStyles.priceLabel}>sotish narxi</span>
                   </div>
@@ -2320,7 +2366,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
             </p>
             {dialog.kind === 'sell' ? (
               <div className={inventoryStyles.dialogAmount}>
-                <img src="/currency/stars.png" alt="" width="22" height="22" aria-hidden="true" />
+                <StarIcon variant="royal" size={22} />
                 {formatPrice(dialog.price)} Stars
               </div>
             ) : null}
@@ -2537,7 +2583,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
         <div className="bonus-dashboard-main">
           <span>Earned</span>
           <strong>
-            <Image src="/currency/stars.png" alt="" width={28} height={28} />
+            <StarIcon variant="aurora" size={28} />
             {formatPrice(stats.earned)}
           </strong>
           <small>Stars</small>
@@ -2564,7 +2610,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
           <div><small>Available</small><strong>{activeTasks.length}</strong></div>
         </article>
         <article>
-          <span className="bonus-mini-icon"><Image src="/currency/stars.png" alt="" width={20} height={20} /></span>
+          <span className="bonus-mini-icon"><StarIcon variant="aurora" size={20} /></span>
           <div><small>Up next</small><strong>{formatPrice(pendingReward)}</strong></div>
         </article>
       </section>
@@ -2617,7 +2663,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
                     <small>{completed ? 'Reward claimed' : task.subtitle || 'Complete the task to unlock the reward'}</small>
                   </div>
                   <span className="bonus-task-reward">
-                    <Image src="/currency/stars.png" alt="" width={17} height={17} />
+                    <StarIcon variant="aurora" size={17} />
                     +{formatPrice(task.reward)}
                   </span>
                 </div>
@@ -2883,7 +2929,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
               <span>Stars</span>
             </strong>
             <span className="referral-invitee-chip">
-              {coinIcon()}
+              {coinIcon('prism')}
               <span>
                 Do‘stingizga <strong>{loadingOverview ? '—' : `+${formatPrice(inviteeReward)} Stars`}</strong>
               </span>
@@ -2894,9 +2940,9 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
             <span className="referral-art-orbit" />
             <span className="referral-art-avatar is-main"><AppIcon name="referral" /></span>
             <span className="referral-art-avatar is-friend"><AppIcon name="userPlus" /></span>
-            <span className="referral-art-star is-one">{coinIcon()}</span>
-            <span className="referral-art-star is-two">{coinIcon()}</span>
-            <span className="referral-art-star is-three">{coinIcon()}</span>
+            <span className="referral-art-star is-one">{coinIcon('aurora')}</span>
+            <span className="referral-art-star is-two">{coinIcon('royal')}</span>
+            <span className="referral-art-star is-three">{coinIcon('nova')}</span>
           </div>
         </div>
 
@@ -2931,7 +2977,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
 
         <article className="referral-overview-stat is-earned">
           <span>Yig‘ilgan</span>
-          <div>{coinIcon()}<strong>{loadingOverview ? '—' : formatPrice(stats.earned)}</strong></div>
+          <div>{coinIcon('prism')}<strong>{loadingOverview ? '—' : formatPrice(stats.earned)}</strong></div>
         </article>
 
         <article className="referral-overview-rate">

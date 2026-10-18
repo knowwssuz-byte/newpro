@@ -11,6 +11,7 @@ import {
 import Image from 'next/image';
 import { ChevronLeft, Wifi } from 'lucide-react';
 import styles from './RocketGame.module.css';
+import StarIcon from './StarIcon';
 
 const DEFAULT_CONFIG = {
   minBet: 1,
@@ -612,13 +613,7 @@ function SignalIcon() {
 function StarCoin({ small = false }) {
   return (
     <span className={`${styles.coin} ${small ? styles.coinSmall : ''}`}>
-      <Image
-        src="/currency/stars.png"
-        alt=""
-        width={24}
-        height={24}
-        draggable="false"
-      />
+      <StarIcon variant="nova" size={24} />
     </span>
   );
 }
