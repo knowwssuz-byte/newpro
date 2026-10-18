@@ -11,6 +11,8 @@ import gameCardStyles from './PremiumGameCards.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
 import DiceGame, { DiceLobbyCard } from './DiceGame';
+import inventoryStyles from './Inventory.module.css';
+import { getInventoryRows } from '@/lib/inventory.mjs';
 
 const WelcomeTour = dynamic(() => import('./WelcomeTour'), { ssr: false });
 const WELCOME_VERSION = 'v1';
@@ -190,7 +192,7 @@ function rewardSubtitle(gift) {
 function giftSellPrice(gift) {
   if (!gift || isBalanceReward(gift)) return 0;
 
-  const rawValue = gift.sell_price ?? gift.buy_price ?? gift.floor_price ?? gift.price ?? gift.value ?? 0;
+  const rawValue = gift.sell_price ?? gift.buy_price ?? gift.floor_price ?? 0;
   const number = Number(rawValue);
 
   return Number.isFinite(number) ? Math.max(0, number) : 0;
@@ -503,6 +505,7 @@ export default function WebAppClient() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [cases, setCases] = useState([]);
   const [gifts, setGifts] = useState([]);
+  const [inventoryGifts, setInventoryGifts] = useState([]);
   const [history, setHistory] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [featureSettings, setFeatureSettings] = useState({});
@@ -687,6 +690,7 @@ export default function WebAppClient() {
     setIsAdmin(Boolean(data.isAdmin));
     setCases(data.cases || []);
     setGifts(data.gifts || []);
+    setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : (data.gifts || []));
     setHistory(data.history || []);
     setWithdrawals(data.withdrawals || []);
     setFeatureSettings(data.featureSettings || {});
@@ -1013,8 +1017,31 @@ export default function WebAppClient() {
   }
 
   async function createWithdraw(historyId) {
-    await runAction(() => apiPost('/api/withdraw', { historyId }), 'Yechish so‘rovi yuborildi ✅');
+    const result = await runAction(
+      () => apiPost('/api/withdraw', { historyId }),
+      'O‘tkazish so‘rovi yuborildi ✅'
+    );
+    if (!result) return null;
+    if (result.request) {
+      setWithdrawals((current) => [result.request, ...current.filter((request) => request.id !== result.request.id)]);
+    }
     await loadApp({ silent: true });
+    return result;
+  }
+
+  async function sellInventoryReward(historyId) {
+    const result = await runAction(() => apiPost('/api/sell-gift', { historyId }));
+    if (!result) return null;
+    // Remove the exact sold copy immediately; a bootstrap refresh then reconciles state.
+    setHistory((current) => current.filter((item) => String(item.id) !== String(historyId)));
+    setProfile((current) => {
+      if (!current) return current;
+      const balance = Number(result.balance);
+      return { ...current, ...(result.user || {}), balance: Number.isFinite(balance) ? balance : current.balance };
+    });
+    showToast('Sotildi: ' + formatPrice(result.salePrice) + ' ⭐');
+    await loadApp({ silent: true });
+    return result;
   }
 
   async function sellOpeningReward(openingPayload) {
@@ -1488,10 +1515,11 @@ export default function WebAppClient() {
               {tab === 'inventory' ? (
                 <InventoryView
                   history={history}
-                  gifts={gifts}
+                  gifts={inventoryGifts}
                   cases={cases}
                   withdrawals={withdrawals}
                   busy={busy}
+                  onSell={sellInventoryReward}
                   onWithdraw={createWithdraw}
                 />
               ) : null}
@@ -2168,61 +2196,148 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   );
 }
 
-function InventoryView({ history, gifts, cases, withdrawals, busy, onWithdraw }) {
-  const wins = history.map((item) => {
-    const gift = gifts.find((giftItem) => String(giftItem.id) === String(item.gift_id));
-    const caseItem = cases.find((caseValue) => String(caseValue.id) === String(item.case_id));
-    const request = withdrawals.find((withdraw) => String(withdraw.gift_id) === String(item.gift_id));
-    const isSold = Boolean(item.sold_at);
-    return { item, gift, caseItem, request, isSold };
-  });
+function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWithdraw }) {
+  const [dialog, setDialog] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(24);
+  const rows = useMemo(
+    () => getInventoryRows(history, gifts, cases, withdrawals),
+    [history, gifts, cases, withdrawals]
+  );
+
+  useEffect(() => {
+    if (!dialog) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape' && !busy) setDialog(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [dialog, busy]);
+
+  async function confirmAction() {
+    if (!dialog || busy) return;
+    const result = dialog.kind === 'sell'
+      ? await onSell(dialog.item.id)
+      : await onWithdraw(dialog.item.id);
+    if (result) setDialog(null);
+  }
 
   return (
-    <section className="screen-stack inventory-view">
-      <div className="page-header premium-card">
-        <span className="page-title-icon"><AppIcon name="inventory" /></span>
-        <h1>Inventory</h1>
+    <section className={'screen-stack inventory-view ' + inventoryStyles.section}>
+      <div className={inventoryStyles.heading}>
+        <div className={inventoryStyles.headingText}>
+          <span className={inventoryStyles.eyebrow}>YOUR COLLECTION</span>
+          <h1>Inventory</h1>
+          <p>Yutgan Telegram giftlaringiz shu yerda saqlanadi.</p>
+        </div>
+        <span className={inventoryStyles.counter} aria-label={'Inventarda ' + rows.length + ' ta gift'}>
+          {rows.length}
+        </span>
       </div>
 
-      {wins.length === 0 ? (
-        <EmptyState icon="inventory" title="Inventory bo‘sh" text="Yutgan sovg‘alaringiz shu yerda ko‘rinadi." />
+      {rows.length === 0 ? (
+        <div className={inventoryStyles.empty}>
+          <div>
+            <strong>Inventaringiz hozircha bo‘sh</strong>
+            <p>Case ochib qo‘lga kiritgan giftlaringiz shu yerda paydo bo‘ladi. Stars esa to‘g‘ridan-to‘g‘ri balansga qo‘shiladi.</p>
+          </div>
+        </div>
       ) : (
-        <div className="inventory-list">
-          {wins.map(({ item, gift, caseItem, request, isSold }) => (
-            <div className="inventory-card premium-card" key={item.id}>
-              <GiftMedia gift={gift} />
-              <div>
-                <span className={`status-badge ${isSold ? 'sold' : request?.status || 'available'}`}>
-                  {isSold ? 'sold' : request?.status || 'available'}
-                </span>
-                <h3>{gift?.title || 'Sovg‘a'}</h3>
-                <p>
-                  {caseItem?.title || 'Case'} · {rewardSubtitle(gift)} ·{' '}
-                  {item.created_at ? new Date(item.created_at).toLocaleString('uz-UZ') : ''}
-                </p>
-              </div>
-              {isBalanceReward(gift) ? (
-                <button type="button" disabled className="ghost-btn">
-                  Balansga qo‘shilgan
-                </button>
-              ) : isSold ? (
-                <button type="button" disabled className="ghost-btn">
-                  Sotilgan
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="primary-btn"
-                  disabled={busy || Boolean(request)}
-                  onClick={() => onWithdraw(item.gift_id)}
-                >
-                  <AppIcon name="withdraw" /> {request ? 'So‘rov yuborilgan' : 'Yechish'}
-                </button>
-              )}
-            </div>
-          ))}
+        <div className={inventoryStyles.grid}>
+          {rows.slice(0, visibleCount).map(({ item, gift, caseItem, request }) => {
+            const price = giftSellPrice(gift);
+            const requested = Boolean(request);
+            const requestStatus = String(request?.status || '');
+            const statusText = !requested ? 'INVENTORY'
+              : requestStatus === 'approved' ? 'TASDIQLANGAN'
+              : requestStatus === 'rejected' ? 'RAD ETILGAN' : 'SO‘ROV YUBORILGAN';
+            return (
+              <article className={inventoryStyles.card} key={item.id}>
+                <div className={inventoryStyles.artwork}>
+                  <span className={inventoryStyles.state + (requested ? ' ' + inventoryStyles.statePending : '')}>
+                    {statusText}
+                  </span>
+                  <GiftMedia gift={gift} preferStatic />
+                </div>
+                <div className={inventoryStyles.cardBody}>
+                  <h3 className={inventoryStyles.title} title={gift?.title || ''}>{gift?.title || 'Collectible Gift'}</h3>
+                  <p className={inventoryStyles.subtitle} title={caseItem?.title || ''}>{caseItem?.title || 'Mystery case'}</p>
+                  <div className={inventoryStyles.priceRow}>
+                    <img src="/currency/stars.png" alt="" aria-hidden="true" width="17" height="17" />
+                    <span>{price > 0 ? formatPrice(price) : '—'}</span>
+                    <span className={inventoryStyles.priceLabel}>sotish narxi</span>
+                  </div>
+                </div>
+                <div className={inventoryStyles.actions}>
+                  <button
+                    type="button"
+                    className={inventoryStyles.action + ' ' + inventoryStyles.sell}
+                    disabled={busy || requested || price <= 0}
+                    title={requested ? 'Bu gift bo‘yicha o‘tkazish so‘rovi bor' : price <= 0 ? 'Narx belgilanmagan' : 'Giftni Starsga sotish'}
+                    onClick={() => setDialog({ kind: 'sell', item, gift, price })}
+                  >
+                    <AppIcon name="gift" /> Sotish
+                  </button>
+                  <button
+                    type="button"
+                    className={inventoryStyles.action + ' ' + inventoryStyles.transfer}
+                    disabled={busy || requested}
+                    title={requested ? 'O‘tkazish so‘rovi ko‘rib chiqilmoqda' : 'Admin orqali giftni o‘tkazish'}
+                    onClick={() => setDialog({ kind: 'transfer', item, gift, price })}
+                  >
+                    <AppIcon name="withdraw" /> {requested ? 'So‘rov bor' : 'O‘tkazish'}
+                  </button>
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
+
+      {rows.length > visibleCount ? (
+        <button
+          type="button"
+          className={inventoryStyles.loadMore}
+          onClick={() => setVisibleCount((count) => count + 24)}
+        >
+          Yana giftlarni ko‘rsatish · {rows.length - visibleCount} ta qolgan
+        </button>
+      ) : null}
+
+      {dialog ? (
+        <div className={inventoryStyles.dialogOverlay}>
+          <div className={inventoryStyles.dialog} role="dialog" aria-modal="true" aria-labelledby="inventory-confirm-title" aria-describedby="inventory-confirm-details">
+            <span className={inventoryStyles.dialogTag}>
+              {dialog.kind === 'sell' ? 'Gift savdosi' : 'Gift o‘tkazish'}
+            </span>
+            <h2 id="inventory-confirm-title">
+              {dialog.kind === 'sell' ? 'Giftni sotishni tasdiqlang' : 'O‘tkazish so‘rovi'}
+            </h2>
+            <p id="inventory-confirm-details">
+              <strong>{dialog.gift?.title || 'Gift'}</strong>
+              {dialog.kind === 'sell'
+                ? ' sotiladi va tasdiqlangach inventardan olib tashlanadi. Stars balansingizga qo‘shiladi.'
+                : ' uchun admin panelga o‘tkazish so‘rovi yuboriladi. Bu avtomatik Telegram transferi emas.'}
+            </p>
+            {dialog.kind === 'sell' ? (
+              <div className={inventoryStyles.dialogAmount}>
+                <img src="/currency/stars.png" alt="" width="22" height="22" aria-hidden="true" />
+                {formatPrice(dialog.price)} Stars
+              </div>
+            ) : null}
+            <small className={inventoryStyles.dialogNote}>
+              {dialog.kind === 'sell'
+                ? 'Yakuniy sotish narxini server tekshiradi. Sotish amalga oshgach uni qaytarib bo‘lmaydi.'
+                : 'Admin so‘rovni tekshiradi. Tasdiqlash Telegramda yuborilganini anglatmaydi.'}
+            </small>
+            <div className={inventoryStyles.dialogActions}>
+              <button type="button" className={inventoryStyles.cancel} disabled={busy} onClick={() => setDialog(null)}>Bekor qilish</button>
+              <button type="button" className={inventoryStyles.confirm} disabled={busy} onClick={confirmAction}>
+                {busy ? 'Bajarilmoqda...' : dialog.kind === 'sell' ? 'Ha, sotish' : 'So‘rov yuborish'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

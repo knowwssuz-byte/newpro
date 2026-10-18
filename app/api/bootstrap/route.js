@@ -79,14 +79,15 @@ export async function POST(request) {
         .from('open_history')
         .select('*')
         .eq('user_id', auth.telegramUser.id)
+        .is('sold_at', null)
         .order('created_at', { ascending: false })
-        .limit(30),
+        .limit(250),
       supabase
         .from('withdraw_requests')
         .select('*')
         .eq('user_id', auth.telegramUser.id)
         .order('created_at', { ascending: false })
-        .limit(30),
+        .limit(250),
       supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp']),
     ]);
 
@@ -97,6 +98,17 @@ export async function POST(request) {
     if (giftsResult.error) throw new Error(giftsResult.error.message);
     if (historyResult.error) throw new Error(historyResult.error.message);
     if (withdrawResult.error) throw new Error(withdrawResult.error.message);
+
+    // A player's owned gift may have since been disabled in the public case
+    // catalog. Resolve inventory media/prices separately from active gifts.
+    // Only fetch gift IDs that this authenticated user actually won.
+    const ownedGiftIds = [...new Set((historyResult.data || [])
+      .map((item) => item.gift_id).filter(Boolean))];
+    const inventoryResult = ownedGiftIds.length
+      ? await supabase.from('gifts').select('*').in('id', ownedGiftIds)
+      : { data: [], error: null };
+    if (inventoryResult.error) throw new Error(inventoryResult.error.message);
+
     const featureSettings = featureResult.error
       ? {}
       : Object.fromEntries((featureResult.data || []).map((item) => [item.key, item.value || {}]));
@@ -109,6 +121,7 @@ export async function POST(request) {
       cases,
       gifts: auth.isAdmin ? (giftsResult.data || []) : giftsWithActualOdds(giftsResult.data || []),
       history: historyResult.data || [],
+      inventoryGifts: inventoryResult.data || [],
       withdrawals: withdrawResult.data || [],
       featureSettings,
     });
