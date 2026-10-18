@@ -65,8 +65,8 @@ export default function WelcomeTour({ onFinish }) {
             <span className={styles.brandMark} aria-hidden="true">✦</span>
             GIFT MYST
           </span>
-          <button type="button" className={styles.skip} ref={skipRef} onClick={onFinish}>
-            O‘tkazib yuborish <span aria-hidden="true">↗</span>
+          <button type="button" className={styles.skip} ref={skipRef} aria-label="Tanishtiruvni o‘tkazib yuborish" onClick={onFinish}>
+            Skip <span aria-hidden="true">↗</span>
           </button>
         </div>
 
