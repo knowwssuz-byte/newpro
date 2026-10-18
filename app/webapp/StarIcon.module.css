@@ -1,8 +1,5 @@
-/* All five treatments use the ORIGINAL Telegram Stars image. Never redraw its
-   silhouette, center cutout or gold color; only use lightweight glow effects. */
+/* The shared native Telegram Stars glyph is never redrawn or distorted.
+   Gold marks value. Mono is an intentionally colorless secondary icon. */
 .telegramStar{display:inline-block;vertical-align:middle;flex:0 0 auto;max-width:100%;height:auto;object-fit:contain;object-position:center;user-select:none;-webkit-user-drag:none;backface-visibility:hidden}
-.gold{filter:drop-shadow(0 1px 2px rgba(153,90,3,.48))}
-.prism{filter:drop-shadow(0 0 4px rgba(255,188,77,.35)) drop-shadow(0 2px 3px rgba(152,88,250,.22))}
-.aurora{filter:drop-shadow(0 0 5px rgba(255,204,102,.4)) drop-shadow(0 1px 5px rgba(255,119,193,.22))}
-.royal{filter:drop-shadow(0 2px 3px rgba(170,114,41,.45)) drop-shadow(0 1px 5px rgba(170,124,255,.20))}
-.nova{filter:drop-shadow(0 0 5px rgba(255,205,93,.4)) drop-shadow(0 2px 5px rgba(103,156,255,.26))}
+.gold{filter:drop-shadow(0 1px 3px rgba(228,166,50,.34))}
+.mono{filter:grayscale(1) brightness(1.65) contrast(.77) drop-shadow(0 1px 3px rgba(216,211,235,.14));opacity:.79}
