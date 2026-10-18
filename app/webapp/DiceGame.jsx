@@ -58,7 +58,7 @@ function formatStars(value) {
 
 function starIcon(className = '') {
   return (
-    <StarIcon variant="nova" size={32} className={className} />
+    <StarIcon variant="gold" size={32} className={className} />
   );
 }
 
