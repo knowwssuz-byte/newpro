@@ -52,3 +52,7 @@
 @media(min-width:1000px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.artwork{height:164px}}
 @media(max-width:350px){.grid{gap:9px}.card{padding:7px;border-radius:15px}.artwork{height:112px}.actions{gap:5px}.action{font-size:9px;padding:7px 3px}.priceRow{font-size:14px}}
 @media(prefers-reduced-motion:reduce){.card,.action{transition:none}.card:hover{transform:none}}
+
+.loadMore{align-self:center;min-height:43px;margin-top:4px;padding:0 18px;border:1px solid rgba(201,173,255,.3);border-radius:12px;background:rgba(106,55,181,.14);color:#dbceff;font-family:inherit;font-size:12px;font-weight:800;cursor:pointer;transition:background .2s ease}
+.loadMore:hover{background:rgba(122,68,205,.26)}
+.loadMore:focus-visible{outline:2px solid #c8aaff;outline-offset:3px}
