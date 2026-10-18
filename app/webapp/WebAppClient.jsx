@@ -192,7 +192,7 @@ function rewardSubtitle(gift) {
 function giftSellPrice(gift) {
   if (!gift || isBalanceReward(gift)) return 0;
 
-  const rawValue = gift.sell_price ?? gift.buy_price ?? gift.floor_price ?? gift.price ?? gift.value ?? 0;
+  const rawValue = gift.sell_price ?? gift.buy_price ?? gift.floor_price ?? 0;
   const number = Number(rawValue);
 
   return Number.isFinite(number) ? Math.max(0, number) : 0;
