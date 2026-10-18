@@ -745,12 +745,14 @@ export default function WebAppClient() {
 
       try {
         const data = await apiPost('/api/bootstrap');
-        if (!mountedRef.current) return;
+        if (!mountedRef.current) return false;
         applyBootstrapData(data);
+        return true;
       } catch (err) {
         if (mountedRef.current) {
           setError(err.message || 'Ma’lumot yuklashda xatolik');
         }
+        return false;
       } finally {
         if (mountedRef.current) {
           setLoading(false);
@@ -1430,8 +1432,8 @@ export default function WebAppClient() {
             telegramUser={telegramUser}
             profile={profile}
             onRefresh={async () => {
-              await loadApp({ silent: true });
-              showToast('Ma’lumotlar yangilandi');
+              const refreshed = await loadApp({ silent: true });
+              showToast(refreshed ? 'Ma’lumotlar yangilandi' : 'Ma’lumotlarni yangilab bo‘lmadi');
             }}
           />
         ) : null}
