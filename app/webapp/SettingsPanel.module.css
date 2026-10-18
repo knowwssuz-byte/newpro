@@ -1,0 +1,35 @@
+.overlay{position:fixed;inset:0;z-index:11000;display:flex;justify-content:center;align-items:flex-end;padding:14px;background:rgba(8,7,19,.79);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.panel{width:min(100%,450px);max-height:min(90vh,800px);overflow-y:auto;background:linear-gradient(152deg,#2b2341 0%,#1b192b 63%,#171522 100%);color:#faf8ff;border:1px solid rgba(201,180,252,.24);border-radius:23px;box-shadow:0 24px 65px rgba(0,0,0,.58),inset 0 1px 0 rgba(255,255,255,.065)}
+.header{display:flex;align-items:center;gap:12px;padding:21px 20px 17px;border-bottom:1px solid rgba(200,183,238,.12)}
+.headerIcon{display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;color:#d8baff;border-radius:14px;background:linear-gradient(145deg,rgba(159,93,255,.34),rgba(89,61,174,.16));border:1px solid rgba(196,160,255,.21)}
+.heading{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.heading strong{font-size:20px;font-weight:850;letter-spacing:-.035em}
+.heading small{font-size:11px;color:#a9a0c5}
+.close{display:grid;place-items:center;width:38px;height:38px;flex:0 0 38px;border:1px solid rgba(223,207,255,.2);border-radius:11px;background:rgba(255,255,255,.045);color:#eae0ff;cursor:pointer}
+.close:focus-visible,.refresh:focus-visible,.switchInput:focus-visible+.track{outline:2px solid #cfa8ff;outline-offset:3px}
+.body{padding:19px 19px 22px}
+.account{display:flex;align-items:center;gap:11px;padding:13px;background:linear-gradient(100deg,rgba(135,72,230,.16),rgba(41,37,74,.6));border:1px solid rgba(184,154,244,.18);border-radius:15px}
+.avatar{display:grid;place-items:center;flex:0 0 39px;width:39px;height:39px;border-radius:50%;background:linear-gradient(145deg,#8456d4,#412e74);color:#f9eeff}
+.accountCopy{min-width:0;flex:1;display:flex;flex-direction:column;gap:4px}
+.accountCopy strong{font-weight:800;font-size:13px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.accountCopy small{font-size:11px;color:#aba3c5;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.accountBalance{display:flex;align-items:center;gap:3px;font-size:13px;font-variant-numeric:tabular-nums;color:#fff1ba}
+.accountBalance img{width:21px;height:21px;object-fit:contain}
+.sectionLabel{margin:25px 2px 12px;font-size:10px;font-weight:850;letter-spacing:.14em;color:#b99cec}
+.options{display:flex;flex-direction:column;gap:9px}
+.option{position:relative;display:flex;align-items:center;gap:12px;min-height:70px;padding:12px;border-radius:13px;background:rgba(27,25,42,.84);border:1px solid rgba(218,197,255,.1);cursor:pointer}
+.optionIcon{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:11px;color:#c1a7ff;background:rgba(153,100,230,.13)}
+.optionText{display:flex;flex-direction:column;min-width:0;flex:1;gap:5px}
+.optionText strong{font-size:12.5px;font-weight:800}
+.optionText small{font-size:10.5px;color:#a9a1b7;line-height:1.3}
+.switchInput{position:absolute;opacity:0;width:42px;height:24px;right:13px;cursor:pointer}
+.track{width:43px;height:25px;flex:0 0 43px;border-radius:99px;background:#494056;border:1px solid rgba(255,255,255,.2);padding:3px;transition:background .18s ease}
+.track span{display:block;width:17px;height:17px;border-radius:50%;background:#d6d0df;transition:transform .18s ease,background .18s ease;box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.switchInput:checked+.track{background:linear-gradient(110deg,#7a3ad6,#ad6bff)}
+.switchInput:checked+.track span{background:#fff;transform:translateX(18px)}
+.footer{display:flex;flex-direction:column;align-items:flex-start;gap:12px;margin-top:20px;padding:0 2px}
+.footer>span{color:#9990ad;font-size:11px}
+.refresh{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;width:100%;color:#eee0ff;background:rgba(135,91,213,.15);border:1px solid rgba(187,151,241,.27);border-radius:11px;font-family:inherit;font-size:12px;font-weight:780;cursor:pointer}
+@media(min-width:600px){.overlay{align-items:center}.panel{border-radius:23px}}
+@media(max-width:340px){.header{padding:16px 13px}.body{padding:14px}.option{gap:8px;padding:9px}.optionText strong{font-size:11.5px}.optionText small{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.track,.track span{transition:none}}
