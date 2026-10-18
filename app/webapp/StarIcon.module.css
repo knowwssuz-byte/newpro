@@ -1,0 +1,8 @@
+/* All five treatments use the ORIGINAL Telegram Stars image. Never redraw its
+   silhouette, center cutout or gold color; only use lightweight glow effects. */
+.telegramStar{display:inline-block;vertical-align:middle;flex:0 0 auto;max-width:100%;height:auto;object-fit:contain;object-position:center;user-select:none;-webkit-user-drag:none;backface-visibility:hidden}
+.gold{filter:drop-shadow(0 1px 2px rgba(153,90,3,.48))}
+.prism{filter:drop-shadow(0 0 4px rgba(255,188,77,.35)) drop-shadow(0 2px 3px rgba(152,88,250,.22))}
+.aurora{filter:drop-shadow(0 0 5px rgba(255,204,102,.4)) drop-shadow(0 1px 5px rgba(255,119,193,.22))}
+.royal{filter:drop-shadow(0 2px 3px rgba(170,114,41,.45)) drop-shadow(0 1px 5px rgba(170,124,255,.20))}
+.nova{filter:drop-shadow(0 0 5px rgba(255,205,93,.4)) drop-shadow(0 2px 5px rgba(103,156,255,.26))}
