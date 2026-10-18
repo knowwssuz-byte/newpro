@@ -613,7 +613,7 @@ function SignalIcon() {
 function StarCoin({ small = false }) {
   return (
     <span className={`${styles.coin} ${small ? styles.coinSmall : ''}`}>
-      <StarIcon variant="nova" size={24} />
+      <StarIcon variant="gold" size={24} />
     </span>
   );
 }
