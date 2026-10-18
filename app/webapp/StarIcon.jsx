@@ -1,6 +1,9 @@
 import Image from 'next/image';
+import styles from './StarIcon.module.css';
 
-const TYPES = Object.freeze({
+// Every version MUST use the original Telegram Stars artwork.
+// "Variants" change only the surrounding light/shadow, never the star shape.
+const FINISHES = Object.freeze({
   balance: 'gold',
   classic: 'gold',
   gold: 'gold',
@@ -15,17 +18,17 @@ const TYPES = Object.freeze({
 });
 
 export default function StarIcon({ variant = 'gold', size = 24, className = '' }) {
-  const finish = TYPES[variant] || TYPES.gold;
+  const finish = FINISHES[variant] || 'gold';
+  const safeSize = Math.max(12, Math.min(128, Number(size) || 24));
   return (
     <Image
-      src={`/currency/stars-${finish}.svg`}
+      src="/currency/stars.png"
       alt=""
       aria-hidden="true"
-      className={className}
-      width={size}
-      height={size}
+      className={[styles.telegramStar, styles[finish], className].filter(Boolean).join(' ')}
+      width={safeSize}
+      height={safeSize}
       draggable={false}
-      unoptimized
     />
   );
 }
