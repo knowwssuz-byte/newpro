@@ -20,6 +20,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import styles from './DepositView.module.css';
+import StarIcon from './StarIcon';
 
 const STAR_PRESETS = [50, 100, 250, 500, 1000];
 const TON_PRESETS = [0.5, 1, 2, 5];
@@ -114,13 +115,7 @@ function StarsMark({ small = false }) {
       className={`${styles.starsMark} ${small ? styles.smallMark : ''}`}
       aria-hidden="true"
     >
-      <Image
-        src="/currency/stars.png"
-        alt=""
-        width={46}
-        height={46}
-        draggable={false}
-      />
+      <StarIcon variant="prism" size={46} />
     </span>
   );
 }
