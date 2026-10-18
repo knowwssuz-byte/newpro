@@ -18,7 +18,6 @@ import inventoryStyles from './Inventory.module.css';
 import { getInventoryRows } from '@/lib/inventory.mjs';
 
 const WelcomeTour = dynamic(() => import('./WelcomeTour'), { ssr: false });
-const WELCOME_VERSION = 'v1';
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
 const UI_SETTINGS_KEY = 'giftmyst_ui_preferences_v2';
@@ -533,7 +532,7 @@ export default function WebAppClient() {
   const diceReturnTabRef = useRef('games');
   const depositReturnTabRef = useRef('home');
   const hasBootstrappedRef = useRef(false);
-  const tourUserIdRef = useRef('');
+  const tourOpenedRef = useRef(false);
   const referralTrackedRef = useRef(false);
   const mountedRef = useRef(false);
 
@@ -580,25 +579,15 @@ export default function WebAppClient() {
     );
   }, [activeCases, giftsByCase, selectedCase]);
 
+  // TEMPORARY: show the three-step tour on every fresh Mini App visit.
+  // Never persist a "seen" flag, and do not reopen during in-app refreshes.
   useEffect(() => {
-    if (loading || !profile?.id) return;
-    const id = String(profile.id);
-    if (tourUserIdRef.current === id) return;
-    tourUserIdRef.current = id;
-    try {
-      setShowWelcomeTour(window.localStorage.getItem(`gift_myst_welcome_${WELCOME_VERSION}_${id}`) !== 'done');
-    } catch {
-      setShowWelcomeTour(true);
-    }
+    if (loading || !profile?.id || tourOpenedRef.current) return;
+    tourOpenedRef.current = true;
+    setShowWelcomeTour(true);
   }, [loading, profile?.id]);
 
   const finishWelcomeTour = useCallback(() => {
-    const id = tourUserIdRef.current;
-    if (id) {
-      try {
-        window.localStorage.setItem(`gift_myst_welcome_${WELCOME_VERSION}_${id}`, 'done');
-      } catch {}
-    }
     setShowWelcomeTour(false);
   }, []);
 
@@ -2308,7 +2297,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
                   <h3 className={inventoryStyles.title} title={gift?.title || ''}>{gift?.title || 'Collectible Gift'}</h3>
                   <p className={inventoryStyles.subtitle} title={caseItem?.title || ''}>{caseItem?.title || 'Mystery case'}</p>
                   <div className={inventoryStyles.priceRow}>
-                    <StarIcon variant="royal" size={17} />
+                    <StarIcon variant="gold" size={17} />
                     <span>{price > 0 ? formatPrice(price) : '—'}</span>
                     <span className={inventoryStyles.priceLabel}>sotish narxi</span>
                   </div>
@@ -2366,7 +2355,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
             </p>
             {dialog.kind === 'sell' ? (
               <div className={inventoryStyles.dialogAmount}>
-                <StarIcon variant="royal" size={22} />
+                <StarIcon variant="gold" size={22} />
                 {formatPrice(dialog.price)} Stars
               </div>
             ) : null}
@@ -2583,7 +2572,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
         <div className="bonus-dashboard-main">
           <span>Earned</span>
           <strong>
-            <StarIcon variant="aurora" size={28} />
+            <StarIcon variant="gold" size={28} />
             {formatPrice(stats.earned)}
           </strong>
           <small>Stars</small>
@@ -2610,7 +2599,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
           <div><small>Available</small><strong>{activeTasks.length}</strong></div>
         </article>
         <article>
-          <span className="bonus-mini-icon"><StarIcon variant="aurora" size={20} /></span>
+          <span className="bonus-mini-icon"><StarIcon variant="mono" size={20} /></span>
           <div><small>Up next</small><strong>{formatPrice(pendingReward)}</strong></div>
         </article>
       </section>
@@ -2663,7 +2652,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
                     <small>{completed ? 'Reward claimed' : task.subtitle || 'Complete the task to unlock the reward'}</small>
                   </div>
                   <span className="bonus-task-reward">
-                    <StarIcon variant="aurora" size={17} />
+                    <StarIcon variant="gold" size={17} />
                     +{formatPrice(task.reward)}
                   </span>
                 </div>
@@ -2929,7 +2918,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
               <span>Stars</span>
             </strong>
             <span className="referral-invitee-chip">
-              {coinIcon('prism')}
+              {coinIcon('gold')}
               <span>
                 Do‘stingizga <strong>{loadingOverview ? '—' : `+${formatPrice(inviteeReward)} Stars`}</strong>
               </span>
@@ -2940,9 +2929,9 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
             <span className="referral-art-orbit" />
             <span className="referral-art-avatar is-main"><AppIcon name="referral" /></span>
             <span className="referral-art-avatar is-friend"><AppIcon name="userPlus" /></span>
-            <span className="referral-art-star is-one">{coinIcon('aurora')}</span>
-            <span className="referral-art-star is-two">{coinIcon('royal')}</span>
-            <span className="referral-art-star is-three">{coinIcon('nova')}</span>
+            <span className="referral-art-star is-one">{coinIcon('mono')}</span>
+            <span className="referral-art-star is-two"><AppIcon name="spark" /></span>
+            <span className="referral-art-star is-three"><AppIcon name="spark" /></span>
           </div>
         </div>
 

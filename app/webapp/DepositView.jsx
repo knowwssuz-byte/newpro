@@ -115,7 +115,7 @@ function StarsMark({ small = false }) {
       className={`${styles.starsMark} ${small ? styles.smallMark : ''}`}
       aria-hidden="true"
     >
-      <StarIcon variant="prism" size={46} />
+      <StarIcon variant="gold" size={46} />
     </span>
   );
 }

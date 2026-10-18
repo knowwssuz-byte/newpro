@@ -9,24 +9,24 @@ const SCREENS = [
     eyebrow: 'XUSH KELIBSIZ',
     title: 'Gift Myst olamiga xush kelibsiz',
     description: 'Caselarni ko‘ring, o‘yinlar bilan tanishing va shaxsiy inventaringizni boshqaring.',
-    symbol: '✦',
+    image: '/onboarding/welcome-1.svg',
     points: ['Games va Caselar', 'Inventardagi sovg‘alar', 'Qulay mobil interfeys'],
   },
   {
     step: '02',
-    eyebrow: 'IMKONIYATLAR',
-    title: 'Bonuslar va do‘stlar',
-    description: 'Bonus vazifalarini bajaring, referal havolangizni ulashing va har bir natijani profilingizda ko‘ring.',
-    symbol: '◇',
-    points: ['Tekshiriladigan bonuslar', 'Referal statistikasi', 'Bajarilgan vazifalar'],
+    eyebrow: 'CASELAR',
+    title: 'Caselarni oching va sovg‘alarni yuting',
+    description: 'Case kolleksiyasini kashf eting. Natijalar tasodifiy — yutuqlar kafolatlanmaydi.',
+    image: '/onboarding/welcome-2.svg',
+    points: ['Turli xil case kolleksiyasi', 'Gift va Stars yutuqlari', 'Chiroyli ochilish animatsiyasi'],
   },
   {
     step: '03',
-    eyebrow: 'XAVFSIZ FOYDALANISH',
-    title: 'Balans va qoidalar',
-    description: 'Depozitni tasdiqlashdan oldin summani tekshiring. O‘yinlar tavakkalchilikni o‘z ichiga oladi, natijalar kafolatlanmaydi.',
-    symbol: '◎',
-    points: ['To‘lov tarixini tekshiring', 'Promokod va limitlarni kuzating', 'Savol bo‘lsa yordam so‘rang'],
+    eyebrow: 'INVENTAR',
+    title: 'Inventaringizni oson boshqaring',
+    description: 'Qo‘lga kiritilgan giftlarni ko‘ring, soting yoki o‘tkazish uchun so‘rov yuboring.',
+    image: '/onboarding/welcome-3.svg',
+    points: ['Barcha giftlar bir joyda', 'Sotish va o‘tkazish so‘rovi', 'Stars balansini kuzatish'],
   },
 ];
 
@@ -34,58 +34,71 @@ export default function WelcomeTour({ onFinish }) {
   const [index, setIndex] = useState(0);
   const skipRef = useRef(null);
   const slide = SCREENS[index];
+  const isLast = index === SCREENS.length - 1;
 
   useEffect(() => {
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     skipRef.current?.focus({ preventScroll: true });
-    const handleEscape = (event) => {
+
+    const onKey = (event) => {
       if (event.key === 'Escape') onFinish?.();
+      if (event.key === 'ArrowRight') setIndex((value) => Math.min(SCREENS.length - 1, value + 1));
+      if (event.key === 'ArrowLeft') setIndex((value) => Math.max(0, value - 1));
     };
-    window.addEventListener('keydown', handleEscape);
+    window.addEventListener('keydown', onKey);
     return () => {
       document.body.style.overflow = previous;
-      window.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('keydown', onKey);
     };
   }, [onFinish]);
 
   return (
     <div className={styles.overlay} role="presentation">
       <section className={styles.sheet} role="dialog" aria-modal="true"
-        aria-labelledby="welcome-title" aria-describedby="welcome-description">
+        aria-labelledby="giftmyst-welcome-title" aria-describedby="giftmyst-welcome-description">
         <div className={styles.topbar}>
-          <span className={styles.brand}><span className={styles.brandMark}>✦</span> GIFT MYST</span>
+          <span className={styles.brand}>
+            <span className={styles.brandMark} aria-hidden="true">✦</span>
+            GIFT MYST
+          </span>
           <button type="button" className={styles.skip} ref={skipRef} onClick={onFinish}>
-            Skip <span aria-hidden="true">↗</span>
+            O‘tkazib yuborish <span aria-hidden="true">↗</span>
           </button>
         </div>
-        <div className={styles.art} aria-hidden="true">
-          <span className={styles.ringOuter} />
-          <span className={styles.ringInner} />
-          <span className={styles.orb}>{slide.symbol}</span>
-          <span className={styles.starLeft}>✧</span>
-          <span className={styles.starRight}>✦</span>
+
+        <div className={styles.hero} key={'hero-' + slide.step}>
+          <span className={styles.heroGlow} aria-hidden="true" />
+          <img src={slide.image} alt="" className={styles.heroImage} draggable="false" />
+          <span className={styles.glowDot} aria-hidden="true" />
         </div>
+
         <div className={styles.copy} key={slide.step}>
-          <span className={styles.eyebrow}>{slide.eyebrow} · {slide.step} / 03</span>
-          <h2 id="welcome-title">{slide.title}</h2>
-          <p id="welcome-description">{slide.description}</p>
+          <span className={styles.eyebrow}>{slide.eyebrow} <span>·</span> {slide.step} / 03</span>
+          <h2 id="giftmyst-welcome-title">{slide.title}</h2>
+          <p id="giftmyst-welcome-description">{slide.description}</p>
           <ul className={styles.points}>
-            {slide.points.map((point) => <li key={point}><span>✓</span>{point}</li>)}
+            {slide.points.map((point) => (
+              <li key={point}><span className={styles.tick} aria-hidden="true">✓</span>{point}</li>
+            ))}
           </ul>
         </div>
+
         <div className={styles.footer}>
           <div className={styles.dots} aria-label="Tanishtiruv bosqichlari">
-            {SCREENS.map((item, i) => (
-              <button key={item.step} type="button" aria-label={`${i + 1}-bosqich`}
+            {SCREENS.map((screen, i) => (
+              <button
+                key={screen.step}
+                type="button"
+                aria-label={i + 1 + '-bosqichga o‘tish'}
                 aria-current={i === index ? 'step' : undefined}
                 className={i === index ? styles.activeDot : ''}
-                onClick={() => setIndex(i)} />
+                onClick={() => setIndex(i)}
+              />
             ))}
           </div>
-          <button type="button" className={styles.next}
-            onClick={() => index === SCREENS.length - 1 ? onFinish?.() : setIndex(index + 1)}>
-            {index === SCREENS.length - 1 ? 'Boshlash' : 'Keyingisi'}
+          <button type="button" className={styles.next} onClick={() => isLast ? onFinish?.() : setIndex((value) => value + 1)}>
+            <span>{isLast ? 'Boshlash' : 'Keyingisi'}</span>
             <span aria-hidden="true">→</span>
           </button>
         </div>
