@@ -33,3 +33,11 @@
 @media(min-width:600px){.overlay{align-items:center}.panel{border-radius:23px}}
 @media(max-width:340px){.header{padding:16px 13px}.body{padding:14px}.option{gap:8px;padding:9px}.optionText strong{font-size:11.5px}.optionText small{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.track,.track span{transition:none}}
+
+/* Always visible beside the header avatar, including narrow Telegram WebViews. */
+.gear{display:grid!important;place-items:center!important;align-self:center;flex:0 0 33px;width:33px;height:33px;min-width:33px;padding:0;cursor:pointer;border:1px solid rgba(208,174,255,.26);border-radius:11px;color:#d9c0ff;background:linear-gradient(135deg,rgba(130,83,199,.24),rgba(62,48,105,.23));box-shadow:inset 0 1px 0 rgba(255,255,255,.11);transition:background .2s ease,transform .2s ease}
+.gear svg{width:17px;height:17px;stroke-width:2}
+.gear:hover{background:rgba(142,89,223,.35)}
+.gear:active{transform:scale(.95)}
+.gear:focus-visible{outline:2px solid #d7baff;outline-offset:3px}
+@media(max-width:375px){.gear{flex-basis:29px;min-width:29px;width:29px;height:32px;border-radius:10px}.gear svg{width:16px;height:16px}}
