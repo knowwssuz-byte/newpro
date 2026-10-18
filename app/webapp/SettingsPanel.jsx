@@ -53,7 +53,7 @@ export default function SettingsPanel({ onClose, settings, onChange, telegramUse
               <strong>{telegramUser?.first_name || 'Telegram user'}</strong>
               <small>{telegramUser?.username ? '@' + telegramUser.username : 'Telegram ID: ' + String(telegramUser?.id || '')}</small>
             </div>
-            <div className={styles.accountBalance}><StarIcon variant="gold" size={21} /><strong>{format(profile?.balance)}</strong></div>
+            <div className={styles.accountBalance}><StarIcon variant="mono" size={21} /><strong>{format(profile?.balance)}</strong></div>
           </div>
 
           <h2 className={styles.sectionLabel}>INTERFEYS</h2>
