@@ -15,7 +15,8 @@ test('welcome includes three local original illustration assets',()=>{
   }
   assert.match(component, /Keyingisi/);
   assert.match(component, /Boshlash/);
-  assert.match(component, /O‘tkazib yuborish/);
+  assert.match(component, /aria-label="Tanishtiruvni o‘tkazib yuborish"/);
+  assert.match(component, /Skip/);
 });
 
 test('welcome shows for every fresh app entry without persisted dismissal',()=>{
@@ -25,4 +26,18 @@ test('welcome shows for every fresh app entry without persisted dismissal',()=>{
   assert.doesNotMatch(app,/gift_myst_welcome_/);
   assert.doesNotMatch(app,/WELCOME_VERSION/);
   assert.match(read('app/webapp/WelcomeTour.module.css'), /max-height:calc\(100dvh/);
+});
+
+test('premium typography retains readable HTML headings and safe responsive layout', () => {
+  const view = read('app/webapp/WelcomeTour.jsx');
+  const css = read('app/webapp/WelcomeTour.module.css');
+  assert.match(view, /styles\.titleAccent/);
+  assert.match(view, /styles\.titleMain/);
+  assert.match(css, /background-clip:text/);
+  assert.match(css, /@media\(max-height:740px\)/);
+  assert.match(css, /@media\(max-width:355px\)/);
+  assert.match(css, /font-family:Inter/);
+  assert.match(css, /prefers-reduced-motion:reduce/);
+  const first = read('public/onboarding/welcome-1.svg');
+  assert.match(first, /fill="url\(#gold\)"/);
 });
