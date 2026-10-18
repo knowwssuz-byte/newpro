@@ -2198,6 +2198,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
 
 function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWithdraw }) {
   const [dialog, setDialog] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(24);
   const rows = useMemo(
     () => getInventoryRows(history, gifts, cases, withdrawals),
     [history, gifts, cases, withdrawals]
@@ -2242,7 +2243,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
         </div>
       ) : (
         <div className={inventoryStyles.grid}>
-          {rows.map(({ item, gift, caseItem, request }) => {
+          {rows.slice(0, visibleCount).map(({ item, gift, caseItem, request }) => {
             const price = giftSellPrice(gift);
             const requested = Boolean(request);
             const requestStatus = String(request?.status || '');
@@ -2291,6 +2292,16 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
           })}
         </div>
       )}
+
+      {rows.length > visibleCount ? (
+        <button
+          type="button"
+          className={inventoryStyles.loadMore}
+          onClick={() => setVisibleCount((count) => count + 24)}
+        >
+          Yana giftlarni ko‘rsatish · {rows.length - visibleCount} ta qolgan
+        </button>
+      ) : null}
 
       {dialog ? (
         <div className={inventoryStyles.dialogOverlay}>
