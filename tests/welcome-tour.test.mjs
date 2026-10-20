@@ -4,14 +4,14 @@ import { readFileSync } from 'node:fs';
 
 const read = (p) => readFileSync(new URL('../'+p, import.meta.url),'utf8');
 
-test('welcome includes three local original illustration assets',()=>{
+test('welcome includes three local generated WebP illustrations',()=>{
   const component=read('app/webapp/WelcomeTour.jsx');
-  for (let i=1;i<=3;i++){
-    const path='public/onboarding/welcome-'+i+'.svg';
-    const illustration=read(path);
-    assert.match(illustration, /^<svg[^>]*xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
-    assert.match(illustration, /<\/svg>$/);
-    assert.match(component, new RegExp('onboarding/welcome-'+i+'\\.svg'));
+  for (const name of ['gift', 'case', 'inventory']){
+    const path='public/onboarding/welcome-'+name+'-v2.webp';
+    const illustration=readFileSync(new URL('../'+path, import.meta.url));
+    assert.equal(illustration.toString('ascii', 0, 4), 'RIFF');
+    assert.equal(illustration.toString('ascii', 8, 12), 'WEBP');
+    assert.match(component, new RegExp('onboarding/welcome-'+name+'-v2\\.webp'));
   }
   assert.match(component, /Keyingisi/);
   assert.match(component, /Boshlash/);
