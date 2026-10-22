@@ -2774,7 +2774,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
   const inviterReward = Number(overview?.settings?.inviterReward || 0);
   const inviteeReward = Number(overview?.settings?.inviteeReward || 0);
   const shareText = inviteeReward > 0
-    ? `Gift Mystga qo‘shiling — faol bo‘lsangiz ${formatPrice(inviteeReward)} Stars bonus olasiz 🎁`
+    ? `Gift Mystga qo‘shiling — taskni bajarsangiz ${formatPrice(inviteeReward)} Stars bonus olasiz 🎁`
     : 'Gift Mystga qo‘shiling va sovg‘alar yuting 🎁';
   const shareLink = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(shareText)}`;
   const stats = overview?.stats || {
@@ -2921,10 +2921,14 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
             <span className="referral-art-avatar is-friend"><AppIcon name="userPlus" /></span>
             <span className="referral-art-star is-one">{coinIcon('mono')}</span>
             <span className="referral-art-star is-two"><AppIcon name="spark" /></span>
-            <span className="referral-art-star is-three"><AppIcon name="spark" /></span>
+            <span className="referral-art-star is-three"><AppIcon name="check" /></span>
           </div>
         </div>
 
+        <p style={{ margin: '3px 0 14px', color: '#b6bad7', fontSize: 12, lineHeight: 1.6 }}>
+          Do‘stingiz birinchi taskni yakunlagach, Stars avtomatik hisoblanadi.
+          Har bir referal uchun mukofot bir martalik.
+        </p>
         <button type="button" className="referral-primary-share" onClick={shareReferral}>
           <AppIcon name="send" />
           <span>Telegramda ulashish</span>
