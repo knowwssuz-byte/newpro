@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 115" fill="none">
+<defs><linearGradient id="gold" x1="5" y1="0" x2="84" y2="112" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFDE9"/><stop offset=".20" stop-color="#FFE3A1"/><stop offset=".43" stop-color="#BA7837"/><stop offset=".6" stop-color="#FFDEA0"/><stop offset=".82" stop-color="#D38B39"/><stop offset="1" stop-color="#683916"/></linearGradient>
+<linearGradient id="ridge" x1="36" y1="13" x2="58" y2="97" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF" stop-opacity=".92"/><stop offset=".55" stop-color="#FFCA7B" stop-opacity=".28"/><stop offset="1" stop-color="#51260D" stop-opacity=".22"/></linearGradient>
+<filter id="shadow" x="-20%" y="-10%" width="140%" height="130%"><feGaussianBlur stdDeviation="3"/></filter></defs>
+<path d="M18 13Q45 -4 72 13Q82 21 76 38L51 103Q45 115 39 103L14 38Q8 21 18 13Z" fill="#020917" opacity=".48" filter="url(#shadow)" transform="translate(2 3)"/>
+<path d="M18 11Q45 -3 72 11Q82 20 75 37L51 103Q45 113 39 103L15 37Q8 20 18 11Z" fill="url(#gold)" stroke="#FFEFC4" stroke-width="2"/>
+<path d="M31 24Q45 20 59 24L46 94Q45 98 44 94L31 24Z" fill="url(#ridge)"/>
+<path d="M19 22Q45 9 71 22" stroke="#FFF9E2" stroke-width="3" stroke-linecap="round" opacity=".85"/>
+<ellipse cx="45" cy="26" rx="12" ry="10" fill="#895522" stroke="#FEE8B8" stroke-width="2"/>
+<ellipse cx="45" cy="26" rx="5" ry="5" fill="#FFE3A0"/>
+</svg>
