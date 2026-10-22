@@ -63,6 +63,8 @@ const emptyDiceSettings = {
   rollDurationMs: 1400,
 };
 
+const emptyReferralSettings = { enabled: true, inviterReward: 100, inviteeReward: 25 };
+
 const emptyBonusTaskForm = {
   id: '',
   title: '',
@@ -318,6 +320,7 @@ export default function AdminClient() {
     paid: 0,
   });
   const [bonusTaskForm, setBonusTaskForm] = useState(emptyBonusTaskForm);
+  const [referralSettings, setReferralSettings] = useState(emptyReferralSettings);
 
   const [caseForm, setCaseForm] = useState(emptyCaseForm);
   const [caseFile, setCaseFile] = useState(null);
@@ -382,6 +385,10 @@ export default function AdminClient() {
     });
     setDiceStats(data.diceStats || null);
     setBonusTasks(data.bonusTasks || []);
+    setReferralSettings({
+      ...emptyReferralSettings,
+      ...(data.referralSettings || {}),
+    });
     setBonusStats((current) => ({
       ...current,
       ...(data.bonusStats || {}),
@@ -992,6 +999,21 @@ export default function AdminClient() {
     }
   }
 
+  async function saveReferralSettings(event) {
+    event.preventDefault();
+    const data = await run(
+      () => callAdmin('referral_settings_update', {
+        settings: {
+          enabled: Boolean(referralSettings.enabled),
+          inviterReward: Number(referralSettings.inviterReward),
+          inviteeReward: Number(referralSettings.inviteeReward),
+        },
+      }),
+      'Referal mukofotlari saqlandi ✅'
+    );
+    if (data) applyBootstrap(data);
+  }
+
   async function saveBonusTask(event) {
     event.preventDefault();
 
@@ -1561,6 +1583,32 @@ export default function AdminClient() {
                 <i /> SERVER VERIFIED
               </div>
             </div>
+
+            <form className="browser-admin-form bonus-admin-form" onSubmit={saveReferralSettings} style={{ maxWidth: '100%', marginBottom: 18 }}>
+              <div className="admin-form-heading">
+                <span>REFERRAL REWARDS</span>
+                <h2>Referal bonusini sozlash</h2>
+                <p>Do‘stingiz taskni muvaffaqiyatli tugatsa, bonus har bir referal uchun faqat bir marta hisoblanadi.</p>
+              </div>
+              <div className="browser-admin-two">
+                <label>
+                  <span>Taklif qilgan foydalanuvchiga, Stars</span>
+                  <input type="number" min="0" max="100000" step="1" required value={referralSettings.inviterReward}
+                    onChange={(event) => setReferralSettings({ ...referralSettings, inviterReward: event.target.value })} />
+                </label>
+                <label>
+                  <span>Taklif qilingan foydalanuvchiga, Stars</span>
+                  <input type="number" min="0" max="100000" step="1" required value={referralSettings.inviteeReward}
+                    onChange={(event) => setReferralSettings({ ...referralSettings, inviteeReward: event.target.value })} />
+                </label>
+              </div>
+              <label className="manual-check">
+                <input type="checkbox" checked={Boolean(referralSettings.enabled)}
+                  onChange={(event) => setReferralSettings({ ...referralSettings, enabled: event.target.checked })} />
+                <span>Referal bonus tizimi yoqilgan</span>
+              </label>
+              <button type="submit" disabled={busy}>{busy ? 'Saqlanmoqda...' : 'Referal sozlamalarini saqlash'}</button>
+            </form>
 
             <div className="bonus-admin-stats">
               <article><span>JAMI TASK</span><strong>{money(bonusStats.totalTasks)}</strong><small>{money(bonusStats.activeTasks)} tasi aktiv</small></article>
