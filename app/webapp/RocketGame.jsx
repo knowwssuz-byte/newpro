@@ -1896,11 +1896,16 @@ export default function RocketGame({
       {booting ? (
         <div className={styles.bootOverlay} role="status" aria-live="polite">
           <div className={styles.bootLoader}>
-            <span className={styles.bootOrbit} aria-hidden="true">
-              <i />
+            <span className={styles.bootFlight} aria-hidden="true">
+              <span className={styles.bootFlightGrid} />
+              <span className={styles.bootFlightTrail} />
+              <span className={styles.bootFlightIcon}>↗</span>
+              <span className={styles.bootFlightRing} />
             </span>
-            <strong>Rocket yuklanmoqda</strong>
-            <span>Jonli raund sinxronlanmoqda</span>
+            <span className={styles.bootEyebrow}>GIFT MYST / LIVE EXPERIENCE</span>
+            <strong>ROCKET</strong>
+            <span className={styles.bootStatus}><i /> Jonli raundga ulanmoqda</span>
+            <span className={styles.bootProgress} aria-hidden="true"><i /></span>
           </div>
         </div>
       ) : null}
@@ -2124,14 +2129,7 @@ export default function RocketGame({
             ))
           ) : (
             <div className={styles.emptyPlayers}>
-              <Image
-                src="/feature/rocket.webp"
-                alt=""
-                width={512}
-                height={512}
-                unoptimized
-                draggable="false"
-              />
+              <span className={styles.emptyPlayersGlyph} aria-hidden="true">↗</span>
               <div>
                 <strong>Waiting for bets</strong>
                 <span>Be the first player in this round.</span>
