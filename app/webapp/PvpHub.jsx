@@ -2,25 +2,16 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Check, Circle, Crown, Grid2X2, Hand, RotateCcw, Scissors, Shield, Swords, Trophy, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Circle, Grid2X2, RotateCcw, Scissors, Shield, Swords, Users, X } from 'lucide-react';
 import styles from './PvpHub.module.css';
+import { evaluateBoard, resolveRps } from '@/lib/pvpGames.mjs';
 
-const LINES = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
 const OPTIONS = [
   { value: 'rock', label: 'Tosh', symbol: '✊' },
   { value: 'paper', label: 'Qog‘oz', symbol: '✋' },
   { value: 'scissors', label: 'Qaychi', symbol: '✌️' },
 ];
 const CHOICE_MAP = Object.fromEntries(OPTIONS.map((choice) => [choice.value, choice]));
-function evaluateBoard(board) {
-  for (const line of LINES) {
-    const [a,b,c] = line;
-    if (board[a] && board[a] === board[b] && board[b] === board[c]) {
-      return { winner: board[a], line };
-    }
-  }
-  return board.every(Boolean) ? { winner: 'draw', line: [] } : null;
-}
 function scoreBoard(score) {
   return <div className={styles.scoreBoard}>
     <span><b>{score[0]}</b> Player 1</span>
@@ -86,18 +77,12 @@ function RockPaperScissors({ onBack }) {
     if(phase === 'p1') { setP1(choice);setPhase('pass');return; }
     if(phase !== 'p2') return;
     setP2(choice);
-    const winner = p1 === choice ? -1 :
-      (p1 === 'rock' && choice === 'scissors') ||
-      (p1 === 'paper' && choice === 'rock') ||
-      (p1 === 'scissors' && choice === 'paper') ? 0 : 1;
+    const winner = resolveRps(p1, choice);
     if(winner >= 0) setScores(current => current.map((x,i) => x+(i===winner?1:0)));
     setPhase('result');
   };
   const again = () => {setP1('');setP2('');setPhase('p1');};
-  const winner = p1 === p2 ? -1 :
-    (p1 === 'rock' && p2 === 'scissors') ||
-    (p1 === 'paper' && p2 === 'rock') ||
-    (p1 === 'scissors' && p2 === 'paper') ? 0 : 1;
+  const winner = resolveRps(p1, p2);
   return (
     <section className={styles.playArea}>
       <button className={styles.inlineBack} type="button" onClick={onBack}><ArrowLeft size={16}/> O‘yinlar</button>

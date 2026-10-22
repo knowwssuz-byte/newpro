@@ -2194,29 +2194,35 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
 // Image formats do not expose a reliable end-of-loop event across WebViews.
 // Show the motion on entry and settle to the still thumbnail after a limited
 // preview window. TGS/Lottie uses its actual complete event (above).
-function OneShotImageGift({ src, still, className }) {
+function OneShotImageGift({ src, still, className, play = true }) {
+  const [loaded, setLoaded] = useState(false);
   const [ended, setEnded] = useState(false);
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
+  useEffect(() => { setLoaded(false); setEnded(false); }, [src, play]);
   useEffect(() => {
-    setEnded(false);
+    if (!loaded) return undefined;
+    // GIF/WebP do not expose a finished event; freeze the preview after
+    // an eight-second presentation window. With animations OFF, freeze at
+    // the first loaded frame without starting another motion cycle.
     const timer = window.setTimeout(() => {
       if (!still && imageRef.current && canvasRef.current) {
         const img = imageRef.current;
         const canvas = canvasRef.current;
-        if (img.complete && img.naturalWidth > 0) {
-          canvas.width = img.naturalWidth;
-          canvas.height = img.naturalHeight;
-          try { canvas.getContext('2d')?.drawImage(img, 0, 0); } catch {}
-        }
+        if (!img.naturalWidth || !img.naturalHeight) return;
+        const scale = Math.min(1, 512 / Math.max(img.naturalWidth, img.naturalHeight));
+        canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+        canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+        try { canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height); } catch { return; }
       }
       setEnded(true);
-    }, 8000);
+    }, play ? 8000 : 0);
     return () => window.clearTimeout(timer);
-  }, [src, still]);
+  }, [src, still, play, loaded]);
   return (
     <span className={`${className} gift-once-media`}>
       <img ref={imageRef} src={src} alt="" decoding="async" draggable={false}
+        onLoad={() => setLoaded(true)}
         className="gift-once-img" style={{ display: ended ? 'none' : undefined }} />
       {ended && still ? <img className="gift-once-img" src={still} alt="" draggable={false}/> : null}
       <canvas ref={canvasRef} className="gift-once-img" style={{ display: ended && !still ? 'block' : 'none' }} aria-hidden="true" />
@@ -2285,7 +2291,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   }
 
   if (animationUrl && isImageAnimationUrl(animationUrl)) {
-    return <OneShotImageGift src={animationUrl} still="" className={mediaClass} />;
+    return <OneShotImageGift src={animationUrl} still="" className={mediaClass} play={false} />;
   }
 
   return (
