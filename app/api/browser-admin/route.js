@@ -245,7 +245,7 @@ async function bootstrap(supabase) {
       enabled: referralSettingsResult.data?.enabled !== false,
       inviterReward: Number(referralSettingsResult.data?.inviter_reward || 0),
       inviteeReward: Number(referralSettingsResult.data?.invitee_reward || 0),
-      activationMode: referralSettingsResult.data?.activation_mode || 'verified_task',
+      activationMode: referralSettingsResult.data?.activation_mode || 'completed_task',
     },
     bonusStats: {
       totalTasks: bonusTasks.length,
@@ -597,7 +597,7 @@ export async function POST(request) {
         enabled: input.enabled === true,
         inviter_reward: inviterReward,
         invitee_reward: inviteeReward,
-        activation_mode: 'verified_task',
+        activation_mode: 'completed_task',
       }, { onConflict: 'id' });
       if (error) throw error;
       return json({ ok: true, ...(await bootstrap(supabase)) });
