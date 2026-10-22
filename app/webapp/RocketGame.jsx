@@ -12,6 +12,8 @@ import Image from 'next/image';
 import { ChevronLeft, Wifi } from 'lucide-react';
 import styles from './RocketGame.module.css';
 import StarIcon from './StarIcon';
+import Helix from './vendor/Helix';
+import LineWobble from './vendor/LineWobble';
 
 const DEFAULT_CONFIG = {
   minBet: 1,
@@ -610,10 +612,10 @@ function SignalIcon() {
   return <Wifi aria-hidden="true" strokeWidth={2.15} />;
 }
 
-function StarCoin({ small = false }) {
+function StarCoin({ small = false, variant = 'gold' }) {
   return (
     <span className={`${styles.coin} ${small ? styles.coinSmall : ''}`}>
-      <StarIcon variant="gold" size={24} />
+      <StarIcon variant={variant} size={24} />
     </span>
   );
 }
@@ -877,7 +879,7 @@ const PlayerRow = memo(function PlayerRow({ player, liveMultiplier }) {
           {player.isYou ? <em>YOU</em> : null}
         </strong>
         <span>
-          <StarCoin small />
+          <StarCoin small variant="mono" />
           {formatStars(player.bet)}
           {player.autoCashout ? (
             <b>Auto {formatMultiplier(player.autoCashout)}</b>
@@ -894,7 +896,7 @@ const PlayerRow = memo(function PlayerRow({ player, liveMultiplier }) {
               : styles.payoutLive
         }`}
       >
-        <StarCoin small />
+        <StarCoin small variant={won ? 'reward' : 'prism'} />
         <strong>{formatStars(value)}</strong>
         {won && player.cashoutMultiplier ? (
           <span>{formatMultiplier(player.cashoutMultiplier)}</span>
@@ -1896,16 +1898,16 @@ export default function RocketGame({
       {booting ? (
         <div className={styles.bootOverlay} role="status" aria-live="polite">
           <div className={styles.bootLoader}>
-            <span className={styles.bootFlight} aria-hidden="true">
-              <span className={styles.bootFlightGrid} />
-              <span className={styles.bootFlightTrail} />
-              <span className={styles.bootFlightIcon}>↗</span>
-              <span className={styles.bootFlightRing} />
-            </span>
-            <span className={styles.bootEyebrow}>GIFT MYST / LIVE EXPERIENCE</span>
+            <div className={styles.vendorStage} aria-hidden="true">
+              <span className={styles.vendorHalo} />
+              <Helix size={112} color="#add6ff" speed={2.2} />
+            </div>
+            <span className={styles.vendorEyebrow}>MYST · LIVE GAME</span>
             <strong>ROCKET</strong>
-            <span className={styles.bootStatus}><i /> Jonli raundga ulanmoqda</span>
-            <span className={styles.bootProgress} aria-hidden="true"><i /></span>
+            <span className={styles.vendorDescription}>Jonli raund sinxronlanmoqda</span>
+            <div className={styles.vendorProgress} aria-hidden="true">
+              <LineWobble size={158} stroke={3} color="#77b9ff" speed={1.5} bgOpacity={0.15} />
+            </div>
           </div>
         </div>
       ) : null}

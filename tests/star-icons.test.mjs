@@ -1,27 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-
-const read = (path) => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
-const component = read('app/webapp/StarIcon.jsx');
-const stylesheet = read('app/webapp/StarIcon.module.css');
-
-test('authentic Telegram Stars is used for both gold and monochrome placements', () => {
-  assert.match(component, /src="\/currency\/stars\.png"/);
-  assert.match(component, /styles\.mono/);
-  assert.match(component, /styles\.gold/);
-  assert.match(stylesheet, /\.mono\{filter:grayscale\(1\)/);
-  assert.match(stylesheet, /\.gold\{filter:drop-shadow/);
-  assert.doesNotMatch(component, /stars-.*\.svg/);
+const read = (p) => readFileSync(new URL('../'+p,import.meta.url),'utf8');
+test('balance retains Telegram currency art, non-balance usage has distinct sourced SVGs',()=>{
+const component=read('app/webapp/StarIcon.jsx');
+assert.match(component,/\/currency\/stars\.png/);
+for(const part of ['star-badge-tabler','stars-cluster-tabler','stars-outline-tabler','stars-sparkles-tabler']){
+ assert.match(component,new RegExp(part));
+ const path='public/currency/'+part+'.svg';
+ assert.ok(existsSync(new URL('../'+path,import.meta.url)));
+ assert.match(read(path),/<svg[\s>]/);
+}
 });
-
-test('the two variants preserve the official currency silhouette', () => {
-  assert.doesNotMatch(stylesheet, /clip-path|mask-image|hue-rotate/);
-  const bytes = readFileSync(new URL('../public/currency/stars.png', import.meta.url));
-  assert.equal(bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
-  assert.ok(bytes.readUInt32BE(16) >= 512);
-  assert.ok(bytes.length > 20000);
-  for (const name of ['gold','prism','aurora','royal','nova']) {
-    assert.equal(existsSync(new URL('../public/currency/stars-'+name+'.svg', import.meta.url)), false);
-  }
+test('official UIBall LDRS animations are used for app and Rocket preloaders',()=>{
+ for(const n of ['Quantum','Helix','LineWobble']){
+  assert.match(read('app/webapp/vendor/'+n+'.jsx'),/UIBall LDRS/);
+  assert.ok(existsSync(new URL('../app/webapp/vendor/'+n+'.module.css',import.meta.url)));
+ }
+ assert.match(read('app/webapp/BootLoader.jsx'),/<Quantum/);
+ assert.match(read('app/webapp/RocketGame.jsx'),/<Helix/);
 });

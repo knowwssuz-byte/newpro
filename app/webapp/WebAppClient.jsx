@@ -1638,7 +1638,7 @@ function Brand({ appName }) {
 function BalancePill({ balance }) {
   return (
     <div className="balance-pill">
-      {coinIcon()}
+      {coinIcon('gold')}
       <strong>{formatPrice(balance)}</strong>
     </div>
   );
@@ -1683,7 +1683,7 @@ function GlobalBalanceBar({
 
           <div className="home-balance-copy" aria-label="Balance">
             <strong>
-              {coinIcon()}
+              {coinIcon('gold')}
               {formatPrice(profile?.balance)}
             </strong>
           </div>
@@ -2181,7 +2181,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   if (isBalanceReward(gift)) {
     return (
       <span className={`${mediaClass} balance-reward`}>
-        {coinIcon()}
+        {coinIcon('prism')}
       </span>
     );
   }
@@ -2287,7 +2287,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
                   <h3 className={inventoryStyles.title} title={gift?.title || ''}>{gift?.title || 'Collectible Gift'}</h3>
                   <p className={inventoryStyles.subtitle} title={caseItem?.title || ''}>{caseItem?.title || 'Mystery case'}</p>
                   <div className={inventoryStyles.priceRow}>
-                    <StarIcon variant="gold" size={17} />
+                    <StarIcon variant="badge" size={17} />
                     <span>{price > 0 ? formatPrice(price) : '—'}</span>
                     <span className={inventoryStyles.priceLabel}>sotish narxi</span>
                   </div>
@@ -2345,7 +2345,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
             </p>
             {dialog.kind === 'sell' ? (
               <div className={inventoryStyles.dialogAmount}>
-                <StarIcon variant="gold" size={22} />
+                <StarIcon variant="royal" size={22} />
                 {formatPrice(dialog.price)} Stars
               </div>
             ) : null}
@@ -2562,7 +2562,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
         <div className="bonus-dashboard-main">
           <span>Earned</span>
           <strong>
-            <StarIcon variant="gold" size={28} />
+            <StarIcon variant="prism" size={28} />
             {formatPrice(stats.earned)}
           </strong>
           <small>Stars</small>
@@ -2642,7 +2642,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
                     <small>{completed ? 'Reward claimed' : task.subtitle || 'Complete the task to unlock the reward'}</small>
                   </div>
                   <span className="bonus-task-reward">
-                    <StarIcon variant="gold" size={17} />
+                    <StarIcon variant="reward" size={17} />
                     +{formatPrice(task.reward)}
                   </span>
                 </div>
@@ -2908,7 +2908,7 @@ function ReferralView({ telegramUser, profile, apiPost, tg, onToast, onBalanceCh
               <span>Stars</span>
             </strong>
             <span className="referral-invitee-chip">
-              {coinIcon('gold')}
+              {coinIcon('reward')}
               <span>
                 Do‘stingizga <strong>{loadingOverview ? '—' : `+${formatPrice(inviteeReward)} Stars`}</strong>
               </span>

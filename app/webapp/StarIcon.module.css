@@ -3,3 +3,5 @@
 .telegramStar{display:inline-block;vertical-align:middle;flex:0 0 auto;max-width:100%;height:auto;object-fit:contain;object-position:center;user-select:none;-webkit-user-drag:none;backface-visibility:hidden}
 .gold{filter:drop-shadow(0 1px 3px rgba(228,166,50,.34))}
 .mono{filter:grayscale(1) brightness(1.65) contrast(.77) drop-shadow(0 1px 3px rgba(216,211,235,.14));opacity:.79}
+
+.vector{filter:drop-shadow(0 2px 5px rgba(151,143,247,.24))}
