@@ -198,7 +198,8 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
         const instance = new vendor.Wheel(host,{
           items,
           isInteractive:false,
-          pointerAngle:0,
+          // CrazyTim angles: 90 degrees is 12 o'clock (top).
+          pointerAngle:90,
           radius:.91,
           itemLabelFont:'Inter, system-ui, sans-serif',
           itemLabelFontSizeMax:13,

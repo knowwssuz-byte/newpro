@@ -72,3 +72,14 @@ test('one uninterrupted SAFE ZONE accurately matches the stated angular size',()
  assert.equal(landedInSafeZone(18.5,1),false);
  assert.equal(landedInSafeZone(18.5,12),false);
 });
+
+test('top pointer is aligned to the wheel engine twelve-o-clock angle',()=>{
+ const page=read('app/webapp/UpgradeLab.jsx');
+ assert.match(page,/pointerAngle:90/);
+ assert.match(page,/metalPointer/);
+ assert.match(page,/\/feature\/upgrade\/pointer-gold\.svg/);
+ assert.match(page,/landedInSafeZone\(chance,index\)/);
+ assert.match(page,/upgradeSound\('tick'/);
+ assert.match(page,/vendor\/confetti-esm\.js/);
+ assert.ok(page.indexOf('01 <b>UPGRADE BARABANI') < page.indexOf('02 <b>GIFT TANLASH'));
+});
