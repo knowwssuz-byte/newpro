@@ -7,13 +7,14 @@ import {
   Search, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, X, Zap,
 } from 'lucide-react';
 import { getInventoryRows } from '@/lib/inventory.mjs';
-import { normalizeUpgradeGift, upgradeChance, wheelSegments, spinIndex } from '@/lib/upgradeLab.mjs';
+import { normalizeUpgradeGift, upgradeChance, wheelSegments, spinIndex, landedInSafeZone } from '@/lib/upgradeLab.mjs';
+import { upgradeSound } from './upgradeAudio';
 import { getGiftPreview, UpgradeGiftThumb } from './UpgradeGiftThumb';
 import StarIcon from './StarIcon';
 import styles from './UpgradeLab.module.css';
 
 const format = value => new Intl.NumberFormat('uz-UZ',{ maximumFractionDigits: 0 }).format(Number(value)||0);
-const AMBIENT = ['#393052','#252b44','#4e345b','#242c43','#584060','#222b46','#3c2b52','#293750','#49335c','#25364b'];
+const AMBIENT = ['#222D53','#2F365E','#202E52','#353059','#242E52','#302F5D','#242D4B','#393159','#253753','#2F3359','#263153'];
 
 async function getCanvasImage(url) {
   const load = (src) => new Promise((resolve, reject) => {
@@ -94,6 +95,45 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
   const timer = useRef(null);
   const spinLock = useRef(false);
   const shouldReduceMotion = useRef(false);
+  const confettiCanvas = useRef(null);
+  const confettiEngine = useRef(null);
+  const fxTimeout = useRef(null);
+  const lastClick = useRef(0);
+  const soundEnabledRef = useRef(true);
+  const [soundEnabled,setSoundEnabled] = useState(true);
+
+  useEffect(()=>{
+    try {
+      const stored=window.localStorage.getItem('myst-upgrade-sounds');
+      if(stored!==null){setSoundEnabled(stored!=='off');soundEnabledRef.current=stored!=='off'}
+    }catch{}
+  },[]);
+  const toggleSound=()=>{
+    setSoundEnabled(current=>{
+      const next=!current;
+      soundEnabledRef.current=next;
+      try{window.localStorage.setItem('myst-upgrade-sounds',next?'on':'off')}catch{}
+      return next;
+    });
+  };
+  const celebrate=useCallback(async()=>{
+    if(shouldReduceMotion.current || !confettiCanvas.current)return;
+    try{
+      if(!confettiEngine.current){
+        const vendor=await import('./vendor/confetti-esm.js');
+        if(!confettiCanvas.current)return;
+        confettiEngine.current=vendor.default.create(confettiCanvas.current,{resize:true,useWorker:false});
+      }
+      const fire=confettiEngine.current;
+      fire({particleCount:105,spread:93,startVelocity:34,gravity:.84,scalar:.9,origin:{x:.47,y:.55},colors:['#FFE4A1','#E1B2FF','#B5FFF0','#E5CDFF','#FFFFFF']});
+      if(fxTimeout.current)clearTimeout(fxTimeout.current);
+      fxTimeout.current=window.setTimeout(()=>{
+        fire({particleCount:68,spread:135,startVelocity:27,gravity:.70,scalar:1.1,origin:{x:.54,y:.41},colors:['#FFD473','#91FFE1','#E1ADFF','#F6F0FF']});
+      },210);
+    }catch{ /* Effects never prevent reporting an Upgrade result. */ }
+  },[]);
+  useEffect(()=>()=>{if(fxTimeout.current)clearTimeout(fxTimeout.current);confettiEngine.current?.reset?.()},[]);
+
 
   const sources = sourceMode==='mine' && owned.length ? owned : catalog;
   const source = sources.find(x=>x.id===sourceId) || sources[0] || null;
@@ -102,17 +142,21 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
   const chance = upgradeChance(source,goal);
   const ratio = goal && source ? Math.round(goal.price/source.price*10)/10:0;
 
-  const finishSpin = useCallback(() => {
-    const result = outcome.current;
-    if (!result || result.done) return;
-    result.done = true;
-    if (timer.current) { window.clearTimeout(timer.current); timer.current=null; }
+  const finishSpin = useCallback((landedIndex) => {
+    const state = outcome.current;
+    if (!state || state.done) return;
+    state.done = true;
+    if(timer.current){window.clearTimeout(timer.current);timer.current=null}
+    const index=Number.isInteger(landedIndex) ? landedIndex : wheel.current?.getCurrentIndex();
+    // Only the pointer's ACTUAL landing zone decides the final result.
+    const won=landedInSafeZone(chance,index);
     spinLock.current=false;
-    setWasSuccessful(result.success);
+    setWasSuccessful(won);
     setPlays(n=>n+1);
-    if(result.success)setWins(n=>n+1);
+    if(won) {setWins(n=>n+1);celebrate()}
+    upgradeSound(won?'win':'miss',soundEnabledRef.current);
     setPhase('result');
-  },[]);
+  },[chance,celebrate]);
 
   useEffect(()=>{
     shouldReduceMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -140,14 +184,16 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
         const [sourceImage,targetImage] = await Promise.all([getCanvasImage(src),getCanvasImage(dst)]);
         if(cancelled||!host.isConnected)return;
         const items = wheelSegments(chance).map((entry,i)=>({
-          label:entry.result==='win'?'UPGRADE':'RETRY',
-          value:entry.result,
-          weight:entry.weight,
-          image:entry.result==='win'?targetImage:sourceImage,
-          imageScale:.47,
-          imageRadius:.59,
-          backgroundColor:entry.result==='win'?(i%4===0?'#504080':'#503a72'):AMBIENT[i],
-          labelColor:entry.result==='win'?'#f3e7ff':'#dce4fb',
+          label: entry.result==='win' ? 'SAFE ZONE' : i % 3===0 ? 'TRY AGAIN' : 'RETRY',
+          value: entry.result,
+          weight: entry.weight,
+          image: entry.result==='win' ? targetImage : sourceImage,
+          // Tiny sectors should not be crowded with unreadable gift images.
+          imageOpacity: entry.result==='win' ? 1 : .72,
+          imageScale: entry.result==='win' ? .55 : .27,
+          imageRadius: entry.result==='win' ? .58 : .63,
+          backgroundColor: entry.result==='win' ? '#19AA86' : AMBIENT[(i-1)%AMBIENT.length],
+          labelColor: entry.result==='win' ? '#FFF8D9' : '#E0DCFC',
         }));
         const instance = new vendor.Wheel(host,{
           items,
@@ -155,16 +201,23 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
           pointerAngle:0,
           radius:.91,
           itemLabelFont:'Inter, system-ui, sans-serif',
-          itemLabelFontSizeMax:15,
-          itemLabelRadius:.89,
-          itemLabelRadiusMax:.27,
+          itemLabelFontSizeMax:13,
+          itemLabelRadius:.86,
+          itemLabelRadiusMax:.22,
           itemLabelAlign:'center',
           itemLabelColors:['#f7f4ff'],
           borderColor:'rgba(210,185,255,.32)',
           borderWidth:3,
           lineColor:'rgba(232,222,255,.28)',
           lineWidth:2,
-          onRest:()=>{if(!cancelled)finishSpin()},
+          onCurrentIndexChange:()=>{
+            const now=performance.now();
+            if(spinLock.current && now-lastClick.current>85){
+              lastClick.current=now;
+              upgradeSound('tick',soundEnabledRef.current);
+            }
+          },
+          onRest:(event)=>{if(!cancelled)finishSpin(event?.currentIndex)},
         });
         if(cancelled){instance.remove();return}
         wheel.current=instance;
@@ -189,17 +242,22 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
     if(spinLock.current||!ready||!source||!goal||chance<=0||!wheel.current)return;
     const hit=Math.random()*100<chance;
     const selectedIndex=spinIndex(hit,Math.random());
-    outcome.current={success:hit,done:false};
+    outcome.current={done:false};
     setPhase('rolling');
     setWasSuccessful(false);
     spinLock.current=true;
+    upgradeSound('start',soundEnabledRef.current);
     try {
       if(shouldReduceMotion.current){
         wheel.current.spinToItem(selectedIndex,0,true,0,1);
-        finishSpin();
+        finishSpin(selectedIndex);
       }else{
         wheel.current.spinToItem(selectedIndex,4600,true,7,1,t=>1-Math.pow(1-t,4));
-        timer.current=window.setTimeout(finishSpin,5300);
+        timer.current=window.setTimeout(()=>{
+          const currentIndex=wheel.current?.getCurrentIndex();
+          try{wheel.current?.stop()}catch{}
+          finishSpin(currentIndex);
+        },5600);
       }
     }catch{
       spinLock.current=false;
@@ -219,6 +277,60 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
         <span className={styles.demoLabel}><ShieldCheck size={13}/> DEMO</span>
       </header>
 
+      <div className={styles.stepHeader}><span>01 <b>UPGRADE BARABANI</b></span><small>12 SEKTOR · 1 SAFE ZONE</small></div>
+      <div className={styles.wheelPanel} data-phase={phase} data-win={phase==='result' && wasSuccessful ? 'true' : 'false'}>
+        <canvas ref={confettiCanvas} className={styles.confettiCanvas} aria-hidden="true" />
+        <div className={styles.wheelIntro}>
+          <div className={styles.wheelTopline}>
+            <span><Zap size={14}/> PRECISION SPIN ENGINE</span>
+            <button type="button" className={styles.soundToggle} onClick={toggleSound}
+              aria-pressed={soundEnabled} aria-label={soundEnabled?'Baraban ovozini o‘chirish':'Baraban ovozini yoqish'}>
+              {soundEnabled ? '◖)) Ovoz yoqilgan' : '◖× Ovoz o‘chiq'}
+            </button>
+          </div>
+          <strong>Upgrade Wheel</strong>
+          <p>Faqat oltin-yashil SAFE ZONE ustida to‘xtasangiz, demo g‘alaba hisoblanadi.</p>
+        </div>
+        <div className={styles.safeInfo} aria-label={`G‘alaba xavfsiz zonasi ${chance.toFixed(1)} foiz`}>
+          <div className={styles.safeInfoTitle}>
+            <span className={styles.safePill}><img src="/feature/upgrade/win-spark.svg" alt=""/> SAFE ZONE</span>
+            <strong>{chance.toFixed(1)}%</strong>
+          </div>
+          <div className={styles.safeProgress}><span style={{width:`${chance}%`}}/></div>
+          <small><span>{(chance*3.6).toFixed(1)}° g‘alaba sektori</span><span>{(100-chance).toFixed(1)}% TRY AGAIN</span></small>
+        </div>
+        <div className={styles.wheelStage}>
+          <img className={styles.metalPointer} src="/feature/upgrade/pointer-gold.svg" alt="" aria-hidden="true" draggable={false}/>
+          <div className={styles.outerRing}>
+            <div className={styles.wheelMount} ref={wheelContainer} role="img" aria-label={`Upgrade barabani, demo imkoniyat ${chance.toFixed(1)} foiz`}/>
+            {!ready?<div className={styles.waitingWheel} role="status"><Sparkles size={28}/><span>{error?'Ulanish xatosi':'Gift rasmlari tayyorlanmoqda…'}</span></div>:null}
+            <div className={styles.hub} aria-hidden="true"><img src="/feature/upgrade/wheel-medallion.svg" alt="" draggable={false}/></div>
+          </div>
+        </div>
+        <div className={styles.spinStatus} role="status">
+          {phase==='rolling'?<><span className={styles.liveDot}/> Baraban aylanyapti · ko‘rsatkich zonani aniqlaydi…</>
+          :phase==='result'?(wasSuccessful?<><CircleCheck size={18}/> DEMO UPGRADE MUVAFFAQIYATLI</>:<><CircleX size={18}/> DEMO: QAYTA URINISH</>)
+          :<><LockKeyhole size={16}/> Stars va haqiqiy giftlar sarflanmaydi</>}
+        </div>
+        {phase==='result' ? (
+          <div className={styles.result} data-success={wasSuccessful?'true':'false'}>
+            <div className={styles.resultThumb}><UpgradeGiftThumb item={wasSuccessful?goal:source}/></div>
+            <div><small>{wasSuccessful?'DEMO UPGRADE':'DEMO RESULT'}</small><strong>{wasSuccessful?goal?.title:'Qayta urinib ko‘ring'}</strong>
+              <p>{wasSuccessful?'Simulyatsiya natijasi — real inventarga gift qo‘shilmadi.':'Asl sovg‘angiz va balansingiz o‘zgarishsiz qoldi.'}</p>
+            </div>
+          </div>
+        ):null}
+        {phase==='result' ?
+          <button type="button" className={styles.mainButton} onClick={again}><RotateCcw size={17}/> Yangi aylanish</button>
+          :<button type="button" className={styles.mainButton} disabled={!ready||phase==='rolling'||!source||!goal||chance<=0} onClick={play}>
+            <Zap size={19}/>{phase==='rolling'?'BARABAN AYLANMOQDA…':'UPGRADE DEMO'}<ArrowUpRight size={17}/>
+          </button>
+        }
+        {error?<p className={styles.error} role="alert">{error}</p>:null}
+        <p className={styles.disclaimer}><Info size={14}/> Faqat demo: hech qanday sovg‘a yoki Stars sarflanmaydi, natijalar inventarga o‘tmaydi.</p>
+      </div>
+
+
       <div className={styles.banner}>
         <div className={styles.bannerMesh} aria-hidden="true"/>
         <div className={styles.bannerCopy}><span><Sparkles size={13}/> UPGRADE STUDIO</span><h2>Giftlaringizga <em>yangi daraja.</em></h2>
@@ -226,7 +338,8 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
         <div className={styles.bannerGem} aria-hidden="true"><Gem size={66} strokeWidth={1.2}/><span/></div>
       </div>
 
-      <div className={styles.stepHeader}><span>01 <b>GIFT TANLASH</b></span><small>1 / 2</small></div>
+
+      <div className={styles.stepHeader}><span>02 <b>GIFT TANLASH</b></span><small>2 / 2</small></div>
       <div className={styles.selection}>
         <button type="button" className={styles.giftSlot} onClick={()=>openPicker('source')} disabled={phase==='rolling'}>
           <span className={styles.slotTop}><span>YOUR GIFT</span><ChevronDown size={15}/></span>
@@ -251,41 +364,6 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
         <div><small>Demo g‘alabalar</small><strong>{wins} <span>/ {plays}</span></strong></div>
       </div>
 
-      <div className={styles.stepHeader}><span>02 <b>UPGRADE BARABANI</b></span><small>10 SEKTOR</small></div>
-      <div className={styles.wheelPanel} data-phase={phase}>
-        <div className={styles.wheelIntro}><span><Zap size={14}/> MYST SPIN ENGINE</span><strong>Spin to upgrade</strong>
-          <p>Yashil/binafsha sektor — upgrade; ko‘k sektor — qayta urinish.</p>
-        </div>
-        <div className={styles.wheelStage}>
-          <div className={styles.pointer} aria-hidden="true"><span/></div>
-          <div className={styles.outerRing}>
-            <div className={styles.wheelMount} ref={wheelContainer} role="img" aria-label={`Upgrade barabani, demo imkoniyat ${chance.toFixed(1)} foiz`}/>
-            {!ready?<div className={styles.waitingWheel} role="status"><Sparkles size={28}/><span>{error?'Ulanish xatosi':'Gift rasmlari tayyorlanmoqda…'}</span></div>:null}
-            <div className={styles.hub} aria-hidden="true"><Zap size={22}/><span>MYST</span></div>
-          </div>
-        </div>
-        <div className={styles.spinStatus} role="status">
-          {phase==='rolling'?<><span className={styles.liveDot}/> Baraban aylanmoqda…</>
-          :phase==='result'?(wasSuccessful?<><CircleCheck size={18}/> DEMO UPGRADE MUVAFFAQIYATLI</>:<><CircleX size={18}/> DEMO: QAYTA URINISH</>)
-          :<><LockKeyhole size={16}/> Stars va haqiqiy giftlar sarflanmaydi</>}
-        </div>
-        {phase==='result' ? (
-          <div className={styles.result} data-success={wasSuccessful?'true':'false'}>
-            <div className={styles.resultThumb}><UpgradeGiftThumb item={wasSuccessful?goal:source}/></div>
-            <div><small>{wasSuccessful?'DEMO UPGRADE':'DEMO RESULT'}</small><strong>{wasSuccessful?goal?.title:'Qayta urinib ko‘ring'}</strong>
-              <p>{wasSuccessful?'Simulyatsiya natijasi — real inventarga gift qo‘shilmadi.':'Asl sovg‘angiz va balansingiz o‘zgarishsiz qoldi.'}</p>
-            </div>
-          </div>
-        ):null}
-        {phase==='result' ?
-          <button type="button" className={styles.mainButton} onClick={again}><RotateCcw size={17}/> Yangi aylanish</button>
-          :<button type="button" className={styles.mainButton} disabled={!ready||phase==='rolling'||!source||!goal||chance<=0} onClick={play}>
-            <Zap size={19}/>{phase==='rolling'?'BARABAN AYLANMOQDA…':'UPGRADE DEMO'}<ArrowUpRight size={17}/>
-          </button>
-        }
-        {error?<p className={styles.error} role="alert">{error}</p>:null}
-        <p className={styles.disclaimer}><Info size={14}/> Bu haqiqiy gift yutish o‘yini emas. Natijalar faqat interfeysni sinash uchun.</p>
-      </div>
 
       {picker ? <GiftPicker key={picker+'-'+sourceMode} mode={picker} gifts={pickerGifts} activeId={picker==='source'?source?.id:goal?.id} sourceMode={sourceMode}
         ownedCount={owned.length} onSourceMode={mode=>{setSourceMode(mode);setSourceId(null);setTargetId(null);setPhase('idle')}} onChoose={selectGift} onClose={()=>setPicker(null)}/> : null}
