@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import AppIcon from './AppIcon';
+import BootLoader from './BootLoader';
 import caseOpeningStyles from './CaseOpening.module.css';
 import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
@@ -1386,18 +1387,7 @@ export default function WebAppClient() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="initial-loader-screen" role="status" aria-live="polite" aria-label="Gift Myst yuklanmoqda">
-        <div className="preload-brand">
-          <span className="preload-brand-mark">✦</span>
-          <strong>GIFT MYST</strong>
-          <span>Telegram Mini App</span>
-        </div>
-        <div className="spinner" aria-hidden="true" />
-      </div>
-    );
-  }
+  if (loading) return <BootLoader />;
 
   const isCaseOpening =
     opening?.stage === 'preparing' || opening?.stage === 'rolling';
