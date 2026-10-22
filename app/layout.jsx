@@ -1,6 +1,7 @@
 import './globals.css';
 import './webapp/professional-theme.css';
 import './webapp/premium-polish.css';
+import './webapp/gift-once.css';
 import './admin/dice-stats.css';
 import Script from 'next/script';
 

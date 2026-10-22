@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { RefreshCw, Settings2, Volume2, Smartphone, Sparkles, X, UserRound } from 'lucide-react';
+import { RefreshCw, Settings2, Volume2, Smartphone, Sparkles, X, UserRound, Clapperboard } from 'lucide-react';
 import styles from './SettingsPanel.module.css';
 import StarIcon from './StarIcon';
 
@@ -71,6 +71,13 @@ export default function SettingsPanel({ onClose, settings, onChange, telegramUse
               subtitle="Telefon tugma bosishni sezdiradi"
               checked={Boolean(settings.haptic)}
               onChange={update('haptic')}
+            />
+            <Setting
+              icon={Clapperboard}
+              title="Gift animatsiyalari"
+              subtitle="Sahifaga kirganda bir marta; scroll paytida qayta boshlanmaydi"
+              checked={settings.giftAnimations !== false}
+              onChange={update('giftAnimations')}
             />
             <Setting
               icon={Sparkles}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
@@ -12,6 +12,7 @@ import gameCardStyles from './PremiumGameCards.module.css';
 import DepositView from './DepositView';
 import RocketGame from './RocketGame';
 import DiceGame, { DiceLobbyCard } from './DiceGame';
+import PvpHub, { PvpEntryCard } from './PvpHub';
 import StarIcon from './StarIcon';
 import SettingsPanel from './SettingsPanel';
 import settingsStyles from './SettingsPanel.module.css';
@@ -22,7 +23,8 @@ const WelcomeTour = dynamic(() => import('./WelcomeTour'), { ssr: false });
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
 const UI_SETTINGS_KEY = 'giftmyst_ui_preferences_v2';
-const DEFAULT_UI_SETTINGS = { sound: true, haptic: true, effects: true };
+const DEFAULT_UI_SETTINGS = { sound: true, haptic: true, effects: true, giftAnimations: true };
+const GiftAnimationContext = createContext(true);
 
 const emptyCaseForm = {
   title: '',
@@ -531,6 +533,7 @@ export default function WebAppClient() {
   const openingFallbackTimerRef = useRef(null);
   const rocketReturnTabRef = useRef('home');
   const diceReturnTabRef = useRef('games');
+  const pvpReturnTabRef = useRef('home');
   const depositReturnTabRef = useRef('home');
   const hasBootstrappedRef = useRef(false);
   const tourOpenedRef = useRef(false);
@@ -545,6 +548,7 @@ export default function WebAppClient() {
           sound: stored.sound !== false,
           haptic: stored.haptic !== false,
           effects: stored.effects !== false,
+          giftAnimations: stored.giftAnimations !== false,
         });
       }
     } catch {}
@@ -1357,6 +1361,20 @@ export default function WebAppClient() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
 
+  const openPvpHub = useCallback((returnTab = 'home') => {
+    pvpReturnTabRef.current = returnTab === 'games' ? 'games' : 'home';
+    setError('');
+    setOpening(null);
+    setSelectedCase(null);
+    setTab('pvp');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
+  const closePvpHub = useCallback(() => {
+    setTab(pvpReturnTabRef.current || 'home');
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
+
   const updateRocketBalance = useCallback((nextBalance) => {
     const value = Number(nextBalance);
 
@@ -1392,7 +1410,7 @@ export default function WebAppClient() {
   const isCaseOpening =
     opening?.stage === 'preparing' || opening?.stage === 'rolling';
   const bottomNavActiveId = !selectedCase
-    ? tab === 'rocket' || tab === 'dice'
+    ? tab === 'rocket' || tab === 'dice' || tab === 'pvp'
       ? 'games'
       : navItems.some((item) => item.id === tab)
         ? tab
@@ -1400,6 +1418,7 @@ export default function WebAppClient() {
     : 'none';
 
   return (
+    <GiftAnimationContext.Provider value={uiSettings.giftAnimations !== false}>
     <div className="app-frame" data-ui-effects={uiSettings.effects ? 'on' : 'off'}>
       <div className="app-shell">
         {showWelcomeTour ? <WelcomeTour onFinish={finishWelcomeTour} /> : null}
@@ -1481,7 +1500,7 @@ export default function WebAppClient() {
                   onOpenCase={openCase}
                   onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
                   onOpenRocket={() => openRocketGame('home')}
-                  onComingSoon={() => showToast('Tez orada 🚀')}
+                  onOpenPvp={() => openPvpHub('home')}
                   busy={busy}
                   featureSettings={featureSettings}
                 />
@@ -1492,10 +1511,12 @@ export default function WebAppClient() {
                   onGoHome={() => setTab('home')}
                   onOpenRocket={() => openRocketGame('games')}
                   onOpenDice={() => openDiceGame('games')}
-                  onComingSoon={() => showToast('Tez orada 🚀')}
+                  onOpenPvp={() => openPvpHub('games')}
                   featureSettings={featureSettings}
                 />
               ) : null}
+
+              {tab === 'pvp' ? <PvpHub onBack={closePvpHub} /> : null}
 
               {tab === 'rocket' ? (
                 <RocketGame
@@ -1584,7 +1605,7 @@ export default function WebAppClient() {
                 <NavButton
                   key={item.id}
                   item={item}
-                  active={!selectedCase && (tab === item.id || tab === 'rocket' || tab === 'dice')}
+                  active={!selectedCase && (tab === item.id || tab === 'rocket' || tab === 'dice' || tab === 'pvp')}
                   disabled={isCaseOpening || rocketRoundActive || diceRoundActive}
                   onClick={() => {
                     if (isCaseOpening || rocketRoundActive || diceRoundActive) return;
@@ -1623,6 +1644,7 @@ export default function WebAppClient() {
 
       </div>
     </div>
+    </GiftAnimationContext.Provider>
   );
 }
 
@@ -1860,16 +1882,10 @@ function HomeView({
   onOpenCase,
   onSelectCase,
   onOpenRocket,
-  onComingSoon,
+  onOpenPvp,
   busy,
 }) {
   const featuredCases = cases || [];
-
-  const showComingSoon = () => {
-    if (typeof onComingSoon === 'function') {
-      onComingSoon();
-    }
-  };
 
   return (
     <section className="home-view premium-home">
@@ -1901,9 +1917,9 @@ function HomeView({
             badge="NEW!"
             title="PVP"
             description="Challenge rivals. Own the arena."
-            actionText="Tez orada"
+            actionText="Arena ochiq"
             image="/feature/game-banners/pvp-v41.webp"
-            onClick={showComingSoon}
+            onClick={onOpenPvp}
           />
         </div>
       </section>
@@ -1965,7 +1981,7 @@ function HomeView({
   );
 }
 
-function CasesView({ onGoHome, onOpenDice }) {
+function CasesView({ onGoHome, onOpenDice, onOpenPvp }) {
   return (
     <section className="screen-stack">
       <div className="page-header premium-card games-page-header">
@@ -1977,6 +1993,7 @@ function CasesView({ onGoHome, onOpenDice }) {
 
       <div className={`${gameCardStyles.stack} ${gameCardStyles.gamesStack}`}>
         <DiceLobbyCard onClick={onOpenDice} />
+        <PvpEntryCard onClick={onOpenPvp} />
       </div>
     </section>
   );
@@ -2114,7 +2131,7 @@ async function createTgsPreview(src) {
   return tgsPreviewCache.get(src);
 }
 
-function TelegramTgsAnimation({ src, className, animate = false }) {
+function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '' }) {
   const containerRef = useRef(null);
   const [failed, setFailed] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -2127,6 +2144,7 @@ function TelegramTgsAnimation({ src, className, animate = false }) {
       try {
         setFailed(false);
         if (!animate) {
+          if (fallbackUrl) return;
           const url = await createTgsPreview(src);
           if (!cancelled) setPreviewUrl(url);
           return;
@@ -2138,9 +2156,14 @@ function TelegramTgsAnimation({ src, className, animate = false }) {
         animation = lottie.loadAnimation({
           container: containerRef.current,
           renderer: 'svg',
-          loop: true,
+          loop: false,
           autoplay: true,
           animationData,
+        });
+        animation.addEventListener('complete', () => {
+          if (!cancelled && animation) {
+            animation.goToAndStop(Math.max(0, animation.totalFrames - 1), true);
+          }
         });
       } catch (error) {
         console.warn('TGS animation failed:', error?.message || error);
@@ -2156,18 +2179,63 @@ function TelegramTgsAnimation({ src, className, animate = false }) {
         animation.destroy();
       }
     };
-  }, [src, animate]);
+  }, [src, animate, fallbackUrl]);
 
   return (
     <span className={`${className} tgs-gift-media`}>
-      {previewUrl && !animate ? <img src={previewUrl} className="tgs-static-preview" alt="" draggable="false" /> : null}
+      {!animate && (fallbackUrl || previewUrl) ? <img src={fallbackUrl || previewUrl} className="tgs-static-preview" alt="" draggable="false" /> : null}
       {animate ? <span ref={containerRef} className="tgs-gift-canvas" /> : null}
-      {failed ? <AppIcon name="gift" /> : null}
+      {failed && fallbackUrl ? <img src={fallbackUrl} className="tgs-static-preview" alt="" draggable="false" /> : null}
+      {failed && !fallbackUrl ? <AppIcon name="gift" /> : null}
     </span>
   );
 }
 
-function GiftMedia({ gift, compact = false, preferStatic = false, animate = false }) {
+// Image formats do not expose a reliable end-of-loop event across WebViews.
+// Show the motion on entry and settle to the still thumbnail after a limited
+// preview window. TGS/Lottie uses its actual complete event (above).
+function OneShotImageGift({ src, still, className }) {
+  const [ended, setEnded] = useState(false);
+  const imageRef = useRef(null);
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    setEnded(false);
+    const timer = window.setTimeout(() => {
+      if (!still && imageRef.current && canvasRef.current) {
+        const img = imageRef.current;
+        const canvas = canvasRef.current;
+        if (img.complete && img.naturalWidth > 0) {
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          try { canvas.getContext('2d')?.drawImage(img, 0, 0); } catch {}
+        }
+      }
+      setEnded(true);
+    }, 8000);
+    return () => window.clearTimeout(timer);
+  }, [src, still]);
+  return (
+    <span className={`${className} gift-once-media`}>
+      <img ref={imageRef} src={src} alt="" decoding="async" draggable={false}
+        className="gift-once-img" style={{ display: ended ? 'none' : undefined }} />
+      {ended && still ? <img className="gift-once-img" src={still} alt="" draggable={false}/> : null}
+      <canvas ref={canvasRef} className="gift-once-img" style={{ display: ended && !still ? 'block' : 'none' }} aria-hidden="true" />
+    </span>
+  );
+}
+
+function OneShotVideoGift({ src, still, className }) {
+  const [finished, setFinished] = useState(false);
+  useEffect(() => { setFinished(false); }, [src]);
+  return finished && still
+    ? <img className={`${className} gift-media-visual`} src={still} alt="" draggable={false}/>
+    : <video className={`${className} gift-media-visual`} src={src} muted playsInline autoPlay
+        onEnded={() => setFinished(true)} onError={() => setFinished(true)}
+        preload="auto" poster={still || undefined} aria-hidden="true" />;
+}
+
+function GiftMedia({ gift, compact = false, preferStatic = false, animate = false, animateOnEnter = false }) {
+  const giftAnimationsEnabled = useContext(GiftAnimationContext);
   const mediaClass = compact ? 'gift-media compact' : 'gift-media';
 
   if (!gift) {
@@ -2188,6 +2256,16 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
 
   const imageUrl = gift.image_url || gift.png_url || gift.webp_url || '';
   const animationUrl = gift.animation_url || '';
+  const playOnce = giftAnimationsEnabled && !preferStatic && (animate || animateOnEnter);
+  if (animationUrl && isTgsAnimationUrl(animationUrl)) {
+    return <TelegramTgsAnimation src={animationUrl} className={mediaClass} animate={playOnce} fallbackUrl={imageUrl} />;
+  }
+  if (playOnce && /\\.(mp4|webm|mov)(?:[?#]|$)/i.test(animationUrl)) {
+    return <OneShotVideoGift src={animationUrl} still={imageUrl} className={mediaClass} />;
+  }
+  if (playOnce && animationUrl && isImageAnimationUrl(animationUrl)) {
+    return <OneShotImageGift src={animationUrl} still={imageUrl && imageUrl !== animationUrl ? imageUrl : ''} className={mediaClass} />;
+  }
 
   if (imageUrl) {
     return (
@@ -2206,12 +2284,8 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
     );
   }
 
-  if (animationUrl && isTgsAnimationUrl(animationUrl)) {
-    return <TelegramTgsAnimation src={animationUrl} className={mediaClass} animate={animate} />;
-  }
-
   if (animationUrl && isImageAnimationUrl(animationUrl)) {
-    return <img className={`${mediaClass} gift-media-visual`} src={animationUrl} alt="" loading="lazy" decoding="async" draggable="false" aria-hidden="true" />;
+    return <OneShotImageGift src={animationUrl} still="" className={mediaClass} />;
   }
 
   return (
@@ -2268,7 +2342,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
         </div>
       ) : (
         <div className={inventoryStyles.grid}>
-          {rows.slice(0, visibleCount).map(({ item, gift, caseItem, request }) => {
+          {rows.slice(0, visibleCount).map(({ item, gift, caseItem, request }, index) => {
             const price = giftSellPrice(gift);
             const requested = Boolean(request);
             const requestStatus = String(request?.status || '');
@@ -2281,7 +2355,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
                   <span className={inventoryStyles.state + (requested ? ' ' + inventoryStyles.statePending : '')}>
                     {statusText}
                   </span>
-                  <GiftMedia gift={gift} preferStatic />
+                  <GiftMedia gift={gift} animateOnEnter={index < 24} />
                 </div>
                 <div className={inventoryStyles.cardBody}>
                   <h3 className={inventoryStyles.title} title={gift?.title || ''}>{gift?.title || 'Collectible Gift'}</h3>
@@ -3758,7 +3832,7 @@ function CaseDetailPage({
           >
             <span className="prize-card-shine" aria-hidden="true" />
             <div className="case-page-prize-image">
-              <GiftMedia gift={gift} compact preferStatic />
+              <GiftMedia gift={gift} compact animateOnEnter />
             </div>
             <div className="case-page-prize-copy">
               <strong>{gift.title}</strong>
