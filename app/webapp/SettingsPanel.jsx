@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { RefreshCw, Settings2, Volume2, Smartphone, Sparkles, X, UserRound, Clapperboard } from 'lucide-react';
+import { RefreshCw, Settings2, Volume2, Smartphone, Sparkles, X, UserRound, Clapperboard, History, ChevronRight } from 'lucide-react';
 import styles from './SettingsPanel.module.css';
 import StarIcon from './StarIcon';
 
@@ -24,7 +24,7 @@ function Setting({ icon: Icon, title, subtitle, checked, onChange }) {
   );
 }
 
-export default function SettingsPanel({ onClose, settings, onChange, telegramUser, profile, onRefresh }) {
+export default function SettingsPanel({ onClose, settings, onChange, telegramUser, profile, onRefresh, onHistory }) {
   const closeRef = useRef(null);
   useEffect(() => {
     closeRef.current?.focus();
@@ -56,6 +56,12 @@ export default function SettingsPanel({ onClose, settings, onChange, telegramUse
             <div className={styles.accountBalance}><StarIcon variant="mono" size={21} /><strong>{format(profile?.balance)}</strong></div>
           </div>
 
+          <h2 className={styles.sectionLabel}>HISOB VA JARAYONLAR</h2>
+          <button type="button" className={styles.historyEntry} onClick={onHistory}>
+            <span className={styles.historyEntryIcon}><History size={22}/></span>
+            <span><strong>Tarix</strong><small>Jarayondagi va yakunlangan sovg‘alar</small></span>
+            <ChevronRight size={19} />
+          </button>
           <h2 className={styles.sectionLabel}>INTERFEYS</h2>
           <div className={styles.options}>
             <Setting

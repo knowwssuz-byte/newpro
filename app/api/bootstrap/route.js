@@ -79,7 +79,6 @@ export async function POST(request) {
         .from('open_history')
         .select('*')
         .eq('user_id', auth.telegramUser.id)
-        .is('sold_at', null)
         .order('created_at', { ascending: false })
         .limit(250),
       supabase

@@ -18,6 +18,8 @@ import SettingsPanel from './SettingsPanel';
 import settingsStyles from './SettingsPanel.module.css';
 import inventoryStyles from './Inventory.module.css';
 import { getInventoryRows } from '@/lib/inventory.mjs';
+import GiftHistory from './GiftHistory';
+import UpgradeLab from './UpgradeLab';
 
 const WelcomeTour = dynamic(() => import('./WelcomeTour'), { ssr: false });
 const CASE_ROLL_DURATION_MS = 4600;
@@ -566,11 +568,11 @@ export default function WebAppClient() {
 
   const navItems = useMemo(
     () => [
-      { id: 'games', icon: 'games', label: 'Games' },
-      { id: 'inventory', icon: 'inventory', label: 'Inventory' },
-      { id: 'home', icon: 'home', label: 'Home' },
-      { id: 'bonus', icon: 'bonus', label: 'Bonus' },
-      { id: 'referral', icon: 'referral', label: 'Referral' },
+      { id: 'games', icon: 'games', label: 'Games', navArt: true },
+      { id: 'inventory', icon: 'inventory', label: 'Inventory', navArt: true },
+      { id: 'home', icon: 'home', label: 'Home', navArt: true },
+      { id: 'bonus', icon: 'bonus', label: 'Bonus', navArt: true },
+      { id: 'referral', icon: 'referral', label: 'Referral', navArt: true },
     ],
     []
   );
@@ -1361,6 +1363,8 @@ export default function WebAppClient() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
 
+  const openUpgradeLab = useCallback(() => { setError(''); setOpening(null); setSelectedCase(null); setTab('upgrade'); window.scrollTo({top:0,behavior:'auto'}); }, []);
+
   const openPvpHub = useCallback((returnTab = 'home') => {
     pvpReturnTabRef.current = returnTab === 'games' ? 'games' : 'home';
     setError('');
@@ -1427,6 +1431,7 @@ export default function WebAppClient() {
             onClose={closeSettings}
             settings={uiSettings}
             onChange={setUiSettings}
+            onHistory={() => { setSettingsOpen(false); setOpening(null); setSelectedCase(null); setTab('history'); window.scrollTo({top:0,behavior:'auto'}); }}
             telegramUser={telegramUser}
             profile={profile}
             onRefresh={async () => {
@@ -1497,6 +1502,7 @@ export default function WebAppClient() {
                   giftsByCase={giftsByCase}
                   onGoCases={() => document.getElementById('case-collection')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })}
                   onGoInventory={() => setTab('inventory')}
+                  onGoUpgrade={openUpgradeLab}
                   onOpenCase={openCase}
                   onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
                   onOpenRocket={() => openRocketGame('home')}
@@ -1516,6 +1522,8 @@ export default function WebAppClient() {
                 />
               ) : null}
 
+              {tab === 'history' ? <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab('home')} onRefresh={() => loadApp({silent:true})}/> : null}
+              {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={gifts} cases={cases} withdrawals={withdrawals} onBack={() => setTab('home')}/> : null}
               {tab === 'pvp' ? <PvpHub onBack={closePvpHub} /> : null}
 
               {tab === 'rocket' ? (
@@ -1756,22 +1764,13 @@ function NavButton({ item, active, onClick, mobile = false, disabled = false }) 
       aria-current={active ? 'page' : undefined}
     >
       <span className={iconWrapClassName} onContextMenu={preventIconMenu}>
-        {item.image ? (
-          <Image
-            className={iconClassName}
-            src={item.image}
-            alt=""
-            width={32}
-            height={32}
-            priority
-            unoptimized
-            draggable={false}
-            aria-hidden="true"
-            onContextMenu={preventIconMenu}
-          />
-        ) : (
-          <AppIcon name={item.icon} />
-        )}
+        {item.navArt ? (
+          <Image className={iconClassName} src={`/feature/nav/pro/${item.id}-${active ? 'filled' : 'outline'}.svg`}
+            alt="" width={28} height={28} priority unoptimized draggable={false} aria-hidden="true" />
+        ) : item.image ? (
+          <Image className={iconClassName} src={item.image} alt="" width={32} height={32}
+            priority unoptimized draggable={false} aria-hidden="true" />
+        ) : <AppIcon name={item.icon} />}
       </span>
       <strong className={labelClassName}>{item.label}</strong>
       {item.center ? <em className={homeDotClassName} /> : null}
@@ -1879,6 +1878,7 @@ function HomeView({
   giftsByCase,
   onGoCases,
   onGoInventory,
+  onGoUpgrade,
   onOpenCase,
   onSelectCase,
   onOpenRocket,
@@ -1936,13 +1936,13 @@ function HomeView({
           <span className={gameCardStyles.actionChevron}><AppIcon name="chevronRight" /></span>
         </button>
 
-        <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.upgrade}`} onClick={onGoInventory}>
+        <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.upgrade}`} onClick={onGoUpgrade}>
           <span className={gameCardStyles.actionIcon}>
-            <AppIcon name="inventory" />
+            <AppIcon name="spark" />
           </span>
           <span className={gameCardStyles.actionCopy}>
-            <strong>INVENTORY</strong>
-            <small>Your rewards</small>
+            <strong>UPGRADE</strong>
+            <small>Gift Upgrade Lab</small>
           </span>
           <span className={gameCardStyles.actionChevron}><AppIcon name="chevronRight" /></span>
         </button>
