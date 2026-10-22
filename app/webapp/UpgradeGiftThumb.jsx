@@ -5,7 +5,7 @@ import styles from './UpgradeGiftThumb.module.css';
 
 const FALLBACK = '/feature/upgrade/gift-fallback.svg';
 const cache = new Map();
-const TGS_SUFFIX = /\\.tgs(?:[?#]|$)/i;
+const TGS_SUFFIX = /\.tgs(?:[?#]|$)/i;
 
 export function getGiftPreview(item) {
   if (!item) return Promise.resolve(FALLBACK);
@@ -13,7 +13,7 @@ export function getGiftPreview(item) {
   if (typeof image === 'string' && image) return Promise.resolve(image);
   const animation = item.animationUrl || item.animation_url || '';
   if (!TGS_SUFFIX.test(animation)) {
-    return Promise.resolve(/\\.(png|jpe?g|svg|gif|webp)(?:[?#]|$)/i.test(animation) ? animation : FALLBACK);
+    return Promise.resolve(/\.(png|jpe?g|svg|gif|webp)(?:[?#]|$)/i.test(animation) ? animation : FALLBACK);
   }
   if (!cache.has(animation)) {
     cache.set(animation, (async () => {
