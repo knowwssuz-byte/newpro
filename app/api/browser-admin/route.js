@@ -177,6 +177,7 @@ async function bootstrap(supabase) {
     bonusTasks,
     bonusProgress,
     promoCodes,
+    referralSettingsResult,
   ] = await Promise.all([
     fetchCasesForAdmin(supabase),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').order('created_at', { ascending: false })),
@@ -219,7 +220,9 @@ async function bootstrap(supabase) {
         .limit(1000)
     ),
     listPromoCodes(supabase),
+    supabase.from('referral_settings').select('enabled,inviter_reward,invitee_reward,activation_mode').eq('id', 1).maybeSingle(),
   ]);
+  if (referralSettingsResult.error) throw referralSettingsResult.error;
 
   const completedProgress = (bonusProgress || []).filter(
     (row) => row?.value?.status === 'completed'
@@ -238,6 +241,12 @@ async function bootstrap(supabase) {
     diceSettings: diceSettingsForClient(diceSettings),
     diceStats,
     bonusTasks,
+    referralSettings: {
+      enabled: referralSettingsResult.data?.enabled !== false,
+      inviterReward: Number(referralSettingsResult.data?.inviter_reward || 0),
+      inviteeReward: Number(referralSettingsResult.data?.invitee_reward || 0),
+      activationMode: referralSettingsResult.data?.activation_mode || 'verified_task',
+    },
     bonusStats: {
       totalTasks: bonusTasks.length,
       activeTasks: bonusTasks.filter((task) => task.isActive).length,
@@ -574,6 +583,24 @@ export async function POST(request) {
         ok: true,
         diceSettings: diceSettingsForClient(settings),
       });
+    }
+
+    if (action === 'referral_settings_update') {
+      const input = body.settings || {};
+      const inviterReward = Number(input.inviterReward);
+      const inviteeReward = Number(input.inviteeReward);
+      if (![inviterReward, inviteeReward].every((n) => Number.isSafeInteger(n) && n >= 0 && n <= 100000)) {
+        return json({ ok: false, error: 'Referal Stars 0–100000 butun son bo‘lishi kerak.' }, 400);
+      }
+      const { error } = await supabase.from('referral_settings').upsert({
+        id: 1,
+        enabled: input.enabled === true,
+        inviter_reward: inviterReward,
+        invitee_reward: inviteeReward,
+        activation_mode: 'verified_task',
+      }, { onConflict: 'id' });
+      if (error) throw error;
+      return json({ ok: true, ...(await bootstrap(supabase)) });
     }
 
     if (action === 'bonus_task_save') {
