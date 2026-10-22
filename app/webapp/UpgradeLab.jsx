@@ -1,126 +1,294 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight, CheckCircle2, ChevronDown, Gift, RotateCcw, ShieldCheck, Sparkles, TrendingUp, XCircle, Zap } from 'lucide-react';
-import StarIcon from './StarIcon';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ArrowLeft, ArrowRight, ArrowUpRight, Check, ChevronDown,
+  CircleCheck, CircleX, Crown, Gem, Info, LockKeyhole, RotateCcw,
+  Search, ShieldCheck, SlidersHorizontal, Sparkles, Trophy, X, Zap,
+} from 'lucide-react';
 import { getInventoryRows } from '@/lib/inventory.mjs';
+import { normalizeUpgradeGift, upgradeChance, wheelSegments, spinIndex } from '@/lib/upgradeLab.mjs';
+import { getGiftPreview, UpgradeGiftThumb } from './UpgradeGiftThumb';
+import StarIcon from './StarIcon';
 import styles from './UpgradeLab.module.css';
 
-const fmt = value => new Intl.NumberFormat('uz-UZ',{maximumFractionDigits:0}).format(Number(value)||0);
-function giftValue(gift) {
-  const values=[gift?.sell_price, gift?.buy_price, gift?.floor_price, gift?.value];
-  return Math.max(0,Number(values.find(v=>Number(v)>0))||0);
+const format = value => new Intl.NumberFormat('uz-UZ',{ maximumFractionDigits: 0 }).format(Number(value)||0);
+const AMBIENT = ['#393052','#252b44','#4e345b','#242c43','#584060','#222b46','#3c2b52','#293750','#49335c','#25364b'];
+
+async function getCanvasImage(url) {
+  const load = (src) => new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Image unavailable'));
+    image.src = src;
+  });
+  try { return await load(url); }
+  catch { return load('/feature/upgrade/gift-fallback.svg'); }
 }
-const demoGift = (gift, i) => ({
-  id: String(gift?.id || 'practice-'+i),
-  title: String(gift?.title || 'Myst Gift'),
-  image_url: gift?.image_url || '',
-  rarity: gift?.rarity || 'rare',
-  price: Math.max(giftValue(gift),i===0?10:30),
-});
-const fallback = [
- {id:'demo-starter',title:'Crystal Drop',image_url:'',rarity:'rare',price:25},
- {id:'demo-prime',title:'Royal Emblem',image_url:'',rarity:'epic',price:65},
- {id:'demo-elite',title:'Eternal Prism',image_url:'',rarity:'legendary',price:180},
-];
-function PrizeArt({ item, size='normal' }) {
- return <div className={styles.prizeArt} data-size={size}>
-  <div className={styles.orbit} aria-hidden="true"/>
-  {item?.image_url ? <img src={item.image_url} alt="" loading="lazy" draggable="false" /> : <Gift size={size==='large'?72:40} strokeWidth={1.25} aria-hidden="true"/>}
- </div>;
+
+function GiftPicker({ mode, gifts, activeId, onChoose, onClose, sourceMode, onSourceMode, ownedCount }) {
+  const [query,setQuery] = useState('');
+  const [sort,setSort] = useState('asc');
+  const list = useMemo(() => {
+    const q = query.trim().toLocaleLowerCase();
+    return gifts.filter(item => !q || item.title.toLocaleLowerCase().includes(q))
+      .sort((a,b)=> sort === 'desc' ? b.price-a.price : a.price-b.price);
+  }, [gifts,query,sort]);
+  useEffect(() => {
+    const onKey = (event) => { if (event.key === 'Escape') onClose(); };
+    document.addEventListener('keydown',onKey);
+    return () => document.removeEventListener('keydown',onKey);
+  },[onClose]);
+  return (
+    <div className={styles.sheetBackdrop} onMouseDown={event => { if(event.target===event.currentTarget)onClose(); }}>
+      <section className={styles.sheet} role="dialog" aria-modal="true" aria-label={mode==='source'?'Gift tanlash':'Target gift tanlash'}>
+        <div className={styles.sheetHandle} aria-hidden="true"/>
+        <div className={styles.sheetHead}>
+          <div><small>{mode==='source'?'STEP 01 / MY GIFT':'STEP 02 / TARGET GIFT'}</small><h2>{mode==='source'?'Giftni tanlash':'Yangilanadigan gift'}</h2></div>
+          <button type="button" onClick={onClose} aria-label="Yopish"><X size={20}/></button>
+        </div>
+        {mode==='source' ? <div className={styles.sourceTabs}>
+          <button type="button" className={sourceMode==='mine'?styles.tabSelected:''} onClick={()=>onSourceMode('mine')} disabled={!ownedCount}>Inventarim ({ownedCount})</button>
+          <button type="button" className={sourceMode==='catalog'?styles.tabSelected:''} onClick={()=>onSourceMode('catalog')}>Demo katalog</button>
+        </div> : null}
+        <div className={styles.searchRow}>
+          <label className={styles.search}><Search size={17}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Gift nomini qidiring..." aria-label="Gift qidirish"/></label>
+          <button type="button" className={styles.sort} onClick={()=>setSort(current=>current==='asc'?'desc':'asc')} aria-label="Narx bo‘yicha tartiblash"><SlidersHorizontal size={16}/><span>{sort==='asc'?'Arzon':'Qimmat'}</span></button>
+        </div>
+        <p className={styles.searchInfo}>{list.length} ta gift · rasmlar Telegram gift kutubxonasidan</p>
+        <div className={styles.pickerList}>
+          {list.length ? list.map(item=>(
+            <button type="button" className={[styles.giftPick,item.id===activeId?styles.pickActive:''].join(' ')} key={item.id} onClick={()=>onChoose(item)}>
+              <span className={styles.pickerArt}><UpgradeGiftThumb item={item} alt=""/></span>
+              <span className={styles.pickerDetails}><strong>{item.title}</strong><small>{item.owned?'Mening giftim':'Katalog · demo'}</small><span className={styles.giftCost}><StarIcon variant="gold" size={15}/>{format(item.price)}</span></span>
+              <span className={styles.pickCheck}>{item.id===activeId?<CircleCheck size={19}/>:<ArrowRight size={16}/>}</span>
+            </button>
+          )):<div className={styles.pickerEmpty}><Gem size={30}/><strong>Gift topilmadi</strong><p>Boshqa nom yoki arzonroq giftni tanlang.</p></div>}
+        </div>
+        <div className={styles.sheetFoot}>Tanlov faqat demo animatsiyasiga ta’sir qiladi. Balansingiz saqlanadi.</div>
+      </section>
+    </div>
+  );
 }
+
 export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], catalogGifts=[], cases=[], withdrawals=[] }) {
- const owned = useMemo(() => getInventoryRows(history,inventoryGifts,cases,withdrawals)
-   .map(({ item,gift })=>({ ...demoGift(gift,0), id:String(item.id),actual:true,price:Math.max(1,giftValue(gift)) })),[history,inventoryGifts,cases,withdrawals]);
- const catalog = useMemo(()=>{
-   const found = (catalogGifts || []).filter(g=>g?.type!=='balance' && Number(g?.stock)>0 && giftValue(g)>0)
-    .slice(0,50).map((g,i)=>demoGift(g,i));
-   return [...found,...fallback].sort((a,b)=>a.price-b.price);
- },[catalogGifts]);
- const [selected,setSelected] = useState(null);
- const [target,setTarget] = useState(null);
- const [phase,setPhase] = useState('idle');
- const [success,setSuccess] = useState(false);
- const timeout = useRef(null);
- useEffect(()=>()=>{if(timeout.current)window.clearTimeout(timeout.current)},[]);
- const sources = owned.length ? owned : (catalog.length?catalog:fallback);
- const source = sources.find(s=>s.id===selected)||sources[0]||fallback[0];
- const targets = catalog.filter(item=>item.price>source.price*1.06 && item.id!==source.id);
- const goal = targets.find(item=>item.id===target)||targets[0]||fallback[2];
- const chance = Math.min(85,Math.max(8,Math.round((source.price/Math.max(goal.price,1))*80)));
- const [tab,setTab]=useState('source');
- function play() {
-  if (phase==='rolling'||!goal || !source) return;
-  setPhase('rolling');
-  setSuccess(false);
-  const result = Math.random() * 100 < chance; // Cosmetic demo only, not a monetary draw.
-  if(timeout.current)window.clearTimeout(timeout.current);
-  timeout.current=window.setTimeout(()=>{setSuccess(result);setPhase('result');timeout.current=null},3200);
- }
- function restart(){setPhase('idle');setSuccess(false)}
- return (
-  <section className={styles.root}>
-   <div className={styles.header}>
-    <button type="button" onClick={onBack} className={styles.back} aria-label="Orqaga"><ArrowLeft size={20}/></button>
-    <div><span>MYST LABS / GAME MODES</span><h1>Gift Upgrade</h1></div>
-    <span className={styles.demo}>DEMO</span>
-   </div>
-   <div className={styles.hero}>
-    <div className={styles.heroGlow} aria-hidden="true"/>
-    <div className={styles.eyebrow}><Zap size={14}/> UPGRADE EXPERIENCE</div>
-    <h2>Next level. <em>New possibilities.</em></h2>
-    <p>Giftni tanlang, maqsadni belgilang va yangilanish animatsiyasini sinang.</p>
-    <div className={styles.badge}><ShieldCheck size={15}/> Balans va haqiqiy sovg‘alar o‘zgarmaydi</div>
-   </div>
-   <div className={styles.selection}>
-    <div className={styles.slot}>
-     <div className={styles.slotTitle}><span>01</span><strong>YOUR GIFT</strong></div>
-     <PrizeArt item={source}/>
-     <strong className={styles.prizeName}>{source.title}</strong>
-     <div className={styles.price}><StarIcon variant="balance" size={17}/>{fmt(source.price)}</div>
-     <button disabled={phase==='rolling'} className={styles.choose} onClick={()=>setTab(tab==='source'?'':'source')} type="button">Sovg‘ani tanlash <ChevronDown size={15}/></button>
-    </div>
-    <span className={styles.exchange} aria-hidden="true"><ArrowRight size={22}/></span>
-    <div className={styles.slot}>
-     <div className={styles.slotTitle}><span>02</span><strong>TARGET GIFT</strong></div>
-     <PrizeArt item={goal}/>
-     <strong className={styles.prizeName}>{goal.title}</strong>
-     <div className={styles.price}><StarIcon variant="balance" size={17}/>{fmt(goal.price)}</div>
-     <button disabled={phase==='rolling'} className={styles.choose} onClick={()=>setTab(tab==='target'?'':'target')} type="button">Maqsadni tanlash <ChevronDown size={15}/></button>
-    </div>
-   </div>
-   {tab ? <div className={styles.picker}>
-     <div className={styles.pickerTop}><strong>{tab==='source'?'Sovg‘ani tanlang':'Yangilanadigan sovg‘ani tanlang'}</strong><small>{tab==='source' && !owned.length?'Demo giftlar':'Katalog'}</small></div>
-     <div className={styles.pickerScroll}>
-      {(tab==='source'?sources:targets).slice(0,24).map(item=>
-       <button type="button" key={item.id} disabled={phase==='rolling'} className={styles.pick} onClick={()=>{if(tab==='source'){setSelected(item.id);setTarget(null)}else setTarget(item.id);setTab('');restart()}}>
-        {item.image_url?<img src={item.image_url} alt="" loading="lazy"/>:<Gift size={22}/>}
-        <span>{item.title}<small>{fmt(item.price)} ★</small></span>
-       </button>
-      )}
-      {tab==='target' && !targets.length?<p className={styles.noTargets}>Hozir yuqoriroq qiymatdagi sovg‘alar mavjud emas.</p>:null}
-     </div>
-    </div>:null}
-   <div className={styles.machine} data-phase={phase} aria-live="polite">
-    <div className={styles.ring}>
-     <svg viewBox="0 0 176 176" aria-hidden="true" className={styles.chanceRing}>
-      <circle cx="88" cy="88" r="77" className={styles.ringTrack}/>
-      <circle cx="88" cy="88" r="77" className={styles.ringProgress} style={{ '--chance': chance }}/>
-     </svg>
-     <div className={styles.ringCore}>
-      {phase==='rolling'?<Sparkles size={31} className={styles.spinMark}/>:phase==='result'?(success?<CheckCircle2 size={38}/>:<XCircle size={38}/>):<><strong>{chance}%</strong><small>DEMO CHANCE</small></>}
-     </div>
-    </div>
-    <div className={styles.machineText}>
-     {phase==='idle'?<><h3>Upgrade lab tayyor</h3><p>Tanlangan sovg‘alar qiymatiga qarab demo imkoniyat ko‘rsatiladi.</p></>
-      :phase==='rolling'?<><h3>Upgrade jarayoni</h3><p>Vizual natija hisoblanmoqda…</p></>
-      :<><h3>{success?'Demo muvaffaqiyatli!':'Bu safar amalga oshmadi'}</h3><p>{success?`Demo natijasi: ${goal.title}`:'Hech qanday haqiqiy gift yoki Stars yo‘qotilmadi.'}</p></>}
-    </div>
-    {phase==='result'
-      ?<button type="button" className={styles.action} onClick={restart}><RotateCcw size={18}/> Qayta urinib ko‘rish</button>
-      :<button type="button" className={styles.action} disabled={phase==='rolling'||!targets.length} onClick={play}><Zap size={18}/>{phase==='rolling'?'ANIMATSIYA…':'UPGRADE DEMO'}<ArrowUpRight size={18}/></button>}
-   </div>
-   <p className={styles.disclaimer}>Bu xavfsiz namoyish rejimi: sovg‘a va Stars yechilmaydi, haqiqiy inventarga yutuq qo‘shilmaydi. Onlayn o‘yin yoki moddiy mukofotga bog‘lanmagan.</p>
-  </section>
- );
+  const owned = useMemo(() => getInventoryRows(history,inventoryGifts,cases,withdrawals)
+    .map(({item,gift})=>normalizeUpgradeGift(gift,item.id)).filter(Boolean),[history,inventoryGifts,cases,withdrawals]);
+  const catalog = useMemo(() => catalogGifts
+    .filter(g=>g?.is_active!==false && Number(g?.stock)>0)
+    .map(g=>normalizeUpgradeGift(g)).filter(Boolean).sort((a,b)=>a.price-b.price),[catalogGifts]);
+
+  const [sourceMode,setSourceMode] = useState(owned.length?'mine':'catalog');
+  const [sourceId,setSourceId] = useState(null);
+  const [targetId,setTargetId] = useState(null);
+  const [picker,setPicker] = useState(null);
+  const [phase,setPhase] = useState('idle');
+  const [wasSuccessful,setWasSuccessful] = useState(false);
+  const [ready,setReady] = useState(false);
+  const [error,setError] = useState('');
+  const [plays,setPlays] = useState(0);
+  const [wins,setWins] = useState(0);
+  const wheelContainer = useRef(null);
+  const wheel = useRef(null);
+  const outcome = useRef(null);
+  const timer = useRef(null);
+  const spinLock = useRef(false);
+  const shouldReduceMotion = useRef(false);
+
+  const sources = sourceMode==='mine' && owned.length ? owned : catalog;
+  const source = sources.find(x=>x.id===sourceId) || sources[0] || null;
+  const targets = useMemo(() => source ? catalog.filter(item=>item.price>source.price && item.catalogId!==source.catalogId):[],[source,catalog]);
+  const goal = targets.find(x=>x.id===targetId) || targets[0] || null;
+  const chance = upgradeChance(source,goal);
+  const ratio = goal && source ? Math.round(goal.price/source.price*10)/10:0;
+
+  const finishSpin = useCallback(() => {
+    const result = outcome.current;
+    if (!result || result.done) return;
+    result.done = true;
+    if (timer.current) { window.clearTimeout(timer.current); timer.current=null; }
+    spinLock.current=false;
+    setWasSuccessful(result.success);
+    setPlays(n=>n+1);
+    if(result.success)setWins(n=>n+1);
+    setPhase('result');
+  },[]);
+
+  useEffect(()=>{
+    shouldReduceMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  },[]);
+
+  useEffect(() => {
+    let cancelled=false;
+    setReady(false);
+    setError('');
+    spinLock.current=false;
+    outcome.current=null;
+    if (timer.current) { window.clearTimeout(timer.current); timer.current=null; }
+    if (wheel.current) { try{wheel.current.remove()}catch{} wheel.current=null; }
+    if (!source || !goal || !wheelContainer.current) return;
+    const host=wheelContainer.current;
+    host.replaceChildren();
+
+    (async()=>{
+      try{
+        const [vendor, src, dst] = await Promise.all([
+          import('./vendor/spin-wheel-esm.js'),
+          getGiftPreview(source),
+          getGiftPreview(goal),
+        ]);
+        const [sourceImage,targetImage] = await Promise.all([getCanvasImage(src),getCanvasImage(dst)]);
+        if(cancelled||!host.isConnected)return;
+        const items = wheelSegments(chance).map((entry,i)=>({
+          label:entry.result==='win'?'UPGRADE':'RETRY',
+          value:entry.result,
+          weight:entry.weight,
+          image:entry.result==='win'?targetImage:sourceImage,
+          imageScale:.47,
+          imageRadius:.59,
+          backgroundColor:entry.result==='win'?(i%4===0?'#504080':'#503a72'):AMBIENT[i],
+          labelColor:entry.result==='win'?'#f3e7ff':'#dce4fb',
+        }));
+        const instance = new vendor.Wheel(host,{
+          items,
+          isInteractive:false,
+          pointerAngle:0,
+          radius:.91,
+          itemLabelFont:'Inter, system-ui, sans-serif',
+          itemLabelFontSizeMax:15,
+          itemLabelRadius:.89,
+          itemLabelRadiusMax:.27,
+          itemLabelAlign:'center',
+          itemLabelColors:['#f7f4ff'],
+          borderColor:'rgba(210,185,255,.32)',
+          borderWidth:3,
+          lineColor:'rgba(232,222,255,.28)',
+          lineWidth:2,
+          onRest:()=>{if(!cancelled)finishSpin()},
+        });
+        if(cancelled){instance.remove();return}
+        wheel.current=instance;
+        setReady(true);
+      }catch(err){
+        if(!cancelled){setError('Baraban tasvirlari yuklanmadi. Sahifani yangilang.');setReady(false)}
+      }
+    })();
+    return ()=>{cancelled=true;if(wheel.current){try{wheel.current.remove()}catch{}wheel.current=null}
+      if(timer.current){window.clearTimeout(timer.current);timer.current=null}};
+  },[source?.id,goal?.id,chance,finishSpin]);
+
+  const selectGift = (item) => {
+    if (spinLock.current) return;
+    if(picker==='source'){setSourceId(item.id);setTargetId(null)}
+    else setTargetId(item.id);
+    setPhase('idle');
+    setPicker(null);
+  };
+  const openPicker=(section)=>{if(phase!=='rolling')setPicker(section)};
+  const play=()=>{
+    if(spinLock.current||!ready||!source||!goal||chance<=0||!wheel.current)return;
+    const hit=Math.random()*100<chance;
+    const selectedIndex=spinIndex(hit,Math.random());
+    outcome.current={success:hit,done:false};
+    setPhase('rolling');
+    setWasSuccessful(false);
+    spinLock.current=true;
+    try {
+      if(shouldReduceMotion.current){
+        wheel.current.spinToItem(selectedIndex,0,true,0,1);
+        finishSpin();
+      }else{
+        wheel.current.spinToItem(selectedIndex,4600,true,7,1,t=>1-Math.pow(1-t,4));
+        timer.current=window.setTimeout(finishSpin,5300);
+      }
+    }catch{
+      spinLock.current=false;
+      outcome.current=null;
+      setPhase('idle');
+      setError('Baraban ishga tushmadi. Sahifani yangilang.');
+    }
+  };
+  const again=()=>{if(spinLock.current)return;setPhase('idle');setWasSuccessful(false)};
+
+  const pickerGifts=picker==='source'?sources:targets;
+  return (
+    <section className={styles.root}>
+      <header className={styles.header}>
+        <button className={styles.back} type="button" onClick={onBack} aria-label="Orqaga qaytish"><ArrowLeft size={20}/></button>
+        <div><small>MYST / EXPERIENCE</small><h1>Gift Upgrade</h1></div>
+        <span className={styles.demoLabel}><ShieldCheck size={13}/> DEMO</span>
+      </header>
+
+      <div className={styles.banner}>
+        <div className={styles.bannerMesh} aria-hidden="true"/>
+        <div className={styles.bannerCopy}><span><Sparkles size={13}/> UPGRADE STUDIO</span><h2>Giftlaringizga <em>yangi daraja.</em></h2>
+        <p>Haqiqiy gift rasmlari, baraban va silliq animatsiya — barchasi demo rejimida.</p></div>
+        <div className={styles.bannerGem} aria-hidden="true"><Gem size={66} strokeWidth={1.2}/><span/></div>
+      </div>
+
+      <div className={styles.stepHeader}><span>01 <b>GIFT TANLASH</b></span><small>1 / 2</small></div>
+      <div className={styles.selection}>
+        <button type="button" className={styles.giftSlot} onClick={()=>openPicker('source')} disabled={phase==='rolling'}>
+          <span className={styles.slotTop}><span>YOUR GIFT</span><ChevronDown size={15}/></span>
+          <span className={styles.largeArt}>{source?<UpgradeGiftThumb item={source} priority/>:<Gem size={34}/>}</span>
+          <strong>{source?.title || 'Gift mavjud emas'}</strong>
+          <span className={styles.slotPrice}><StarIcon variant="gold" size={17}/>{format(source?.price||0)}</span>
+          <small>{source?.owned?'Inventardan':'Demo katalogdan'} · Almashtirish</small>
+        </button>
+        <div className={styles.exchange}><ArrowRight size={18}/></div>
+        <button type="button" className={styles.giftSlot} onClick={()=>openPicker('target')} disabled={phase==='rolling'||!targets.length}>
+          <span className={styles.slotTop}><span>TARGET</span><ChevronDown size={15}/></span>
+          <span className={styles.largeArt}>{goal?<UpgradeGiftThumb item={goal} priority/>:<Gem size={34}/>}</span>
+          <strong>{goal?.title || 'Target topilmadi'}</strong>
+          <span className={styles.slotPrice}><StarIcon variant="gold" size={17}/>{format(goal?.price||0)}</span>
+          <small>{goal?'Yuqoriroq qiymatli gift':'Boshqa giftni tanlang'}</small>
+        </button>
+      </div>
+
+      <div className={styles.metrics}>
+        <div><small>Demo imkoniyat</small><strong>{chance.toFixed(1)}%</strong></div>
+        <div><small>Qiymat farqi</small><strong>{ratio?ratio.toFixed(1)+'×':'—'}</strong></div>
+        <div><small>Demo g‘alabalar</small><strong>{wins} <span>/ {plays}</span></strong></div>
+      </div>
+
+      <div className={styles.stepHeader}><span>02 <b>UPGRADE BARABANI</b></span><small>10 SEKTOR</small></div>
+      <div className={styles.wheelPanel} data-phase={phase}>
+        <div className={styles.wheelIntro}><span><Zap size={14}/> MYST SPIN ENGINE</span><strong>Spin to upgrade</strong>
+          <p>Yashil/binafsha sektor — upgrade; ko‘k sektor — qayta urinish.</p>
+        </div>
+        <div className={styles.wheelStage}>
+          <div className={styles.pointer} aria-hidden="true"><span/></div>
+          <div className={styles.outerRing}>
+            <div className={styles.wheelMount} ref={wheelContainer} role="img" aria-label={`Upgrade barabani, demo imkoniyat ${chance.toFixed(1)} foiz`}/>
+            {!ready?<div className={styles.waitingWheel} role="status"><Sparkles size={28}/><span>{error?'Ulanish xatosi':'Gift rasmlari tayyorlanmoqda…'}</span></div>:null}
+            <div className={styles.hub} aria-hidden="true"><Zap size={22}/><span>MYST</span></div>
+          </div>
+        </div>
+        <div className={styles.spinStatus} role="status">
+          {phase==='rolling'?<><span className={styles.liveDot}/> Baraban aylanmoqda…</>
+          :phase==='result'?(wasSuccessful?<><CircleCheck size={18}/> DEMO UPGRADE MUVAFFAQIYATLI</>:<><CircleX size={18}/> DEMO: QAYTA URINISH</>)
+          :<><LockKeyhole size={16}/> Stars va haqiqiy giftlar sarflanmaydi</>}
+        </div>
+        {phase==='result' ? (
+          <div className={styles.result} data-success={wasSuccessful?'true':'false'}>
+            <div className={styles.resultThumb}><UpgradeGiftThumb item={wasSuccessful?goal:source}/></div>
+            <div><small>{wasSuccessful?'DEMO UPGRADE':'DEMO RESULT'}</small><strong>{wasSuccessful?goal?.title:'Qayta urinib ko‘ring'}</strong>
+              <p>{wasSuccessful?'Simulyatsiya natijasi — real inventarga gift qo‘shilmadi.':'Asl sovg‘angiz va balansingiz o‘zgarishsiz qoldi.'}</p>
+            </div>
+          </div>
+        ):null}
+        {phase==='result' ?
+          <button type="button" className={styles.mainButton} onClick={again}><RotateCcw size={17}/> Yangi aylanish</button>
+          :<button type="button" className={styles.mainButton} disabled={!ready||phase==='rolling'||!source||!goal||chance<=0} onClick={play}>
+            <Zap size={19}/>{phase==='rolling'?'BARABAN AYLANMOQDA…':'UPGRADE DEMO'}<ArrowUpRight size={17}/>
+          </button>
+        }
+        {error?<p className={styles.error} role="alert">{error}</p>:null}
+        <p className={styles.disclaimer}><Info size={14}/> Bu haqiqiy gift yutish o‘yini emas. Natijalar faqat interfeysni sinash uchun.</p>
+      </div>
+
+      {picker ? <GiftPicker key={picker+'-'+sourceMode} mode={picker} gifts={pickerGifts} activeId={picker==='source'?source?.id:goal?.id} sourceMode={sourceMode}
+        ownedCount={owned.length} onSourceMode={mode=>{setSourceMode(mode);setSourceId(null);setTargetId(null);setPhase('idle')}} onChoose={selectGift} onClose={()=>setPicker(null)}/> : null}
+    </section>
+  );
 }
