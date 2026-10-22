@@ -143,7 +143,7 @@ begin
     'inviteeCredited', v_invitee_credited
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.bonus_claim_atomic(p_user_id bigint, p_task_id text, p_reward integer)
  RETURNS jsonb
@@ -177,7 +177,7 @@ begin
  select balance into v_balance from public.users where id=p_user_id;
  return jsonb_build_object('reward',p_reward,'balance',v_balance,'alreadyClaimed',false);
 end;
-$function$
+$function$;
 
 UPDATE public.referral_settings SET activation_mode='completed_task',updated_at=now() WHERE id=1;
 
