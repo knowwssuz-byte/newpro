@@ -5,6 +5,25 @@ import styles from './UpgradeGiftThumb.module.css';
 
 const FALLBACK = '/feature/upgrade/gift-fallback.svg';
 const cache = new Map();
+// Telegram Mini App performance: limit simultaneous Lottie SVG decoding to two.
+const previewJobs = [];
+let activePreviews = 0;
+function queuePreview(job) {
+  return new Promise((resolve, reject) => {
+    previewJobs.push({ job, resolve, reject });
+    function drain() {
+      while (activePreviews < 2 && previewJobs.length) {
+        const next = previewJobs.shift();
+        activePreviews += 1;
+        Promise.resolve().then(next.job).then(next.resolve, next.reject).finally(() => {
+          activePreviews -= 1;
+          drain();
+        });
+      }
+    }
+    drain();
+  });
+}
 const TGS_SUFFIX = /\.tgs(?:[?#]|$)/i;
 
 export function getGiftPreview(item) {
@@ -16,7 +35,7 @@ export function getGiftPreview(item) {
     return Promise.resolve(/\.(png|jpe?g|svg|gif|webp)(?:[?#]|$)/i.test(animation) ? animation : FALLBACK);
   }
   if (!cache.has(animation)) {
-    cache.set(animation, (async () => {
+    cache.set(animation, queuePreview(async () => {
       const [{ default: lottie }, response] = await Promise.all([
         import('lottie-web'),
         fetch('/api/gift-animation?url=' + encodeURIComponent(animation), { cache: 'force-cache' }),
@@ -53,7 +72,7 @@ export function getGiftPreview(item) {
         try { player?.destroy(); } catch {}
         host.remove();
       }
-    })().catch(() => {
+    }).catch(() => {
       cache.delete(animation);
       return FALLBACK;
     }));
