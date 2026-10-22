@@ -2415,3 +2415,27 @@
     opacity: 0;
   }
 }
+
+/* Rocket 2026: one coherent loading identity, with performant compositor animation. */
+.bootOverlay{place-items:center;padding:18px 16px max(22px,env(safe-area-inset-bottom));background:radial-gradient(ellipse at 50% 43%,rgba(87,77,184,.20),transparent 54%),linear-gradient(180deg,#090b16,#080a12);animation:bootOverlayIn .26s ease both}
+.bootLoader{width:min(100%,305px);gap:0;transform:translateY(-10px)}
+.bootFlight{position:relative;display:grid;place-items:center;width:124px;height:124px;margin-bottom:28px;border:1px solid rgba(137,150,255,.13);border-radius:50%;background:radial-gradient(circle,rgba(89,95,182,.16),rgba(47,51,94,.04) 70%);box-shadow:0 0 0 23px rgba(129,119,225,.025),0 0 75px rgba(86,85,200,.13)}
+.bootFlightGrid{position:absolute;inset:15px;border:1px dashed rgba(176,185,255,.19);border-radius:50%;animation:bootOrbitSpin 20s linear infinite}
+.bootFlightRing{position:absolute;inset:-3px;border-radius:50%;border:2px solid transparent;border-top-color:rgba(165,161,255,.9);border-left-color:rgba(143,158,255,.3);animation:bootOrbitSpin 2.6s cubic-bezier(.6,.15,.35,.85) infinite}
+.bootFlightTrail{position:absolute;width:70px;height:8px;left:13px;bottom:32px;border-radius:99px;background:linear-gradient(90deg,transparent,rgba(94,122,253,.08),rgba(174,188,255,.65));transform:rotate(-45deg);filter:blur(6px);animation:bootThrust 1.65s ease-in-out infinite}
+.bootFlightIcon{position:relative;z-index:2;display:grid;place-items:center;width:57px;height:57px;border:1px solid rgba(193,205,255,.24);border-radius:19px;color:#e9eaff;background:linear-gradient(145deg,#505d9e,#242d59);box-shadow:0 12px 38px rgba(53,62,152,.44),inset 0 1px 0 rgba(255,255,255,.18);font-size:41px;font-weight:750;line-height:1;transform:rotate(-4deg);animation:bootFloat 1.65s ease-in-out infinite}
+.bootEyebrow{color:#8b92bd;font-size:9px;font-weight:800;letter-spacing:.22em;margin-bottom:9px}
+.bootLoader>strong{margin:0;color:#f5f6ff;font-size:25px;font-weight:900;letter-spacing:.16em}
+.bootLoader>.bootStatus{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:12px;color:#afb5d3;font-size:11px;font-weight:550;letter-spacing:.01em}
+.bootStatus i{width:6px;height:6px;border-radius:50%;background:#90cfff;box-shadow:0 0 10px rgba(122,194,255,.8);animation:bootDot 1.8s ease-in-out infinite}
+.bootLoader>.bootProgress{position:relative;display:block;overflow:hidden;width:166px;height:3px;border-radius:99px;margin-top:25px;background:rgba(191,198,255,.14)}
+.bootProgress i{position:absolute;left:0;top:0;height:100%;width:43%;border-radius:inherit;background:linear-gradient(90deg,transparent,#a8b5ff,#ecf1ff);animation:bootSlide 1.55s ease-in-out infinite}
+.emptyPlayersGlyph{display:grid;place-items:center;flex-shrink:0;width:45px;height:45px;border-radius:14px;color:#b7cbff;background:linear-gradient(140deg,rgba(77,100,151,.25),rgba(34,47,69,.48));border:1px solid rgba(118,157,213,.18);font-size:31px;font-weight:750}
+.rocket{transition:opacity .24s ease,transform .30s cubic-bezier(.25,.65,.3,1),filter .25s ease;will-change:transform,opacity}
+.sceneFlying .engineGlow{animation-duration:.75s}
+.sceneFlying .rocketTrail{animation-duration:.7s}
+@keyframes bootFloat{0%,100%{transform:translate3d(0,4px,0) rotate(-4deg)}50%{transform:translate3d(5px,-6px,0) rotate(-4deg)}}
+@keyframes bootThrust{0%,100%{opacity:.5;transform:rotate(-45deg) scaleX(.72)}50%{opacity:1;transform:rotate(-45deg) scaleX(1.14)}}
+@keyframes bootDot{50%{opacity:.45}}
+@keyframes bootSlide{0%{transform:translateX(-110%)}100%{transform:translateX(410%)}}
+@media(prefers-reduced-motion:reduce){.bootFlightGrid,.bootFlightRing,.bootFlightTrail,.bootFlightIcon,.bootStatus i,.bootProgress i{animation:none!important}.rocket{transition:none}}
