@@ -52,7 +52,7 @@ test('production Upgrade Studio displays real photo previews and the vendored op
   assert.match(page,/isInteractive:false/);
   assert.match(page,/wheelSegments\(chance\)/);
   assert.match(page,/UpgradeGiftThumb/);
-  assert.match(page,/getGiftPreview/);
+  assert.match(preview,/getGiftPreview/);
   assert.match(page,/sourceMode/);
   assert.match(page,/role="dialog"/);
   assert.match(preview,/api\/gift-animation/);

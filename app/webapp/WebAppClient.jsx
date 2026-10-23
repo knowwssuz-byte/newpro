@@ -1424,7 +1424,7 @@ export default function WebAppClient() {
   return (
     <GiftAnimationContext.Provider value={uiSettings.giftAnimations !== false}>
     <div className="app-frame" data-ui-effects={uiSettings.effects ? 'on' : 'off'}>
-      <div className="app-shell">
+      <div className="app-shell" style={tab === 'upgrade' ? { width: 'min(100%, 1130px)' } : undefined}>
         {showWelcomeTour ? <WelcomeTour onFinish={finishWelcomeTour} /> : null}
         {settingsOpen ? (
           <SettingsPanel

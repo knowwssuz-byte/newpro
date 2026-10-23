@@ -9,23 +9,12 @@ import {
 import { getInventoryRows } from '@/lib/inventory.mjs';
 import { normalizeUpgradeGift, upgradeChance, wheelSegments, spinIndex, landedInSafeZone } from '@/lib/upgradeLab.mjs';
 import { upgradeSound } from './upgradeAudio';
-import { getGiftPreview, UpgradeGiftThumb } from './UpgradeGiftThumb';
+import { UpgradeGiftThumb } from './UpgradeGiftThumb';
 import StarIcon from './StarIcon';
 import styles from './UpgradeLab.module.css';
 
 const format = value => new Intl.NumberFormat('uz-UZ',{ maximumFractionDigits: 0 }).format(Number(value)||0);
-const AMBIENT = ['#222D53','#2F365E','#202E52','#353059','#242E52','#302F5D','#242D4B','#393159','#253753','#2F3359','#263153'];
-
-async function getCanvasImage(url) {
-  const load = (src) => new Promise((resolve, reject) => {
-    const image = new Image();
-    image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error('Image unavailable'));
-    image.src = src;
-  });
-  try { return await load(url); }
-  catch { return load('/feature/upgrade/gift-fallback.svg'); }
-}
+const AMBIENT = ['#1C2951','#303364','#182D58','#323163','#192649','#343369','#24365E','#352F61','#1C365B','#2B315E','#1E2C56'];
 
 function GiftPicker({ mode, gifts, activeId, onChoose, onClose, sourceMode, onSourceMode, ownedCount }) {
   const [query,setQuery] = useState('');
@@ -176,24 +165,16 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
 
     (async()=>{
       try{
-        const [vendor, src, dst] = await Promise.all([
-          import('./vendor/spin-wheel-esm.js'),
-          getGiftPreview(source),
-          getGiftPreview(goal),
-        ]);
-        const [sourceImage,targetImage] = await Promise.all([getCanvasImage(src),getCanvasImage(dst)]);
-        if(cancelled||!host.isConnected)return;
+        // Existing MIT Spin Wheel renders the actual percentage-sized SAFE ZONE.
+        // Do not place gift photos inside the wheel: collectible previews belong on either side.
+        const vendor = await import('./vendor/spin-wheel-esm.js');
+        if(cancelled || !host.isConnected) return;
         const items = wheelSegments(chance).map((entry,i)=>({
-          label: entry.result==='win' ? 'SAFE ZONE' : i % 3===0 ? 'TRY AGAIN' : 'RETRY',
+          label: entry.result==='win' ? 'SAFE ZONE' : '',
           value: entry.result,
           weight: entry.weight,
-          image: entry.result==='win' ? targetImage : sourceImage,
-          // Tiny sectors should not be crowded with unreadable gift images.
-          imageOpacity: entry.result==='win' ? 1 : .72,
-          imageScale: entry.result==='win' ? .55 : .27,
-          imageRadius: entry.result==='win' ? .58 : .63,
-          backgroundColor: entry.result==='win' ? '#19AA86' : AMBIENT[(i-1)%AMBIENT.length],
-          labelColor: entry.result==='win' ? '#FFF8D9' : '#E0DCFC',
+          backgroundColor: entry.result==='win' ? '#11AC84' : AMBIENT[i % AMBIENT.length],
+          labelColor: entry.result==='win' ? '#FFF5D3' : '#BFB8DA',
         }));
         const instance = new vendor.Wheel(host,{
           items,
@@ -202,7 +183,7 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
           pointerAngle:90,
           radius:.91,
           itemLabelFont:'Inter, system-ui, sans-serif',
-          itemLabelFontSizeMax:13,
+          itemLabelFontSizeMax:12,
           itemLabelRadius:.86,
           itemLabelRadiusMax:.22,
           itemLabelAlign:'center',
@@ -278,8 +259,25 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
         <span className={styles.demoLabel}><ShieldCheck size={13}/> DEMO</span>
       </header>
 
-      <div className={styles.stepHeader}><span>01 <b>UPGRADE BARABANI</b></span><small>12 SEKTOR · 1 SAFE ZONE</small></div>
-      <div className={styles.wheelPanel} data-phase={phase} data-win={phase==='result' && wasSuccessful ? 'true' : 'false'}>
+      <div className={styles.premiumHero}>
+        <div className={styles.heroTitle}><span><Sparkles size={15}/> NEWPRO UPGRADE STUDIO</span><h2>Premium gift <em>upgrade</em></h2><p>Beradigan sovg‘ani tanlang, markazdagi barabanni aylantiring va natijani kuzating.</p></div>
+        <div className={styles.heroIcons} aria-hidden="true"><img src="/feature/upgrade/royal-star.svg" alt=""/><img src="/feature/upgrade/royal-boost.svg" alt=""/><img src="/feature/upgrade/royal-gem.svg" alt=""/></div>
+      </div>
+      <div className={styles.stepHeader}><span>01 <b>UPGRADE BARABANI</b></span><small>SOVG‘A → BARABAN → SOVG‘A</small></div>
+      <div className={styles.upgradeArena}>
+        <div className={styles.arenaDecor} aria-hidden="true"><img src="/feature/upgrade/royal-gift.svg" alt=""/><img src="/feature/upgrade/royal-crown.svg" alt=""/><img src="/feature/upgrade/royal-boost.svg" alt=""/></div>
+        <div className={`${styles.giftColumn} ${styles.giveColumn}`}>
+          <span className={styles.columnLabel}>01 / BERASIZ</span>
+          <button type="button" className={styles.giftSlot} onClick={()=>openPicker('source')} disabled={phase==='rolling'}>
+          <span className={styles.slotTop}><span>BERADIGAN SOVG‘A</span><ChevronDown size={15}/></span>
+          <span className={styles.largeArt}>{source?<UpgradeGiftThumb item={source} priority/>:<Gem size={34}/>}</span>
+          <strong>{source?.title || 'Gift mavjud emas'}</strong>
+          <span className={styles.slotPrice}><StarIcon variant="gold" size={17}/>{format(source?.price||0)}</span>
+          <small>{source?.owned?'Inventardan':'Demo katalogdan'} · Almashtirish</small>
+        </button>
+        </div>
+        <div className={styles.wheelColumn}>
+          <div className={styles.wheelPanel} data-phase={phase} data-win={phase==='result' && wasSuccessful ? 'true' : 'false'}>
         <canvas ref={confettiCanvas} className={styles.confettiCanvas} aria-hidden="true" />
         <div className={styles.wheelIntro}>
           <div className={styles.wheelTopline}>
@@ -330,33 +328,23 @@ export default function UpgradeLab({ onBack, history=[], inventoryGifts=[], cata
         {error?<p className={styles.error} role="alert">{error}</p>:null}
         <p className={styles.disclaimer}><Info size={14}/> Faqat demo: hech qanday sovg‘a yoki Stars sarflanmaydi, natijalar inventarga o‘tmaydi.</p>
       </div>
-
-
-      <div className={styles.banner}>
-        <div className={styles.bannerMesh} aria-hidden="true"/>
-        <div className={styles.bannerCopy}><span><Sparkles size={13}/> UPGRADE STUDIO</span><h2>Giftlaringizga <em>yangi daraja.</em></h2>
-        <p>Haqiqiy gift rasmlari, baraban va silliq animatsiya — barchasi demo rejimida.</p></div>
-        <div className={styles.bannerGem} aria-hidden="true"><Gem size={66} strokeWidth={1.2}/><span/></div>
-      </div>
-
-
-      <div className={styles.stepHeader}><span>02 <b>GIFT TANLASH</b></span><small>2 / 2</small></div>
-      <div className={styles.selection}>
-        <button type="button" className={styles.giftSlot} onClick={()=>openPicker('source')} disabled={phase==='rolling'}>
-          <span className={styles.slotTop}><span>YOUR GIFT</span><ChevronDown size={15}/></span>
-          <span className={styles.largeArt}>{source?<UpgradeGiftThumb item={source} priority/>:<Gem size={34}/>}</span>
-          <strong>{source?.title || 'Gift mavjud emas'}</strong>
-          <span className={styles.slotPrice}><StarIcon variant="gold" size={17}/>{format(source?.price||0)}</span>
-          <small>{source?.owned?'Inventardan':'Demo katalogdan'} · Almashtirish</small>
-        </button>
-        <div className={styles.exchange}><ArrowRight size={18}/></div>
-        <button type="button" className={styles.giftSlot} onClick={()=>openPicker('target')} disabled={phase==='rolling'||!targets.length}>
-          <span className={styles.slotTop}><span>TARGET</span><ChevronDown size={15}/></span>
+        </div>
+        <div className={`${styles.giftColumn} ${styles.receiveColumn}`}>
+          <span className={styles.columnLabel}>02 / OLASIZ</span>
+          <button type="button" className={styles.giftSlot} onClick={()=>openPicker('target')} disabled={phase==='rolling'||!targets.length}>
+          <span className={styles.slotTop}><span>OLADIGAN SOVG‘A</span><ChevronDown size={15}/></span>
           <span className={styles.largeArt}>{goal?<UpgradeGiftThumb item={goal} priority/>:<Gem size={34}/>}</span>
           <strong>{goal?.title || 'Target topilmadi'}</strong>
           <span className={styles.slotPrice}><StarIcon variant="gold" size={17}/>{format(goal?.price||0)}</span>
           <small>{goal?'Yuqoriroq qiymatli gift':'Boshqa giftni tanlang'}</small>
         </button>
+        </div>
+      </div>
+      <div className={styles.banner}>
+        <div className={styles.bannerMesh} aria-hidden="true"/>
+        <div className={styles.bannerCopy}><span><Sparkles size={13}/> UPGRADE STUDIO</span><h2>Giftlaringizga <em>yangi daraja.</em></h2>
+        <p>Haqiqiy gift rasmlari, baraban va silliq animatsiya — barchasi demo rejimida.</p></div>
+        <div className={styles.bannerGem} aria-hidden="true"><Gem size={66} strokeWidth={1.2}/><span/></div>
       </div>
 
       <div className={styles.metrics}>
