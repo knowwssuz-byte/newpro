@@ -140,3 +140,34 @@
  .historyRow>span:last-child strong{font-size:9px}
  .confirmSheet{padding:19px 14px}
 }
+
+
+/* Type polish: legible probabilities, gift names and mobile-safe subtitles. */
+.root{font-family:var(--font-ui);font-weight:530;letter-spacing:-.012em}
+.headerTitle strong,.sheetHead h2,.confirmSheet h2,.historyHead strong,
+.itemDetails>strong,.improve strong{font-family:var(--font-display);letter-spacing:-.025em}
+.headerTitle strong{font-size:clamp(16px,4vw,19px);font-weight:850}
+.headerTitle small,.headerMode{font-size:10px;letter-spacing:.075em;line-height:1.2}
+.wheelCaption{font-size:10px;letter-spacing:.085em}
+.chanceLine strong{font-family:var(--font-numbers);font-size:clamp(24px,6.5vw,30px);font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.chanceLine span{font-size:10px;line-height:1.35;letter-spacing:.025em}
+.itemTitle{min-height:41px}
+.itemTitle strong{font-size:clamp(11.5px,3.3vw,13px);font-weight:800;line-height:1.3}
+.itemTitle small{font-size:10px;line-height:1.3;letter-spacing:0}
+.itemDetails>strong{font-size:clamp(11px,2.8vw,12px);font-weight:740}
+.itemPrice{font-family:var(--font-numbers);font-size:13px;font-variant-numeric:tabular-nums}
+.changeItem,.sortButton,.resultCount,.pickerFoot{font-size:11px!important;line-height:1.4}
+.footnote{font-size:10.5px;line-height:1.5;color:#a4aab6}
+.pickText strong{font-size:12px;line-height:1.4}
+.pickText small{font-size:10.5px;line-height:1.35}
+.sheetHead small{font-size:10px;letter-spacing:.09em}
+.confirmSheet p{font-size:12.5px;line-height:1.65}
+.status{font-size:11.5px;line-height:1.45}
+@media(max-width:380px){
+  .wheelCaption{font-size:9px}
+  .chanceLine{gap:5px}
+  .chanceLine span{font-size:9px;min-width:0}
+  .itemTitle strong{font-size:11px}
+  .itemTitle small{font-size:9.5px}
+  .itemDetails>strong{font-size:10.5px}
+}
