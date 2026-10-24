@@ -103,3 +103,40 @@
 @media(max-width:460px){.root{padding:8px 7px calc(101px + env(safe-area-inset-bottom,0px))}.header{gap:6px}.headerTitle strong{font-size:14px}.headerTitle small{font-size:8px}.headerMode{font-size:8px;padding:6px}.wheelCaption{font-size:8px}.wheelFrame{width:clamp(195px,67vw,276px)}.wheelSection{padding:8px 7px 3px}.cards{padding:7px 8px 0;gap:7px}.itemCard{min-height:220px;padding:10px 7px 7px}.itemTitle strong{font-size:10px}.itemTitle small{font-size:8px}.itemVisual{min-height:110px}.giftThumb{height:112px;width:min(100%,126px)}.itemDetails{flex-direction:column;align-items:center;gap:2px}.itemDetails>strong{max-width:100%;font-size:10px}.itemPrice{font-size:11px}.controls{padding:8px 8px 12px}.chanceLine{gap:8px}.chanceLine strong{font-size:22px}.chanceLine span{font-size:8px}}
 @media(max-width:340px){.headerTitle small{display:none}.itemTitle strong{font-size:9px}.itemTitle small{font-size:7px}.wheelFrame{width:205px}.chanceLine span{font-size:7px}}
 @media(prefers-reduced-motion:reduce){.wheelDisc{transition-duration:0.01ms!important}.wheelHalo,.wheelNeedle,.giftThumb,.spinIcon{animation:none!important}.itemCard,.improve{transition:none!important}}
+
+
+/* Live Upgrade: confirmation, verifiable activity, and mobile-safe status */
+.confirmSheet{width:min(calc(100% - 24px),410px);margin:auto 12px 24px;padding:23px 21px 19px;border:1px solid #5e5421;border-radius:18px;background:linear-gradient(160deg,#292820,#121317 55%);color:#f6f6f4;box-shadow:0 35px 75px #000b;text-align:center}
+.confirmSheet>svg{color:#ffe122;margin:0 auto 8px}
+.confirmSheet h2{font-size:19px;line-height:1.25;margin:0 0 11px;letter-spacing:-.02em}
+.confirmSheet p{font-size:12px;line-height:1.65;color:#b8bbc3;margin:0 0 19px}
+.confirmSheet p strong{color:#fff0b3}
+.confirmActions{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.confirmActions button{min-height:46px;border-radius:10px;font-size:12px;font-weight:850;cursor:pointer}
+.confirmActions button:first-child{color:#e2e4eb;background:#25262c;border:1px solid #464850}
+.confirmActions button:last-child{color:#151515;background:linear-gradient(#ffe853,#ffc900);border:1px solid #ffdf25}
+.emptyHint{margin:5px 0 0;text-align:center;color:#d8c57a;font-size:11px}
+.historyPanel{margin:15px 0 0;padding:14px;border:1px solid #34363b;border-radius:14px;background:linear-gradient(150deg,#1b1d22,#101115)}
+.historyHead{display:flex;align-items:center;gap:9px;color:#ffe127;font-size:13px;margin-bottom:10px}
+.historyRow{display:flex;justify-content:space-between;align-items:center;gap:11px;padding:10px 0;border-top:1px solid #303136}
+.historyRow>span:first-child{display:flex;flex-direction:column;gap:4px}
+.historyRow b{font-size:11px;color:#f1ece7}
+.historyRow small{font-size:9px;color:#a0a2a9}
+.historyRow>span:last-child{display:flex;flex-direction:column;gap:4px;text-align:right;color:#eed455;font-size:11px}
+.historyRow>span:last-child strong{font-size:10px;color:#d9d9de;font-weight:700}
+.status[data-state=checking]{color:#ffe369}
+.winnerLine{line-height:1.4}
+.headerMode{border-color:#456443;background:#122a1c;color:#93e5a3}
+@media(min-width:760px){
+ .stage{border-radius:20px}
+ .wheelFrame{width:304px}
+ .root{width:min(100%,820px)}
+ .cards{gap:13px;padding-inline:24px}
+ .itemCard{min-height:272px;border-radius:14px}
+ .controls{padding-inline:24px}
+}
+@media(max-width:380px){
+ .historyPanel{padding:10px}
+ .historyRow>span:last-child strong{font-size:9px}
+ .confirmSheet{padding:19px 14px}
+}
