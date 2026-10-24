@@ -517,6 +517,7 @@ export default function WebAppClient() {
   const [inventoryGifts, setInventoryGifts] = useState([]);
   const [history, setHistory] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [upgradeRounds, setUpgradeRounds] = useState([]);
   const [featureSettings, setFeatureSettings] = useState({});
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminWithdrawals, setAdminWithdrawals] = useState([]);
@@ -714,6 +715,7 @@ export default function WebAppClient() {
     setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : (data.gifts || []));
     setHistory(data.history || []);
     setWithdrawals(data.withdrawals || []);
+    setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
     setFeatureSettings(data.featureSettings || {});
 
     if (data.cases?.[0]?.id) {
@@ -1523,7 +1525,7 @@ export default function WebAppClient() {
               ) : null}
 
               {tab === 'history' ? <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab('home')} onRefresh={() => loadApp({silent:true})}/> : null}
-              {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={gifts} cases={cases} withdrawals={withdrawals} onBack={() => setTab('home')}/> : null}
+              {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={gifts} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
               {tab === 'pvp' ? <PvpHub onBack={closePvpHub} /> : null}
 
               {tab === 'rocket' ? (
