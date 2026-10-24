@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft, ArrowUpDown, CheckCircle2, ChevronDown, Info,
+  ArrowLeft, ArrowUpDown, CheckCircle2, ChevronDown, Clock3, Info, LockKeyhole,
   RotateCcw, Search, ShieldCheck, Sparkles, Volume2, VolumeX, X, Zap,
 } from 'lucide-react';
 import { getInventoryRows } from '@/lib/inventory.mjs';
@@ -17,12 +17,13 @@ import styles from './UpgradeLab.module.css';
 const SPIN_MS = 4600;
 const POINTER_DEG = 180;
 const fmt = (value) => new Intl.NumberFormat('uz-UZ',{maximumFractionDigits:0}).format(Number(value)||0);
+const chanceText = (n) => (Number(n) || 0).toFixed(2).replace(/0+$/,'').replace(/\.$/,'');
 
 function ChevronMark({small=false}) {
   return <span className={small ? styles.markSmall : styles.mark} aria-hidden="true"><i/><i/></span>;
 }
 
-function GiftPicker({ mode, gifts, activeId, onChoose, onClose, sourceMode, onSourceMode, ownedCount }) {
+function GiftPicker({mode,gifts,activeId,onChoose,onClose}) {
   const [query,setQuery] = useState('');
   const [sort,setSort] = useState('asc');
   useEffect(()=>{
@@ -39,13 +40,9 @@ function GiftPicker({ mode, gifts, activeId, onChoose, onClose, sourceMode, onSo
     <section className={styles.sheet} role="dialog" aria-modal="true" aria-label={mode==='source'?'Beriladigan sovg‘ani tanlash':'Olinadigan sovg‘ani tanlash'}>
       <div className={styles.sheetHandle} aria-hidden="true"/>
       <div className={styles.sheetHead}>
-        <div><small>{mode==='source'?'YOUR ITEMS':'TARGET ITEM'}</small><h2>{mode==='source'?'Beradigan sovg‘a':'Oladigan sovg‘a'}</h2></div>
+        <div><small>{mode==='source'?'YOUR INVENTORY':'AVAILABLE GIFTS'}</small><h2>{mode==='source'?'Beradigan sovg‘a':'Oladigan sovg‘a'}</h2></div>
         <button type="button" onClick={onClose} aria-label="Yopish"><X size={18}/></button>
       </div>
-      {mode==='source' ? <div className={styles.tabs}>
-        <button type="button" data-active={sourceMode==='mine'} disabled={!ownedCount} onClick={()=>onSourceMode('mine')}>Inventar ({ownedCount})</button>
-        <button type="button" data-active={sourceMode==='catalog'} onClick={()=>onSourceMode('catalog')}>Demo katalog</button>
-      </div>:null}
       <div className={styles.searchRow}>
         <label className={styles.searchField}><Search size={16}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Sovg‘a nomini yozing" aria-label="Gift qidirish"/></label>
         <button type="button" onClick={()=>setSort(s=>s==='asc'?'desc':'asc')} className={styles.sortButton} aria-label="Narx bo‘yicha tartiblash"><ArrowUpDown size={15}/><span>{sort==='asc'?'Arzon':'Qimmat'}</span></button>
@@ -54,17 +51,17 @@ function GiftPicker({ mode, gifts, activeId, onChoose, onClose, sourceMode, onSo
       <div className={styles.pickerList}>
         {list.map(item=><button type="button" key={item.id} className={styles.pickRow} data-active={item.id===activeId} onClick={()=>onChoose(item)}>
           <span className={styles.pickThumb}><UpgradeGiftThumb item={item} alt=""/></span>
-          <span className={styles.pickText}><strong>{item.title}</strong><small>{item.owned?'Sizning sovg‘angiz':'Demo katalog'}</small></span>
+          <span className={styles.pickText}><strong>{item.title}</strong><small>{mode==='source'?'Inventaringizdagi sovg‘a':'Sovg‘alar katalogi'}</small></span>
           <span className={styles.pickPrice}><StarIcon variant="gold" size={14}/>{fmt(item.price)}</span>
         </button>)}
-        {!list.length ? <div className={styles.emptyResult}>Sovg‘a topilmadi</div>:null}
+        {!list.length ? <div className={styles.emptyResult}>{mode==='source'?'Inventarda mos sovg‘a yo‘q':'Qimmatroq sovg‘a topilmadi'}</div>:null}
       </div>
-      <p className={styles.pickerFoot}>Demo rejimida balans va real sovg‘alar o‘zgarmaydi.</p>
+      <p className={styles.pickerFoot}>{mode==='source'?'Faqat sizga tegishli, band qilinmagan sovg‘alar ko‘rsatiladi.':'Tanlangan sovg‘a yutuqda inventarga qo‘shiladi.'}</p>
     </section>
   </div>;
 }
 
-function ItemCard({ item, label, subtitle, onClick, disabled=false, side }) {
+function ItemCard({item,label,subtitle,onClick,disabled=false,side}) {
   return <button type="button" className={styles.itemCard} data-side={side} onClick={onClick} disabled={disabled} aria-label={label+' tanlash'}>
     <div className={styles.itemTitle}><strong>{label}</strong><small>{subtitle}</small></div>
     <div className={styles.itemVisual}>
@@ -80,12 +77,12 @@ function ItemCard({ item, label, subtitle, onClick, disabled=false, side }) {
   </button>;
 }
 
-function UpgradeWheel({ chance, rotation, rolling, reduceMotion, onRest }) {
+function UpgradeWheel({chance,rotation,rolling,reduceMotion,onRest}) {
   const arc=Math.max(0,Math.min(100,chance))*3.6;
-  const style={'--win-angle':arc+'deg',transform:'rotate('+rotation+'deg)'};
   return <div className={styles.wheelFrame} data-rolling={rolling}>
     <div className={styles.wheelHalo} aria-hidden="true"/>
-    <div className={styles.wheelDisc} style={style} onTransitionEnd={e=>{if(e.propertyName==='transform')onRest()}}>
+    <div className={styles.wheelDisc} style={{'--win-angle':arc+'deg',transform:'rotate('+rotation+'deg)'}}
+      onTransitionEnd={e=>{if(e.propertyName==='transform')onRest()}}>
       <div className={styles.wheelGloss} aria-hidden="true"/>
       <div className={styles.wheelTicks} aria-hidden="true"/>
       <div className={styles.wheelBezel} aria-hidden="true"/>
@@ -96,38 +93,43 @@ function UpgradeWheel({ chance, rotation, rolling, reduceMotion, onRest }) {
   </div>;
 }
 
-export default function UpgradeLab({onBack,history=[],inventoryGifts=[],catalogGifts=[],cases=[],withdrawals=[]}) {
+export default function UpgradeLab({
+  onBack, history=[], inventoryGifts=[], catalogGifts=[], cases=[], withdrawals=[],
+  upgradeRounds=[], apiPost, onRefresh, onToast, tg,
+}) {
   const owned=useMemo(()=>getInventoryRows(history,inventoryGifts,cases,withdrawals)
     .map(({item,gift})=>normalizeUpgradeGift(gift,item.id)).filter(Boolean),
     [history,inventoryGifts,cases,withdrawals]);
   const catalog=useMemo(()=>catalogGifts.filter(g=>g?.is_active!==false&&Number(g?.stock)>0)
     .map(g=>normalizeUpgradeGift(g)).filter(Boolean).sort((a,b)=>a.price-b.price),
     [catalogGifts]);
-  const [sourceMode,setSourceMode]=useState(owned.length?'mine':'catalog');
   const [sourceId,setSourceId]=useState(null);
   const [targetId,setTargetId]=useState(null);
   const [picker,setPicker]=useState(null);
+  const [confirm,setConfirm]=useState(false);
   const [phase,setPhase]=useState('idle');
   const [won,setWon]=useState(false);
   const [rotation,setRotation]=useState(0);
-  const [plays,setPlays]=useState(0);
-  const [wins,setWins]=useState(0);
+  const [settledChance,setSettledChance]=useState(null);
+  const [resultTitle,setResultTitle]=useState('');
   const [soundEnabled,setSoundEnabled]=useState(true);
   const [reduceMotion,setReduceMotion]=useState(false);
   const [error,setError]=useState('');
   const rotationRef=useRef(0);
   const runningRef=useRef(false);
   const planRef=useRef(null);
+  const pendingRef=useRef(null);
   const fallbackTimer=useRef(null);
   const confettiRef=useRef(null);
   const fxEngine=useRef(null);
 
-  const sources=sourceMode==='mine' && owned.length ? owned : catalog;
-  const source=sources.find(item=>item.id===sourceId)||sources[0]||null;
+  const source=owned.find(item=>item.id===sourceId)||null;
   const targets=useMemo(()=>source?catalog.filter(item=>item.price>source.price&&item.catalogId!==source.catalogId):[],[source,catalog]);
-  const goal=targets.find(item=>item.id===targetId)||targets[0]||null;
-  const chance=upgradeChance(source,goal);
+  const goal=targets.find(item=>item.id===targetId)||null;
+  const estimatedChance=upgradeChance(source,goal);
+  const chance=(phase==='rolling'||phase==='result')&&settledChance!==null?settledChance:estimatedChance;
   const multiplier=source&&goal?goal.price/source.price:0;
+  const blocked=phase==='checking'||phase==='rolling';
 
   useEffect(()=>{
     const mq=window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -139,7 +141,6 @@ export default function UpgradeLab({onBack,history=[],inventoryGifts=[],catalogG
   const changeSound=()=>{
     setSoundEnabled(value=>{const next=!value;try{localStorage.setItem('myst-upgrade-sounds',next?'on':'off')}catch{}return next});
   };
-
   const celebrate=useCallback(async()=>{
     if(reduceMotion||!confettiRef.current)return;
     try{
@@ -156,53 +157,76 @@ export default function UpgradeLab({onBack,history=[],inventoryGifts=[],catalogG
   const finishSpin=useCallback(()=>{
     if(!runningRef.current||!planRef.current)return;
     if(fallbackTimer.current){clearTimeout(fallbackTimer.current);fallbackTimer.current=null}
-    const landing=planRef.current;
-    // Result is read from the actual displayed wheel stop angle; never reroll at finish.
-    const isWin=didWheelLandInSafeZone(landing.chance, landing.endRotation, POINTER_DEG);
+    const result=planRef.current;
     runningRef.current=false;
     planRef.current=null;
-    setWon(isWin);setPhase('result');setPlays(n=>n+1);
-    if(isWin){setWins(n=>n+1);celebrate()}
-    upgradeSound(isWin?'win':'miss',landing.soundEnabled);
-  },[celebrate]);
+    pendingRef.current=null;
+    setWon(result.won);setResultTitle(result.title);setPhase('result');
+    setSourceId(null);setTargetId(null);
+    if(result.won)celebrate();
+    upgradeSound(result.won?'win':'miss',result.soundEnabled);
+    tg?.HapticFeedback?.notificationOccurred?.(result.won?'success':'warning');
+    onRefresh?.().catch?.(()=>{});
+  },[celebrate,onRefresh,tg]);
 
-  const spin=()=>{
-    if(runningRef.current||!source||!goal||chance<=0)return;
-    const willWin=Math.random()*100<chance;
-    const landing=planUpgradeSpin({chance,previousRotation:rotationRef.current,
-      pointerDeg:POINTER_DEG,win:willWin,randomValue:Math.random()});
-    if(didWheelLandInSafeZone(chance,landing.endRotation,POINTER_DEG)!==willWin){
-      setError('Baraban hisobida xatolik aniqlandi. Qayta urinib ko‘ring.');
-      return;
+  const performSpin=async()=>{
+    if(blocked||runningRef.current||!source||!goal||estimatedChance<=0||!apiPost)return;
+    setConfirm(false);setError('');setPhase('checking');
+    const request=(
+      pendingRef.current?.sourceId===source.id && pendingRef.current?.targetId===goal.catalogId
+    )?pendingRef.current:{
+      requestId:globalThis.crypto?.randomUUID?.(),sourceId:source.id,targetId:goal.catalogId,
+    };
+    if(!request.requestId){
+      setError('Xavfsiz urinish identifikatorini yaratib bo‘lmadi. Sahifani yangilang.');
+      setPhase('idle');return;
     }
-    setError('');runningRef.current=true;
-    planRef.current={...landing,chance,soundEnabled};
-    rotationRef.current=landing.endRotation;
-    setWon(false);setPhase('rolling');
-    setRotation(landing.endRotation);
-    upgradeSound('start',soundEnabled);
-    if(fallbackTimer.current)clearTimeout(fallbackTimer.current);
-    fallbackTimer.current=setTimeout(finishSpin,reduceMotion?100:SPIN_MS+300);
+    pendingRef.current=request;
+    try {
+      const result=await apiPost('/api/upgrade',{
+        historyId:request.sourceId,targetGiftId:request.targetId,requestId:request.requestId,
+      },{timeoutMs:20000});
+      const actualChance=Number(result.chance);
+      if(!Number.isFinite(actualChance)||actualChance<=0||actualChance>85)throw new Error('Serverdan yaroqsiz ehtimol qaytdi. Tarixni yangilang.');
+      const landing=planUpgradeSpin({chance:actualChance,previousRotation:rotationRef.current,
+        pointerDeg:POINTER_DEG,win:Boolean(result.won),randomValue:Math.random()});
+      if(didWheelLandInSafeZone(actualChance,landing.endRotation,POINTER_DEG)!==Boolean(result.won))
+        throw new Error('Baraban tasvirida xatolik bor. Inventar tarixini yangilang.');
+      setSettledChance(actualChance);
+      setWon(false);setResultTitle('');
+      runningRef.current=true;
+      planRef.current={...landing,won:Boolean(result.won),title:goal.title,soundEnabled};
+      rotationRef.current=landing.endRotation;
+      setPhase('rolling');
+      setRotation(landing.endRotation);
+      upgradeSound('start',soundEnabled);
+      if(fallbackTimer.current)clearTimeout(fallbackTimer.current);
+      fallbackTimer.current=setTimeout(finishSpin,reduceMotion?100:SPIN_MS+300);
+    }catch(e){
+      // The request might have settled on the server even if the response was lost.
+      // Retrying uses the exact same requestId; PostgreSQL returns the original result.
+      setError(e?.name==='AbortError'
+        ? 'Server javobi kechikdi. Xuddi shu tanlov bilan qayta urinib, natijani tekshiring.'
+        : e?.message||'Upgrade natijasini tekshirib bo‘lmadi.');
+      setPhase('idle');
+      onRefresh?.().catch?.(()=>{});
+    }
   };
 
   const chooseGift=item=>{
-    if(runningRef.current)return;
+    if(blocked)return;
     if(picker==='source'){setSourceId(item.id);setTargetId(null)}
     else setTargetId(item.id);
-    setPhase('idle');setPicker(null);
+    pendingRef.current=null;setSettledChance(null);setResultTitle('');
+    setError('');setPhase('idle');setPicker(null);
   };
-  const switchMode=mode=>{
-    if(runningRef.current)return;
-    setSourceMode(mode);setSourceId(null);setTargetId(null);setPhase('idle');
-  };
-  const openPicker=mode=>{if(!runningRef.current)setPicker(mode)};
 
   return <section className={styles.root}>
     <div className={styles.header}>
-      <button type="button" onClick={onBack} className={styles.back} aria-label="Orqaga"><ArrowLeft size={19}/></button>
+      <button type="button" disabled={blocked} onClick={onBack} className={styles.back} aria-label="Orqaga"><ArrowLeft size={19}/></button>
       <ChevronMark small/>
-      <div className={styles.headerTitle}><strong>UPGRADE</strong><small>NEWPRO / DEMO</small></div>
-      <span className={styles.headerMode}><ShieldCheck size={13}/> DEMO</span>
+      <div className={styles.headerTitle}><strong>UPGRADE</strong><small>NEWPRO / LIVE</small></div>
+      <span className={styles.headerMode}><ShieldCheck size={13}/> LIVE</span>
       <button type="button" onClick={changeSound} className={styles.soundButton}
         aria-label={soundEnabled?'Ovozni o‘chirish':'Ovozni yoqish'} title={soundEnabled?'Ovozni o‘chirish':'Ovozni yoqish'}>
         {soundEnabled?<Volume2 size={17}/>:<VolumeX size={17}/>}
@@ -212,42 +236,66 @@ export default function UpgradeLab({onBack,history=[],inventoryGifts=[],catalogG
     <div className={styles.stage} data-phase={phase} data-win={phase==='result'&&won}>
       <canvas ref={confettiRef} className={styles.confetti} aria-hidden="true"/>
       <div className={styles.wheelSection}>
-        <div className={styles.wheelCaption}><span className={styles.microTitle}>UPGRADE WHEEL</span><span><Zap size={13}/> PRECISION SPIN</span></div>
+        <div className={styles.wheelCaption}><span className={styles.microTitle}>UPGRADE WHEEL</span><span><Zap size={13}/> SERVER VERIFIED</span></div>
         <UpgradeWheel chance={chance} rotation={rotation} rolling={phase==='rolling'} reduceMotion={reduceMotion} onRest={finishSpin}/>
         <div className={styles.chanceLine}>
           <span>WIN CHANCE</span>
-          <strong>{chance.toFixed(1)}%</strong>
+          <strong>{chanceText(chance)}%</strong>
           <span>{source&&goal?fmt(source.price)+' → '+fmt(goal.price):'SOVG‘A TANLANG'}</span>
         </div>
       </div>
 
       <div className={styles.cards}>
-        <ItemCard side="source" label="Beradigan sovg‘a" subtitle="Select items to use" item={source}
-          disabled={phase==='rolling'} onClick={()=>openPicker('source')}/>
-        <ItemCard side="target" label="Oladigan sovg‘a" subtitle="Select item for upgrade" item={goal}
-          disabled={phase==='rolling'||!targets.length} onClick={()=>openPicker('target')}/>
+        <ItemCard side="source" label="Beradigan sovg‘a" subtitle="Inventaringizdan" item={source}
+          disabled={blocked||!owned.length} onClick={()=>setPicker('source')}/>
+        <ItemCard side="target" label="Oladigan sovg‘a" subtitle="Yutishingiz mumkin" item={goal}
+          disabled={blocked||!targets.length} onClick={()=>setPicker('target')}/>
       </div>
 
       <div className={styles.controls}>
-        <button type="button" className={styles.improve} disabled={!source||!goal||phase==='rolling'||chance<=0} onClick={spin}>
-          {phase==='rolling'?<RotateCcw size={19} className={styles.spinIcon}/>:<ChevronMark small/>}
-          <strong>{phase==='rolling'?'UPGRADING…':phase==='result'?'TRY AGAIN':'IMPROVE'}</strong>
+        <button type="button" className={styles.improve} disabled={!source||!goal||blocked||estimatedChance<=0}
+          onClick={()=>{setConfirm(true);setError('')}}>
+          {blocked?<RotateCcw size={19} className={styles.spinIcon}/>:<ChevronMark small/>}
+          <strong>{phase==='checking'?'SERVER TEKSHIRMOQDA…':phase==='rolling'?'UPGRADING…':'IMPROVE'}</strong>
         </button>
         {error?<p role="alert" className={styles.error}>{error}</p>:null}
         <div className={styles.status} role="status" aria-live="polite" data-state={phase==='result'?(won?'won':'lost'):phase}>
-          <span>{phase==='rolling'?'Aylanmoqda…':phase==='result'?(won?'Demo muvaffaqiyatli!':'Bu safar muvaffaqiyatsiz'):'G‘ildirak ishga tayyor'}</span>
-          <span>{wins} / {plays} <Sparkles size={13}/></span>
+          <span>{phase==='checking'?'Sovg‘a va zaxira tekshirilmoqda…':phase==='rolling'?'Natija bazaga yozildi. Baraban aylanmoqda…':
+            phase==='result'?(won?'Upgrade muvaffaqiyatli!':'Upgrade amalga oshmadi'):'Server natijani tasdiqlaydi'}</span>
+          <span><LockKeyhole size={13}/> SECURE</span>
         </div>
-        {phase==='result'&&won?<div className={styles.winnerLine}><CheckCircle2 size={17}/> {goal?.title} — faqat demo natijasi</div>:null}
+        {phase==='result'?<div className={styles.winnerLine}>
+          {won?<CheckCircle2 size={17}/>:<Info size={17}/>}
+          {won?resultTitle+' — inventarga qo‘shildi':'Tanlangan sovg‘a ishlatildi'}
+        </div>:null}
+        {!owned.length&&phase!=='result'?<p className={styles.emptyHint}>Upgrade boshlash uchun inventaringizda sovg‘a bo‘lishi kerak.</p>:null}
         <div className={styles.footnote}><Info size={14}/>
-          <span>{multiplier?multiplier.toFixed(2)+'× · ':''}Bu demo: Stars yechilmaydi, real sovg‘a inventarga qo‘shilmaydi.</span>
+          <span>{multiplier?multiplier.toFixed(2)+'× · ':''}Yutqazsangiz, berilgan sovg‘a yo‘qoladi. Ehtimol serverda hisoblanadi; har bir urinishning natijasi saqlanadi.</span>
         </div>
       </div>
     </div>
 
-    {picker?<GiftPicker key={picker+'-'+sourceMode} mode={picker}
-      gifts={picker==='source'?sources:targets} activeId={picker==='source'?source?.id:goal?.id}
-      onChoose={chooseGift} onClose={()=>setPicker(null)} sourceMode={sourceMode}
-      onSourceMode={switchMode} ownedCount={owned.length}/>:null}
+    {upgradeRounds.length?<div className={styles.historyPanel}>
+      <div className={styles.historyHead}><Clock3 size={16}/><strong>So‘nggi urinishlar</strong></div>
+      {upgradeRounds.slice(0,6).map(round=><div className={styles.historyRow} key={round.id}>
+        <span><b>{round.outcome==='won'?'YUTUQ':'YUTQAZDI'}</b><small>{new Date(round.created_at).toLocaleString('uz-UZ')}</small></span>
+        <span>{chanceText(round.chance)}% <strong>{fmt(round.source_price)} → {fmt(round.target_price)} ★</strong></span>
+      </div>)}
+    </div>:null}
+
+    {picker?<GiftPicker mode={picker} gifts={picker==='source'?owned:targets}
+      activeId={picker==='source'?sourceId:targetId}
+      onChoose={chooseGift} onClose={()=>setPicker(null)}/>:null}
+    {confirm?<div className={styles.backdrop} onMouseDown={e=>{if(e.target===e.currentTarget)setConfirm(false)}}>
+      <section className={styles.confirmSheet} role="alertdialog" aria-modal="true" aria-label="Upgrade tasdiqlash">
+        <ShieldCheck size={27}/>
+        <h2>Upgrade’ni tasdiqlaysizmi?</h2>
+        <p><strong>{source?.title}</strong> ({fmt(source?.price)} ★) sarflanadi. Yutish ehtimoli <strong>{chanceText(estimatedChance)}%</strong>. Yutqazsangiz, sovg‘a qaytarilmaydi.</p>
+        <div className={styles.confirmActions}>
+          <button type="button" onClick={()=>setConfirm(false)}>Bekor qilish</button>
+          <button type="button" onClick={performSpin}>Tasdiqlash va boshlash</button>
+        </div>
+      </section>
+    </div>:null}
   </section>;
 }
