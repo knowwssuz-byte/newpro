@@ -185,6 +185,7 @@ export default function UpgradeLab({
     try {
       const result=await apiPost('/api/upgrade',{
         historyId:request.sourceId,targetGiftId:request.targetId,requestId:request.requestId,
+        quote:{sourcePrice:source.price,targetPrice:goal.price,chance:estimatedChance},
       },{timeoutMs:20000});
       const actualChance=Number(result.chance);
       if(!Number.isFinite(actualChance)||actualChance<=0||actualChance>85)throw new Error('Serverdan yaroqsiz ehtimol qaytdi. Tarixni yangilang.');
@@ -203,6 +204,7 @@ export default function UpgradeLab({
       if(fallbackTimer.current)clearTimeout(fallbackTimer.current);
       fallbackTimer.current=setTimeout(finishSpin,reduceMotion?100:SPIN_MS+300);
     }catch(e){
+      if(String(e?.message||'').includes('o‘zgardi'))pendingRef.current=null;
       // The request might have settled on the server even if the response was lost.
       // Retrying uses the exact same requestId; PostgreSQL returns the original result.
       setError(e?.name==='AbortError'
