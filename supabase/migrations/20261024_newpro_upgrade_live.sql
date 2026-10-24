@@ -129,8 +129,7 @@ begin
   return jsonb_build_object('ok',true,'replayed',false,'won',v_won,
     'chance',v_chance,'round',to_jsonb(v_round),'rewardHistoryId',v_reward.id);
 end;
-$function$
-
+$function$;
 
 revoke all on function public.upgrade_gift_atomic(bigint,uuid,uuid,uuid,jsonb) from public,anon,authenticated;
 grant execute on function public.upgrade_gift_atomic(bigint,uuid,uuid,uuid,jsonb) to service_role;
