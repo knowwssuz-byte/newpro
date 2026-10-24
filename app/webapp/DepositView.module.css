@@ -3728,3 +3728,21 @@
   .promoClock b { font-size: 11px; letter-spacing: 0; }
   .promoRemove { width: 20px; flex-basis: 20px; }
 }
+
+
+/* Typography pass: clear totals and legible form labels in Telegram WebView. */
+.page{font-family:var(--font-ui);font-weight:530}
+.hero h1,.hero h2,.headerTitle strong,.invoiceAmount strong,.amountInput input{
+  font-family:var(--font-display);font-kerning:normal
+}
+.amountInput input,.invoiceAmount strong{font-variant-numeric:tabular-nums lining-nums}
+.headerTitle span,.eyebrow,.panelHeading>div>span,.historyHeading>div>span{
+  font-size:10px;letter-spacing:.08em;line-height:1.35
+}
+.secureStrip>div span,.walletConnect>div span,.invoiceRow span{
+  font-size:10px;line-height:1.38
+}
+.panelFootnote,.tonInvoice>p{font-size:10.5px;line-height:1.52}
+.amountLabel small,.invoiceTop small{font-size:10px;line-height:1.4}
+.invoiceRow strong{font-size:11px;line-height:1.4}
+@media(max-width:460px){.amountInput input{font-size:clamp(26px,8vw,34px)}}
