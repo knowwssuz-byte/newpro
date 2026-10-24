@@ -9,6 +9,7 @@ const STATUS = {
   approved: { name: 'Tasdiqlandi', Icon: CheckCircle2, className: 'completed' },
   rejected: { name: 'Rad etildi', Icon: XCircle, className: 'rejected' },
   sold: { name: 'Sotilgan', Icon: CheckCircle2, className: 'completed' },
+  upgraded: { name: 'Upgrade uchun ishlatilgan', Icon: CheckCircle2, className: 'completed' },
 };
 const money = x => new Intl.NumberFormat('uz-UZ').format(Number(x) || 0);
 function timeText(value) {
@@ -55,7 +56,7 @@ export default function GiftHistory({ history = [], gifts = [], withdrawals = []
                 </div>
                 <div className={styles.details}>
                   <strong title={row.gift?.title || ''}>{row.gift?.title || 'Gift'}</strong>
-                  <span>{row.kind === 'sale' ? 'Sotuv' : 'Gift o‘tkazish'}</span>
+                  <span>{row.kind === 'upgrade' ? 'Upgrade urinishida sarflangan' : row.kind === 'sale' ? 'Sotuv' : 'Gift o‘tkazish'}</span>
                   <small>{timeText(row.date)}</small>
                   {row.note ? <p>{row.note}</p> : null}
                 </div>
