@@ -29,7 +29,9 @@ export function upgradeSound(kind, enabled=true) {
     const ctx=getContext();
     if (!ctx) return;
     const now=ctx.currentTime+.015;
-    if(kind==='start') {
+    if(kind==='select') {
+      tone(ctx,620,now,.09,.024,'triangle',1.24);
+    }else if(kind==='start') {
       tone(ctx,210,now,.24,.047,'triangle',2.7);
       tone(ctx,520,now+.16,.18,.024,'sine',1.38);
     }else if(kind==='tick') {
