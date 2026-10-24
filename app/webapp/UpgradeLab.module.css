@@ -467,3 +467,24 @@
  .wheelFrame[data-rolling=true] .wheelNeedle,
  .wheelFrame[data-rolling=true] .wheelHalo{animation:none!important}
 }
+
+
+/* Final asset registration — original AI emblem with transparent alpha. */
+.wheelCenter {
+  inset:33%;
+  background:transparent;
+  border:0;
+  box-shadow:0 12px 30px rgba(0,0,0,.5);
+  overflow:visible;
+}
+.hubCrystal{
+  width:100%;height:100%;max-width:none;
+  object-fit:contain;display:block;
+  transform:none;filter:drop-shadow(0 3px 13px rgba(222,147,28,.2));
+}
+.hubBrand{
+  position:absolute;left:50%;bottom:10%;transform:translateX(-50%);
+  color:#ffe7ab;font-size:clamp(7px,1.65vw,10px);
+  letter-spacing:.06em;
+  text-shadow:0 1px 3px #09070b,0 0 6px #030205;
+}
