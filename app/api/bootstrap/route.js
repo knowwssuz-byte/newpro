@@ -71,7 +71,7 @@ export async function POST(request) {
       giftsQuery = giftsQuery.eq('is_active', true);
     }
 
-    const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult] = await Promise.all([
+    const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult, upgradeResult] = await Promise.all([
       ensureUser(auth.telegramUser),
       fetchCases(supabase, { onlyActive: !auth.isAdmin }),
       giftsQuery,
@@ -87,7 +87,8 @@ export async function POST(request) {
         .eq('user_id', auth.telegramUser.id)
         .order('created_at', { ascending: false })
         .limit(250),
-      supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp']),
+      supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp', 'feature_upgrade']),
+      supabase.from('upgrade_rounds').select('id,user_id,source_history_id,source_gift_id,target_gift_id,reward_history_id,source_price,target_price,chance,outcome,created_at').eq('user_id', auth.telegramUser.id).order('created_at', { ascending: false }).limit(50),
     ]);
 
     if (dbUser.is_banned) {
@@ -97,6 +98,7 @@ export async function POST(request) {
     if (giftsResult.error) throw new Error(giftsResult.error.message);
     if (historyResult.error) throw new Error(historyResult.error.message);
     if (withdrawResult.error) throw new Error(withdrawResult.error.message);
+    if (upgradeResult.error) throw new Error(upgradeResult.error.message);
 
     // A player's owned gift may have since been disabled in the public case
     // catalog. Resolve inventory media/prices separately from active gifts.
@@ -122,6 +124,7 @@ export async function POST(request) {
       history: historyResult.data || [],
       inventoryGifts: inventoryResult.data || [],
       withdrawals: withdrawResult.data || [],
+      upgradeRounds: upgradeResult.data || [],
       featureSettings,
     });
   } catch (error) {
