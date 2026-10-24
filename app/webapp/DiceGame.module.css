@@ -448,3 +448,16 @@
 @keyframes orbitSpin { to { transform: rotate(360deg); } }
 @keyframes resultPop { from { opacity: 0; transform: translateX(-50%) scale(.45); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
 @keyframes resultSlide { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+
+/* Dice game: balanced typography across desktop and narrow Telegram views. */
+.root{font-family:var(--font-ui);letter-spacing:-.012em}
+.brand strong,.resultCard strong,.lobbyCopy strong{
+  font-family:var(--font-display);letter-spacing:-.04em
+}
+.brand>div>span,.statsGrid span,.resultCard span,
+.betHeading>span,.betHeading small,.modeSwitch button small{
+  font-size:10px;line-height:1.35
+}
+.targetZones{font-size:9px}
+.lobbyCopy small{font-size:11px;line-height:1.42}
