@@ -65,3 +65,8 @@
 .artwork :global(.tgs-gift-canvas svg){max-width:100%!important;max-height:100%!important;width:100%!important;height:100%!important;}
 :global(.app-frame[data-ui-effects="off"]) .card, :global(.app-frame[data-ui-effects="off"]) .action{transition:none!important;}
 :global(.app-frame[data-ui-effects="off"]) .card:hover{transform:none!important;box-shadow:0 13px 29px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.07)!important;}
+
+
+/* Gift inventory copy maintains a readable visual rhythm. */
+.section{font-family:var(--font-ui)}
+.heading h2,.heading h3,.cardTitle strong{font-family:var(--font-display);letter-spacing:-.025em}
