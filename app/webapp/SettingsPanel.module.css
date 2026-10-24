@@ -45,3 +45,12 @@
 .historyEntry{width:100%;display:flex;align-items:center;gap:11px;padding:13px;min-height:73px;border:1px solid rgba(171,142,253,.26);border-radius:15px;background:radial-gradient(circle at 10% 0%,rgba(126,82,235,.2),transparent 46%),rgba(42,34,66,.8);color:#f8f5ff;text-align:left;font-family:inherit;cursor:pointer}
 .historyEntryIcon{display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border-radius:13px;background:rgba(148,102,249,.17);color:#d3bcff}
 .historyEntry>span:nth-child(2){display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}.historyEntry strong{font-size:13px;font-weight:850}.historyEntry small{font-size:10px;line-height:1.4;color:#aaa2c5}.historyEntry>svg{flex-shrink:0;color:#a8a2c5}
+
+/* NewPro typography: settings and account options. */
+.panel{font-family:var(--font-ui);font-weight:530}
+.panel h2,.panel h3,.historyEntry strong{font-family:var(--font-display);letter-spacing:-.03em}
+.optionText strong{font-size:13px;line-height:1.35;font-weight:780}
+.optionText small{font-size:11px;line-height:1.47;letter-spacing:0}
+.sectionLabel{font-size:11px;letter-spacing:.09em}
+.historyEntry small{font-size:11px;line-height:1.4}
+@media(max-width:340px){.optionText strong{font-size:12.5px}.optionText small{font-size:10.5px}}
