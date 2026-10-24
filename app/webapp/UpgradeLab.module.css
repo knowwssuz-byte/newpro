@@ -262,8 +262,7 @@
   inset:12%;border:0;border-radius:50%;box-shadow:none;
   background:conic-gradient(from 0deg,
     #ffec93 0deg,
-    #ffd34c calc(var(--win-angle) * .56),
-    #edac27 var(--win-angle),
+    #ffd34c var(--win-angle),
     #41305e var(--win-angle),
     #211c31 360deg);
   mask-image:radial-gradient(circle,transparent 0 61%,black 65% 92%,transparent 97%);
@@ -321,7 +320,7 @@
   display:flex;align-items:flex-end;justify-content:center;
 }
 .wheelNeedle:before,.wheelNeedle span{display:none}
-.wheelNeedle img{display:block;width:100%;height:100%;object-fit:contain;transform:scaleY(-1)}
+.wheelNeedle img{display:block;width:100%;height:100%;object-fit:contain}
 .wheelFrame[data-rolling=true] .wheelNeedle{animation:needleGold .14s ease-in-out infinite alternate}
 .wheelFrame[data-rolling=true] .wheelHalo{animation:pulse 1s ease-in-out infinite alternate}
 @keyframes needleGold{
