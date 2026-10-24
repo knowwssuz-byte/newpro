@@ -488,3 +488,14 @@
   letter-spacing:.06em;
   text-shadow:0 1px 3px #09070b,0 0 6px #030205;
 }
+
+/* Correct the original transparent cutout's internal 29%-radius framing. */
+.wheelCenter{overflow:visible}
+.wheelCenter .hubCrystal{
+  position:absolute;
+  left:50%;top:50%;
+  width:285%;height:285%;
+  max-width:none;max-height:none;
+  transform:translate(-50%,-50%);
+}
+.wheelCenter .hubBrand{z-index:2;bottom:7%}
