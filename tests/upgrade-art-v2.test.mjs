@@ -29,12 +29,12 @@ test('server-selected outcome and visual safe zone agree throughout range', () =
 
 test('UI uses independent AI assets and keeps a user-visible accurate chance',()=>{
   const component = readFileSync(join(process.cwd(),'app','webapp','UpgradeLab.jsx'),'utf8');
-  assert.match(component,/frame-metal\\.webp/);
-  assert.match(component,/pointer-gold\\.webp/);
-  assert.match(component,/hub-emblem\\.webp/);
-  assert.match(component,/chanceText\\(chance\\)/);
-  assert.match(component,/planUpgradeSpin/);
-  assert.match(component,/\/api\/upgrade/);
+  assert.ok(component.includes('frame-metal.webp'));
+  assert.ok(component.includes('pointer-gold.webp'));
+  assert.ok(component.includes('hub-emblem.webp'));
+  assert.ok(component.includes('chanceText(chance)'));
+  assert.ok(component.includes('planUpgradeSpin'));
+  assert.ok(component.includes('/api/upgrade'));
 });
 
 test('mobile, tablet and desktop layout breakpoints exist',()=>{
