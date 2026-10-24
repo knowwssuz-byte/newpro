@@ -1900,3 +1900,17 @@
 
 .actionChevron svg { width: 14px; height: 14px; }
 .bannerAction > svg { width: 16px; height: 16px; }
+
+
+/* Premium card typography: crisp titles, readable supporting copy. */
+.titleGroup strong,.showcaseTitle,.bannerTitle strong,.actionCopy strong{
+  font-family:var(--font-display);font-kerning:normal
+}
+.titleGroup strong{line-height:1.06;letter-spacing:-.035em}
+.showcaseTitle{line-height:1.13;letter-spacing:-.04em}
+.showcaseKicker{font-size:10px;letter-spacing:.09em;line-height:1.35}
+.actionCopy strong{font-size:clamp(11px,2.9vw,13.5px);font-weight:790;line-height:1.2;letter-spacing:-.015em}
+.actionCopy small{font-size:clamp(10px,2.35vw,11.5px);line-height:1.38;letter-spacing:0}
+.titleGroup em{font-size:clamp(9px,2.25vw,10px);line-height:1.3}
+.bannerCopy>small{font-size:clamp(10px,2.65vw,11.5px);line-height:1.35}
+@media(max-width:350px){.actionCopy strong{font-size:10.5px}.actionCopy small{font-size:9.5px}}
