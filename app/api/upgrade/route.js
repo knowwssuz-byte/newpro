@@ -19,6 +19,8 @@ function upgradeError(error) {
     TARGET_UNAVAILABLE: ['Tanlangan sovg‘a mavjud emas yoki omborda tugagan', 409],
     TARGET_NOT_HIGHER: ['Olinadigan sovg‘a qimmatroq bo‘lishi kerak', 400],
     CHANCE_TOO_LOW: ['Bu juftlik uchun yutish ehtimoli juda past', 400],
+    QUOTE_MISSING: ['Narx yoki ehtimol tasdiqlanmagan', 400],
+    QUOTE_CHANGED: ['Narx yoki ehtimol o‘zgardi. Ma’lumotni yangilab, qayta tasdiqlang.', 409],
     REQUEST_ID_REUSED: ['Urinish identifikatori noto‘g‘ri takrorlangan', 409],
   };
   for (const [code, response] of Object.entries(known)) {
@@ -33,10 +35,11 @@ export async function POST(request) {
   try {
     const auth = await readTelegramRequest(request);
     if (!auth.ok) return jsonError(auth.error, auth.status);
-    const { historyId, targetGiftId, requestId } = auth.body || {};
+    const { historyId, targetGiftId, requestId, quote } = auth.body || {};
     if (![historyId, targetGiftId, requestId].every(value => UUID.test(String(value || '')))) {
       return jsonError('Urinish ma’lumotlari noto‘g‘ri', 400);
     }
+    if (!quote || ![quote.sourcePrice, quote.targetPrice, quote.chance].every(v=>typeof v==='number' && Number.isFinite(v) && v>0)) return jsonError('Narx va ehtimol noto‘g‘ri', 400);
     const user = await ensureUser(auth.telegramUser);
     if (user.is_banned) return jsonError('Siz bloklangansiz', 403);
     const { data, error } = await getSupabaseAdmin().rpc('upgrade_gift_atomic', {
@@ -44,6 +47,7 @@ export async function POST(request) {
       p_source_history_id: historyId,
       p_target_gift_id: targetGiftId,
       p_request_id: requestId,
+      p_quote: { sourcePrice: quote.sourcePrice, targetPrice: quote.targetPrice, chance: quote.chance },
     });
     if (error) {
       const [message, status] = upgradeError(error);
