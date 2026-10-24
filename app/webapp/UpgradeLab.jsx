@@ -96,10 +96,9 @@ function UpgradeWheel({chance,rotation,rolling,reduceMotion,onRest}) {
         src="/feature/upgrade/art/frame-metal.webp" alt="" aria-hidden="true"
         width="512" height="512" draggable={false}/>
       <div className={styles.wheelCenter} aria-hidden="true">
-        <img src="/feature/upgrade/art/pointer-gold.webp"
-          className={styles.hubCrystal} alt="" draggable={false}/>
+        <img src="/feature/upgrade/art/hub-emblem.webp"
+          className={styles.hubCrystal} alt="" width="512" height="512" draggable={false}/>
         <span className={styles.hubBrand}>NEWPRO</span>
-        <span className={styles.hubSubtitle}>UPGRADE</span>
       </div>
       <div className={styles.wheelNeedle} aria-hidden="true">
         <img src="/feature/upgrade/art/pointer-gold.webp" alt=""
