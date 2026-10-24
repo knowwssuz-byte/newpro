@@ -1389,9 +1389,7 @@
   padding: 10px 11px calc(96px + env(safe-area-inset-bottom, 0px));
   color: var(--deposit-text);
   background: #111214;
-  font-family:
-    "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-ui);
   font-weight: 500;
   letter-spacing: -0.012em;
 }
@@ -1986,9 +1984,7 @@
   overflow: hidden;
   color: var(--deposit-text);
   background: transparent;
-  font-family:
-    "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
-    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-ui);
   font-weight: 520;
   letter-spacing: -0.012em;
 }
