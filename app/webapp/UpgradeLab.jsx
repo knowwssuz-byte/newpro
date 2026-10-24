@@ -79,18 +79,35 @@ function ItemCard({item,label,subtitle,onClick,disabled=false,side}) {
 
 function UpgradeWheel({chance,rotation,rolling,reduceMotion,onRest}) {
   const arc=Math.max(0,Math.min(100,chance))*3.6;
-  return <div className={styles.wheelFrame} data-rolling={rolling}>
-    <div className={styles.wheelHalo} aria-hidden="true"/>
-    <div className={styles.wheelDisc} style={{'--win-angle':arc+'deg',transform:'rotate('+rotation+'deg)'}}
-      onTransitionEnd={e=>{if(e.propertyName==='transform')onRest()}}>
-      <div className={styles.wheelGloss} aria-hidden="true"/>
-      <div className={styles.wheelTicks} aria-hidden="true"/>
-      <div className={styles.wheelBezel} aria-hidden="true"/>
+  const style={ '--win-angle':arc+'deg', transform:'rotate('+rotation+'deg)' };
+  return (
+    <div className={styles.wheelFrame} data-rolling={rolling} role="img"
+      aria-label={'Upgrade barabani. Yutish hududi '+chanceText(chance)+' foiz.'}>
+      <div className={styles.wheelHalo} aria-hidden="true"/>
+      <div className={styles.wheelRotorTexture} aria-hidden="true"
+        style={{transform:'rotate('+rotation+'deg)'}} />
+      <div className={styles.wheelDisc} style={style}
+        onTransitionEnd={e=>{if(e.target===e.currentTarget&&e.propertyName==='transform')onRest()}}>
+        <div className={styles.wheelGloss} aria-hidden="true"/>
+        <div className={styles.wheelTicks} aria-hidden="true"/>
+        <div className={styles.wheelBezel} aria-hidden="true"/>
+      </div>
+      <img className={styles.wheelAssetFrame}
+        src="/feature/upgrade/art/frame-metal.webp" alt="" aria-hidden="true"
+        width="512" height="512" draggable={false}/>
+      <div className={styles.wheelCenter} aria-hidden="true">
+        <img src="/feature/upgrade/art/pointer-gold.webp"
+          className={styles.hubCrystal} alt="" draggable={false}/>
+        <span className={styles.hubBrand}>NEWPRO</span>
+        <span className={styles.hubSubtitle}>UPGRADE</span>
+      </div>
+      <div className={styles.wheelNeedle} aria-hidden="true">
+        <img src="/feature/upgrade/art/pointer-gold.webp" alt=""
+          width="136" height="200" draggable={false}/>
+      </div>
+      {reduceMotion?<span className={styles.srOnly}>Harakat kamaytirilgan</span>:null}
     </div>
-    <div className={styles.wheelCenter}><ChevronMark/></div>
-    <div className={styles.wheelNeedle} aria-hidden="true"><span/></div>
-    {reduceMotion?<span className={styles.srOnly}>Harakat kamaytirilgan</span>:null}
-  </div>;
+  );
 }
 
 export default function UpgradeLab({
@@ -112,6 +129,7 @@ export default function UpgradeLab({
   const [rotation,setRotation]=useState(0);
   const [settledChance,setSettledChance]=useState(null);
   const [resultTitle,setResultTitle]=useState('');
+  const [resultGift,setResultGift]=useState(null);
   const [soundEnabled,setSoundEnabled]=useState(true);
   const [reduceMotion,setReduceMotion]=useState(false);
   const [error,setError]=useState('');
@@ -161,7 +179,7 @@ export default function UpgradeLab({
     runningRef.current=false;
     planRef.current=null;
     pendingRef.current=null;
-    setWon(result.won);setResultTitle(result.title);setPhase('result');
+    setWon(result.won);setResultTitle(result.title);setResultGift(result.item || null);setPhase('result');
     setSourceId(null);setTargetId(null);
     if(result.won)celebrate();
     upgradeSound(result.won?'win':'miss',result.soundEnabled);
@@ -196,7 +214,7 @@ export default function UpgradeLab({
       setSettledChance(actualChance);
       setWon(false);setResultTitle('');
       runningRef.current=true;
-      planRef.current={...landing,won:Boolean(result.won),title:goal.title,soundEnabled};
+      planRef.current={...landing,won:Boolean(result.won),title:goal.title,item:goal,soundEnabled};
       rotationRef.current=landing.endRotation;
       setPhase('rolling');
       setRotation(landing.endRotation);
@@ -219,14 +237,14 @@ export default function UpgradeLab({
     if(blocked)return;
     if(picker==='source'){setSourceId(item.id);setTargetId(null)}
     else setTargetId(item.id);
-    pendingRef.current=null;setSettledChance(null);setResultTitle('');
+    pendingRef.current=null;setSettledChance(null);setResultTitle('');setResultGift(null);
     setError('');setPhase('idle');setPicker(null);
   };
 
   return <section className={styles.root}>
     <div className={styles.header}>
       <button type="button" disabled={blocked} onClick={onBack} className={styles.back} aria-label="Orqaga"><ArrowLeft size={19}/></button>
-      <ChevronMark small/>
+      <img src="/feature/upgrade/art/pointer-gold.webp" className={styles.headerCrest} alt="" aria-hidden="true" />
       <div className={styles.headerTitle}><strong>UPGRADE</strong><small>NEWPRO / LIVE</small></div>
       <span className={styles.headerMode}><ShieldCheck size={13}/> LIVE</span>
       <button type="button" onClick={changeSound} className={styles.soundButton}
@@ -238,12 +256,16 @@ export default function UpgradeLab({
     <div className={styles.stage} data-phase={phase} data-win={phase==='result'&&won}>
       <canvas ref={confettiRef} className={styles.confetti} aria-hidden="true"/>
       <div className={styles.wheelSection}>
-        <div className={styles.wheelCaption}><span className={styles.microTitle}>UPGRADE WHEEL</span><span><Zap size={13}/> SERVER VERIFIED</span></div>
+        <div className={styles.wheelCaption}><span className={styles.microTitle}>UPGRADE WHEEL</span><span><ShieldCheck size={13}/> SERVER SETTLED</span></div>
         <UpgradeWheel chance={chance} rotation={rotation} rolling={phase==='rolling'} reduceMotion={reduceMotion} onRest={finishSpin}/>
-        <div className={styles.chanceLine}>
+        <div className={styles.chanceLine} aria-live="polite">
           <span>WIN CHANCE</span>
           <strong>{chanceText(chance)}%</strong>
-          <span>{source&&goal?fmt(source.price)+' → '+fmt(goal.price):'SOVG‘A TANLANG'}</span>
+          <span>{source&&goal?multiplier.toFixed(2)+'× MULTIPLIER':'SOVG‘A TANLANG'}</span>
+        </div>
+        <div className={styles.chanceDetails}>
+          <span><i/> YUTISH ZONASI <b>{chanceText(chance)}%</b></span>
+          <span><i/> QOLGAN ZONA <b>{chanceText(100-chance)}%</b></span>
         </div>
       </div>
 
@@ -266,9 +288,10 @@ export default function UpgradeLab({
             phase==='result'?(won?'Upgrade muvaffaqiyatli!':'Upgrade amalga oshmadi'):'Server natijani tasdiqlaydi'}</span>
           <span><LockKeyhole size={13}/> SECURE</span>
         </div>
-        {phase==='result'?<div className={styles.winnerLine}>
-          {won?<CheckCircle2 size={17}/>:<Info size={17}/>}
-          {won?resultTitle+' — inventarga qo‘shildi':'Tanlangan sovg‘a ishlatildi'}
+        {phase==='result'?<div className={styles.winnerLine} data-result={won?'won':'lost'}>
+          {won&&resultGift?<UpgradeGiftThumb item={resultGift} alt={resultGift.title}/>:won?<CheckCircle2 size={22}/>:<Info size={22}/>}
+          <div><strong>{won?'UPGRADE SUCCESS':'UPGRADE FINISHED'}</strong>
+            <span>{won?resultTitle+' — inventarga qo‘shildi':'Tanlangan sovg‘a sarflandi'}</span></div>
         </div>:null}
         {!owned.length&&phase!=='result'?<p className={styles.emptyHint}>Upgrade boshlash uchun inventaringizda sovg‘a bo‘lishi kerak.</p>:null}
         <div className={styles.footnote}><Info size={14}/>
