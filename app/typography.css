@@ -1,0 +1,174 @@
+/*
+ * NEWPRO TYPOGRAPHY SYSTEM / 2026
+ * Manrope for clear interface copy; Outfit for high-contrast editorial headings.
+ * The font files are self-hosted by next/font/google, not fetched by the browser.
+ * Imported last so legacy global overrides cannot re-introduce platform fonts.
+ */
+:root {
+  --font-ui: var(--font-manrope), "Manrope", "Segoe UI", system-ui, sans-serif;
+  --font-display: var(--font-outfit), "Outfit", var(--font-manrope), system-ui, sans-serif;
+  --font-numbers: var(--font-outfit), var(--font-manrope), system-ui, sans-serif;
+  --font-code: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --type-leading: 1.48;
+  --type-caption-leading: 1.4;
+  --type-tracking: -0.014em;
+}
+html {
+  font-family: var(--font-ui);
+  font-optical-sizing: auto;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+html,
+body {
+  font-family: var(--font-ui) !important;
+  font-weight: 500;
+  letter-spacing: var(--type-tracking) !important;
+  font-kerning: normal;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+body,
+.app-frame,
+.app-shell,
+.app-main,
+.admin-shell {
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+}
+button,
+input,
+select,
+textarea,
+option,
+[role="button"] {
+  font-family: var(--font-ui) !important;
+  font-kerning: normal;
+}
+button,
+[role="button"] {
+  font-weight: 750;
+  letter-spacing: -0.015em;
+}
+input,
+textarea,
+select {
+  letter-spacing: -0.012em;
+  font-weight: 550;
+}
+input::placeholder,
+textarea::placeholder {
+  font-weight: 450;
+  letter-spacing: 0;
+  opacity: .77;
+}
+h1,h2,h3,h4,h5,h6,
+.page-header h1,.profile-card h1,
+.section-title-row h2,
+.promo-banner-text strong,
+.case-card-body h3,
+.brand strong,
+.admin-form h2,.admin-list h2,
+.referral-hero-copy h1,
+.games-page-title h1,
+.empty-state strong {
+  font-family: var(--font-display) !important;
+  font-optical-sizing: auto;
+  font-kerning: normal;
+  text-wrap: balance;
+}
+h1,h2,h3 {
+  letter-spacing: -.035em;
+  line-height: 1.13;
+}
+h4,h5,h6 { letter-spacing: -.022em; line-height: 1.25; }
+p { line-height: var(--type-leading); }
+small,
+label,
+caption,
+figcaption {
+  line-height: var(--type-caption-leading);
+}
+strong,b { font-kerning: normal; }
+.app-frame :is(.home-balance-copy strong,.balance-amount,.coin-value,.money-value),
+.admin-frame :is(.admin-stat-value,.metric-value),
+:where(.app-frame) [data-balance],
+:where(.app-frame) [data-amount] {
+  font-family: var(--font-numbers) !important;
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -.035em;
+}
+.app-frame :is(.section-title-row h2,.games-page-title h1) {
+  letter-spacing: -.045em !important;
+  line-height: 1.08 !important;
+  font-weight: 780 !important;
+}
+.app-frame :is(.page-header h1,.profile-card h1,.referral-hero-copy h1) {
+  letter-spacing: -.038em !important;
+  font-weight: 780 !important;
+  line-height: 1.14 !important;
+}
+.app-frame :is(.case-card-body h3,.promo-banner-text strong) {
+  letter-spacing: -.047em !important;
+  font-weight: 820 !important;
+  line-height: 1.08 !important;
+}
+/* Deliberately keep animated financial numbers aligned with no width flicker. */
+.app-frame :is(.home-balance-copy strong,.game-multiplier,.rocket-multiplier),
+.app-main :is([class*="multiplier"],[class*="Multiplier"]):is(strong,b),
+.admin-page :is(.stat-value,.balance-number) {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.app-frame :is(.mobile-nav-btn strong,.mobile-nav-btn.center-home strong) {
+  font-size: clamp(10px,2.75vw,11px) !important;
+  font-weight: 760 !important;
+  letter-spacing: -.015em !important;
+  line-height: 1.22 !important;
+}
+.app-frame :is(.bonus-task-state,.bonus-task-cta,.bonus-task-copy small,
+  .referral-friend-copy span,.referral-friend-status > span,
+  .referral-invitee-chip,.games-hub-status) {
+  font-size: max(10px, .65rem) !important;
+  line-height: 1.4 !important;
+  letter-spacing: .005em !important;
+}
+.app-frame :is(.referral-page-head > div > span,
+  .games-page-title > span,.games-hub-section-head span,
+  .bonus-title-lockup > div small) {
+  font-size: 10px !important;
+  line-height: 1.4 !important;
+  letter-spacing: .065em !important;
+}
+.app-frame :is(.inventory-card p,.activity-row span,.case-card-body p),
+.admin-panel p {
+  line-height: 1.46 !important;
+  letter-spacing: -.008em !important;
+}
+/* Make the accessible name readable, not tiny letter-spaced noise. */
+:where(.app-frame,.admin-shell) :is(.error,.field-error,[role="alert"]) {
+  line-height: 1.48;
+}
+:where(.app-frame,.admin-shell) :is(.badge,.status-badge,[class*="StatusBadge"]) {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+code,pre,kbd,samp {
+  font-family: var(--font-code);
+  font-variant-ligatures: none;
+}
+@media (max-width: 460px) {
+  .app-frame :is(.section-title-row h2) { font-size: clamp(22px,6.4vw,26px) !important; }
+  .app-frame :is(.referral-hero-copy h1,.page-header h1) { line-height: 1.13 !important; }
+  .app-frame :is(.mobile-nav-btn strong,.mobile-nav-btn.center-home strong) {
+    font-size: 10.25px !important;
+  }
+}
+@media (max-width: 350px) {
+  .app-frame :is(.mobile-nav-btn strong,.mobile-nav-btn.center-home strong) {
+    font-size: 9.75px !important;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
