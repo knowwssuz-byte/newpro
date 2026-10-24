@@ -155,6 +155,14 @@ export default function UpgradeLab({
     return ()=>{if(fallbackTimer.current)clearTimeout(fallbackTimer.current);fxEngine.current?.reset?.()};
   },[]);
 
+  useEffect(()=>{
+    if(phase!=='rolling'||reduceMotion||!soundEnabled)return;
+    // Light mechanical ratchet beats (no continuous animation/audio loop).
+    const marks=[190,320,445,565,685,810,940,1080,1230,1390,1570,1770,2000,2260,2540,2870,3250,3660,4100];
+    const timers=marks.map(ms=>setTimeout(()=>upgradeSound('tick',true),ms));
+    return ()=>timers.forEach(clearTimeout);
+  },[phase,reduceMotion,soundEnabled]);
+
   const changeSound=()=>{
     setSoundEnabled(value=>{const next=!value;try{localStorage.setItem('myst-upgrade-sounds',next?'on':'off')}catch{}return next});
   };
@@ -188,6 +196,7 @@ export default function UpgradeLab({
 
   const performSpin=async()=>{
     if(blocked||runningRef.current||!source||!goal||estimatedChance<=0||!apiPost)return;
+    upgradeSound('select',soundEnabled); // Prime iOS WebAudio in the direct tap gesture.
     setConfirm(false);setError('');setPhase('checking');
     const request=(
       pendingRef.current?.sourceId===source.id && pendingRef.current?.targetId===goal.catalogId
@@ -236,6 +245,7 @@ export default function UpgradeLab({
     if(blocked)return;
     if(picker==='source'){setSourceId(item.id);setTargetId(null)}
     else setTargetId(item.id);
+    upgradeSound('select',soundEnabled);
     pendingRef.current=null;setSettledChance(null);setResultTitle('');setResultGift(null);
     setError('');setPhase('idle');setPicker(null);
   };
