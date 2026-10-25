@@ -9,8 +9,9 @@ import BootLoader from './BootLoader';
 import caseOpeningStyles from './CaseOpening.module.css';
 import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
-import DepositView from './DepositView';
-import RocketGame from './RocketGame';
+
+import RouteSkeleton from './RouteSkeleton';
+import { prepareFirstView, warmNearViewport } from '@/lib/mystAssetReadiness.mjs';
 import DiceGame, { DiceLobbyCard } from './DiceGame';
 import PvpHub, { PvpEntryCard } from './PvpHub';
 import StarIcon from './StarIcon';
@@ -19,9 +20,12 @@ import settingsStyles from './SettingsPanel.module.css';
 import inventoryStyles from './Inventory.module.css';
 import { getInventoryRows } from '@/lib/inventory.mjs';
 import GiftHistory from './GiftHistory';
-import UpgradeLab from './UpgradeLab';
+
 
 const WelcomeTour = dynamic(() => import('./WelcomeTour'), { ssr: false });
+const RocketGame = dynamic(() => import('./RocketGame'), { ssr: false, loading: () => <RouteSkeleton title="Rocket tayyorlanmoqda" /> });
+const UpgradeLab = dynamic(() => import('./UpgradeLab'), { ssr: false, loading: () => <RouteSkeleton title="Upgrade tayyorlanmoqda" /> });
+const DepositView = dynamic(() => import('./DepositView'), { ssr: false, loading: () => <RouteSkeleton title="Balans sahifasi ochilmoqda" /> });
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
 const UI_SETTINGS_KEY = 'giftmyst_ui_preferences_v2';
@@ -59,39 +63,6 @@ const emptyUserForm = {
   amount: '',
 };
 
-const WARMED_IMAGE_URLS = new Set();
-let firstPaintPromise = null;
-
-// Start the two visible artworks during the Telegram handshake, rather than
-// after the app has already replaced its loading screen.
-function warmFirstPaint() {
-  if (typeof window === 'undefined') return Promise.resolve();
-  if (firstPaintPromise) return firstPaintPromise;
-
-  const images = ['/onboarding/welcome-gift-v2.webp', '/feature/game-banners/rocket-v41.webp'];
-  firstPaintPromise = Promise.allSettled(images.map((src) => new Promise((resolve) => {
-    const image = new window.Image();
-    image.decoding = 'async';
-    image.loading = 'eager';
-    image.fetchPriority = 'high';
-    image.onload = () => {
-      if (image.decode) image.decode().catch(() => {}).finally(resolve);
-      else resolve();
-    };
-    image.onerror = resolve; // A missing image cannot lock the app.
-    image.src = src;
-    if (image.complete && image.naturalWidth) image.decode?.().catch(() => {}).finally(resolve);
-  })));
-  return firstPaintPromise;
-}
-
-// Never strand a slow/mobile connection behind a decorative image.
-function waitForFirstPaint() {
-  return Promise.race([
-    warmFirstPaint(),
-    new Promise((resolve) => window.setTimeout(resolve, 850)),
-  ]);
-}
 const BOOTSTRAP_CACHE_TTL_MS = 3 * 60_000;
 
 const GIFT_BACKGROUND_PRESETS = [
@@ -110,25 +81,9 @@ function imageUrlOf(item) {
 
 function warmImageCacheFromData(...groups) {
   if (typeof window === 'undefined') return;
-
-  // Only nearby artwork is warmed. Do not decode 9 large collectible images
-  // in parallel as soon as the loader disappears on a Telegram WebView.
-  const connection = window.navigator?.connection;
-  const slow = Boolean(connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ''));
-  const limit = slow ? 1 : 2;
-  const urls = groups.flat().filter(Boolean)
-    .map((item) => typeof item === 'string' ? item : imageUrlOf(item))
-    .filter((url) => typeof url === 'string' && url && !WARMED_IMAGE_URLS.has(url))
-    .slice(0, limit);
-  urls.forEach((url) => {
-    WARMED_IMAGE_URLS.add(url);
-    const img = new window.Image();
-    img.loading = 'eager';
-    img.decoding = 'async';
-    img.fetchPriority = 'low';
-    img.src = url;
-    img.decode?.().catch(() => {});
-  });
+  warmNearViewport(groups.flat().filter(Boolean).map((item) =>
+    typeof item === 'string' ? item : imageUrlOf(item)
+  ), window.navigator?.connection);
 }
 
 function defaultGiftBackground(rarity = 'rare') {
@@ -498,6 +453,8 @@ export default function WebAppClient() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [adminTab, setAdminTab] = useState('cases');
   const [loading, setLoading] = useState(true);
+  const [bootStatus, setBootStatus] = useState('connecting');
+  const [bootError, setBootError] = useState('');
   const [showWelcomeTour, setShowWelcomeTour] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -578,8 +535,8 @@ export default function WebAppClient() {
   );
 
   useEffect(() => {
-    warmFirstPaint();
-    // Prefetch the three-step tour module before the loader is removed.
+    // Priority assets + code are loaded alongside Telegram startup.
+    void prepareFirstView();
     void import('./WelcomeTour').catch(() => {});
   }, []);
 
@@ -592,14 +549,8 @@ export default function WebAppClient() {
     );
   }, [activeCases, giftsByCase, selectedCase]);
 
-  // TEMPORARY: show the three-step tour on every fresh Mini App visit.
-  // Never persist a "seen" flag, and do not reopen during in-app refreshes.
-  useEffect(() => {
-    if (loading || !profile?.id || tourOpenedRef.current) return;
-    tourOpenedRef.current = true;
-    setShowWelcomeTour(true);
-  }, [loading, profile?.id]);
-
+  // Welcome is chosen during bootstrap (before loader removal), preventing
+  // a one-frame flash of Home underneath the first-visit modal.
   const finishWelcomeTour = useCallback(() => {
     setShowWelcomeTour(false);
   }, []);
@@ -642,7 +593,9 @@ export default function WebAppClient() {
         const data = await response.json().catch(() => null);
 
         if (!response.ok || !data?.ok) {
-          throw new Error(data?.error || `Server xatosi (${response.status})`);
+          const requestError = new Error(data?.error || `Server xatosi (${response.status})`);
+          requestError.status = response.status;
+          throw requestError;
         }
 
         return data;
@@ -730,6 +683,10 @@ export default function WebAppClient() {
     }
 
     hasBootstrappedRef.current = true;
+    if (!tourOpenedRef.current && (data.telegramUser?.id || data.user?.id)) {
+      tourOpenedRef.current = true;
+      setShowWelcomeTour(true);
+    }
 
     if (cache) {
       writeBootstrapCache(data.telegramUser?.id || data.user?.id, data);
@@ -738,28 +695,38 @@ export default function WebAppClient() {
 
   const loadApp = useCallback(
     async ({ silent = false } = {}) => {
-      if (!initData) return;
-
-      if (!silent && !hasBootstrappedRef.current) {
+      if (!initData) return false;
+      const wasReady = hasBootstrappedRef.current;
+      if (!silent && !wasReady) {
+        setBootError('');
+        setBootStatus('syncing');
         setLoading(true);
       }
-
       setError('');
-
       try {
-        const data = await apiPost('/api/bootstrap');
+        const data = await apiPost('/api/bootstrap', {}, { timeoutMs: 15000 });
         if (!mountedRef.current) return false;
         applyBootstrapData(data);
+        if (!silent && !wasReady) {
+          setBootStatus('visuals');
+          await prepareFirstView();
+        }
         return true;
       } catch (err) {
         if (mountedRef.current) {
-          setError(err.message || 'Ma’lumot yuklashda xatolik');
+          const message = err?.message || 'Ma’lumot yuklashda xatolik';
+          setError(message);
+          if (err?.status === 401 || err?.status === 403) {
+            hasBootstrappedRef.current = false;
+            setProfile(null);
+            setShowWelcomeTour(false);
+            setBootError(message);
+          } else if (!hasBootstrappedRef.current) {
+            setBootError(message);
+          }
         }
         return false;
       } finally {
-        // On cold startup, decode the first hero artwork before unveiling the UI.
-        // The timeout guarantees the app stays usable even on a slow connection.
-        if (!silent) await waitForFirstPaint();
         if (mountedRef.current) setLoading(false);
       }
     },
@@ -804,8 +771,8 @@ export default function WebAppClient() {
           return;
         }
 
+        setBootError("Telegram WebApp script yuklanmadi. Ilovani botdagi tugma orqali qayta oching.");
         setLoading(false);
-        setError("Telegram WebApp script yuklanmadi. Botdagi Menu Button/Main App URL aynan /webapp bo‘lishi kerak.");
         return;
       }
 
@@ -816,25 +783,25 @@ export default function WebAppClient() {
         app.BackButton?.hide?.();
 
         setTg(app);
-        setInitData(app.initData || '');
         setStartParam(getTelegramStartParam(app));
         const telegramIdentity = app.initDataUnsafe?.user || null;
         setTelegramUser(telegramIdentity);
-
+        if (!app.initData) {
+          setBootError("Telegram sessiyasi topilmadi. Ilovani bot orqali qayta oching.");
+          setLoading(false);
+          return;
+        }
+        setBootStatus('syncing');
+        setInitData(app.initData);
         const cachedBootstrap = readBootstrapCache(telegramIdentity?.id);
         if (cachedBootstrap) {
           applyBootstrapData(cachedBootstrap, { cache: false });
-          // Cached profiles should open quickly, but not before the first art is ready.
-          waitForFirstPaint().then(() => { if (mountedRef.current) setLoading(false); });
-        }
-
-        if (!app.initData) {
-          setLoading(false);
-          setError("Telegram initData kelmadi. Web App oddiy browserda yoki noto‘g‘ri URL orqali ochilgan. BotFather’da URL: https://your-domain.vercel.app/webapp bo‘lishi kerak.");
+          setBootStatus('visuals');
+          void prepareFirstView().then(() => { if (mountedRef.current) setLoading(false); });
         }
       } catch (err) {
+        setBootError(err.message || "Telegram WebApp ishga tushmadi.");
         setLoading(false);
-        setError(err.message || "Telegram WebApp ishga tushmadi.");
       }
     };
 
@@ -1418,7 +1385,10 @@ export default function WebAppClient() {
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, []);
 
-  if (loading) return <BootLoader />;
+  if (loading || (bootError && !hasBootstrappedRef.current)) {
+    return <BootLoader status={bootStatus} error={bootError}
+      onRetry={() => window.location.reload()} />;
+  }
 
   const isCaseOpening =
     opening?.stage === 'preparing' || opening?.stage === 'rolling';
@@ -1432,7 +1402,7 @@ export default function WebAppClient() {
 
   return (
     <GiftAnimationContext.Provider value={uiSettings.giftAnimations !== false}>
-    <div className="app-frame" data-ui-effects={uiSettings.effects ? 'on' : 'off'}>
+    <div className="app-frame myst-ready-reveal" data-ui-effects={uiSettings.effects ? 'on' : 'off'}>
       <div className="app-shell" style={tab === 'upgrade' ? { width: 'min(100%, 1130px)' } : undefined}>
         {showWelcomeTour ? <WelcomeTour onFinish={finishWelcomeTour} /> : null}
         {settingsOpen ? (
@@ -1707,6 +1677,8 @@ function GlobalBalanceBar({
                   alt=""
                   width={40}
                   height={40}
+                  loading="eager"
+                  fetchPriority="high"
                   unoptimized
                   draggable={false}
                 />
