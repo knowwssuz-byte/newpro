@@ -2,12 +2,66 @@
 
 // Loaded only when the user actually opens a case detail page.
 // This keeps roulette motion, result artwork and lifecycle code out of boot.
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import AppIcon from './AppIcon';
+import StarIcon from './StarIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
 
 const CASE_ROLL_DURATION_MS = 4600;
+const CASE_ART_STAGE_MS = 480;
+
+// Existing server-provided case art, framed without forged mechanical pieces.
+function CaseArtwork({ caseItem, activating }) {
+  const [failed, setFailed] = useState(false);
+  const [ready, setReady] = useState(false);
+  useEffect(() => { setFailed(false); setReady(false); }, [caseItem?.image_url]);
+  return (
+    <div className={caseOpeningStyles.caseStage} data-activating={activating ? 'true' : 'false'}
+      aria-label="Case rasmi" role="img">
+      <span className={caseOpeningStyles.caseStageAura} aria-hidden="true" />
+      {caseItem?.image_url && !failed ? (
+        <img className={caseOpeningStyles.caseStageArt} src={caseItem.image_url}
+          alt="" decoding="async" loading="eager" fetchPriority="high"
+          data-ready={ready ? 'true' : 'false'}
+          onLoad={() => setReady(true)} onError={() => setFailed(true)} draggable={false} />
+      ) : (
+        <div className={caseOpeningStyles.caseStagePlaceholder} aria-hidden="true"><AppIcon name="box" /></div>
+      )}
+      <div className={caseOpeningStyles.caseStageGlow} aria-hidden="true" />
+      <span className={caseOpeningStyles.caseStageSignature}>MYST / CASE COLLECTION</span>
+    </div>
+  );
+}
+
+function useCaseSound(enabled) {
+  const contextRef = useRef(null);
+  useEffect(() => () => {
+    if (contextRef.current) { void contextRef.current.close().catch(() => {}); contextRef.current = null; }
+  }, []);
+  return useCallback((kind) => {
+    if (!enabled) return;
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = contextRef.current || new Ctx();
+      contextRef.current = ctx;
+      if (ctx.state === 'suspended') void ctx.resume().catch(() => {});
+      const sounds = { open: [540,240,.18,.026], spin: [790,530,.115,.015], win: [590,910,.29,.035] };
+      const [start,end,duration,loudness] = sounds[kind] || sounds.open;
+      const osc = ctx.createOscillator(), gain = ctx.createGain(), t = ctx.currentTime;
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(start,t);
+      osc.frequency.exponentialRampToValueAtTime(end,t+duration);
+      gain.gain.setValueAtTime(.0001,t);
+      gain.gain.exponentialRampToValueAtTime(loudness,t+.015);
+      gain.gain.exponentialRampToValueAtTime(.0001,t+duration);
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.onended = () => { osc.disconnect(); gain.disconnect(); };
+      osc.start(t); osc.stop(t+duration+.025);
+    } catch { /* audio must never block opening */ }
+  }, [enabled]);
+}
 
 function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplete, helpers }) {
   const { GiftMedia, solidGiftBackground, defaultGiftBackground } = helpers;
