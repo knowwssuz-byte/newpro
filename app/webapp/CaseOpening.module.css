@@ -1103,3 +1103,20 @@
 @media(max-width:350px){
  .stageCaseImage{width:min(66%,215px) !important;height:66% !important}
 }
+
+/* Absolute visual centering avoids grid-sized image boxes crossing a short frame.
+   Actual object content always uses contain, never crop. */
+.caseStage .stageCaseImage{
+  position:absolute !important;
+  top:0 !important;right:0 !important;bottom:0 !important;left:0 !important;
+  margin:auto !important;
+  width:60% !important;height:65% !important;
+  max-width:280px !important;max-height:100% !important;
+  object-fit:contain !important;
+}
+@media(max-width:430px){
+  .caseStage .stageCaseImage{width:61% !important;height:64% !important}
+}
+@media(max-width:350px){
+  .caseStage .stageCaseImage{width:61% !important;height:62% !important}
+}
