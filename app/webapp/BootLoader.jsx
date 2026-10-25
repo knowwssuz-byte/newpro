@@ -1,3 +1,4 @@
+import Quantum from './vendor/Quantum';
 import styles from './BootLoader.module.css';
 
 // The artwork is shared with onboarding: the first reveal reuses the decoded image.
@@ -12,6 +13,7 @@ export default function BootLoader() {
         </div>
         <div className={styles.artwork} aria-hidden="true">
           <div className={styles.artworkGlow} />
+          <span className={styles.quantum} aria-hidden="true"><Quantum size={170} color="#bca8ff" speed={1.25} /></span>
           <img src="/onboarding/welcome-gift-v2.webp" width="220" height="220"
             alt="" loading="eager" decoding="async" fetchPriority="high" draggable="false" />
         </div>
