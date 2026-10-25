@@ -2,10 +2,11 @@
 // All API requests are intercepted; no live Supabase state is ever mutated.
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import { chromium } from 'playwright';
+import { chromium, webkit } from 'playwright';
 
 const base=process.env.BASE_URL||'http://127.0.0.1:3000';
-const dir='artifacts/myst-smoke/recovery';
+const engine=process.env.BROWSER_ENGINE==='webkit'?webkit:chromium;
+const dir='artifacts/myst-smoke/recovery-'+engine.name();
 await fs.mkdir(dir,{recursive:true});
 const sleep=(ms)=>new Promise(resolve=>setTimeout(resolve,ms));
 for(let i=0;i<70;i++){
@@ -13,7 +14,7 @@ for(let i=0;i<70;i++){
  if(i===69)throw Error('WebApp server unavailable');
  await sleep(350);
 }
-const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+const browser=await engine.launch({headless:true,args:engine===chromium?['--no-sandbox']:[]});
 const run=[];
 const data={
  ok:true,user:{id:24680,balance:150,is_banned:false},
