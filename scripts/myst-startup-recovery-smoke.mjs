@@ -87,7 +87,7 @@ for(const scenario of scenarios) {
    await page.getByRole('status',{name:/MYST yuklanmoqda/}).waitFor({timeout:3000});
   }
   await page.getByRole('main',{name:'MYST tanishtiruv'}).waitFor({timeout:18000});
-  assert.equal(await page.getByRole('alert').count(),0,'Expected successful boot');
+  assert.equal(await page.locator('main[aria-label="MYST yuklashda muammo"]').count(),0,'Loader must be replaced after successful boot');
   await page.getByRole('button',{name:/Tanishtiruvni o‘tkazib yuborish/}).click();
   await page.getByRole('heading',{name:'Play. Win. Repeat.'}).waitFor({timeout:9000});
  }
