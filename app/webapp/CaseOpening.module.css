@@ -852,3 +852,5 @@
   display:grid;place-items:center;font-size:21px;font-weight:800;cursor:pointer;
 }
 .caseTileRetry:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+.caseTileImage{grid-area:1/1}
