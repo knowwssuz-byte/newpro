@@ -51,12 +51,11 @@ const SCREENS = [
 export default function WelcomeTour({ onFinish }) {
   const [index, setIndex] = useState(0);
   const skipRef = useRef(null);
-  const dialogRef = useRef(null);
   const slide = SCREENS[index];
   const isLast = index === SCREENS.length - 1;
 
   useEffect(() => {
-    // Decoding the next onboarding slide before a tap avoids a blank hero swap.
+    // Prepare the next real WebP artwork before the visitor switches slides.
     const nextArtwork = SCREENS[index + 1]?.image;
     if (!nextArtwork) return;
     const img = new window.Image();
@@ -68,103 +67,94 @@ export default function WelcomeTour({ onFinish }) {
   }, [index]);
 
   useEffect(() => {
-    const previous = document.body.style.overflow;
-    const previousFocus = document.activeElement;
-    document.body.style.overflow = 'hidden';
     skipRef.current?.focus({ preventScroll: true });
-
     const onKey = (event) => {
-      if (event.key === 'Tab') {
-        const buttons = dialogRef.current?.querySelectorAll('button:not(:disabled)');
-        if (!buttons?.length) return;
-        const first = buttons[0];
-        const last = buttons[buttons.length - 1];
-        if (!dialogRef.current.contains(document.activeElement)) {
-          event.preventDefault();
-          (event.shiftKey ? last : first).focus();
-        } else if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
       if (event.key === 'Escape') onFinish?.();
-      if (event.key === 'ArrowRight') setIndex((value) => Math.min(SCREENS.length - 1, value + 1));
-      if (event.key === 'ArrowLeft') setIndex((value) => Math.max(0, value - 1));
+      if (event.key === 'ArrowRight') setIndex((n) => Math.min(SCREENS.length - 1, n + 1));
+      if (event.key === 'ArrowLeft') setIndex((n) => Math.max(0, n - 1));
     };
     window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = previous;
-      window.removeEventListener('keydown', onKey);
-      if (previousFocus?.isConnected) previousFocus.focus?.({ preventScroll: true });
-    };
+    return () => window.removeEventListener('keydown', onKey);
   }, [onFinish]);
 
   return (
-    <div className={styles.overlay} role="presentation">
-      <section ref={dialogRef} className={styles.sheet} role="dialog" aria-modal="true"
-        aria-labelledby="giftmyst-welcome-title" aria-describedby="giftmyst-welcome-description">
-        <div className={styles.topbar}>
+    <main className={styles.page} aria-label="MYST tanishtiruv" data-myst-intro="true">
+      <div className={styles.atmosphere} aria-hidden="true" />
+      <div className={styles.shell}>
+        <header className={styles.topbar}>
           <span className={styles.brand}>
             <span className={styles.brandMark}><AppIcon name="gift" /></span>
             <span>GIFT MYST<small>GIFT COLLECTION</small></span>
           </span>
-          <button type="button" className={styles.skip} ref={skipRef} aria-label="Tanishtiruvni o‘tkazib yuborish" onClick={onFinish}>
+          <button type="button" className={styles.skip} ref={skipRef}
+            aria-label="Tanishtiruvni o‘tkazib yuborish" onClick={onFinish}>
             Skip <AppIcon name="chevronRight" />
           </button>
-        </div>
+        </header>
 
-        <div className={styles.hero} key={'hero-' + slide.step}>
-          <span className={styles.heroGlow} aria-hidden="true" />
-          <span className={styles.heroOrbit} aria-hidden="true" />
-          <div className={styles.imageFrame}>
-            <Image src={slide.image} alt="" className={styles.heroImage} width={768} height={768}
-              unoptimized loading="eager" fetchPriority={index === 0 ? 'high' : 'auto'} draggable={false} />
+        <div className={styles.body}>
+          <div className={styles.hero} key={'hero-' + slide.step}>
+            <span className={styles.heroGlow} aria-hidden="true" />
+            <span className={styles.heroOrbit} aria-hidden="true" />
+            <div className={styles.imageFrame}>
+              <Image src={slide.image} alt="" className={styles.heroImage} width={768} height={768}
+                unoptimized loading="eager" fetchPriority={index === 0 ? 'high' : 'auto'} draggable={false} />
+            </div>
+            <span className={styles.heroBadge} aria-hidden="true">
+              <AppIcon name={slide.badgeIcon} /> {slide.badge}
+            </span>
+            <span className={styles.starsBadge} aria-hidden="true">
+              <StarIcon size={22} /> <span>Telegram<small>Stars</small></span>
+            </span>
+            <span className={styles.heroCaption} aria-hidden="true">{slide.detail}</span>
           </div>
-          <span className={styles.heroBadge} aria-hidden="true"><AppIcon name={slide.badgeIcon} />{slide.badge}</span>
-          <span className={styles.starsBadge} aria-hidden="true"><StarIcon size={22} /><span>Telegram<small>Stars</small></span></span>
-          <span className={styles.glowDot} aria-hidden="true" />
-          <span className={styles.heroCaption} aria-hidden="true">{slide.detail}</span>
+
+          <section className={styles.copy} key={slide.step} aria-live="polite" aria-atomic="true"
+            aria-labelledby="giftmyst-welcome-title">
+            <span className={styles.eyebrow}>{slide.eyebrow} <span>·</span> {slide.step} / 03</span>
+            <h1 id="giftmyst-welcome-title">
+              <span className={styles.titleMain}>{slide.title}</span>
+              <span className={styles.titleAccent}>{slide.emphasis}</span>
+            </h1>
+            <p>{slide.description}</p>
+            <ul className={styles.points}>
+              {slide.points.map((point) => (
+                <li key={point.text}>
+                  <span className={styles.pointIcon}><AppIcon name={point.icon} /></span>
+                  <span>{point.text}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         </div>
 
-        <div className={styles.copy} key={slide.step} aria-live="polite" aria-atomic="true">
-          <span className={styles.eyebrow}>{slide.eyebrow} <span>·</span> {slide.step} / 03</span>
-          <h2 id="giftmyst-welcome-title">
-            <span className={styles.titleMain}>{slide.title}</span>
-            <span className={styles.titleAccent}>{slide.emphasis}</span>
-          </h2>
-          <p id="giftmyst-welcome-description">{slide.description}</p>
-          <ul className={styles.points}>
-            {slide.points.map((point) => (
-              <li key={point.text}><span className={styles.pointIcon}><AppIcon name={point.icon} /></span><span>{point.text}</span></li>
-            ))}
-          </ul>
-        </div>
-
-        <div className={styles.footer}>
+        <footer className={styles.footer}>
           <div className={styles.dots} aria-label="Tanishtiruv bosqichlari">
             {SCREENS.map((screen, i) => (
-              <button
-                key={screen.step}
-                type="button"
+              <button key={screen.step} type="button"
                 aria-label={i + 1 + '-bosqichga o‘tish'}
                 aria-current={i === index ? 'step' : undefined}
                 className={i === index ? styles.activeDot : ''}
-                onClick={() => setIndex(i)}
-              ><span className={styles.progressTrack} /><span>{screen.label}</span></button>
+                onClick={() => setIndex(i)}>
+                <span className={styles.progressTrack} /><span>{screen.label}</span>
+              </button>
             ))}
           </div>
           <div className={styles.actions}>
-          {index > 0 && <button type="button" className={styles.back} aria-label="Oldingi bosqich" onClick={() => setIndex((value) => Math.max(0, value - 1))}><AppIcon name="chevronLeft" /></button>}
-          <button type="button" className={styles.next} onClick={() => isLast ? onFinish?.() : setIndex((value) => Math.min(SCREENS.length - 1, value + 1))}>
-            <span>{isLast ? 'Boshlash' : 'Keyingisi'}</span>
-            <AppIcon name="chevronRight" />
-          </button>
+            {index > 0 ? (
+              <button type="button" className={styles.back} aria-label="Oldingi bosqich"
+                onClick={() => setIndex((n) => Math.max(0, n - 1))}>
+                <AppIcon name="chevronLeft" />
+              </button>
+            ) : null}
+            <button type="button" className={styles.next}
+              onClick={() => isLast ? onFinish?.() : setIndex((n) => Math.min(SCREENS.length - 1, n + 1))}>
+              <span>{isLast ? 'Boshlash' : 'Keyingisi'}</span>
+              <AppIcon name="chevronRight" />
+            </button>
           </div>
-        </div>
-      </section>
-    </div>
+        </footer>
+      </div>
+    </main>
   );
 }
