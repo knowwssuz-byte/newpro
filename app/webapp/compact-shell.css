@@ -11,3 +11,11 @@
 .global-balance-bar button[aria-label="Sozlamalarni ochish"]{height:34px!important;width:34px!important;min-width:34px!important;flex-basis:34px!important;border-radius:11px!important}
 .app-main{padding-top:62px!important}
 @media(max-width:380px){.home-hero.global-balance-bar,.global-balance-bar.home-hero.premium-card{height:56px!important;min-height:56px!important;padding:5px 8px!important;gap:5px!important}.app-main{padding-top:58px!important}.global-balance-bar .home-avatar,.global-balance-bar .home-avatar-wrap{width:33px!important;height:33px!important;min-width:33px!important}.global-balance-bar .home-user-zone{gap:5px!important}.global-balance-bar .deposit-button{min-width:83px!important;padding:0 7px!important;font-size:11px!important;min-height:32px!important;height:32px!important}.global-balance-bar button[aria-label="Sozlamalarni ochish"]{width:31px!important;height:31px!important;min-width:31px!important;flex-basis:31px!important}}
+
+/* Single fast reveal after the initial authenticated bootstrap. */
+.app-frame.myst-ready-reveal{animation:mystReadyReveal .2s ease-out both}
+@keyframes mystReadyReveal{from{opacity:0;transform:translate3d(0,3px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
+@media(prefers-reduced-motion:reduce){.app-frame.myst-ready-reveal{animation:none}}
+
+/* Prevent a white document flash between BootLoader removal and the first UI frame. */
+html{background-color:#080a12}

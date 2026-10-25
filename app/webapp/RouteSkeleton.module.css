@@ -1,0 +1,10 @@
+.root{width:min(100%,760px);margin:8px auto 0;padding:12px;min-height:360px;display:flex;flex-direction:column;gap:13px;contain:layout paint;color:#ded9ed}
+.header{min-height:35px;display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700}
+.dot{width:7px;height:7px;border-radius:50%;background:#c0aaff;flex-shrink:0}
+.hero,.row{position:relative;overflow:hidden;border:1px solid rgba(205,188,245,.12);border-radius:16px;background:linear-gradient(145deg,rgba(44,40,64,.65),rgba(20,20,31,.9))}
+.hero{height:clamp(150px,28dvh,240px);display:grid;place-items:center}
+.orb{width:clamp(64px,12vw,108px);aspect-ratio:1;border-radius:50%;border:1px solid rgba(190,171,237,.35);background:radial-gradient(circle,rgba(171,142,246,.13),transparent 70%)}
+.rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.row{height:72px}
+@media(max-width:380px){.root{padding:8px;gap:9px}.hero{height:150px}.row{height:56px}}
+@media(prefers-reduced-motion:reduce){.root{scroll-behavior:auto}}
