@@ -24,7 +24,7 @@ test('TGS gifts autoplay exactly once and user can switch animations off', () =>
   assert.match(src,/loop: false,\s+autoplay: true,\s+animationData/);
   assert.match(src,/animation\.addEventListener\('complete'/);
   assert.match(src,/animateOnEnter=\{index < 24\}/);
-  assert.match(src,/compact animateOnEnter/);
+  assert.match(read('app/webapp/CaseDetailExperience.jsx'),/compact animateOnEnter/);
   assert.match(src,/play=\{false\}/);
   assert.match(settings,/Gift animatsiyalari/);
 });

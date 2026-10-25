@@ -12,7 +12,7 @@ import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
 
 import RouteSkeleton from './RouteSkeleton';
-import { prepareFirstView, warmNearViewport } from '@/lib/mystAssetReadiness.mjs';
+import { prepareFirstView, warmNearViewport, preloadDecodedImage } from '@/lib/mystAssetReadiness.mjs';
 import DiceGame, { DiceLobbyCard } from './DiceGame';
 import PvpHub, { PvpEntryCard } from './PvpHub';
 import StarIcon from './StarIcon';
@@ -26,11 +26,20 @@ import GiftHistory from './GiftHistory';
 const RocketGame = dynamic(() => import('./RocketGame'), { ssr: false, loading: () => <RouteSkeleton title="Rocket tayyorlanmoqda" /> });
 const UpgradeLab = dynamic(() => import('./UpgradeLab'), { ssr: false, loading: () => <RouteSkeleton title="Upgrade tayyorlanmoqda" /> });
 const DepositView = dynamic(() => import('./DepositView'), { ssr: false, loading: () => <RouteSkeleton title="Balans sahifasi ochilmoqda" /> });
+const CaseDetailPage = dynamic(() => import('./CaseDetailExperience'), { ssr: false, loading: () => <RouteSkeleton title="Case ochilmoqda" /> });
 const CASE_ROLL_DURATION_MS = 4600;
 const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
 const UI_SETTINGS_KEY = 'giftmyst_ui_preferences_v2';
 const DEFAULT_UI_SETTINGS = { sound: true, haptic: true, effects: true, giftAnimations: true };
 const GiftAnimationContext = createContext(true);
+
+// Pass existing, proven gift/media/rarity helpers into case-only bundle. None
+// of the opening animations execute during authentication or Home boot.
+const caseDetailHelpers = {
+  GiftMedia, eligibleGift, openableGift, formatPrice, getWinningIndexFromReel,
+  caseAccent, caseBadgeColor, solidGiftBackground, defaultGiftBackground,
+  visibleChance, isBalanceReward, rewardSubtitle, sellButtonText,
+};
 
 const emptyCaseForm = {
   title: '',
@@ -911,6 +920,7 @@ export default function WebAppClient() {
 
     openingLockRef.current = true;
     pendingOpeningRef.current = null;
+    const preparationStarted = typeof performance !== 'undefined' ? performance.now() : Date.now();
     setError('');
 
     // Home'dagi pastroqda joylashgan case tugmasidan ochilganda eski scroll
@@ -945,6 +955,14 @@ export default function WebAppClient() {
           : activeGiftPool;
 
       warmImageCacheFromData(latestGiftPool, result.gift);
+      // A real server-authorized reward always wins. Decode only that media
+      // (bounded to 850 ms) before revealing the reel; no global boot loader.
+      const readyArtwork = imageUrlOf(result.gift);
+      await Promise.allSettled([
+        preloadDecodedImage(readyArtwork, { priority: 'high', timeoutMs: 850 }),
+        new Promise((resolve) => window.setTimeout(resolve,
+          Math.max(0, 420 - ((typeof performance !== 'undefined' ? performance.now() : Date.now()) - preparationStarted)))),
+      ]);
 
       const reel = buildOpeningReel(latestGiftPool, result.gift);
       const spinKey = Date.now();
@@ -1444,7 +1462,11 @@ export default function WebAppClient() {
               onOpen={() => openCase(selectedCase)}
               onCloseResult={() => setOpening(null)}
               onSellResult={sellOpeningReward}
+              onInventory={() => { setOpening(null); setSelectedCase(null); setTab('inventory'); }}
+              onAgain={() => openCase(selectedCase)}
+              soundEnabled={uiSettings.sound}
               onRollComplete={finalizeCaseOpening}
+              helpers={caseDetailHelpers}
             />
           ) : (
             <>
@@ -1458,7 +1480,12 @@ export default function WebAppClient() {
                   onGoInventory={() => setTab('inventory')}
                   onGoUpgrade={openUpgradeLab}
                   onOpenCase={openCase}
-                  onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
+                  onSelectCase={(caseItem) => {
+                    setOpening(null); setSelectedCase(caseItem);
+                    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                  }}
                   onOpenRocket={() => openRocketGame('home')}
                   onOpenPvp={() => openPvpHub('home')}
                   busy={busy}
@@ -3407,450 +3434,6 @@ function AdminList({ title, children }) {
       <h2>{title}</h2>
       {children}
     </div>
-  );
-}
-
-function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplete }) {
-  const trackRef = useRef(null);
-  const finalDistanceRef = useRef(null);
-  const completedSpinRef = useRef(null);
-  const [rollerStyle, setRollerStyle] = useState({
-    '--raffle-x': '0px',
-    '--raffle-transition': 'none',
-  });
-
-  const isLive =
-    opening?.stage === 'rolling' || opening?.stage === 'result';
-  const isResult = opening?.stage === 'result';
-  const isRolling = opening?.stage === 'rolling';
-  const isPreparing = opening?.stage === 'preparing';
-  const reel = isLive ? opening.reel : idleGifts;
-
-  const measureCardDistance = useCallback((index) => {
-    const track = trackRef.current;
-    const viewport = track?.parentElement;
-    const card = track?.children?.[index];
-
-    if (!track || !viewport || !card) return 0;
-
-    return Math.max(
-      0,
-      card.offsetLeft +
-        card.offsetWidth / 2 -
-        viewport.clientWidth / 2
-    );
-  }, []);
-
-  useLayoutEffect(() => {
-    let firstFrame = null;
-    let secondFrame = null;
-
-    const resetStyle = {
-      '--raffle-x': '0px',
-      '--raffle-transition': 'none',
-    };
-
-    if (!opening || opening.stage === 'preparing') {
-      finalDistanceRef.current = null;
-      completedSpinRef.current = null;
-      setRollerStyle(resetStyle);
-      return undefined;
-    }
-
-    if (opening.stage === 'result') {
-      const measuredDistance =
-        finalDistanceRef.current ?? measureCardDistance(targetIndex);
-
-      finalDistanceRef.current = measuredDistance;
-      setRollerStyle({
-        '--raffle-x': `-${measuredDistance}px`,
-        '--raffle-transition': 'none',
-      });
-      return undefined;
-    }
-
-    if (opening.stage !== 'rolling') {
-      return undefined;
-    }
-
-    const startIndex = Math.min(3, Math.max(0, targetIndex - 1));
-    const startDistance = measureCardDistance(startIndex);
-    const measuredDistance = measureCardDistance(targetIndex);
-    const reduceMotion = window.matchMedia?.(
-      '(prefers-reduced-motion: reduce)'
-    )?.matches;
-    const duration = reduceMotion ? 320 : CASE_ROLL_DURATION_MS;
-
-    finalDistanceRef.current = measuredDistance;
-    completedSpinRef.current = null;
-
-    setRollerStyle({
-      '--raffle-x': `-${startDistance}px`,
-      '--raffle-transition': 'none',
-    });
-
-    firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
-        setRollerStyle({
-          '--raffle-x': `-${measuredDistance}px`,
-          '--raffle-transition': `transform ${duration}ms cubic-bezier(.10,.68,.08,1)`,
-        });
-      });
-    });
-
-    return () => {
-      if (firstFrame) window.cancelAnimationFrame(firstFrame);
-      if (secondFrame) window.cancelAnimationFrame(secondFrame);
-    };
-  }, [measureCardDistance, opening, targetIndex]);
-
-  const finishRoll = (event) => {
-    if (
-      !isRolling ||
-      event.target !== trackRef.current ||
-      event.propertyName !== 'transform' ||
-      completedSpinRef.current === opening?.spinKey
-    ) {
-      return;
-    }
-
-    completedSpinRef.current = opening.spinKey;
-    onRollComplete?.(opening.spinKey);
-  };
-
-  const idleLoopBase = idleGifts.length
-    ? Array.from({ length: Math.max(18, idleGifts.length * 5) }, (_, index) => idleGifts[index % idleGifts.length])
-    : [];
-  const idleLoopGifts = idleLoopBase.length ? [...idleLoopBase, ...idleLoopBase] : [];
-
-  return (
-    <div
-      className={[
-        caseOpeningStyles.roller,
-        isLive ? caseOpeningStyles.live : '',
-        isResult ? caseOpeningStyles.result : '',
-        isPreparing ? caseOpeningStyles.preparing : '',
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      aria-label="Case prizes preview"
-      aria-busy={isPreparing || isRolling}
-    >
-      <span className={caseOpeningStyles.centerGuide} aria-hidden="true" />
-      <span
-        className={`${caseOpeningStyles.marker} ${caseOpeningStyles.markerTop}`}
-        aria-hidden="true"
-      />
-      <span
-        className={`${caseOpeningStyles.marker} ${caseOpeningStyles.markerBottom}`}
-        aria-hidden="true"
-      />
-
-      {!isLive ? (
-        <div
-          className={`${caseOpeningStyles.idleTrack} ${
-            isPreparing ? caseOpeningStyles.idleTrackPaused : ''
-          }`}
-        >
-          {idleLoopGifts.map((gift, index) => (
-            <div
-              className={caseOpeningStyles.card}
-              key={`${gift?.id || 'gift'}-idle-${index}`}
-              style={{
-                '--gift-color': solidGiftBackground(
-                  gift?.background_value,
-                  defaultGiftBackground(gift?.rarity)
-                ),
-              }}
-            >
-              <GiftMedia gift={gift} preferStatic />
-            </div>
-          ))}
-
-          {!idleLoopGifts.length ? (
-            <div className={caseOpeningStyles.emptyCard}>
-              <AppIcon name="box" />
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <div
-          ref={trackRef}
-          className={`${caseOpeningStyles.spinTrack} ${
-            isRolling ? caseOpeningStyles.rolling : ''
-          }`}
-          style={rollerStyle}
-          onTransitionEnd={finishRoll}
-        >
-          {reel.map((gift, index) => (
-            <div
-              className={`${caseOpeningStyles.card} ${
-                index === targetIndex ? caseOpeningStyles.winnerCard : ''
-              }`}
-              data-winning={index === targetIndex ? 'true' : undefined}
-              key={`${gift?.id || 'gift'}-${index}-${opening?.spinKey || 'idle'}`}
-              style={{
-                '--gift-color': solidGiftBackground(
-                  gift?.background_value,
-                  defaultGiftBackground(gift?.rarity)
-                ),
-              }}
-            >
-              <GiftMedia gift={gift} preferStatic />
-            </div>
-          ))}
-
-          {!reel.length ? (
-            <div className={caseOpeningStyles.emptyCard}>
-              <AppIcon name="box" />
-            </div>
-          ) : null}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CaseWinResult({ opening, onClose, onSell }) {
-  if (!opening?.gift || typeof document === 'undefined') {
-    return null;
-  }
-
-  return createPortal(
-    <div
-      className={`win-screen-layer ${caseOpeningStyles.resultPortal}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="case-win-title"
-    >
-      <div
-        className={`win-screen-card ${caseOpeningStyles.resultPanel} ${
-          isBalanceReward(opening.gift) ? 'balance-win' : ''
-        }`}
-        style={{
-          '--win-screen-bg': solidGiftBackground(
-            opening.gift?.background_value,
-            defaultGiftBackground(opening.gift?.rarity)
-          ),
-        }}
-      >
-        <span className="win-screen-shine" aria-hidden="true" />
-        <span className="win-screen-badge">YOU WON</span>
-
-        <div className="win-screen-media">
-          <GiftMedia gift={opening.gift} animate />
-        </div>
-
-        <div className="win-screen-copy">
-          <strong id="case-win-title">{opening.gift?.title || 'Reward'}</strong>
-          <p>{rewardSubtitle(opening.gift)}</p>
-        </div>
-
-        <div className="win-screen-actions">
-          {!isBalanceReward(opening.gift) ? (
-            <button type="button" className="sell-btn" onClick={() => onSell(opening)}>
-              {sellButtonText(opening.gift)}
-            </button>
-          ) : (
-            <button type="button" className="sell-btn" onClick={onClose}>
-              Balansga qo‘shildi
-            </button>
-          )}
-          <button type="button" className="close-win-btn" onClick={onClose}>
-            Yopish
-          </button>
-        </div>
-      </div>
-    </div>,
-    document.body
-  );
-}
-
-function CaseDetailPage({
-  caseItem,
-  gifts,
-  opening,
-  busy,
-  onBack,
-  onOpen,
-  onCloseResult,
-  onSellResult,
-  onRollComplete,
-}) {
-  const readyGifts = gifts.filter(eligibleGift);
-  const openableGifts = readyGifts.filter(openableGift);
-  const isFree = Number(caseItem.price || 0) === 0;
-  const openText = isFree ? 'OPEN' : `OPEN ${formatPrice(caseItem.price)}`;
-  const previewGifts = readyGifts.length ? readyGifts : gifts;
-  const inlineOpening = opening && String(opening.caseItem?.id) === String(caseItem.id) ? opening : null;
-  const isSpinning = inlineOpening && inlineOpening.stage !== 'result';
-  const isResult = inlineOpening?.stage === 'result';
-  const isOpeningActive = Boolean(inlineOpening);
-  const targetIndex =
-    typeof inlineOpening?.winningIndex === 'number'
-      ? inlineOpening.winningIndex
-      : getWinningIndexFromReel(inlineOpening?.reel || []);
-  const stripSource = previewGifts.length ? previewGifts : [];
-  const stripGifts = stripSource.length
-    ? Array.from({ length: Math.min(9, Math.max(7, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
-    : [];
-
-  useLayoutEffect(() => {
-    if (!isOpeningActive) return undefined;
-
-    const root = document.documentElement;
-    const body = document.body;
-    const scrollY =
-      window.scrollY || root.scrollTop || body.scrollTop || 0;
-    const previousBody = {
-      position: body.style.position,
-      top: body.style.top,
-      right: body.style.right,
-      left: body.style.left,
-      width: body.style.width,
-      overflow: body.style.overflow,
-      overscrollBehavior: body.style.overscrollBehavior,
-    };
-    const previousRoot = {
-      overflow: root.style.overflow,
-      overscrollBehavior: root.style.overscrollBehavior,
-    };
-
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.right = '0';
-    body.style.left = '0';
-    body.style.width = '100%';
-    body.style.overflow = 'hidden';
-    body.style.overscrollBehavior = 'none';
-    root.style.overflow = 'hidden';
-    root.style.overscrollBehavior = 'none';
-
-    const preventScroll = (event) => {
-      if (event.cancelable) event.preventDefault();
-    };
-
-    document.addEventListener('touchmove', preventScroll, { passive: false });
-    document.addEventListener('wheel', preventScroll, { passive: false });
-
-    return () => {
-      document.removeEventListener('touchmove', preventScroll);
-      document.removeEventListener('wheel', preventScroll);
-
-      body.style.position = previousBody.position;
-      body.style.top = previousBody.top;
-      body.style.right = previousBody.right;
-      body.style.left = previousBody.left;
-      body.style.width = previousBody.width;
-      body.style.overflow = previousBody.overflow;
-      body.style.overscrollBehavior = previousBody.overscrollBehavior;
-      root.style.overflow = previousRoot.overflow;
-      root.style.overscrollBehavior = previousRoot.overscrollBehavior;
-
-      window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' });
-    };
-  }, [isOpeningActive]);
-
-  return (
-    <section className={`case-page-screen ${isSpinning ? 'is-inline-spinning' : ''} ${isResult ? 'has-inline-result' : ''}`}>
-      <div className="case-page-top">
-        <button
-          type="button"
-          className="case-page-back"
-          onClick={onBack}
-          disabled={isSpinning}
-          aria-label="Back"
-        >
-          ←
-        </button>
-        <div>
-          <span className="eyebrow">Case detail</span>
-          <h1>{caseItem.title}</h1>
-        </div>
-      </div>
-
-      <div
-        className="case-page-hero premium-card inline-case-hero"
-        style={{
-          '--case-page-accent': caseAccent(caseItem),
-          '--case-page-badge': caseBadgeColor(caseItem),
-        }}
-      >
-        <span className="case-page-glow glow-one" aria-hidden="true" />
-        <span className="case-page-glow glow-two" aria-hidden="true" />
-
-        <div className="case-page-copy">
-          <span className="case-page-pill">Premium case</span>
-          <h2>{caseItem.title}</h2>
-          <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
-        </div>
-
-        <InlineRaffleRoller
-          opening={inlineOpening}
-          idleGifts={stripGifts}
-          targetIndex={targetIndex}
-          onRollComplete={onRollComplete}
-        />
-
-        <button
-          type="button"
-          className={caseOpeningStyles.openButton}
-          disabled={busy || isSpinning || openableGifts.length === 0}
-          onClick={onOpen}
-          aria-busy={isSpinning}
-          aria-live="polite"
-        >
-          <AppIcon name="spark" />
-          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
-        </button>
-
-      </div>
-
-      {isResult ? (
-        <CaseWinResult
-          opening={inlineOpening}
-          onClose={onCloseResult}
-          onSell={onSellResult}
-        />
-      ) : null}
-
-      <div className="case-page-prizes-head">
-        <div>
-          <span className="eyebrow">Inside this case</span>
-          <h2>Sovg‘alar</h2>
-        </div>
-        <strong>{previewGifts.length || 0} ta</strong>
-      </div>
-
-      <div className="case-page-prize-grid">
-        {previewGifts.map((gift, index) => (
-          <div
-            className="case-page-prize-card"
-            key={gift.id}
-            style={{
-              '--float-delay': `${(index % 6) * 0.13}s`,
-              '--gift-card-bg': solidGiftBackground(gift.background_value, defaultGiftBackground(gift.rarity)),
-            }}
-          >
-            <span className="prize-card-shine" aria-hidden="true" />
-            <div className="case-page-prize-image">
-              <GiftMedia gift={gift} compact animateOnEnter />
-            </div>
-            <div className="case-page-prize-copy">
-              <strong>{gift.title}</strong>
-              <span>{visibleChance(gift)}% · stock {gift.stock}</span>
-            </div>
-          </div>
-        ))}
-        {!previewGifts.length ? (
-          <div className="case-page-empty-prizes">
-            <AppIcon name="box" />
-            <strong>Hozircha sovg‘alar yo‘q</strong>
-            <span>Bu case tez orada to‘ldiriladi.</span>
-          </div>
-        ) : null}
-      </div>
-    </section>
   );
 }
 
