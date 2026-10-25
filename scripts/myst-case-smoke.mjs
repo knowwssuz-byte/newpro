@@ -53,13 +53,25 @@ for(const width of [320,375,390,430,768,1024,1440]){
  await page.getByRole('button',{name:'Demo case case tafsilotlari'}).click();
  await page.getByRole('heading',{name:'Demo case'}).first().waitFor({timeout:6000});
  await page.screenshot({path:`${output}/${width}-detail.png`,fullPage:false});
- const layout=await page.evaluate(()=>({
-   scrollWidth:document.documentElement.scrollWidth,
-   innerWidth:window.innerWidth,
-   mainStage:document.querySelector('[aria-label="Case tasviri"]')?.getBoundingClientRect().height||0,
- }));
+ const layout=await page.evaluate(()=>{
+   const stage=document.querySelector('[aria-label="Case tasviri"]');
+   const artwork=stage?.querySelector('img');
+   const frame=stage?.getBoundingClientRect();
+   const image=artwork?.getBoundingClientRect();
+   const heading=document.querySelector('.case-page-top')?.getBoundingClientRect();
+   return {
+     scrollWidth:document.documentElement.scrollWidth,
+     innerWidth:window.innerWidth,
+     mainStage:frame?.height||0,
+     headingTop:heading?.top||0,
+     imageInside:Boolean(frame&&image&&image.top>=frame.top+2&&image.bottom<=frame.bottom-2),
+     imageNaturalWidth:artwork?.naturalWidth||0,
+   };
+ });
  assert.ok(layout.scrollWidth<=layout.innerWidth+2,`Overflow at ${width}: ${JSON.stringify(layout)}`);
  assert.ok(layout.mainStage>=130,`Missing real case artwork stage on ${width}`);
+ assert.ok(layout.headingTop>=55,`Case page inherited Home scroll position at ${width}: ${JSON.stringify(layout)}`);
+ assert.ok(layout.imageInside && layout.imageNaturalWidth>0,`Artwork clipped or not loaded at ${width}: ${JSON.stringify(layout)}`);
  const btn=page.getByRole('button',{name:'OPEN',exact:true});
  await btn.waitFor({timeout:5000});
  // Double click during a single synchronous event loop: one request maximum.
