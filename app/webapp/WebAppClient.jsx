@@ -6,6 +6,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import AppIcon from './AppIcon';
 import BootLoader from './BootLoader';
+import WelcomeTour from './WelcomeTour';
 import caseOpeningStyles from './CaseOpening.module.css';
 import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
@@ -22,7 +23,6 @@ import { getInventoryRows } from '@/lib/inventory.mjs';
 import GiftHistory from './GiftHistory';
 
 
-const WelcomeTour = dynamic(() => import('./WelcomeTour'), { ssr: false });
 const RocketGame = dynamic(() => import('./RocketGame'), { ssr: false, loading: () => <RouteSkeleton title="Rocket tayyorlanmoqda" /> });
 const UpgradeLab = dynamic(() => import('./UpgradeLab'), { ssr: false, loading: () => <RouteSkeleton title="Upgrade tayyorlanmoqda" /> });
 const DepositView = dynamic(() => import('./DepositView'), { ssr: false, loading: () => <RouteSkeleton title="Balans sahifasi ochilmoqda" /> });
@@ -535,9 +535,8 @@ export default function WebAppClient() {
   );
 
   useEffect(() => {
-    // Priority assets + code are loaded alongside Telegram startup.
+    // Prime visible assets during Telegram startup.
     void prepareFirstView();
-    void import('./WelcomeTour').catch(() => {});
   }, []);
 
   useEffect(() => {
