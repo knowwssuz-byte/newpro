@@ -25,7 +25,11 @@ test('welcome shows for every fresh app entry without persisted dismissal',()=>{
   assert.match(app,/setShowWelcomeTour\(true\)/);
   assert.doesNotMatch(app,/gift_myst_welcome_/);
   assert.doesNotMatch(app,/WELCOME_VERSION/);
-  assert.match(read('app/webapp/WelcomeTour.module.css'), /max-height:calc\(100dvh/);
+  assert.match(read('app/webapp/WelcomeTour.module.css'), /min-height: 100dvh/);
+  assert.match(app, /if \(showWelcomeTour\) return <WelcomeTour/);
+  assert.doesNotMatch(app, /\{showWelcomeTour \? <WelcomeTour/);
+  assert.match(read('app/webapp/WelcomeTour.jsx'), /data-myst-intro="true"/);
+  assert.doesNotMatch(read('app/webapp/WelcomeTour.jsx'), /aria-modal|role="dialog"|styles\.overlay/);
 });
 
 test('premium typography retains readable HTML headings and safe responsive layout', () => {
@@ -36,7 +40,7 @@ test('premium typography retains readable HTML headings and safe responsive layo
   assert.match(css, /background-clip:text/);
   assert.match(css, /@media\(max-height:740px\)/);
   assert.match(css, /@media\(max-width:355px\)/);
-  assert.match(css, /font-family:Inter/);
+  assert.match(css, /font-family: Inter/);
   assert.match(css, /prefers-reduced-motion:reduce/);
   const first = read('public/onboarding/welcome-1.svg');
   assert.match(first, /fill="url\(#gold\)"/);
