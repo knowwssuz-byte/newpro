@@ -2,7 +2,13 @@ import Quantum from './vendor/Quantum';
 import styles from './BootLoader.module.css';
 
 // The artwork is shared with onboarding: the first reveal reuses the decoded image.
-export default function BootLoader() {
+const messages = {
+  connecting: 'Telegram bilan bog‘lanmoqda',
+  syncing: 'Hisob ma’lumotlari tekshirilmoqda',
+  visuals: 'Bosh sahifa tayyorlanmoqda',
+};
+
+export default function BootLoader({ status = 'connecting', error = '', onRetry }) {
   return (
     <main className={styles.screen} role="status" aria-live="polite" aria-label="MYST yuklanmoqda">
       <div className={styles.ambient} aria-hidden="true" />
@@ -23,11 +29,20 @@ export default function BootLoader() {
         </div>
         <div className={styles.progress}>
           <div className={styles.progressHeader}>
-            <span><i className={styles.pulse} /> Ilova tayyorlanmoqda</span>
+            <span><i className={styles.pulse} /> {error ? 'Ulanishda muammo' : messages[status] || messages.connecting}</span>
             <span>TELEGRAM</span>
           </div>
-          <div className={styles.track} aria-hidden="true"><span className={styles.indicator} /></div>
-          <span className={styles.progressNote}>Xavfsiz ulanish va ma’lumotlar yuklanmoqda</span>
+          {error ? (
+            <div className={styles.error} role="alert">
+              <p>{error}</p>
+              <button type="button" onClick={onRetry}>Qayta urinish</button>
+            </div>
+          ) : (
+            <>
+              <div className={styles.track} aria-hidden="true"><span className={styles.indicator} /></div>
+              <span className={styles.progressNote}>Xavfsiz ulanish va ma’lumotlar yuklanmoqda</span>
+            </>
+          )}
         </div>
       </div>
       <footer className={styles.footer}><span>POWERED BY MYST</span><span>SECURE MINI APP</span></footer>
