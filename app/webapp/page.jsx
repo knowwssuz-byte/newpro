@@ -39,7 +39,8 @@ export default async function WebAppPage() {
 
   return (
     <>
-      {/* 38 KB static WebP is available before Telegram bootstrap completes. */}
+      {/* These small shared WebP assets are decoded while Telegram bootstrap runs. */}
+      <link rel="preload" as="image" type="image/webp" href="/onboarding/welcome-gift-v2.webp" fetchPriority="high" />
       <link rel="preload" as="image" type="image/webp" href="/feature/game-banners/rocket-v41.webp" />
       <TonConnectProvider
         manifestUrl={`${origin}/api/tonconnect-manifest?v=3`}
