@@ -38,3 +38,9 @@
 .quantum{position:absolute;inset:0;display:grid;place-items:center;z-index:2;opacity:.32;pointer-events:none;mix-blend-mode:screen}
 .quantum>*{max-width:100%;max-height:100%}
 @media(prefers-reduced-motion:reduce){.quantum{display:none}}
+
+/* Recoverable startup errors: no infinite spinner on a failed auth/network request. */
+.error{width:100%;margin-top:14px;padding:13px 12px;border-radius:13px;border:1px solid rgba(255,154,158,.25);background:rgba(47,28,41,.55)}
+.error p{font-size:12px;line-height:1.5;color:#f3c1cb;margin:0 0 12px;overflow-wrap:anywhere}
+.error button{width:100%;min-height:43px;border-radius:10px;border:1px solid rgba(217,196,255,.35);color:#21172c;background:linear-gradient(145deg,#ddd0ff,#ad93e8);font-weight:800;cursor:pointer}
+.error button:focus-visible{outline:2px solid #fff;outline-offset:3px}
