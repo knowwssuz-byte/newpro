@@ -839,3 +839,16 @@
       0 0 0 1px color-mix(in srgb, var(--case-accent, #8b5cf6) 13%, transparent);
   }
 }
+
+/* Stable media state / image failure recovery. Never shift the surrounding case tile. */
+.caseTileMedia{isolation:isolate}
+.caseTileImage[data-ready="false"]{visibility:hidden}
+.caseTileFallback{grid-area:1/1}
+.caseTileRetry{
+  position:absolute;z-index:7;right:9px;bottom:8px;
+  min-width:42px;min-height:42px;border-radius:12px;
+  border:1px solid rgba(225,203,255,.35);
+  color:#e9d8ff;background:rgba(33,24,57,.9);
+  display:grid;place-items:center;font-size:21px;font-weight:800;cursor:pointer;
+}
+.caseTileRetry:focus-visible{outline:2px solid #fff;outline-offset:2px}
