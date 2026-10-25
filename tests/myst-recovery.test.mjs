@@ -20,7 +20,7 @@ test('broken cached responses are normalized instead of crashing React',()=>{
   assert.match(client,/Array\.isArray\(data\.cases\)/);
   assert.match(client,/Array\.isArray\(data\.gifts\)/);
   assert.match(client,/Array\.isArray\(data\.history\)/);
-  assert.match(client,/myst_recover=1/);
+  assert.doesNotMatch(client,/readBootstrapCache|writeBootstrapCache|sessionStorage\.setItem/);
 });
 test('app render failure offers manual non-destructive reload',()=>{
   const ui=read('app/webapp/error.jsx');
