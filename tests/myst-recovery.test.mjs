@@ -30,3 +30,14 @@ test('app render failure offers manual non-destructive reload',()=>{
   assert.match(ui,/window\.location\.replace/);
   assert.doesNotMatch(ui,/localStorage\.clear|sessionStorage\.clear/);
 });
+
+test('stale Vercel Next.js asset chunks trigger at most one recovery',()=>{
+  const layout=read('app/layout.jsx');
+  assert.match(layout,/myst-version-recovery/);
+  assert.match(layout,/ChunkLoadError/);
+  assert.match(layout,/myst_recover_chunk_once/);
+  assert.match(layout,/600000/);
+  assert.match(layout,/myst_recover/);
+  assert.match(layout,/location\.pathname/);
+  assert.doesNotMatch(layout,/location\.reload\(\);\s*location\.reload/);
+});
