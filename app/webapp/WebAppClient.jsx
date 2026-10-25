@@ -667,15 +667,18 @@ export default function WebAppClient() {
     setProfile(data.user || null);
     setTelegramUser(data.telegramUser || null);
     setIsAdmin(Boolean(data.isAdmin));
-    setCases(data.cases || []);
-    setGifts(data.gifts || []);
-    setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : (data.gifts || []));
-    setHistory(data.history || []);
-    setWithdrawals(data.withdrawals || []);
+    // Old cached snapshots (or an unexpected server payload) may contain
+    // incompatible field types; never crash the first React render.
+    const safeGifts = Array.isArray(data.gifts) ? data.gifts : [];
+    setCases(Array.isArray(data.cases) ? data.cases : []);
+    setGifts(safeGifts);
+    setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : safeGifts);
+    setHistory(Array.isArray(data.history) ? data.history : []);
+    setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
     setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
     setFeatureSettings(data.featureSettings || {});
 
-    if (data.cases?.[0]?.id) {
+    if (Array.isArray(data.cases) && data.cases[0]?.id) {
       setGiftForm((current) => (
         current.case_id ? current : { ...current, case_id: data.cases[0].id }
       ));
@@ -801,7 +804,8 @@ export default function WebAppClient() {
         setBootError('');
         setBootStatus('syncing');
         setInitData(app.initData);
-        const cachedBootstrap = readBootstrapCache(telegramIdentity?.id);
+        const cachedBootstrap = window.location.search.includes('myst_recover=1')
+          ? null : readBootstrapCache(telegramIdentity?.id);
         if (cachedBootstrap) {
           applyBootstrapData(cachedBootstrap, { cache: false });
           setBootStatus('visuals');
