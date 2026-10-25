@@ -769,7 +769,7 @@ const FlightScene = memo(function FlightScene({
           alt=""
           width={512}
           height={512}
-          unoptimized
+          sizes="(max-width: 590px) 58vw, 380px"
           priority
           draggable="false"
           onLoad={onAssetReady}
