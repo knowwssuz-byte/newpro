@@ -12,7 +12,7 @@ import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
 
 import RouteSkeleton from './RouteSkeleton';
-import { prepareFirstView, warmNearViewport } from '@/lib/mystAssetReadiness.mjs';
+import { prepareFirstView, warmNearViewport, preloadDecodedImage } from '@/lib/mystAssetReadiness.mjs';
 import DiceGame, { DiceLobbyCard } from './DiceGame';
 import PvpHub, { PvpEntryCard } from './PvpHub';
 import StarIcon from './StarIcon';
@@ -920,6 +920,7 @@ export default function WebAppClient() {
 
     openingLockRef.current = true;
     pendingOpeningRef.current = null;
+    const preparationStarted = typeof performance !== 'undefined' ? performance.now() : Date.now();
     setError('');
 
     // Home'dagi pastroqda joylashgan case tugmasidan ochilganda eski scroll
@@ -954,6 +955,14 @@ export default function WebAppClient() {
           : activeGiftPool;
 
       warmImageCacheFromData(latestGiftPool, result.gift);
+      // A real server-authorized reward always wins. Decode only that media
+      // (bounded to 850 ms) before revealing the reel; no global boot loader.
+      const readyArtwork = imageUrlOf(result.gift);
+      await Promise.allSettled([
+        preloadDecodedImage(readyArtwork, { priority: 'high', timeoutMs: 850 }),
+        new Promise((resolve) => window.setTimeout(resolve,
+          Math.max(0, 420 - ((typeof performance !== 'undefined' ? performance.now() : Date.now()) - preparationStarted)))),
+      ]);
 
       const reel = buildOpeningReel(latestGiftPool, result.gift);
       const spinKey = Date.now();
