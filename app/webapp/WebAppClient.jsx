@@ -1453,6 +1453,9 @@ export default function WebAppClient() {
               onOpen={() => openCase(selectedCase)}
               onCloseResult={() => setOpening(null)}
               onSellResult={sellOpeningReward}
+              onInventory={() => { setOpening(null); setSelectedCase(null); setTab('inventory'); }}
+              onAgain={() => openCase(selectedCase)}
+              soundEnabled={uiSettings.sound}
               onRollComplete={finalizeCaseOpening}
               helpers={caseDetailHelpers}
             />
