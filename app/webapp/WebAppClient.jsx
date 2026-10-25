@@ -63,8 +63,6 @@ const emptyUserForm = {
   amount: '',
 };
 
-const BOOTSTRAP_CACHE_TTL_MS = 3 * 60_000;
-
 const GIFT_BACKGROUND_PRESETS = [
   { name: 'Gold', value: '#f59e0b' },
   { name: 'Emerald', value: '#22c55e' },
@@ -304,35 +302,8 @@ function getDeviceInfo() {
   };
 }
 
-function bootstrapCacheKey(userId) {
-  return `gift_myst_bootstrap_v3_${String(userId || '')}`;
-}
-
-function readBootstrapCache(userId) {
-  if (typeof window === 'undefined' || !userId) return null;
-
-  try {
-    const parsed = JSON.parse(window.sessionStorage.getItem(bootstrapCacheKey(userId)) || 'null');
-    if (!parsed?.data || Date.now() - Number(parsed.savedAt || 0) > BOOTSTRAP_CACHE_TTL_MS) return null;
-    if (String(parsed.data?.telegramUser?.id || parsed.data?.user?.id || '') !== String(userId)) return null;
-    return parsed.data;
-  } catch {
-    return null;
-  }
-}
-
-function writeBootstrapCache(userId, data) {
-  if (typeof window === 'undefined' || !userId || !data) return;
-
-  try {
-    window.sessionStorage.setItem(
-      bootstrapCacheKey(userId),
-      JSON.stringify({ savedAt: Date.now(), data })
-    );
-  } catch {
-    // Katta gift katalogida storage to‘lsa, live API odatdagidek ishlaydi.
-  }
-}
+// Live server validation is required on launch. Optimistic private snapshots
+// are not restored: stale large sessionStorage data can crash old WebViews.
 
 function randomItem(items) {
   if (!items.length) return null;
@@ -661,7 +632,7 @@ export default function WebAppClient() {
     [initData]
   );
 
-  const applyBootstrapData = useCallback((data, { cache = true } = {}) => {
+  const applyBootstrapData = useCallback((data) => {
     if (!data) return;
 
     setProfile(data.user || null);
@@ -690,9 +661,6 @@ export default function WebAppClient() {
       setShowWelcomeTour(true);
     }
 
-    if (cache) {
-      writeBootstrapCache(data.telegramUser?.id || data.user?.id, data);
-    }
   }, []);
 
   const loadApp = useCallback(
@@ -804,17 +772,6 @@ export default function WebAppClient() {
         setBootError('');
         setBootStatus('syncing');
         setInitData(app.initData);
-        const cachedBootstrap = window.location.search.includes('myst_recover=1')
-          ? null : readBootstrapCache(telegramIdentity?.id);
-        if (cachedBootstrap) {
-          applyBootstrapData(cachedBootstrap, { cache: false });
-          setBootStatus('visuals');
-          // A broken image decoder or rejected async preload must never trap
-          // the app behind its splash screen.
-          void prepareFirstView()
-            .catch(() => ({ ready: false, timedOut: true }))
-            .then(() => { if (mountedRef.current) setLoading(false); });
-        }
       } catch (err) {
         setBootError(err.message || "Telegram WebApp ishga tushmadi.");
         setLoading(false);
@@ -824,7 +781,7 @@ export default function WebAppClient() {
     initTelegram();
 
     return cleanup;
-  }, [applyBootstrapData]);
+  }, []);
 
   useEffect(() => {
     loadApp();
