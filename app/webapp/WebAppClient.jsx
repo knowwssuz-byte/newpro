@@ -1983,6 +1983,9 @@ function CasesView({ onGoHome, onOpenDice, onOpenPvp }) {
 }
 
 function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
+  const [imageReady, setImageReady] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
+  const [imageAttempt, setImageAttempt] = useState(0);
   const accent = caseAccent(caseItem);
   const badge = caseBadgeText(caseItem, gifts);
   const badgeColor = caseBadgeColor(caseItem);
@@ -2011,20 +2014,30 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
       <div className={caseOpeningStyles.caseTileMedia}>
         <span className={caseOpeningStyles.caseTileHalo} aria-hidden="true" />
 
-        {caseItem.image_url ? (
+        {caseItem.image_url && !imageFailed ? (
           <img
+            key={imageAttempt}
             className={caseOpeningStyles.caseTileImage}
+            data-ready={imageReady}
             src={caseItem.image_url}
             alt=""
             loading={eager ? 'eager' : 'lazy'}
             decoding="async"
             fetchPriority={eager ? 'auto' : 'low'}
+            onLoad={() => setImageReady(true)}
+            onError={() => { setImageFailed(true); setImageReady(false); }}
           />
-        ) : (
-          <span className={caseOpeningStyles.caseTileFallback}>
+        ) : null}
+        {!caseItem.image_url || !imageReady || imageFailed ? (
+          <span className={caseOpeningStyles.caseTileFallback} aria-hidden="true">
             <AppIcon name="box" />
           </span>
-        )}
+        ) : null}
+        {imageFailed ? (
+          <button type="button" className={caseOpeningStyles.caseTileRetry}
+            onClick={(event) => { event.stopPropagation(); setImageReady(false); setImageFailed(false); setImageAttempt((attempt) => attempt + 1); }}
+            aria-label="Case rasmini qayta yuklash">↻</button>
+        ) : null}
 
         {badge ? (
           <span className={caseOpeningStyles.caseTileBadge}>{badge}</span>
@@ -2225,6 +2238,7 @@ function OneShotVideoGift({ src, still, className }) {
 
 function GiftMedia({ gift, compact = false, preferStatic = false, animate = false, animateOnEnter = false, viewportLazy = false }) {
   const giftAnimationsEnabled = useContext(GiftAnimationContext);
+  const [brokenImageUrl, setBrokenImageUrl] = useState('');
   const mediaClass = compact ? 'gift-media compact' : 'gift-media';
   const [nearViewport, setNearViewport] = useState(!viewportLazy);
   const visibilityRef = useRef(null);
@@ -2279,7 +2293,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
     return <OneShotImageGift src={animationUrl} still={imageUrl && imageUrl !== animationUrl ? imageUrl : ''} className={mediaClass} />;
   }
 
-  if (imageUrl) {
+  if (imageUrl && brokenImageUrl !== imageUrl) {
     return (
       <img
         className={`${mediaClass} gift-media-visual`}
@@ -2288,6 +2302,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
         loading={preferStatic ? 'eager' : 'lazy'}
         decoding="async"
         fetchPriority={preferStatic ? 'high' : 'auto'}
+        onError={() => setBrokenImageUrl(imageUrl)}
         draggable="false"
         onDragStart={(event) => event.preventDefault()}
         onContextMenu={(event) => event.preventDefault()}
