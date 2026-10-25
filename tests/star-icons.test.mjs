@@ -12,11 +12,12 @@ for(const part of ['star-badge-tabler','stars-cluster-tabler','stars-outline-tab
  assert.match(read(path),/<svg[\s>]/);
 }
 });
-test('official UIBall LDRS animations are used for app and Rocket preloaders',()=>{
+test('Rocket preserves LDRS and loader has minimal MYST wordmark',()=>{
  for(const n of ['Quantum','Helix','LineWobble']){
   assert.match(read('app/webapp/vendor/'+n+'.jsx'),/UIBall LDRS/);
   assert.ok(existsSync(new URL('../app/webapp/vendor/'+n+'.module.css',import.meta.url)));
  }
- assert.match(read('app/webapp/BootLoader.jsx'),/<Quantum/);
+ assert.match(read('app/webapp/BootLoader.jsx'), /styles\.wordmark/);
+ assert.doesNotMatch(read('app/webapp/BootLoader.jsx'), /<Quantum|POWERED BY|SECURE MINI APP/);
  assert.match(read('app/webapp/RocketGame.jsx'),/<Helix/);
 });

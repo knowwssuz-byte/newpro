@@ -55,4 +55,6 @@ test('bootstrap and media state do not fake progress or block forever', () => {
   assert.match(webapp,/prepareFirstView/);
   assert.match(webapp,/RouteSkeleton/);
   assert.doesNotMatch(loader,/\b100%/);
+  assert.match(loader,/data-text="MYST"/);
+  assert.doesNotMatch(loader,/LineWobble|Quantum|TELEGRAM MINI APP/);
 });

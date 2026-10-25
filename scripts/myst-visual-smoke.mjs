@@ -72,9 +72,28 @@ for (const viewport of [
   const warnings = [];
   page.on('pageerror', (error) => warnings.push(String(error)));
   await page.goto(base+'/webapp', { waitUntil: 'domcontentloaded' });
-  await page.getByRole('dialog').first().waitFor({ state: 'visible', timeout: 16000 });
+  await page.getByRole('main', { name: 'MYST tanishtiruv' }).waitFor({ state: 'visible', timeout: 16000 });
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  assert.equal(await page.locator('.app-frame').count(), 0, 'Home must not render behind onboarding');
+  assert.equal(await page.getByRole('navigation', { name: 'Bottom navigation' }).count(), 0);
+  const introBounds = await page.evaluate(() => ({
+    viewport: window.innerWidth,
+    scroll: document.documentElement.scrollWidth,
+    height: document.querySelector('[data-myst-intro]')?.getBoundingClientRect().height,
+  }));
+  assert.ok(introBounds.scroll <= viewport.width + 2, 'Onboarding must have no horizontal overflow');
+  assert.ok(introBounds.height >= viewport.height - 1, 'Onboarding must fill screen');
   await page.screenshot({ path: `${artifacts}/${viewport.name}-welcome.png`, fullPage: true });
-  await page.getByRole('button', { name: /Tanishtiruvni o‘tkazib yuborish/ }).click();
+  if (viewport.name === 'iphone-size') {
+    await page.getByRole('button', { name: 'Keyingisi' }).click();
+    await page.getByRole('heading', { name: /Caselarni oching/ }).waitFor();
+    await page.screenshot({ path: `${artifacts}/${viewport.name}-step2.png`, fullPage: true });
+    await page.getByRole('button', { name: 'Keyingisi' }).click();
+    await page.getByRole('heading', { name: /Inventaringizni/ }).waitFor();
+    await page.getByRole('button', { name: 'Boshlash' }).click();
+  } else {
+    await page.getByRole('button', { name: /Tanishtiruvni o‘tkazib yuborish/ }).click();
+  }
   await page.getByRole('heading', { name: 'Play. Win. Repeat.' }).waitFor({ timeout: 9000 });
   const width = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth, viewport: window.innerWidth,
@@ -111,7 +130,7 @@ for (const viewport of [
     await page.getByRole('button', { name: 'Orqaga' }).click();
     await page.getByRole('heading', { name: 'Play. Win. Repeat.' }).waitFor({ timeout: 8000 });
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await page.getByRole('dialog').first().waitFor({ state: 'visible', timeout: 16000 });
+      await page.getByRole('main', { name: 'MYST tanishtiruv' }).waitFor({ state: 'visible', timeout: 16000 });
     await page.getByRole('button', { name: /Tanishtiruvni o‘tkazib yuborish/ }).click();
     await page.getByRole('heading', { name: 'Play. Win. Repeat.' }).waitFor();
   }
