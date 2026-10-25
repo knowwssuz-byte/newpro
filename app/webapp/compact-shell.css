@@ -16,3 +16,6 @@
 .app-frame.myst-ready-reveal{animation:mystReadyReveal .2s ease-out both}
 @keyframes mystReadyReveal{from{opacity:0;transform:translate3d(0,3px,0)}to{opacity:1;transform:translate3d(0,0,0)}}
 @media(prefers-reduced-motion:reduce){.app-frame.myst-ready-reveal{animation:none}}
+
+/* Prevent a white document flash between BootLoader removal and the first UI frame. */
+html{background-color:#080a12}
