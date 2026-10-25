@@ -58,3 +58,10 @@ test('bootstrap and media state do not fake progress or block forever', () => {
   assert.match(loader,/data-text="MYST"/);
   assert.doesNotMatch(loader,/LineWobble|Quantum|TELEGRAM MINI APP/);
 });
+
+test('first-frame animation never traps viewport-fixed balance and dock', () => {
+  const css=read('app/webapp/compact-shell.css');
+  assert.match(css, /@keyframes mystReadyFade/);
+  assert.doesNotMatch(css, /@keyframes mystReadyReveal/);
+  assert.doesNotMatch(css, /\.app-frame\.myst-ready-reveal\s*\{[^}]*transform:/);
+});
