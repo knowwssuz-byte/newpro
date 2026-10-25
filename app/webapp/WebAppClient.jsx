@@ -60,6 +60,38 @@ const emptyUserForm = {
 };
 
 const WARMED_IMAGE_URLS = new Set();
+let firstPaintPromise = null;
+
+// Start the two visible artworks during the Telegram handshake, rather than
+// after the app has already replaced its loading screen.
+function warmFirstPaint() {
+  if (typeof window === 'undefined') return Promise.resolve();
+  if (firstPaintPromise) return firstPaintPromise;
+
+  const images = ['/onboarding/welcome-gift-v2.webp', '/feature/game-banners/rocket-v41.webp'];
+  firstPaintPromise = Promise.allSettled(images.map((src) => new Promise((resolve) => {
+    const image = new window.Image();
+    image.decoding = 'async';
+    image.loading = 'eager';
+    image.fetchPriority = 'high';
+    image.onload = () => {
+      if (image.decode) image.decode().catch(() => {}).finally(resolve);
+      else resolve();
+    };
+    image.onerror = resolve; // A missing image cannot lock the app.
+    image.src = src;
+    if (image.complete && image.naturalWidth) image.decode?.().catch(() => {}).finally(resolve);
+  })));
+  return firstPaintPromise;
+}
+
+// Never strand a slow/mobile connection behind a decorative image.
+function waitForFirstPaint() {
+  return Promise.race([
+    warmFirstPaint(),
+    new Promise((resolve) => window.setTimeout(resolve, 850)),
+  ]);
+}
 const BOOTSTRAP_CACHE_TTL_MS = 3 * 60_000;
 
 const GIFT_BACKGROUND_PRESETS = [
@@ -79,57 +111,24 @@ function imageUrlOf(item) {
 function warmImageCacheFromData(...groups) {
   if (typeof window === 'undefined') return;
 
-  const urls = [];
-
-  groups
-    .flat()
-    .filter(Boolean)
-    .forEach((item) => {
-      const url = typeof item === 'string' ? item : imageUrlOf(item);
-
-      if (!url || WARMED_IMAGE_URLS.has(url)) return;
-
-      WARMED_IMAGE_URLS.add(url);
-      urls.push(url);
-    });
-
-  if (!urls.length) return;
-
-  const loadOne = (url, eager = false) => {
-    try {
-      // `Image` yuqorida next/image komponenti sifatida import qilingan.
-      // Preload uchun esa native browser konstruktori kerak.
-      const img = new window.Image();
-
-      img.decoding = 'async';
-      img.loading = eager ? 'eager' : 'lazy';
-      img.src = url;
-
-      if (typeof img.decode === 'function') {
-        img.decode().catch(() => {});
-      }
-    } catch (error) {
-      console.warn('Image preload failed:', url, error);
-    }
-  };
-
-  // A slow Telegram WebView should not request dozens of off-screen images.
+  // Only nearby artwork is warmed. Do not decode 9 large collectible images
+  // in parallel as soon as the loader disappears on a Telegram WebView.
   const connection = window.navigator?.connection;
-  const isSlowNetwork = Boolean(connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ''));
-  const eagerCount = isSlowNetwork ? 1 : 2;
-  const totalCount = isSlowNetwork ? 3 : 9;
-  urls.slice(0, eagerCount).forEach((url) => loadOne(url, true));
-
-  const rest = urls.slice(eagerCount, totalCount);
-  if (!rest.length) return;
-
-  const warmRest = () => rest.forEach((url) => loadOne(url, false));
-
-  if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(warmRest, { timeout: 1200 });
-  } else {
-    window.setTimeout(warmRest, 160);
-  }
+  const slow = Boolean(connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || ''));
+  const limit = slow ? 1 : 2;
+  const urls = groups.flat().filter(Boolean)
+    .map((item) => typeof item === 'string' ? item : imageUrlOf(item))
+    .filter((url) => typeof url === 'string' && url && !WARMED_IMAGE_URLS.has(url))
+    .slice(0, limit);
+  urls.forEach((url) => {
+    WARMED_IMAGE_URLS.add(url);
+    const img = new window.Image();
+    img.loading = 'eager';
+    img.decoding = 'async';
+    img.fetchPriority = 'low';
+    img.src = url;
+    img.decode?.().catch(() => {});
+  });
 }
 
 function defaultGiftBackground(rarity = 'rare') {
@@ -579,6 +578,12 @@ export default function WebAppClient() {
   );
 
   useEffect(() => {
+    warmFirstPaint();
+    // Prefetch the three-step tour module before the loader is removed.
+    void import('./WelcomeTour').catch(() => {});
+  }, []);
+
+  useEffect(() => {
     // The two homepage banners use next/image's optimized URLs, so do not
     // prefetch the original uncompressed images in parallel.
     warmImageCacheFromData(
@@ -752,9 +757,10 @@ export default function WebAppClient() {
         }
         return false;
       } finally {
-        if (mountedRef.current) {
-          setLoading(false);
-        }
+        // On cold startup, decode the first hero artwork before unveiling the UI.
+        // The timeout guarantees the app stays usable even on a slow connection.
+        if (!silent) await waitForFirstPaint();
+        if (mountedRef.current) setLoading(false);
       }
     },
     [apiPost, applyBootstrapData, initData]
@@ -818,7 +824,8 @@ export default function WebAppClient() {
         const cachedBootstrap = readBootstrapCache(telegramIdentity?.id);
         if (cachedBootstrap) {
           applyBootstrapData(cachedBootstrap, { cache: false });
-          setLoading(false);
+          // Cached profiles should open quickly, but not before the first art is ready.
+          waitForFirstPaint().then(() => { if (mountedRef.current) setLoading(false); });
         }
 
         if (!app.initData) {
@@ -1966,9 +1973,10 @@ function HomeView({
           />
         ) : (
           <div className="cases-grid premium-cases-grid">
-            {featuredCases.map((caseItem) => (
+            {featuredCases.map((caseItem, index) => (
               <CaseCard
                 key={caseItem.id}
+                eager={index < 2}
                 caseItem={caseItem}
                 gifts={giftsByCase[caseItem.id] || []}
                 busy={busy}
@@ -2001,7 +2009,7 @@ function CasesView({ onGoHome, onOpenDice, onOpenPvp }) {
   );
 }
 
-function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
+function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
   const accent = caseAccent(caseItem);
   const badge = caseBadgeText(caseItem, gifts);
   const badgeColor = caseBadgeColor(caseItem);
@@ -2035,9 +2043,9 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails }) {
             className={caseOpeningStyles.caseTileImage}
             src={caseItem.image_url}
             alt=""
-            loading="lazy"
+            loading={eager ? 'eager' : 'lazy'}
             decoding="async"
-            fetchPriority="low"
+            fetchPriority={eager ? 'auto' : 'low'}
           />
         ) : (
           <span className={caseOpeningStyles.caseTileFallback}>
