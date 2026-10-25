@@ -104,6 +104,48 @@ for (const viewport of [
   assert.ok(width.scroll <= width.viewport + 2, `Horizontal overflow on ${viewport.name}: ${JSON.stringify(width)}`);
   assert.notEqual(width.background, 'rgb(255, 255, 255)', 'White background must not flash');
   await page.screenshot({ path: `${artifacts}/${viewport.name}-home.png`, fullPage: true });
+
+  // Fixed viewport controls must remain at identical screen coordinates while
+  // the CONTENT moves. The test-only spacer guarantees a meaningful scroll,
+  // even when the mocked account has very little content.
+  const dockFixed = await page.evaluate(async () => {
+    const header = document.querySelector('.global-balance-stabilizer');
+    const dock = document.querySelector('nav[aria-label="Bottom navigation"]');
+    const main = document.querySelector('.app-main');
+    if (!header || !dock || !main) throw new Error('Persistent shell controls missing');
+    const spacer = document.createElement('div');
+    spacer.style.height = '1500px';
+    spacer.setAttribute('data-test-spacer', 'true');
+    main.appendChild(spacer);
+
+    const measure = () => ({
+      headerY: header.getBoundingClientRect().top,
+      dockY: dock.getBoundingClientRect().top,
+      headerPosition: getComputedStyle(header).position,
+      dockPosition: getComputedStyle(dock).position,
+      frameTransform: getComputedStyle(document.querySelector('.app-frame')).transform,
+      scrollY: window.scrollY,
+    });
+    const first = measure();
+    window.scrollTo({ top: 520, left: 0, behavior: 'instant' });
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const second = measure();
+    return { first, second };
+  });
+  assert.ok(dockFixed.second.scrollY - dockFixed.first.scrollY > 150,
+    `Document must scroll for fixed-position test: ${JSON.stringify(dockFixed)}`);
+  assert.equal(dockFixed.first.headerPosition, 'fixed');
+  assert.equal(dockFixed.first.dockPosition, 'fixed');
+  assert.equal(dockFixed.first.frameTransform, 'none', 'App frame must not trap fixed-position children');
+  assert.ok(Math.abs(dockFixed.second.headerY - dockFixed.first.headerY) <= 1.5,
+    `Top balance moved during scroll: ${JSON.stringify(dockFixed)}`);
+  assert.ok(Math.abs(dockFixed.second.dockY - dockFixed.first.dockY) <= 1.5,
+    `Bottom dock moved during scroll: ${JSON.stringify(dockFixed)}`);
+  await page.screenshot({ path: `${artifacts}/${viewport.name}-pinned-bars.png`, fullPage: false });
+  await page.evaluate(() => {
+    document.querySelector('[data-test-spacer]')?.remove();
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  });
   await delay(300);
   const nav = await page.evaluate(() => {
     const n = performance.getEntriesByType('navigation')[0];
