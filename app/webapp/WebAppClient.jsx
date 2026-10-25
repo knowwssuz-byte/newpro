@@ -1855,7 +1855,8 @@ function HomeGameBanner({
         height={800}
         sizes="(max-width: 590px) 100vw, 560px"
         priority={!isPvp}
-        loading={isPvp ? 'lazy' : 'eager'}
+        loading="eager"
+        fetchPriority={isPvp ? 'auto' : 'high'}
         unoptimized
         draggable={false}
       />
