@@ -1,25 +1,34 @@
-import Quantum from './vendor/Quantum';
-import LineWobble from './vendor/LineWobble';
 import styles from './BootLoader.module.css';
 
-// Animation: UIBall LDRS (MIT). No new generic MYST logo.
+// The artwork is shared with onboarding: the first reveal reuses the decoded image.
 export default function BootLoader() {
   return (
     <main className={styles.screen} role="status" aria-live="polite" aria-label="MYST yuklanmoqda">
-      <div className={styles.stage} aria-hidden="true">
-        <span className={styles.rim} />
-        <Quantum size={138} color="#c8bcff" speed={2} />
-        <span className={styles.core} />
+      <div className={styles.ambient} aria-hidden="true" />
+      <div className={styles.content}>
+        <div className={styles.identity} aria-hidden="true">
+          <span className={styles.identityDot} />
+          <span>GIFT MYST <i>·</i> MINI APP</span>
+        </div>
+        <div className={styles.artwork} aria-hidden="true">
+          <div className={styles.artworkGlow} />
+          <img src="/onboarding/welcome-gift-v2.webp" width="220" height="220"
+            alt="" loading="eager" decoding="async" fetchPriority="high" draggable="false" />
+        </div>
+        <div className={styles.copy}>
+          <h1>MYST<span className={styles.fullStop}>.</span></h1>
+          <p>Sovg‘alar olamiga xush kelibsiz</p>
+        </div>
+        <div className={styles.progress}>
+          <div className={styles.progressHeader}>
+            <span><i className={styles.pulse} /> Ilova tayyorlanmoqda</span>
+            <span>TELEGRAM</span>
+          </div>
+          <div className={styles.track} aria-hidden="true"><span className={styles.indicator} /></div>
+          <span className={styles.progressNote}>Xavfsiz ulanish va ma’lumotlar yuklanmoqda</span>
+        </div>
       </div>
-      <div className={styles.copy}>
-        <span className={styles.eyebrow}>TELEGRAM MINI APP</span>
-        <h1>MYST</h1>
-        <p>Yangi tajribaga ulanyapsiz</p>
-      </div>
-      <div className={styles.progress} aria-hidden="true">
-        <LineWobble size={148} stroke={3} color="#ac9bff" speed={1.5} bgOpacity={0.15} />
-      </div>
-      <footer className={styles.footer}>SECURE CONNECTION <span>·</span> TELEGRAM</footer>
+      <footer className={styles.footer}><span>POWERED BY MYST</span><span>SECURE MINI APP</span></footer>
     </main>
   );
 }
