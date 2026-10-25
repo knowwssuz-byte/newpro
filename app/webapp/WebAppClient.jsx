@@ -12,7 +12,8 @@ import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
 
 import RouteSkeleton from './RouteSkeleton';
-import { prepareFirstView, warmNearViewport } from '@/lib/mystAssetReadiness.mjs';
+import { prepareFirstView, warmNearViewport, preloadDecodedImage } from '@/lib/mystAssetReadiness.mjs';
+import { REEL_PRE_WIN, REEL_POST_WIN, CASE_CINEMATIC_ACTIVATION_MS, CASE_ROLL_DURATION_MS, winningIndexOfReel, reelLandingDistance, cinematicReelKeyframes } from '@/lib/caseReelMotion.mjs';
 import DiceGame, { DiceLobbyCard } from './DiceGame';
 import PvpHub, { PvpEntryCard } from './PvpHub';
 import StarIcon from './StarIcon';
@@ -26,8 +27,7 @@ import GiftHistory from './GiftHistory';
 const RocketGame = dynamic(() => import('./RocketGame'), { ssr: false, loading: () => <RouteSkeleton title="Rocket tayyorlanmoqda" /> });
 const UpgradeLab = dynamic(() => import('./UpgradeLab'), { ssr: false, loading: () => <RouteSkeleton title="Upgrade tayyorlanmoqda" /> });
 const DepositView = dynamic(() => import('./DepositView'), { ssr: false, loading: () => <RouteSkeleton title="Balans sahifasi ochilmoqda" /> });
-const CASE_ROLL_DURATION_MS = 4600;
-const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1200;
+const CASE_ROLL_FALLBACK_MS = CASE_ROLL_DURATION_MS + 1400;
 const UI_SETTINGS_KEY = 'giftmyst_ui_preferences_v2';
 const DEFAULT_UI_SETTINGS = { sound: true, haptic: true, effects: true, giftAnimations: true };
 const GiftAnimationContext = createContext(true);
@@ -366,7 +366,7 @@ function buildOpeningReel(gifts = [], winningGift) {
 
   // Raffle logic: winner doim aniq indexga qo'yiladi.
   // Keyin JS transition o'sha indexni marker markaziga olib keladi.
-  for (let index = 0; index < 48; index += 1) {
+  for (let index = 0; index < REEL_PRE_WIN; index += 1) {
     reel.push(pickDifferent());
   }
 
@@ -375,7 +375,7 @@ function buildOpeningReel(gifts = [], winningGift) {
     reel.push(winningGift);
   }
 
-  for (let index = 0; index < 8; index += 1) {
+  for (let index = 0; index < REEL_POST_WIN; index += 1) {
     reel.push(pickDifferent());
   }
 
@@ -383,8 +383,7 @@ function buildOpeningReel(gifts = [], winningGift) {
 }
 
 function getWinningIndexFromReel(reel = []) {
-  // buildOpeningReel: 48 random + winner + 8 random => winner index = length - 9
-  return Math.max(0, reel.length - 9);
+  return winningIndexOfReel(reel);
 }
 
 function coinIcon(variant = 'gold') {
@@ -439,6 +438,39 @@ function playNavFeedback(app, settings = DEFAULT_UI_SETTINGS) {
   } catch {
     // Audio is a progressive enhancement; navigation must never depend on it.
   }
+}
+
+// Original low-volume synthesis — no copyrighted samples, respects MYST sound setting.
+let caseSoundContext = null;
+function playCaseCue(name, enabled) {
+  if (!enabled || typeof window === 'undefined') return;
+  try {
+    const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextCtor) return;
+    const ctx = caseSoundContext && caseSoundContext.state !== 'closed' ? caseSoundContext : new AudioContextCtor();
+    caseSoundContext = ctx;
+    if (ctx.state === 'suspended') void ctx.resume().catch(() => {});
+    const config = {
+      activate: { frequency: 360, end: 240, duration: .14, gain: .024, type: 'triangle' },
+      roll: { frequency: 630, end: 480, duration: .11, gain: .018, type: 'sine' },
+      win: { frequency: 720, end: 1020, duration: .33, gain: .036, type: 'sine' },
+    }[name];
+    if (!config) return;
+    const now = ctx.currentTime;
+    const oscillator = ctx.createOscillator();
+    const volume = ctx.createGain();
+    oscillator.type = config.type;
+    oscillator.frequency.setValueAtTime(config.frequency, now);
+    oscillator.frequency.exponentialRampToValueAtTime(config.end, now + config.duration);
+    volume.gain.setValueAtTime(.0001, now);
+    volume.gain.exponentialRampToValueAtTime(config.gain, now + .011);
+    volume.gain.exponentialRampToValueAtTime(.0001, now + config.duration);
+    oscillator.connect(volume);
+    volume.connect(ctx.destination);
+    oscillator.onended = () => { oscillator.disconnect(); volume.disconnect(); };
+    oscillator.start(now);
+    oscillator.stop(now + config.duration + .015);
+  } catch { /* Audio is always optional. */ }
 }
 
 export default function WebAppClient() {
@@ -912,8 +944,9 @@ export default function WebAppClient() {
 
       openingLockRef.current = false;
       tg?.HapticFeedback?.notificationOccurred?.('success');
+      playCaseCue('win', uiSettings.sound);
     },
-    [tg]
+    [tg, uiSettings.sound]
   );
 
   async function openCase(caseItem) {
@@ -936,6 +969,8 @@ export default function WebAppClient() {
     }
 
     openingLockRef.current = true;
+    const activationStartAt = performance.now();
+    playCaseCue('activate', uiSettings.sound);
     pendingOpeningRef.current = null;
     setError('');
 
@@ -971,7 +1006,13 @@ export default function WebAppClient() {
           : activeGiftPool;
 
       warmImageCacheFromData(latestGiftPool, result.gift);
-
+      // The actual winner art is decoded before the reel is revealed.
+      // A bounded decode delay never initiates or repeats the transaction.
+      await Promise.allSettled([
+        preloadDecodedImage(imageUrlOf(result.gift), { priority: 'high', timeoutMs: 1050 }),
+        new Promise((resolve) => window.setTimeout(resolve,
+          Math.max(0, CASE_CINEMATIC_ACTIVATION_MS - (performance.now() - activationStartAt)))),
+      ]);
       const reel = buildOpeningReel(latestGiftPool, result.gift);
       const spinKey = Date.now();
       const winningIndex = getWinningIndexFromReel(reel);
@@ -992,7 +1033,7 @@ export default function WebAppClient() {
 
       pendingOpeningRef.current = rollingOpening;
       setOpening(rollingOpening);
-
+      playCaseCue('roll', uiSettings.sound);
       tg?.HapticFeedback?.impactOccurred?.('medium');
 
       openingFallbackTimerRef.current = window.setTimeout(
@@ -1469,6 +1510,8 @@ export default function WebAppClient() {
               }}
               onOpen={() => openCase(selectedCase)}
               onCloseResult={() => setOpening(null)}
+              onOpenAgain={() => openCase(selectedCase)}
+              onInventoryResult={() => { setOpening(null); setSelectedCase(null); setTab('inventory'); }}
               onSellResult={sellOpeningReward}
               onRollComplete={finalizeCaseOpening}
             />
@@ -3436,6 +3479,32 @@ function AdminList({ title, children }) {
   );
 }
 
+function CaseCinematicStage({ caseItem, phase = 'idle' }) {
+  const [hasImageError, setHasImageError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => { setHasImageError(false); setLoaded(false); }, [caseItem?.image_url]);
+  return (
+    <div className={caseOpeningStyles.caseStage} data-phase={phase}
+      aria-label={phase === 'preparing' ? 'Case faollashtirilmoqda' : 'Case tasviri'}>
+      <span className={caseOpeningStyles.stageAtmosphere} aria-hidden="true" />
+      <span className={caseOpeningStyles.stageLight} aria-hidden="true" />
+      {caseItem?.image_url && !hasImageError ? (
+        <img src={caseItem.image_url} className={caseOpeningStyles.stageCaseImage}
+          alt={caseItem?.title || 'Case'} loading="eager" decoding="async" fetchPriority="high"
+          data-loaded={loaded ? 'true' : 'false'}
+          onLoad={() => setLoaded(true)} onError={() => setHasImageError(true)} draggable={false} />
+      ) : (
+        <span className={caseOpeningStyles.stageFallback} aria-hidden="true"><AppIcon name="cases" /></span>
+      )}
+      <span className={caseOpeningStyles.stageBloom} aria-hidden="true" />
+      <span className={caseOpeningStyles.stageFloor} aria-hidden="true" />
+      <span className={caseOpeningStyles.stageStatus} aria-live="polite">
+        {phase === 'preparing' ? 'ACTIVATING' : phase === 'rolling' ? 'UNLOCKED' : 'MYST COLLECTION'}
+      </span>
+    </div>
+  );
+}
+
 function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplete }) {
   const trackRef = useRef(null);
   const finalDistanceRef = useRef(null);
@@ -3459,76 +3528,78 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
 
     if (!track || !viewport || !card) return 0;
 
-    return Math.max(
-      0,
-      card.offsetLeft +
-        card.offsetWidth / 2 -
-        viewport.clientWidth / 2
-    );
+    return reelLandingDistance({
+      cardLeft: card.offsetLeft,
+      cardWidth: card.offsetWidth,
+      viewportWidth: viewport.clientWidth,
+    });
   }, []);
 
   useLayoutEffect(() => {
+    const track = trackRef.current;
     let firstFrame = null;
     let secondFrame = null;
-
-    const resetStyle = {
-      '--raffle-x': '0px',
-      '--raffle-transition': 'none',
-    };
+    let animation = null;
+    const resetStyle = { '--raffle-x': '0px', '--raffle-transition': 'none' };
 
     if (!opening || opening.stage === 'preparing') {
       finalDistanceRef.current = null;
       completedSpinRef.current = null;
       setRollerStyle(resetStyle);
+      if (track) { track.style.transform = ''; track.style.transition = ''; }
       return undefined;
     }
-
     if (opening.stage === 'result') {
-      const measuredDistance =
-        finalDistanceRef.current ?? measureCardDistance(targetIndex);
-
-      finalDistanceRef.current = measuredDistance;
-      setRollerStyle({
-        '--raffle-x': `-${measuredDistance}px`,
-        '--raffle-transition': 'none',
-      });
+      const exact = finalDistanceRef.current ?? measureCardDistance(targetIndex);
+      finalDistanceRef.current = exact;
+      setRollerStyle({ '--raffle-x': `-${exact}px`, '--raffle-transition': 'none' });
+      if (track) { track.style.transform = `translate3d(-${exact}px,0,0)`; track.style.transition = 'none'; }
       return undefined;
     }
+    if (opening.stage !== 'rolling' || !track) return undefined;
 
-    if (opening.stage !== 'rolling') {
-      return undefined;
-    }
-
-    const startIndex = Math.min(3, Math.max(0, targetIndex - 1));
-    const startDistance = measureCardDistance(startIndex);
-    const measuredDistance = measureCardDistance(targetIndex);
-    const reduceMotion = window.matchMedia?.(
-      '(prefers-reduced-motion: reduce)'
-    )?.matches;
-    const duration = reduceMotion ? 320 : CASE_ROLL_DURATION_MS;
-
-    finalDistanceRef.current = measuredDistance;
+    const start = measureCardDistance(Math.min(3, Math.max(0, targetIndex - 1)));
+    const end = measureCardDistance(targetIndex);
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+    const duration = reduced ? 280 : CASE_ROLL_DURATION_MS;
+    finalDistanceRef.current = end;
     completedSpinRef.current = null;
-
-    setRollerStyle({
-      '--raffle-x': `-${startDistance}px`,
-      '--raffle-transition': 'none',
-    });
+    track.style.transition = 'none';
+    track.style.transform = `translate3d(-${start}px,0,0)`;
+    setRollerStyle({ '--raffle-x': `-${start}px`, '--raffle-transition': 'none' });
 
     firstFrame = window.requestAnimationFrame(() => {
       secondFrame = window.requestAnimationFrame(() => {
-        setRollerStyle({
-          '--raffle-x': `-${measuredDistance}px`,
-          '--raffle-transition': `transform ${duration}ms cubic-bezier(.10,.68,.08,1)`,
-        });
+        if (typeof track.animate === 'function') {
+          const frames = reduced
+            ? [
+                { transform: `translate3d(-${start}px,0,0)`, offset: 0 },
+                { transform: `translate3d(-${end}px,0,0)`, offset: 1 },
+              ]
+            : cinematicReelKeyframes(start, end);
+          animation = track.animate(frames, { duration, fill: 'forwards', easing: 'linear' });
+          animation.onfinish = () => {
+            // Persist the exact final transform before removing the animation.
+            track.style.transform = `translate3d(-${end}px,0,0)`;
+            animation.onfinish = null;
+            animation.cancel();
+            if (completedSpinRef.current === opening.spinKey) return;
+            completedSpinRef.current = opening.spinKey;
+            onRollComplete?.(opening.spinKey);
+          };
+        } else {
+          // Fallback for older WebViews: simple, precise CSS transition.
+          track.style.transition = `transform ${duration}ms cubic-bezier(.10,.68,.08,1)`;
+          track.style.transform = `translate3d(-${end}px,0,0)`;
+        }
       });
     });
-
     return () => {
-      if (firstFrame) window.cancelAnimationFrame(firstFrame);
-      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+      if (firstFrame !== null) window.cancelAnimationFrame(firstFrame);
+      if (secondFrame !== null) window.cancelAnimationFrame(secondFrame);
+      if (animation) { animation.onfinish = null; animation.cancel(); }
     };
-  }, [measureCardDistance, opening, targetIndex]);
+  }, [measureCardDistance, opening?.spinKey, opening?.stage, targetIndex, onRollComplete]);
 
   const finishRoll = (event) => {
     if (
@@ -3545,7 +3616,7 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
   };
 
   const idleLoopBase = idleGifts.length
-    ? Array.from({ length: Math.max(18, idleGifts.length * 5) }, (_, index) => idleGifts[index % idleGifts.length])
+    ? Array.from({ length: 18 }, (_, index) => idleGifts[index % idleGifts.length])
     : [];
   const idleLoopGifts = idleLoopBase.length ? [...idleLoopBase, ...idleLoopBase] : [];
 
