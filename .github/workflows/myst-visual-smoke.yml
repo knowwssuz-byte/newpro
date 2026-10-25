@@ -5,6 +5,8 @@ on:
     paths:
       - 'app/webapp/**'
       - 'lib/mystAssetReadiness.mjs'
+      - 'lib/caseReelMotion.mjs'
+      - 'scripts/myst-case-smoke.mjs'
       - 'next.config.mjs'
       - 'scripts/myst-visual-smoke.mjs'
       - '.github/workflows/myst-visual-smoke.yml'
@@ -24,13 +26,14 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm install --no-save --package-lock=false playwright@1.56.1
-      - run: npx eslint app/webapp/BootLoader.jsx app/webapp/RouteSkeleton.jsx lib/mystAssetReadiness.mjs scripts/myst-visual-smoke.mjs
+      - run: npx eslint app/webapp/BootLoader.jsx app/webapp/RouteSkeleton.jsx lib/mystAssetReadiness.mjs scripts/myst-visual-smoke.mjs scripts/myst-case-smoke.mjs
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - name: Browser test (mocked auth/data only)
         run: |
           npm run start -- -p 3000 > /tmp/newpro-browser-server.log 2>&1 &
           node scripts/myst-visual-smoke.mjs
+          node scripts/myst-case-smoke.mjs
         env:
           BASE_URL: http://127.0.0.1:3000
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
