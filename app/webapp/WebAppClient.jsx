@@ -3708,7 +3708,7 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
   );
 }
 
-function CaseWinResult({ opening, onClose, onSell }) {
+function CaseWinResult({ opening, onClose, onSell, onInventory, onOpenAgain }) {
   if (!opening?.gift || typeof document === 'undefined') {
     return null;
   }
@@ -3724,6 +3724,7 @@ function CaseWinResult({ opening, onClose, onSell }) {
         className={`win-screen-card ${caseOpeningStyles.resultPanel} ${
           isBalanceReward(opening.gift) ? 'balance-win' : ''
         }`}
+        data-rarity={String(opening.gift?.rarity || '').toLowerCase()}
         style={{
           '--win-screen-bg': solidGiftBackground(
             opening.gift?.background_value,
@@ -3732,7 +3733,9 @@ function CaseWinResult({ opening, onClose, onSell }) {
         }}
       >
         <span className="win-screen-shine" aria-hidden="true" />
-        <span className="win-screen-badge">YOU WON</span>
+        <span className="win-screen-badge">YOUR REWARD</span>
+        {opening.gift?.rarity ? <span className={caseOpeningStyles.resultRarity}>{opening.gift.rarity}</span> : null}
+        <span className={caseOpeningStyles.resultHalo} aria-hidden="true" />
 
         <div className="win-screen-media">
           <GiftMedia gift={opening.gift} animate />
@@ -3743,18 +3746,20 @@ function CaseWinResult({ opening, onClose, onSell }) {
           <p>{rewardSubtitle(opening.gift)}</p>
         </div>
 
-        <div className="win-screen-actions">
+        <div className={caseOpeningStyles.resultActions}>
           {!isBalanceReward(opening.gift) ? (
-            <button type="button" className="sell-btn" onClick={() => onSell(opening)}>
+            <button type="button" className={caseOpeningStyles.resultSell} onClick={() => onSell(opening)}>
               {sellButtonText(opening.gift)}
             </button>
-          ) : (
-            <button type="button" className="sell-btn" onClick={onClose}>
-              Balansga qo‘shildi
-            </button>
-          )}
-          <button type="button" className="close-win-btn" onClick={onClose}>
+          ) : <span className={caseOpeningStyles.resultBalance}>Balansga qo‘shildi</span>}
+          <button type="button" className={caseOpeningStyles.resultPrimary} onClick={onInventory}>
+            Inventar
+          </button>
+          <button type="button" className={caseOpeningStyles.resultSecondary} onClick={onClose}>
             Yopish
+          </button>
+          <button type="button" className={caseOpeningStyles.resultSecondary} onClick={onOpenAgain}>
+            Yana ochish
           </button>
         </div>
       </div>
@@ -3772,6 +3777,8 @@ function CaseDetailPage({
   onOpen,
   onCloseResult,
   onSellResult,
+  onInventoryResult,
+  onOpenAgain,
   onRollComplete,
 }) {
   const readyGifts = gifts.filter(eligibleGift);
@@ -3877,10 +3884,17 @@ function CaseDetailPage({
         <span className="case-page-glow glow-two" aria-hidden="true" />
 
         <div className="case-page-copy">
-          <span className="case-page-pill">Premium case</span>
+          <span className="case-page-pill">MYST · PREMIUM CASE</span>
           <h2>{caseItem.title}</h2>
-          <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
+          <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan tasodifiy yutuq.`}</p>
+          <span className={caseOpeningStyles.casePrice}>
+            <StarIcon size={17} /> {isFree ? 'Bepul' : `${formatPrice(caseItem.price)} Stars`}
+          </span>
         </div>
+
+        <CaseCinematicStage caseItem={caseItem}
+          phase={inlineOpening?.stage === 'preparing' ? 'preparing'
+            : inlineOpening?.stage === 'rolling' ? 'rolling' : 'idle'} />
 
         <InlineRaffleRoller
           opening={inlineOpening}
@@ -3898,7 +3912,7 @@ function CaseDetailPage({
           aria-live="polite"
         >
           <AppIcon name="spark" />
-          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
+          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'ACTIVATING' : 'ROULETTE') : openText}</span>
         </button>
 
       </div>
@@ -3908,6 +3922,8 @@ function CaseDetailPage({
           opening={inlineOpening}
           onClose={onCloseResult}
           onSell={onSellResult}
+          onInventory={onInventoryResult}
+          onOpenAgain={onOpenAgain}
         />
       ) : null}
 
