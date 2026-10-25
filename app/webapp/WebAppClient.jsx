@@ -1527,7 +1527,14 @@ export default function WebAppClient() {
                   onGoInventory={() => setTab('inventory')}
                   onGoUpgrade={openUpgradeLab}
                   onOpenCase={openCase}
-                  onSelectCase={(caseItem) => { setOpening(null); setSelectedCase(caseItem); }}
+                  onSelectCase={(caseItem) => {
+                    setOpening(null);
+                    setSelectedCase(caseItem);
+                    // Never inherit Home's deep scroll position on detail navigation.
+                    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+                  }}
                   onOpenRocket={() => openRocketGame('home')}
                   onOpenPvp={() => openPvpHub('home')}
                   busy={busy}
