@@ -63,8 +63,6 @@ const emptyUserForm = {
   amount: '',
 };
 
-const BOOTSTRAP_CACHE_TTL_MS = 3 * 60_000;
-
 const GIFT_BACKGROUND_PRESETS = [
   { name: 'Gold', value: '#f59e0b' },
   { name: 'Emerald', value: '#22c55e' },
@@ -304,35 +302,8 @@ function getDeviceInfo() {
   };
 }
 
-function bootstrapCacheKey(userId) {
-  return `gift_myst_bootstrap_v3_${String(userId || '')}`;
-}
-
-function readBootstrapCache(userId) {
-  if (typeof window === 'undefined' || !userId) return null;
-
-  try {
-    const parsed = JSON.parse(window.sessionStorage.getItem(bootstrapCacheKey(userId)) || 'null');
-    if (!parsed?.data || Date.now() - Number(parsed.savedAt || 0) > BOOTSTRAP_CACHE_TTL_MS) return null;
-    if (String(parsed.data?.telegramUser?.id || parsed.data?.user?.id || '') !== String(userId)) return null;
-    return parsed.data;
-  } catch {
-    return null;
-  }
-}
-
-function writeBootstrapCache(userId, data) {
-  if (typeof window === 'undefined' || !userId || !data) return;
-
-  try {
-    window.sessionStorage.setItem(
-      bootstrapCacheKey(userId),
-      JSON.stringify({ savedAt: Date.now(), data })
-    );
-  } catch {
-    // Katta gift katalogida storage to‘lsa, live API odatdagidek ishlaydi.
-  }
-}
+// Live server validation is required on launch. Optimistic private snapshots
+// are not restored: stale large sessionStorage data can crash old WebViews.
 
 function randomItem(items) {
   if (!items.length) return null;
@@ -661,21 +632,24 @@ export default function WebAppClient() {
     [initData]
   );
 
-  const applyBootstrapData = useCallback((data, { cache = true } = {}) => {
+  const applyBootstrapData = useCallback((data) => {
     if (!data) return;
 
     setProfile(data.user || null);
     setTelegramUser(data.telegramUser || null);
     setIsAdmin(Boolean(data.isAdmin));
-    setCases(data.cases || []);
-    setGifts(data.gifts || []);
-    setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : (data.gifts || []));
-    setHistory(data.history || []);
-    setWithdrawals(data.withdrawals || []);
+    // Old cached snapshots (or an unexpected server payload) may contain
+    // incompatible field types; never crash the first React render.
+    const safeGifts = Array.isArray(data.gifts) ? data.gifts : [];
+    setCases(Array.isArray(data.cases) ? data.cases : []);
+    setGifts(safeGifts);
+    setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : safeGifts);
+    setHistory(Array.isArray(data.history) ? data.history : []);
+    setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
     setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
     setFeatureSettings(data.featureSettings || {});
 
-    if (data.cases?.[0]?.id) {
+    if (Array.isArray(data.cases) && data.cases[0]?.id) {
       setGiftForm((current) => (
         current.case_id ? current : { ...current, case_id: data.cases[0].id }
       ));
@@ -687,9 +661,6 @@ export default function WebAppClient() {
       setShowWelcomeTour(true);
     }
 
-    if (cache) {
-      writeBootstrapCache(data.telegramUser?.id || data.user?.id, data);
-    }
   }, []);
 
   const loadApp = useCallback(
@@ -708,7 +679,7 @@ export default function WebAppClient() {
         applyBootstrapData(data);
         if (!silent && !wasReady) {
           setBootStatus('visuals');
-          await prepareFirstView();
+          await prepareFirstView().catch(() => ({ ready: false, timedOut: true }));
         }
         return true;
       } catch (err) {
@@ -765,21 +736,29 @@ export default function WebAppClient() {
       if (!app) {
         attempts += 1;
 
-        if (attempts < 80) {
-          telegramTimer = window.setTimeout(initTelegram, 50);
+        // Telegram's external script may arrive late on slow mobile networks.
+        // Do not interpret script latency as a crash after only four seconds.
+        if (attempts < 120) {
+          telegramTimer = window.setTimeout(initTelegram, 100);
           return;
         }
 
-        setBootError("Telegram WebApp script yuklanmadi. Ilovani botdagi tugma orqali qayta oching.");
+        setBootError("Telegram WebApp yuklanmadi. Ilovani botdagi tugma orqali qayta oching.");
         setLoading(false);
         return;
       }
 
       try {
-        app.ready();
-        app.expand();
-        app.MainButton?.hide?.();
-        app.BackButton?.hide?.();
+        // Telegram host UI helpers can throw independently on older versions.
+        // None should prevent authenticated bootstrap when initData exists.
+        for (const prepareHost of [
+          () => app.ready?.(),
+          () => app.expand?.(),
+          () => app.MainButton?.hide?.(),
+          () => app.BackButton?.hide?.(),
+        ]) {
+          try { prepareHost(); } catch { /* continue with valid Telegram session */ }
+        }
 
         setTg(app);
         setStartParam(getTelegramStartParam(app));
@@ -790,14 +769,9 @@ export default function WebAppClient() {
           setLoading(false);
           return;
         }
+        setBootError('');
         setBootStatus('syncing');
         setInitData(app.initData);
-        const cachedBootstrap = readBootstrapCache(telegramIdentity?.id);
-        if (cachedBootstrap) {
-          applyBootstrapData(cachedBootstrap, { cache: false });
-          setBootStatus('visuals');
-          void prepareFirstView().then(() => { if (mountedRef.current) setLoading(false); });
-        }
       } catch (err) {
         setBootError(err.message || "Telegram WebApp ishga tushmadi.");
         setLoading(false);
@@ -807,7 +781,7 @@ export default function WebAppClient() {
     initTelegram();
 
     return cleanup;
-  }, [applyBootstrapData]);
+  }, []);
 
   useEffect(() => {
     loadApp();
