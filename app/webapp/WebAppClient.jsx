@@ -708,7 +708,7 @@ export default function WebAppClient() {
         applyBootstrapData(data);
         if (!silent && !wasReady) {
           setBootStatus('visuals');
-          await prepareFirstView();
+          await prepareFirstView().catch(() => ({ ready: false, timedOut: true }));
         }
         return true;
       } catch (err) {
@@ -765,21 +765,29 @@ export default function WebAppClient() {
       if (!app) {
         attempts += 1;
 
-        if (attempts < 80) {
-          telegramTimer = window.setTimeout(initTelegram, 50);
+        // Telegram's external script may arrive late on slow mobile networks.
+        // Do not interpret script latency as a crash after only four seconds.
+        if (attempts < 120) {
+          telegramTimer = window.setTimeout(initTelegram, 100);
           return;
         }
 
-        setBootError("Telegram WebApp script yuklanmadi. Ilovani botdagi tugma orqali qayta oching.");
+        setBootError("Telegram WebApp yuklanmadi. Ilovani botdagi tugma orqali qayta oching.");
         setLoading(false);
         return;
       }
 
       try {
-        app.ready();
-        app.expand();
-        app.MainButton?.hide?.();
-        app.BackButton?.hide?.();
+        // Telegram host UI helpers can throw independently on older versions.
+        // None should prevent authenticated bootstrap when initData exists.
+        for (const prepareHost of [
+          () => app.ready?.(),
+          () => app.expand?.(),
+          () => app.MainButton?.hide?.(),
+          () => app.BackButton?.hide?.(),
+        ]) {
+          try { prepareHost(); } catch { /* continue with valid Telegram session */ }
+        }
 
         setTg(app);
         setStartParam(getTelegramStartParam(app));
@@ -790,13 +798,18 @@ export default function WebAppClient() {
           setLoading(false);
           return;
         }
+        setBootError('');
         setBootStatus('syncing');
         setInitData(app.initData);
         const cachedBootstrap = readBootstrapCache(telegramIdentity?.id);
         if (cachedBootstrap) {
           applyBootstrapData(cachedBootstrap, { cache: false });
           setBootStatus('visuals');
-          void prepareFirstView().then(() => { if (mountedRef.current) setLoading(false); });
+          // A broken image decoder or rejected async preload must never trap
+          // the app behind its splash screen.
+          void prepareFirstView()
+            .catch(() => ({ ready: false, timedOut: true }))
+            .then(() => { if (mountedRef.current) setLoading(false); });
         }
       } catch (err) {
         setBootError(err.message || "Telegram WebApp ishga tushmadi.");
