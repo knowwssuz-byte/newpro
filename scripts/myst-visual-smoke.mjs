@@ -30,10 +30,38 @@ for (const viewport of [
   { name: 'short-mobile', width: 375, height: 667, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
   { name: 'desktop', width: 1280, height: 800, deviceScaleFactor: 1, isMobile: false, hasTouch: false },
 ]) {
-  const context = await browser.newContext(viewport);
+  const context = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    deviceScaleFactor: viewport.deviceScaleFactor,
+    isMobile: viewport.isMobile,
+    hasTouch: viewport.hasTouch,
+  });
+  await context.addInitScript(() => {
+    window.__mystPerf = { lcp: 0, cls: 0, longTasks: 0 };
+    try {
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) window.__mystPerf.lcp = Math.round(e.startTime);
+      }).observe({ type: 'largest-contentful-paint', buffered: true });
+      new PerformanceObserver((list) => {
+        for (const e of list.getEntries()) {
+          if (!e.hadRecentInput) window.__mystPerf.cls += e.value;
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+      new PerformanceObserver((list) => {
+        window.__mystPerf.longTasks += list.getEntries().length;
+      }).observe({ type: 'longtask', buffered: true });
+    } catch {}
+  });
   await context.route('https://telegram.org/js/telegram-web-app.js', (route) => route.fulfill({
     status: 200, contentType: 'application/javascript', body: telegramScript,
   }));
+  if (viewport.name === 'short-mobile') {
+    await context.route('**/cases/starter.svg', (route) => route.abort());
+    await context.route('**/feature/game-banners/pvp-v41.webp', async (route) => {
+      await delay(1600);
+      await route.continue();
+    });
+  }
   await context.route('**/api/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
     if (pathname === '/api/bootstrap') await delay(190);
@@ -53,15 +81,35 @@ for (const viewport of [
     background: getComputedStyle(document.body).backgroundColor,
     images: [...document.querySelectorAll('img')].length,
   }));
+  assert.ok(width.viewport <= viewport.width + 1, `Incorrect mobile viewport: expected ${viewport.width}, got ${width.viewport}`);
   assert.ok(width.scroll <= width.viewport + 2, `Horizontal overflow on ${viewport.name}: ${JSON.stringify(width)}`);
+  assert.notEqual(width.background, 'rgb(255, 255, 255)', 'White background must not flash');
   await page.screenshot({ path: `${artifacts}/${viewport.name}-home.png`, fullPage: true });
+  await delay(300);
   const nav = await page.evaluate(() => {
     const n = performance.getEntriesByType('navigation')[0];
-    return { domContentLoaded: Math.round(n?.domContentLoadedEventEnd || 0), load: Math.round(n?.loadEventEnd || 0), resourceCount: performance.getEntriesByType('resource').length };
+    return {
+      domContentLoaded: Math.round(n?.domContentLoadedEventEnd || 0),
+      load: Math.round(n?.loadEventEnd || 0),
+      resourceCount: performance.getEntriesByType('resource').length,
+      lcp: window.__mystPerf?.lcp || 0,
+      cls: Number((window.__mystPerf?.cls || 0).toFixed(4)),
+      longTasks: window.__mystPerf?.longTasks || 0,
+    };
   });
   assert.deepEqual(warnings, [], `Page errors on ${viewport.name}`);
   results.push({ viewport: viewport.name, width, timings: nav, pageErrors: warnings.length });
+  if (viewport.name === 'short-mobile') {
+    await page.getByRole('button', { name: 'Case rasmini qayta yuklash' }).waitFor({ timeout: 6000 });
+    await page.screenshot({ path: `${artifacts}/short-mobile-broken-image.png`, fullPage: true });
+  }
   if (viewport.name === 'iphone-size') {
+    // An actual route change must use a small local skeleton, never a full-screen boot.
+    await page.getByRole('button', { name: /UPGRADE/ }).first().click();
+    await page.getByRole('img', { name: /Upgrade barabani/ }).waitFor({ timeout: 10000 });
+    assert.equal(await page.getByRole('status', { name: 'MYST yuklanmoqda' }).count(), 0);
+    await page.getByRole('button', { name: 'Orqaga' }).click();
+    await page.getByRole('heading', { name: 'Play. Win. Repeat.' }).waitFor({ timeout: 8000 });
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.getByRole('dialog').first().waitFor({ state: 'visible', timeout: 16000 });
     await page.getByRole('button', { name: /Tanishtiruvni o‘tkazib yuborish/ }).click();
