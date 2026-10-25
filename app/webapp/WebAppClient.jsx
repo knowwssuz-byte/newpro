@@ -2250,9 +2250,32 @@ function OneShotVideoGift({ src, still, className }) {
         preload="auto" poster={still || undefined} aria-hidden="true" />;
 }
 
-function GiftMedia({ gift, compact = false, preferStatic = false, animate = false, animateOnEnter = false }) {
+function GiftMedia({ gift, compact = false, preferStatic = false, animate = false, animateOnEnter = false, viewportLazy = false }) {
   const giftAnimationsEnabled = useContext(GiftAnimationContext);
   const mediaClass = compact ? 'gift-media compact' : 'gift-media';
+  const [nearViewport, setNearViewport] = useState(!viewportLazy);
+  const visibilityRef = useRef(null);
+
+  useEffect(() => {
+    if (!viewportLazy || nearViewport) return undefined;
+    if (typeof IntersectionObserver === 'undefined') {
+      setNearViewport(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setNearViewport(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: '160px 0px' });
+    if (visibilityRef.current) observer.observe(visibilityRef.current);
+    return () => observer.disconnect();
+  }, [nearViewport, viewportLazy]);
+
+  // Do not instantiate distant TGS/Lottie previews and animated image decoders.
+  if (!nearViewport) {
+    return <span ref={visibilityRef} className={mediaClass} aria-hidden="true"><AppIcon name="gift" /></span>;
+  }
 
   if (!gift) {
     return (
@@ -2371,7 +2394,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
                   <span className={inventoryStyles.state + (requested ? ' ' + inventoryStyles.statePending : '')}>
                     {statusText}
                   </span>
-                  <GiftMedia gift={gift} animateOnEnter={index < 24} />
+                  <GiftMedia gift={gift} animateOnEnter={index < 24} viewportLazy />
                 </div>
                 <div className={inventoryStyles.cardBody}>
                   <h3 className={inventoryStyles.title} title={gift?.title || ''}>{gift?.title || 'Collectible Gift'}</h3>
