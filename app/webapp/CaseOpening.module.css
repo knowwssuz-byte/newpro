@@ -1084,3 +1084,22 @@
  .stageLight,.stageCaseImage{transition:none !important}
  .idleTrack{animation:none !important}
 }
+
+/* Keep the complete native case artwork inside the cinematic frame. */
+.stageCaseImage{
+ width:min(66%,290px) !important;
+ height:72% !important;
+ max-width:100% !important;
+ max-height:100% !important;
+ object-fit:contain !important;
+ object-position:center !important;
+}
+@media(max-width:430px){
+ .stageCaseImage{
+  width:min(69%,235px) !important;
+  height:68% !important;
+ }
+}
+@media(max-width:350px){
+ .stageCaseImage{width:min(66%,215px) !important;height:66% !important}
+}
