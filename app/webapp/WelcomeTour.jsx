@@ -56,6 +56,18 @@ export default function WelcomeTour({ onFinish }) {
   const isLast = index === SCREENS.length - 1;
 
   useEffect(() => {
+    // Decoding the next onboarding slide before a tap avoids a blank hero swap.
+    const nextArtwork = SCREENS[index + 1]?.image;
+    if (!nextArtwork) return;
+    const img = new window.Image();
+    img.loading = 'eager';
+    img.decoding = 'async';
+    img.fetchPriority = 'low';
+    img.src = nextArtwork;
+    img.decode?.().catch(() => {});
+  }, [index]);
+
+  useEffect(() => {
     const previous = document.body.style.overflow;
     const previousFocus = document.activeElement;
     document.body.style.overflow = 'hidden';
