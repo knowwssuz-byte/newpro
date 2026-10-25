@@ -9,7 +9,7 @@ import StarIcon from './StarIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
 
 const CASE_ROLL_DURATION_MS = 4600;
-const CASE_ART_STAGE_MS = 480;
+
 
 // Existing server-provided case art, framed without forged mechanical pieces.
 function CaseArtwork({ caseItem, activating }) {
@@ -173,7 +173,7 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
   };
 
   const idleLoopBase = idleGifts.length
-    ? Array.from({ length: Math.max(18, idleGifts.length * 5) }, (_, index) => idleGifts[index % idleGifts.length])
+    ? Array.from({ length: 18 }, (_, index) => idleGifts[index % idleGifts.length])
     : [];
   const idleLoopGifts = idleLoopBase.length ? [...idleLoopBase, ...idleLoopBase] : [];
 
@@ -265,7 +265,7 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
   );
 }
 
-function CaseWinResult({ opening, onClose, onSell, helpers }) {
+function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers }) {
   const { GiftMedia, solidGiftBackground, defaultGiftBackground, isBalanceReward, rewardSubtitle, sellButtonText } = helpers;
   if (!opening?.gift || typeof document === 'undefined') {
     return null;
@@ -282,6 +282,7 @@ function CaseWinResult({ opening, onClose, onSell, helpers }) {
         className={`win-screen-card ${caseOpeningStyles.resultPanel} ${
           isBalanceReward(opening.gift) ? 'balance-win' : ''
         }`}
+        data-rarity={String(opening.gift?.rarity || 'common').toLowerCase()}
         style={{
           '--win-screen-bg': solidGiftBackground(
             opening.gift?.background_value,
@@ -291,6 +292,8 @@ function CaseWinResult({ opening, onClose, onSell, helpers }) {
       >
         <span className="win-screen-shine" aria-hidden="true" />
         <span className="win-screen-badge">YOU WON</span>
+        {opening.gift?.rarity && <span className={caseOpeningStyles.winRarity}>{opening.gift.rarity}</span>}
+        <span className={caseOpeningStyles.winHalo} aria-hidden="true" />
 
         <div className="win-screen-media">
           <GiftMedia gift={opening.gift} animate />
@@ -301,19 +304,17 @@ function CaseWinResult({ opening, onClose, onSell, helpers }) {
           <p>{rewardSubtitle(opening.gift)}</p>
         </div>
 
-        <div className="win-screen-actions">
+        <div className={caseOpeningStyles.winActions}>
           {!isBalanceReward(opening.gift) ? (
-            <button type="button" className="sell-btn" onClick={() => onSell(opening)}>
+            <button type="button" className={caseOpeningStyles.winSell} onClick={() => onSell(opening)}>
               {sellButtonText(opening.gift)}
             </button>
           ) : (
-            <button type="button" className="sell-btn" onClick={onClose}>
-              Balansga qo‘shildi
-            </button>
+            <span className={caseOpeningStyles.winCredited}>Balansga qo‘shildi</span>
           )}
-          <button type="button" className="close-win-btn" onClick={onClose}>
-            Yopish
-          </button>
+          <button type="button" className={caseOpeningStyles.winPrimary} onClick={onInventory}>Inventar</button>
+          <button type="button" className={caseOpeningStyles.winSecondary} onClick={onAgain}>Yana ochish</button>
+          <button type="button" className={caseOpeningStyles.winSecondary} onClick={onClose}>Yopish</button>
         </div>
       </div>
     </div>,
@@ -331,10 +332,14 @@ export default function CaseDetailPage({
   onCloseResult,
   onSellResult,
   onRollComplete,
+  onInventory,
+  onAgain,
+  soundEnabled,
   helpers,
 }) {
   const { GiftMedia, eligibleGift, openableGift, formatPrice, getWinningIndexFromReel,
     caseAccent, caseBadgeColor, solidGiftBackground, defaultGiftBackground, visibleChance } = helpers;
+  const cue = useCaseSound(soundEnabled);
   const readyGifts = gifts.filter(eligibleGift);
   const openableGifts = readyGifts.filter(openableGift);
   const isFree = Number(caseItem.price || 0) === 0;
@@ -353,61 +358,13 @@ export default function CaseDetailPage({
     ? Array.from({ length: Math.min(9, Math.max(7, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
     : [];
 
-  useLayoutEffect(() => {
-    if (!isOpeningActive) return undefined;
+  // Keep global body untouched: a fixed body moves the Telegram balance
+  // header and dock. Playback stays in its own surface, with a skip option.
+  useEffect(() => {
+    if (inlineOpening?.stage === 'rolling') cue('spin');
+    if (inlineOpening?.stage === 'result') cue('win');
+  }, [inlineOpening?.stage, cue]);
 
-    const root = document.documentElement;
-    const body = document.body;
-    const scrollY =
-      window.scrollY || root.scrollTop || body.scrollTop || 0;
-    const previousBody = {
-      position: body.style.position,
-      top: body.style.top,
-      right: body.style.right,
-      left: body.style.left,
-      width: body.style.width,
-      overflow: body.style.overflow,
-      overscrollBehavior: body.style.overscrollBehavior,
-    };
-    const previousRoot = {
-      overflow: root.style.overflow,
-      overscrollBehavior: root.style.overscrollBehavior,
-    };
-
-    body.style.position = 'fixed';
-    body.style.top = `-${scrollY}px`;
-    body.style.right = '0';
-    body.style.left = '0';
-    body.style.width = '100%';
-    body.style.overflow = 'hidden';
-    body.style.overscrollBehavior = 'none';
-    root.style.overflow = 'hidden';
-    root.style.overscrollBehavior = 'none';
-
-    const preventScroll = (event) => {
-      if (event.cancelable) event.preventDefault();
-    };
-
-    document.addEventListener('touchmove', preventScroll, { passive: false });
-    document.addEventListener('wheel', preventScroll, { passive: false });
-
-    return () => {
-      document.removeEventListener('touchmove', preventScroll);
-      document.removeEventListener('wheel', preventScroll);
-
-      body.style.position = previousBody.position;
-      body.style.top = previousBody.top;
-      body.style.right = previousBody.right;
-      body.style.left = previousBody.left;
-      body.style.width = previousBody.width;
-      body.style.overflow = previousBody.overflow;
-      body.style.overscrollBehavior = previousBody.overscrollBehavior;
-      root.style.overflow = previousRoot.overflow;
-      root.style.overscrollBehavior = previousRoot.overscrollBehavior;
-
-      window.scrollTo({ top: scrollY, left: 0, behavior: 'auto' });
-    };
-  }, [isOpeningActive]);
 
   return (
     <section className={`case-page-screen ${isSpinning ? 'is-inline-spinning' : ''} ${isResult ? 'has-inline-result' : ''}`}>
@@ -438,10 +395,13 @@ export default function CaseDetailPage({
         <span className="case-page-glow glow-two" aria-hidden="true" />
 
         <div className="case-page-copy">
-          <span className="case-page-pill">Premium case</span>
+          <span className="case-page-pill">MYST · PREMIUM CASE</span>
           <h2>{caseItem.title}</h2>
-          <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘a ichidan random yutuq.`}</p>
+          <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘adan tasodifiy yutuq.`}</p>
+          <span className={caseOpeningStyles.casePrice}><StarIcon size={16} /> {isFree ? 'Bepul' : formatPrice(caseItem.price) + ' Stars'}</span>
         </div>
+
+        <CaseArtwork caseItem={caseItem} activating={isSpinning} />
 
         <InlineRaffleRoller
           opening={inlineOpening}
@@ -455,14 +415,17 @@ export default function CaseDetailPage({
           type="button"
           className={caseOpeningStyles.openButton}
           disabled={busy || isSpinning || openableGifts.length === 0}
-          onClick={onOpen}
+          onClick={() => { cue('open'); onOpen(); }}
           aria-busy={isSpinning}
           aria-live="polite"
         >
           <AppIcon name="spark" />
           <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
         </button>
-
+        {inlineOpening?.stage === 'rolling' && (
+          <button className={caseOpeningStyles.skipAnimation} type="button"
+            onClick={() => onRollComplete(inlineOpening.spinKey)}>Animatsiyani o‘tkazib yuborish</button>
+        )}
       </div>
 
       {isResult ? (
@@ -470,6 +433,8 @@ export default function CaseDetailPage({
           opening={inlineOpening}
           onClose={onCloseResult}
           onSell={onSellResult}
+          onInventory={onInventory}
+          onAgain={onAgain}
           helpers={helpers}
         />
       ) : null}
