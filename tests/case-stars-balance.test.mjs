@@ -39,3 +39,27 @@ test('admin predicts actual normalized chance for a new reward',()=>{
  assert.match(admin,/starsProjectedChance/);
  assert.match(admin,/weight \/ \(existing \+ weight\)/);
 });
+
+// Real 0% must remain zero through every admin and legacy entry point.
+test('0% is never silently replaced with the display chance in old admin flows',()=>{
+ const browser=read('app/admin/AdminClient.jsx');
+ const mobile=read('app/webapp/WebAppClient.jsx');
+ const legacy=read('app/api/admin/gift/route.js');
+ const api=read('app/api/browser-admin/route.js');
+ assert.match(browser,/current\.real_chance \?\? current\.chance/);
+ assert.match(mobile,/giftForm\.real_chance \?\? giftForm\.chance/);
+ assert.match(legacy,/numericRealChance = realChanceValue\(real_chance, numericChance\)/);
+ assert.doesNotMatch(legacy,/numericRealChance = numericChance/);
+ assert.doesNotMatch(legacy,/updates\.real_chance = nextChance/);
+ assert.match(api,/const realChanceValue = Number\(data\.real_chance \?\?/);
+ assert.match(api,/changes\.real_chance = actual/);
+ assert.match(browser,/0% — yutib chiqmaydi/);
+});
+test('server selection excludes real chance zero and does not fall back to insecure draw',()=>{
+ const open=read('app/api/open-case/route.js');
+ const migration=read('supabase/migrations/20261028_case_stars_actual_odds.sql');
+ assert.match(open,/realChance\(gift\) > 0/);
+ assert.match(open,/openCaseWithRpc\(supabase,/);
+ assert.doesNotMatch(open,/return Response\.json\(await openCaseFallback/);
+ assert.match(migration,/AND g\.real_chance > 0/);
+});

@@ -1183,7 +1183,7 @@ export default function WebAppClient() {
         title: cleanTitle,
         value: currentRewardType === 'balance' ? String(balanceAmount) : giftForm.value,
         chance: chanceNumber,
-        real_chance: Number(giftForm.real_chance || giftForm.chance || 0),
+        real_chance: Number(giftForm.real_chance ?? giftForm.chance ?? 0),
         stock: stockNumber,
         rarity,
         is_active: true,

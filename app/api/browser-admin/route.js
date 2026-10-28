@@ -1153,11 +1153,11 @@ export async function POST(request) {
       if (libraryError) throw libraryError;
 
       const price = toNumber(data.price ?? libraryGift.buy_price ?? libraryGift.price, 0);
-      const visibleChanceValue = Math.max(0, toNumber(data.chance, 10));
-      const realChanceValue = Math.max(
-        0,
-        toNumber(data.real_chance ?? data.drop_chance ?? visibleChanceValue, visibleChanceValue)
-      );
+      const visibleChanceValue = Number(data.chance ?? 10);
+      const realChanceValue = Number(data.real_chance ?? data.drop_chance ?? visibleChanceValue);
+      if (!Number.isFinite(visibleChanceValue) || visibleChanceValue < 0 || visibleChanceValue > 100
+          || !Number.isFinite(realChanceValue) || realChanceValue < 0 || realChanceValue > 100)
+        return json({ok:false,error:'Chance va Real % 0–100 oralig‘ida bo‘lishi kerak.'},400);
 
       const row = {
         case_id: caseId,
@@ -1190,7 +1190,24 @@ export async function POST(request) {
 
     if (action === 'gift_update') {
       const { giftId, updates } = body;
-      const { data, error } = await supabase.from('gifts').update(updates || {}).eq('id', giftId).select('*').single();
+      // Keep the public admin editor safe: no raw updates to balance, stock or reward identity.
+      const changes = {};
+      if (typeof updates?.is_active === 'boolean') changes.is_active = updates.is_active;
+      if (updates?.real_chance !== undefined) {
+        const actual = Number(updates.real_chance);
+        if (!Number.isFinite(actual) || actual < 0 || actual > 100)
+          return json({ok:false,error:'Real % 0–100 orasida bo‘lishi kerak.'},400);
+        changes.real_chance = actual;
+      }
+      if (updates?.chance !== undefined) {
+        const visible = Number(updates.chance);
+        if (!Number.isFinite(visible) || visible < 0 || visible > 100)
+          return json({ok:false,error:'Chance 0–100 orasida bo‘lishi kerak.'},400);
+        changes.chance = visible;
+      }
+      if (!Object.keys(changes).length)
+        return json({ok:false,error:'O‘zgartirish uchun maydon tanlanmagan.'},400);
+      const { data, error } = await supabase.from('gifts').update(changes).eq('id', giftId).select('*').single();
 
       if (error) throw error;
 

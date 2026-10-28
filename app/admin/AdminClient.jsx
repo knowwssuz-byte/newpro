@@ -206,6 +206,27 @@ function CaseImage({ caseItem }) {
   return <img className="admin-gift-media admin-case-media" src={url} alt="" loading="lazy" draggable="false" />;
 }
 
+function CaseRewardRealChanceEditor({ gift, busy, onSave }) {
+  const [input, setInput] = useState(() => String(gift.real_chance ?? gift.chance ?? 0));
+  useEffect(() => { setInput(String(gift.real_chance ?? gift.chance ?? 0)); },
+    [gift.id, gift.real_chance, gift.chance]);
+  const configured = Number(gift.real_chance ?? gift.chance ?? 0);
+  const candidate = Number(input);
+  const valid = input.trim() !== '' && Number.isFinite(candidate) && candidate >= 0 && candidate <= 100;
+  return (
+    <div className="admin-case-real-chance-editor">
+      <label>
+        <span>Real %</span>
+        <input type="number" min="0" max="100" step="0.01"
+          value={input} disabled={busy} onChange={(event) => setInput(event.target.value)} />
+      </label>
+      <button type="button" disabled={busy || !valid || candidate === configured}
+        onClick={() => onSave(gift.id, { real_chance: candidate })}>Saqlash</button>
+      {valid && candidate === 0 ? <small className="admin-real-zero">0% — yutib chiqmaydi</small> : null}
+    </div>
+  );
+}
+
 function CaseArtworkEditor({ caseItem, busy, onSave }) {
   const [draft, setDraft] = useState(() => caseImageValues(caseItem));
   const saved = caseImageValues(caseItem);
@@ -947,7 +968,8 @@ export default function AdminClient() {
       library_gift_id: gift.id,
       title: gift.title || '',
       price: String(gift.price ?? ''),
-      real_chance: current.real_chance || current.chance || '10',
+      // "0" is deliberate: do not replace zero odds with another percentage.
+      real_chance: current.real_chance ?? current.chance ?? '10',
     }));
   }
 
@@ -2105,7 +2127,7 @@ export default function AdminClient() {
               <label>
                 <span>Haqiqiy tanlash vazni (%)</span>
                 <input type="number" min="0" max="100" step="0.01" value={giftForm.real_chance} onChange={(event) => setGiftForm({ ...giftForm, real_chance: event.target.value })} />
-                <small className="manual-field-note">Foydalanuvchiga haqiqiy yakuniy ehtimol ko‘rsatiladi. Barcha zaxirasi bor mukofotlarning vaznlari bo‘yicha hisoblanadi. 0 bo‘lsa mukofot tushmaydi.</small>
+                <small className="manual-field-note"><strong>Real % = 0 → yutish ehtimoli 0.</strong> Mukofot rasmda ko‘rinadi, ammo hech qachon yutib chiqmaydi. Foydalanuvchiga haqiqiy yakuniy ehtimol ko‘rsatiladi.</small>
                 <small className="manual-field-note">Yangi mukofot qo‘shilgandan keyingi taxminiy real ulush: <strong>{starsProjectedChance}%</strong> (mavjud zaxira va boshqa mukofotlar o‘zgarmasa). Bu qiymat barcha mukofotlarning vaznlariga nisbatan hisoblanadi.</small>
               </label>
 
@@ -2135,6 +2157,7 @@ export default function AdminClient() {
                     <p>{gift.type === 'balance' ? '+'+money(gift.value)+' Stars · balans mukofoti' : money(gift.floor_price || gift.value)+' ⭐'}
                       {' · weight '+(gift.real_chance ?? gift.chance)+' · stock '+gift.stock}</p>
                   </div>
+                  <CaseRewardRealChanceEditor gift={gift} busy={busy} onSave={updateGift} />
                   <button type="button" onClick={() => updateGift(gift.id, { is_active: gift.is_active === false })}>
                     {gift.is_active === false ? 'Show' : 'Hide'}
                   </button>
