@@ -416,7 +416,6 @@ export default function WebAppClient() {
   const [inventoryGifts, setInventoryGifts] = useState([]);
   const [history, setHistory] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
-  const [referralNew, setReferralNew] = useState(true);
   const [upgradeRounds, setUpgradeRounds] = useState([]);
   const [upgradeCatalog, setUpgradeCatalog] = useState([]);
   const [featureSettings, setFeatureSettings] = useState({});
@@ -466,16 +465,6 @@ export default function WebAppClient() {
   }, [uiSettings, settingsLoaded]);
 
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
-  // The red NEW badge only appears until the user first visits Referral.
-  useEffect(() => {
-    try { setReferralNew(window.localStorage.getItem('myst-referral-new-v1') !== 'seen'); }
-    catch { setReferralNew(true); }
-  }, []);
-  const markReferralSeen = useCallback(() => {
-    setReferralNew(false);
-    try { window.localStorage.setItem('myst-referral-new-v1', 'seen'); } catch {}
-  }, []);
-
   const giftsByCase = useMemo(() => groupGiftsByCase(gifts), [gifts]);
   const activeCases = useMemo(() => sortCasesForDisplay(cases.filter((item) => item.is_active !== false)), [cases]);
 
@@ -1609,11 +1598,10 @@ export default function WebAppClient() {
                   item={item}
                   active={!selectedCase && tab === item.id}
                   disabled={isCaseOpening || rocketRoundActive || diceRoundActive}
-                  showNew={item.id === 'referral' && referralNew}
+                  showNew={item.id === 'referral'}
                   onClick={() => {
                     if (isCaseOpening || rocketRoundActive || diceRoundActive) return;
                     playNavFeedback(tg);
-                    if (item.id === 'referral') markReferralSeen();
                     setOpening(null);
                     setSelectedCase(null);
                     setTab(item.id);

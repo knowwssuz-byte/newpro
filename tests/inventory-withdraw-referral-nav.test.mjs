@@ -39,11 +39,12 @@ test('real withdrawal API uses authenticated atomic server request',()=>{
  assert.match(admin,/updateWithdrawal\(request\.id, 'approved'\)/);
  assert.match(admin,/updateWithdrawal\(request\.id, 'rejected'\)/);
 });
-test('Referral nav has one-time NEW badge that is dismissed after first visit',()=>{
+test('Referral NEW badge stays visible permanently, including after a visit',()=>{
  const view=read('app/webapp/WebAppClient.jsx');
- assert.match(view,/showNew=\{item\.id === 'referral' && referralNew\}/);
- assert.match(view,/markReferralSeen\(\)/);
- assert.match(view,/myst-referral-new-v1/);
+ assert.match(view,/showNew=\{item\.id === 'referral'\}/);
+ assert.doesNotMatch(view,/markReferralSeen/);
+ assert.doesNotMatch(view,/myst-referral-new-v1/);
+ assert.doesNotMatch(view,/referralNew/);
  assert.match(view,/liquidNavStyles\.newBadge/);
  const nav=read('app/webapp/LiquidGlassNav.module.css');
  assert.match(nav,/\.newBadge\{/);
