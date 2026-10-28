@@ -576,6 +576,31 @@ async function handleFormAction(request, formData, supabase) {
     return json({ ok: true, case: changed, ...(await bootstrap(supabase)) });
   }
 
+  if (action === 'case_xp_reward_create') {
+    const caseId=clean(formData.get('case_id'));
+    const amount=Number(formData.get('xp_amount'));
+    const stock=Number(formData.get('stock'));
+    const chance=Number(formData.get('chance'));
+    const realChance=Number(formData.get('real_chance'));
+    if(!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(caseId))throw new Error('Case ID noto‘g‘ri.');
+    if(!Number.isSafeInteger(amount)||amount<1||amount>100000)throw new Error('XP 1–100000 oralig‘ida.');
+    if(!Number.isSafeInteger(stock)||stock<1||stock>1000000)throw new Error('Stock 1–1000000 oralig‘ida.');
+    if(![chance,realChance].every(v=>Number.isFinite(v)&&v>=0&&v<=100))throw new Error('Foiz 0–100 oralig‘ida.');
+    const {data:found,error:caseError}=await supabase.from('cases').select('id')
+      .eq('id',caseId).eq('is_active',true).is('archived_at',null).maybeSingle();
+    if(caseError)throw caseError;
+    if(!found)throw new Error('Faol Case topilmadi.');
+    const {data:reward,error}=await supabase.from('gifts').insert({
+      case_id:caseId,title:amount+' XP',type:'xp',value:String(amount),
+      chance,real_chance:realChance,stock,
+      image_url:'/rewards/xp-orb.svg',background_value:'#8b5cf6',
+      rarity:clean(formData.get('rarity'))||'rare',is_active:formData.get('is_active')!=='false',
+      source:'case_xp',floor_price:0,sell_price:0,buy_price:0
+    }).select('*').single();
+    if(error)throw error;
+    return json({ok:true,gift:reward,...(await bootstrap(supabase))});
+  }
+
   if (action === 'case_stars_reward_create_upload') {
     const gift = await createCaseStarsReward(supabase, {
       case_id: formData.get('case_id'),

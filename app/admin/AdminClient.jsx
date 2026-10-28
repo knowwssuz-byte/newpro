@@ -27,6 +27,7 @@ const emptyGiftForm = {
   case_id: '',
   reward_kind: 'gift',
   stars_amount: '50',
+  xp_amount: '50',
   library_gift_id: '',
   title: '',
   price: '',
@@ -1005,10 +1006,11 @@ export default function AdminClient() {
   async function createGiftFromLibrary(event) {
     event.preventDefault();
     const isStars = giftForm.reward_kind === 'stars';
+    const isXp = giftForm.reward_kind === 'xp';
     const chance = Number(giftForm.chance);
     const actual = Number(giftForm.real_chance);
     const stock = Number(giftForm.stock);
-    const amount = Number(giftForm.stars_amount);
+    const amount = Number(isXp ? giftForm.xp_amount : giftForm.stars_amount);
     if (!cases.some((item) => item.id === giftForm.case_id)) {
       setError('Avval Case tanlang.'); return;
     }
@@ -1019,24 +1021,24 @@ export default function AdminClient() {
     if (!Number.isSafeInteger(stock) || stock < 1 || stock > 1000000) {
       setError('Stock 1–1 000 000 oralig‘ida bo‘lishi kerak.'); return;
     }
-    if (isStars && (!Number.isSafeInteger(amount) || amount < 1 || amount > 100000)) {
+    if ((isStars || isXp) && (!Number.isSafeInteger(amount) || amount < 1 || amount > 100000)) {
       setError('Stars miqdori 1–100 000 orasida butun son bo‘lishi kerak.'); return;
     }
-    if (!isStars && !giftForm.library_gift_id) {
+    if (!isStars && !isXp && !giftForm.library_gift_id) {
       setError('Gift bazadan sovg‘ani tanlang.'); return;
     }
 
     const data = await run(
       () => {
-        if (!isStars) {
+        if (!isStars && !isXp) {
           return callAdmin('gift_create_from_library', {
             giftData: { ...giftForm, chance, real_chance: actual, stock },
           });
         }
         const form = new FormData();
-        form.append('action','case_stars_reward_create_upload');
+        form.append('action',isXp ? 'case_xp_reward_create' : 'case_stars_reward_create_upload');
         form.append('case_id',giftForm.case_id);
-        form.append('stars_amount',String(amount));
+        form.append(isXp ? 'xp_amount' : 'stars_amount',String(amount));
         form.append('stock',String(stock));
         form.append('chance',String(chance));
         form.append('real_chance',String(actual));
@@ -1045,7 +1047,7 @@ export default function AdminClient() {
         if (starsImageFile) form.append('image_file',starsImageFile);
         return callAdminForm(form);
       },
-      isStars ? 'Stars mukofoti Case’ga qo‘shildi ✅' : 'Gift Case’ga qo‘shildi ✅'
+      isStars ? 'Stars mukofoti Case’ga qo‘shildi ✅' : isXp ? 'XP mukofoti qo‘shildi ✅' : 'Gift Case’ga qo‘shildi ✅'
     );
 
     if (!data) return;
@@ -2086,8 +2088,8 @@ export default function AdminClient() {
               </label>
 
               <div className="admin-case-reward-switch" role="group" aria-label="Mukofot turi">
-                <button type="button" className={giftForm.reward_kind !== 'stars' ? 'chosen' : ''}
-                  aria-pressed={giftForm.reward_kind !== 'stars'} onClick={() => setGiftForm((current) => ({...current,reward_kind:'gift'}))}>
+                <button type="button" className={giftForm.reward_kind === 'gift' ? 'chosen' : ''}
+                  aria-pressed={giftForm.reward_kind === 'gift'} onClick={() => setGiftForm((current) => ({...current,reward_kind:'gift'}))}>
                   🎁 Telegram Gift
                 </button>
                 <button type="button" className={giftForm.reward_kind === 'stars' ? 'chosen' : ''}
@@ -2095,9 +2097,14 @@ export default function AdminClient() {
                   onClick={() => setGiftForm((current) => ({...current,reward_kind:'stars'}))}>
                   ⭐ Stars balans
                 </button>
+                <button type="button" className={giftForm.reward_kind === 'xp' ? 'chosen' : ''}
+                  aria-pressed={giftForm.reward_kind === 'xp'}
+                  onClick={() => setGiftForm((current) => ({...current,reward_kind:'xp'}))}>
+                  ✨ Level XP
+                </button>
               </div>
 
-              {giftForm.reward_kind !== 'stars' ? (
+              {giftForm.reward_kind === 'gift' ? (
               <>
               <div className="admin-gift-selector" role="group" aria-label="Rasm orqali gift tanlash">
                 <label><span>Gift baza · {caseGiftChoices.length} ta</span>
@@ -2142,7 +2149,7 @@ export default function AdminClient() {
               </label>
 
               </>
-              ) : (
+              ) : giftForm.reward_kind === 'stars' ? (
                 <div className="admin-case-stars-reward">
                   <div className="admin-case-stars-image" aria-hidden="true">
                     {starsImagePreview || sharedStarsArtworkUrl ? <img src={starsImagePreview || sharedStarsArtworkUrl} alt="" /> : <span>⭐</span>}
@@ -2170,6 +2177,19 @@ export default function AdminClient() {
                     <label><span>Beriladigan Stars miqdori</span>
                       <input type="number" min="1" max="100000" step="1" required
                         value={giftForm.stars_amount} onChange={(event) => setGiftForm((current) => ({...current,stars_amount:event.target.value}))}/>
+                    </label>
+                  </div>
+                </div>
+              ) : (
+                <div className="admin-case-stars-reward">
+                  <div className="admin-case-stars-image"><img src="/rewards/xp-orb.svg" alt="Level XP"/></div>
+                  <div>
+                    <strong>+{money(giftForm.xp_amount || 0)} XP</strong>
+                    <p>Yutilganda Level XP avtomatik oshadi. Bu Stars yoki Telegram Gift emas.</p>
+                    <label><span>XP miqdori</span>
+                      <input type="number" min="1" max="100000" step="1" required
+                        value={giftForm.xp_amount}
+                        onChange={(event) => setGiftForm((current) => ({...current,xp_amount:event.target.value}))}/>
                     </label>
                   </div>
                 </div>
@@ -2204,8 +2224,8 @@ export default function AdminClient() {
                 </select>
               </label>
 
-              <button type="submit" disabled={busy || !giftForm.case_id || (giftForm.reward_kind !== 'stars' && !giftForm.library_gift_id)}>
-                {busy ? 'Yuklanmoqda...' : giftForm.reward_kind === 'stars' ? 'Stars qo‘shish' : 'Gift qo‘shish'}
+              <button type="submit" disabled={busy || !giftForm.case_id || (giftForm.reward_kind === 'gift' && !giftForm.library_gift_id)}>
+                {busy ? 'Yuklanmoqda...' : giftForm.reward_kind === 'stars' ? 'Stars qo‘shish' : giftForm.reward_kind === 'xp' ? 'XP qo‘shish' : 'Gift qo‘shish'}
               </button>
             </form>
 
@@ -2216,7 +2236,7 @@ export default function AdminClient() {
                   {gift.type === 'balance' && !gift.image_url ? <span className="admin-stars-reward-thumb" aria-label="Stars">⭐</span> : <GiftImage gift={gift} />}
                   <div>
                     <strong>{gift.title}</strong>
-                    <p>{gift.type === 'balance' ? '+'+money(gift.value)+' Stars · balans mukofoti' : money(gift.floor_price || gift.value)+' ⭐'}
+                    <p>{gift.type === 'balance' ? '+'+money(gift.value)+' Stars · balans mukofoti' : gift.type === 'xp' ? '+'+money(gift.value)+' XP · Level mukofoti' : money(gift.floor_price || gift.value)+' ⭐'}
                       {' · weight '+(gift.real_chance ?? gift.chance)+' · stock '+gift.stock}</p>
                   </div>
                   {gift.type === 'balance' && gift.source === 'case_stars' ? (
