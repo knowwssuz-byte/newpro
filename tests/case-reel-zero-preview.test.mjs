@@ -8,22 +8,22 @@ const zero={id:'z',stock:5,is_active:true,real_chance:0};
 const zero2={id:'z2',stock:3,is_active:true,real_chance:0};
 const hidden={id:'h',stock:8,is_active:false,real_chance:0};
 const empty={id:'e',stock:0,is_active:true,real_chance:0};
-test('non-winning 0% gifts appear only in sparse preview positions',()=>{
+test('0% gifts appear more often visually while keeping the non-winning badge',()=>{
  const reel=buildPresentationReel([possible,possible2,zero,zero2,hidden,empty],possible,()=>.35);
  assert.equal(reel.length,57);
  assert.strictEqual(reel[48],possible);
- assert.deepEqual(reel.map((g,i)=>['z','z2'].includes(g.id)?i:-1).filter(i=>i>=0),[7,18,29,40,54]);
+ assert.deepEqual(reel.map((g,i)=>['z','z2'].includes(g.id)?i:-1).filter(i=>i>=0),[0,5,10,15,20,25,30,35,40,45,53,56]);
  assert.ok(reel.every(g=>g.id!=='h'&&g.id!=='e'));
 });
 test('zero can never overwrite the authoritative server winner',()=>{
  const reel=buildPresentationReel([zero,possible],possible,()=>.2);
  assert.strictEqual(reel[48],possible);
- assert.equal(reel.filter(g=>g.id==='z').length,5);
+ assert.equal(reel.filter(g=>g.id==='z').length,12);
 });
-test('idle preview shows 0% once per 11 cards',()=>{
+test('idle preview shows 0% three times per 11 cards',()=>{
  const idle=buildIdlePreviewStrip([possible,zero,zero2,hidden,empty]);
  assert.equal(idle.length,11);
- assert.equal(idle.filter(g=>g.id==='z').length,1);
+ assert.equal(idle.filter(g=>g.id==='z').length,3);
  assert.deepEqual(buildIdlePreviewStrip([]),[]);
 });
 test('server is still the only authority',()=>{
@@ -33,5 +33,9 @@ test('server is still the only authority',()=>{
  assert.match(main,/buildOpeningReel\(displayGiftPool, result\.gift\)/);
  assert.doesNotMatch(detail,/Math\.random/);
  assert.doesNotMatch(detail,/<CaseArtwork/);
+ assert.doesNotMatch(detail,/0% giftlar faqat ko‘rinadi/);
+ assert.match(detail,/className=\{caseOpeningStyles\.previewOnly\}/);
+ assert.match(detail,/Yutish ehtimoli nol/);
+ assert.match(detail,/0% · PREVIEW/);
  assert.match(detail,/previewOnly/);
 });

@@ -401,7 +401,7 @@ export default function CaseDetailPage({
           <InlineRaffleRoller opening={inlineOpening} idleGifts={stripGifts}
             targetIndex={targetIndex} onRollComplete={onRollComplete} helpers={helpers}/>
           <div className={caseOpeningStyles.detailReelCaption}>
-            <span>0% giftlar faqat ko‘rinadi</span><span>Natija serverda aniqlanadi</span>
+            <span>Giftlar kolleksiyasi</span><span>Yutish foizlari pastda</span>
           </div>
         </div>
 
