@@ -501,16 +501,20 @@ export default function WebAppClient() {
     setShowWelcomeTour(false);
   }, []);
 
-  const showToast = useCallback((message) => {
+  const showToast = useCallback((message, tone = 'success') => {
     if (toastTimerRef.current) {
       window.clearTimeout(toastTimerRef.current);
     }
 
-    setToast(message);
+    const notification=typeof message==='object' && message!==null
+      ? {title:String(message.title||'MYST'),message:String(message.message||''),tone:message.tone||tone}
+      : {title:tone==='error'?'Xatolik':tone==='info'?'Bildirishnoma':'Bajarildi',
+         message:String(message||''),tone};
+    setToast(notification);
     toastTimerRef.current = window.setTimeout(() => {
       setToast('');
       toastTimerRef.current = null;
-    }, 2200);
+    },notification.tone==='error'?4200:3300);
   }, []);
 
   const apiPost = useCallback(
@@ -956,6 +960,8 @@ export default function WebAppClient() {
         balanceBefore: result.balanceBefore,
         balanceAfter: result.balanceAfter,
         balance: result.balance,
+        userXp: result.userXp,
+        xpAwarded: result.xpAwarded,
         spinKey,
       };
 
@@ -1392,7 +1398,11 @@ export default function WebAppClient() {
         ) : null}
 
 
-        {toast ? <div className="toast" role="status">{toast}</div> : null}
+        {toast ? <div className="toast myst-toast" data-tone={toast.tone||'success'} role="status" aria-live="polite">
+          <span className="myst-toast-icon" aria-hidden="true">{toast.tone==='error'?'!':toast.tone==='info'?'i':'✓'}</span>
+          <span className="myst-toast-copy"><strong>{toast.title||'Bajarildi'}</strong><small>{toast.message||String(toast)}</small></span>
+          <button type="button" className="myst-toast-close" aria-label="Xabarni yopish" onClick={()=>setToast('')}>×</button>
+        </div> : null}
         {error ? (
           <div className="global-alert" role="alert">
             <strong>Xatolik</strong>

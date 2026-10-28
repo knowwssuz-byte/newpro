@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import {sendCaseRewardNotice} from '@/lib/telegramBot';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
@@ -344,7 +345,12 @@ export async function POST(request) {
     if (dbUser.is_banned) return jsonError('Siz bloklangansiz', 403);
 
     try {
-      return Response.json(await openCaseWithRpc(supabase, Number(auth.telegramUser.id), caseId));
+      const won=await openCaseWithRpc(supabase, Number(auth.telegramUser.id), caseId);
+      // Notify after the atomic draw commits. A blocked/unstarted bot never
+      // changes the prize or the user's balance.
+      try {await sendCaseRewardNotice(auth.telegramUser.id,won)}
+      catch(e){console.warn('[case:notification]',String(e?.message||'unavailable').slice(0,140))}
+      return Response.json(won,{headers:{'Cache-Control':'no-store'}});
     } catch (rpcError) {
       if (shouldFallbackRpc(rpcError)) {
         return jsonError(

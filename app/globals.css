@@ -13947,3 +13947,26 @@ body {
 /* Telegram WebView: suppress preview/copy URL callouts on non-editable media. */
 body img,body svg,body video,body canvas,body picture,body button,body a{-webkit-touch-callout:none!important;-webkit-user-drag:none!important}
 body img,body svg,body video,body canvas,body picture{-webkit-user-select:none!important;user-select:none!important}
+
+/* Consistent, unobtrusive MYST notifications (mobile and desktop). */
+.toast.myst-toast{position:fixed;top:calc(82px + env(safe-area-inset-top,0px));z-index:20000;
+ display:flex;align-items:center;gap:11px;text-align:left;
+ padding:12px 12px;border:1px solid rgba(151,224,183,.29);
+ background:linear-gradient(135deg,rgba(25,44,46,.98),rgba(24,31,44,.98));color:#f4fff9;
+ box-shadow:0 16px 45px rgba(0,0,0,.36),inset 0 1px rgba(255,255,255,.07);
+ border-radius:16px;backdrop-filter:blur(18px);
+ animation:mystToastEnter .25s ease-out both;
+ width:min(calc(100vw - 28px),410px);font-family:var(--font-ui)}
+.myst-toast-icon{display:grid;place-items:center;flex:0 0 31px;width:31px;height:31px;
+ border-radius:10px;background:rgba(85,201,146,.16);border:1px solid rgba(108,225,165,.22);font-weight:900;color:#8ff0bd}
+.myst-toast-copy{display:flex;flex-direction:column;flex:1;min-width:0;gap:3px}
+.myst-toast-copy strong{font-size:12.5px;font-weight:850;letter-spacing:-.01em}
+.myst-toast-copy small{font-size:11px;line-height:1.35;color:#b8c8ca;overflow-wrap:anywhere}
+.myst-toast-close{flex:0 0 26px;width:26px;height:26px;display:grid;place-items:center;
+ border:0;border-radius:8px;background:rgba(255,255,255,.06);color:#d5d2e4;font-size:19px;cursor:pointer}
+.myst-toast[data-tone="info"]{border-color:rgba(155,151,244,.32);background:linear-gradient(135deg,#25233f,#1a2538)}
+.myst-toast[data-tone="info"] .myst-toast-icon{color:#d0b7ff;background:rgba(158,131,240,.16)}
+.myst-toast[data-tone="error"]{border-color:rgba(255,129,157,.33);background:linear-gradient(135deg,#392330,#222331)}
+.myst-toast[data-tone="error"] .myst-toast-icon{color:#ffbac8;background:rgba(235,99,131,.12)}
+@keyframes mystToastEnter{from{opacity:0;transform:translate(-50%,-10px) scale(.97)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.toast.myst-toast{animation:none}}
