@@ -79,10 +79,12 @@ INSERT INTO public.gifts(case_id,title,type,value,chance,real_chance,stock,image
 SELECT case_id,title,'gift',price::text,0,0,10000,'/rewards/gift-preview.svg',
  COALESCE(NULLIF(background_value,''),'#362248'),
  CASE slot WHEN 1 THEN 'rare' WHEN 2 THEN 'legendary' ELSE 'mythic' END,
- true,'case_seed_v1',library_id,price,price,price
+ false,'case_seed_v1',library_id,price,price,price
 FROM picked m
 WHERE NOT EXISTS (SELECT 1 FROM public.gifts g WHERE g.case_id=m.case_id
  AND g.source='case_seed_v1' AND g.library_gift_id=m.library_id);
+-- Explicitly keep unfunded Telegram gift placeholders out of player draws.
+UPDATE public.gifts SET is_active=false WHERE source='case_seed_v1' AND type='gift' AND real_chance=0;
 UPDATE public.gifts SET stock=10000,updated_at=now()
  WHERE case_id IN (SELECT id FROM public.cases WHERE is_active=true AND archived_at IS NULL);
 COMMIT;
