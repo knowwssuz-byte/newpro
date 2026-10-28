@@ -161,3 +161,62 @@
 @keyframes pvpSpin{to{transform:rotate(360deg)}}@keyframes pvpPulse{50%{box-shadow:0 0 22px rgba(176,125,229,.18);transform:scale(1.045)}}
 @media(max-width:380px){.root{padding-inline:8px}.gameSetup{padding:10px}.boardFrame{padding:8px}.board{gap:6px}.square{border-radius:12px}.square svg{width:33px;height:33px}.playerBox{padding:6px}.playModeTabs button{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.searchOrb,.spinner{animation:none}.square{transition:none}}
+
+/* PvP V3: game marketplace and original victory artwork */
+.arenaIntro {margin:4px 0 14px}
+.arenaIntro h2 {font-size:clamp(32px,9vw,41px);margin:7px 0 5px}
+.lobbyHeader {width:100%;max-width:430px;display:flex;align-items:center;justify-content:space-between;gap:10px;margin:1px 0 10px}
+.lobbyHeader>div {min-width:0}
+.lobbyEyebrow {color:#aa9abe;font-size:9px;font-weight:800;letter-spacing:.15em}
+.lobbyHeader h3 {font-size:17px;letter-spacing:-.04em;margin:4px 0 0;color:#faf7ff}
+.createRoomButton {display:flex;align-items:center;gap:5px;min-height:39px;padding:7px 11px;border:1px solid rgba(207,182,240,.35);border-radius:11px;background:linear-gradient(115deg,#7854ab,#5d488f);color:#fff;font-size:11px;font-weight:810;white-space:nowrap;cursor:pointer}
+.gameSetup {margin:0 0 12px}
+.gameSetup .playPrimary{margin-top:7px}
+.openRooms {display:grid;gap:8px;width:100%;max-width:430px;min-height:100px}
+.roomCard {min-width:0;display:flex;align-items:center;gap:10px;padding:10px;border:1px solid rgba(192,171,225,.18);border-radius:15px;background:linear-gradient(115deg,rgba(42,36,61,.91),rgba(23,26,41,.94));box-shadow:inset 0 1px rgba(255,255,255,.055)}
+.roomAvatar {width:43px;height:43px;flex:0 0 43px;display:grid;place-items:center;border:1px solid rgba(196,168,239,.18);border-radius:12px;background:radial-gradient(circle at 30% 0%,rgba(168,128,229,.32),transparent 82%),#28233f;color:#dcc9f9}
+.roomDetails {display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.roomDetails strong {color:#f9f3ff;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.roomDetails small {color:#bdafd0;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.roomDetails small span {color:#8f84a6;padding:0 2px}
+.roomJoin {display:inline-flex;align-items:center;justify-content:center;gap:3px;min-height:35px;flex-shrink:0;border:1px solid rgba(135,222,183,.28);border-radius:9px;background:rgba(76,149,117,.16);color:#b7f2d2;font-size:10px;font-weight:800;padding:6px 9px;cursor:pointer}
+.roomJoin:disabled {opacity:.5;cursor:not-allowed}
+.roomsPlaceholder,.emptyRooms {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:143px;padding:22px 10px;border:1px dashed rgba(190,173,224,.24);border-radius:15px;background:rgba(31,29,45,.36);color:#b9b1ca;text-align:center}
+.emptyRooms svg {color:#c0a2e6}
+.emptyRooms strong {color:#e5d9fa;font-size:13px}
+.emptyRooms span,.roomsPlaceholder {font-size:11px}
+.lobbyFootnote {width:100%;max-width:430px;text-align:center;color:#958fa8;font-size:10px;line-height:1.45;margin:13px 0 9px}
+.otherGame {display:flex;align-items:center;gap:11px;width:100%;max-width:430px;min-height:54px;padding:10px 12px;border:1px solid rgba(187,162,224,.13);border-radius:13px;background:rgba(44,38,63,.5);color:#d4c6e9;font-size:11px;text-align:left;cursor:pointer}
+.otherGame>span {display:flex;flex:1;flex-direction:column;gap:3px;font-weight:790}
+.otherGame small {color:#968aa9;font-size:9px}
+.otherGame>svg:last-child {color:#978aaa}
+.waitNote {color:#a5cebd;font-size:10px}
+.victoryShade {position:fixed;inset:0;z-index:100002;display:grid;place-items:center;padding:calc(12px + env(safe-area-inset-top)) 12px calc(12px + env(safe-area-inset-bottom));background:rgba(5,5,16,.85);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);animation:pvpOverlayIn .25s ease-out both}
+.victoryPanel {position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:center;width:min(365px,100%);max-height:calc(100dvh - 32px);overflow:auto;scrollbar-width:none;padding:24px 20px 20px;border:1px solid rgba(237,196,130,.4);border-radius:26px;background:radial-gradient(ellipse at 50% 28%,rgba(157,104,209,.22),transparent 68%),linear-gradient(152deg,#30203e,#191527 70%,#101724);box-shadow:inset 0 1px rgba(255,248,217,.2),0 28px 70px rgba(0,0,0,.6),0 0 56px rgba(225,160,77,.12);text-align:center;animation:pvpWinRise .43s cubic-bezier(.17,.9,.26,1) both}
+.victoryPanel::-webkit-scrollbar{display:none}
+.victoryBackdropArt{position:absolute;z-index:-1;inset:7% 0 0;overflow:hidden;opacity:.12;filter:saturate(.75);pointer-events:none}
+.victoryBackdropArt img{object-fit:contain;object-position:center;mix-blend-mode:screen}
+.victoryHeading{position:relative;z-index:3}
+.victoryHeading>span{font-size:10px;letter-spacing:.23em;font-weight:850;color:#f4d08f}
+.victoryHeading h2{font-size:clamp(35px,10vw,46px);line-height:1.08;letter-spacing:-.07em;color:#ffe5a3;text-shadow:0 5px 20px rgba(239,158,55,.32);font-weight:900;margin:9px 0 6px}
+.victoryHeading p{font-size:11px;color:#c7b9d6;margin:0}
+.victoryArt{position:relative;display:grid;place-items:center;width:100%;height:225px;margin:2px auto 0;isolation:isolate}
+.victoryRing{position:absolute;z-index:-1;width:205px;height:205px;border-radius:50%;border:1px solid rgba(241,202,133,.29);box-shadow:0 0 50px rgba(239,179,88,.16),inset 0 0 30px rgba(240,189,113,.12);animation:pvpRingPulse 3.5s ease-in-out infinite alternate}
+.victoryTrophy{position:relative;width:min(205px,75%);height:auto;filter:drop-shadow(0 19px 18px rgba(0,0,0,.45));animation:pvpTrophyEnter .75s .09s cubic-bezier(.18,.98,.22,1) both,pvpTrophyFloat 4.2s 1s ease-in-out infinite alternate}
+.victoryReward{display:grid;gap:5px;justify-items:center;z-index:3;width:100%;margin:-2px 0 16px}
+.victoryReward>span{font-size:9px;letter-spacing:.18em;color:#bcaad0;font-weight:800}
+.victoryReward strong{color:#ffdf8c;font-size:38px;line-height:1.1;letter-spacing:-.045em;font-weight:890;font-variant-numeric:tabular-nums}
+.victoryReward strong b{font-size:25px;color:#f0b85d}
+.victoryReward small{color:#aaa3bc;font-size:10px}
+.victoryPanel .playPrimary{z-index:3}
+.victoryParticles{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.victoryParticles i{position:absolute;left:var(--p-left);top:-20px;width:7px;height:13px;border-radius:2px;background:var(--p-color);opacity:0;box-shadow:0 0 7px var(--p-color);animation:pvpConfettiFall var(--p-duration) var(--p-delay) linear 2}
+@keyframes pvpOverlayIn{from{opacity:0}to{opacity:1}}
+@keyframes pvpWinRise{from{opacity:0;transform:translateY(22px) scale(.94)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes pvpRingPulse{to{transform:scale(1.07);opacity:.55}}
+@keyframes pvpTrophyEnter{from{opacity:0;transform:translateY(28px) scale(.62) rotate(-12deg)}to{opacity:1;transform:translateY(0) scale(1) rotate(0)}}
+@keyframes pvpTrophyFloat{to{translate:0 -7px}}
+@keyframes pvpConfettiFall{0%{opacity:0;transform:translateY(-30px) rotate(0)}8%{opacity:1}90%{opacity:.85}100%{opacity:0;transform:translateY(540px) rotate(520deg)}}
+@media(max-width:380px){.roomAvatar{width:38px;height:38px;flex-basis:38px}.roomCard{padding:8px;gap:7px}.roomJoin{padding:6px}.roomDetails small{font-size:9px}.victoryPanel{padding:18px 15px 16px}.victoryArt{height:195px}.victoryTrophy{width:178px}.victoryRing{width:178px;height:178px}}
+@media(max-height:630px){.victoryPanel{padding:12px 16px}.victoryHeading h2{font-size:31px}.victoryArt{height:160px}.victoryTrophy{width:150px}.victoryRing{width:146px;height:146px}.victoryReward strong{font-size:29px}}
+@media(prefers-reduced-motion:reduce){.victoryShade,.victoryPanel,.victoryParticles i,.victoryTrophy,.victoryRing{animation:none!important}}

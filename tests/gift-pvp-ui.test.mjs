@@ -34,6 +34,7 @@ test('PvP opens a real local 1v1 hub instead of the old placeholder toast', () =
   assert.match(src,/onOpenPvp=\{\(\) => openPvpHub\('home'\)\}/);
   assert.match(src,/tab === 'pvp' \? <PvpHub/);
   assert.match(pvp,/TicTacToe/);
+  assert.doesNotMatch(pvp,/Play\\. Compete\\./);
   assert.match(pvp,/RockPaperScissors/);
   assert.match(pvp,/ONLINE DUEL/);
 });

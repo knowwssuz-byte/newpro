@@ -11,11 +11,13 @@ test('PvP X/O route authenticates user and has server-only wallet operations',()
  assert.match(route,/your_mark:String\(match\.x_id\)===userId\?'X'/);
  assert.doesNotMatch(route,/users\.update/);
 });
-test('PvP has bot and online match and authoritative board moves',()=>{
+test('PvP has live room creation/joining and authoritative board moves',()=>{
  const s=read('app/webapp/PvpHub.jsx');
  assert.match(s,/STAKES=\[5,10,25,50\]/);
- assert.match(s,/setMode\('bot'\)/);
- assert.match(s,/setMode\('online'\)/);
+ assert.doesNotMatch(s,/setMode\('bot'\)/);
+ assert.match(s,/act\('create',\{stake\}\)/);
+ assert.match(s,/act\('join',\{matchId:room\.id\}\)/);
+ assert.match(s,/action:'list'/);
  assert.match(s,/action:'state'/);
  assert.match(s,/act\('move',\{matchId:match\.id,cell:i\}\)/);
  assert.match(s,/const yourMark=match\?\.your_mark/);
@@ -39,4 +41,11 @@ test('PvP SQL migration auto-cancels expired matchmaking and locks balance chang
  assert.match(sql,/balance=balance\+m\.stake\*2/);
  assert.match(sql,/pvp_xo_ledger/);
  assert.match(sql,/revoke all on public\.pvp_xo_matches/ig);
+});
+
+test('New online PvP API never creates bot rooms',()=>{
+ const api=read('app/api/pvp-xo/route.js');
+ assert.match(api,/const ACTIONS=new Set\(\['list','create','join','state','move','cancel'\]\)/);
+ assert.match(api,/rpc=action==='create'\?'pvp_xo_create':action==='join'\?'pvp_xo_join'/);
+ assert.match(api,/const rooms=openRooms\.data\|\|\[\]/);
 });

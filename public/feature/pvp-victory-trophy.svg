@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+<title id="title">MYST PvP Victory Trophy</title><desc id="desc">Original golden 3D-style trophy and purple arena decorations</desc>
+<defs>
+<radialGradient id="glow"><stop stop-color="#FFDC80" stop-opacity=".5"/><stop offset=".65" stop-color="#D69A41" stop-opacity=".1"/><stop offset="1" stop-color="#FFDC80" stop-opacity="0"/></radialGradient>
+<linearGradient id="gold" x1=".14" y1="0" x2=".85" y2="1"><stop stop-color="#FFF2B3"/><stop offset=".2" stop-color="#FFD65D"/><stop offset=".5" stop-color="#F9AA29"/><stop offset=".75" stop-color="#B96813"/><stop offset="1" stop-color="#FFE397"/></linearGradient>
+<linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFF6C9"/><stop offset=".52" stop-color="#F6B32D"/><stop offset="1" stop-color="#B46516"/></linearGradient>
+<linearGradient id="base" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFD86D"/><stop offset="1" stop-color="#995116"/></linearGradient>
+<filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="11"/></filter>
+<filter id="shine" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+</defs>
+<ellipse cx="256" cy="260" rx="221" ry="220" fill="url(#glow)"/>
+<ellipse cx="256" cy="446" rx="151" ry="18" fill="#100C27" opacity=".55" filter="url(#shadow)"/>
+<g fill="none" stroke-linecap="round" opacity=".86">
+<path d="M115 312c-58-64-65-134-38-192" stroke="#E0B26B" stroke-width="7"/>
+<path d="M397 312c58-64 65-134 38-192" stroke="#E0B26B" stroke-width="7"/>
+<path d="M99 238l-35-21m35-8-40-12m35-10-31-25m64 124-39-18m43 39-24-23" stroke="#F7D488" stroke-width="10"/>
+<path d="M413 238l35-21m-35-8 40-12m-35-10 31-25m-64 124 39-18m-43 39 24-23" stroke="#F7D488" stroke-width="10"/>
+</g>
+<g>
+<path d="M173 145H89c-12 90 41 135 113 133" fill="none" stroke="url(#gold)" stroke-width="27" stroke-linejoin="round"/>
+<path d="M339 145h84c12 90-41 135-113 133" fill="none" stroke="url(#gold)" stroke-width="27" stroke-linejoin="round"/>
+<path d="M144 122c4 113 27 184 112 193 85-9 108-80 112-193z" fill="url(#gold)" stroke="#FFD982" stroke-width="8"/>
+<path d="M168 137c8 106 27 150 86 166-44-36-54-103-60-165z" fill="#FFF1A5" opacity=".54"/>
+<path d="M328 135c-5 75-12 105-36 143 30-16 44-59 50-143z" fill="#8E4D13" opacity=".5"/>
+<ellipse cx="256" cy="125" rx="113" ry="22" fill="url(#rim)" stroke="#FFF0B0" stroke-width="6"/>
+<ellipse cx="256" cy="123" rx="97" ry="10" fill="#9F5B13" opacity=".45"/>
+<path d="M241 310h30v70h-30z" fill="url(#gold)"/>
+<path d="M213 373h86l12 22H201z" fill="url(#gold)" stroke="#FFE5A4" stroke-width="4"/>
+<rect x="178" y="392" width="156" height="46" rx="13" fill="url(#base)" stroke="#FFE29B" stroke-width="5"/>
+<rect x="194" y="402" width="124" height="26" rx="9" fill="#613816" opacity=".52"/>
+<path d="M256 164l15 30 34 5-25 24 6 33-30-16-30 16 6-33-25-24 34-5z" fill="#FFF6C4" stroke="#B96E1B" stroke-width="5"/>
+</g>
+<g fill="#FFE6A0"><path d="M110 60l8 20 20 8-20 8-8 20-8-20-20-8 20-8z"/><path d="M388 68l7 18 18 7-18 7-7 18-7-18-18-7 18-7z"/><path d="M437 333l6 14 14 6-14 6-6 14-6-14-14-6 14-6z"/></g>
+<g fill="#D8B3FE"><circle cx="83" cy="336" r="6"/><circle cx="425" cy="150" r="5"/><circle cx="371" cy="395" r="4"/></g>
+</svg>
