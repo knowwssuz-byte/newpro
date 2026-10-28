@@ -91,6 +91,7 @@ function TicTacToe({onBack,apiPost,balance,onBalanceChange,onToast,onRps}) {
  const [clock,setClock]=useState(0);
  const syncBusy=useRef(false);
  const actionBusy=useRef(false);
+ const notifiedMatches=useRef(new Set());
  const onBalanceRef=useRef(onBalanceChange);
  onBalanceRef.current=onBalanceChange;
  const isLive=match?.status==='waiting'||match?.status==='active';
@@ -101,6 +102,15 @@ function TicTacToe({onBack,apiPost,balance,onBalanceChange,onToast,onRps}) {
  const won=finished&&match.winner===yourMark;
  const lost=finished&&match.winner!=='D'&&match.winner!==yourMark;
  const myTurn=match?.status==='active'&&match.turn===yourMark;
+ useEffect(()=>{
+   if(!finished||!match?.id||notifiedMatches.current.has(match.id))return;
+   notifiedMatches.current.add(match.id);
+   onToast?.({
+     tone:won?'success':lost?'error':'info',
+     title:won?'Duel g‘alabasi!':lost?'Duel yakunlandi':'Durrang',
+     message:won?`+${Number(match.stake||0)} Stars sof yutuq`:lost?'Raqib g‘olib bo‘ldi':'Tikishlar qaytarildi'
+   });
+ },[finished,match?.id,match?.stake,won,lost,onToast]);
  const timeRemaining=match?.deadline?Math.max(0,Math.ceil((new Date(match.deadline).getTime()-Date.now())/1000)):null;
  useEffect(()=>{
   if(!isLive)return undefined;

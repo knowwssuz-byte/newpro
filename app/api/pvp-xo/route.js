@@ -1,4 +1,5 @@
 import {getSupabaseAdmin} from '@/lib/supabaseAdmin';
+import {sendPvpOutcomeNotices} from '@/lib/telegramBot';
 import {ensureUser,jsonError,readTelegramRequest} from '@/lib/telegramAuth';
 
 export const runtime='nodejs';
@@ -85,6 +86,11 @@ export async function POST(request) {
   if(error){const [message,status]=publicError(error);return jsonError(message,status);}
   const userId=String(auth.telegramUser.id);
   const match=data?.match;
+  if(action==='move'&&match?.status==='finished'){
+    // Notify both players once on the authoritative finishing move, not on polling.
+    try{await sendPvpOutcomeNotices(match)}
+    catch(err){console.warn('[pvp:notification]',String(err?.message||'not available').slice(0,120))}
+  }
   const assignedMatch=match
     ? {...match,your_mark:String(match.x_id)===userId?'X':String(match.o_id)===userId?'O':null}
     : null;
