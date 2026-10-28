@@ -24,7 +24,7 @@ test('inventory removes redundant INVENTORY ribbon and confirms Yechish request'
  assert.doesNotMatch(slice,/!requested \? 'INVENTORY'/);
  assert.match(slice,/Ishonchingiz komilmi\?/);
  assert.match(slice,/Ha, yechish/);
- assert.match(slice,/>Yechish/);
+ assert.match(slice,/requested \? 'Pending' : 'Yechish'/);
  assert.match(slice,/onWithdraw\(dialog\.item\.id\)/);
  assert.match(slice,/onClick=\{onPending\}/);
  assert.match(slice,/Pending/);
