@@ -54,3 +54,17 @@ test('reward result uses isolated premium modal with accessibly labeled close an
  assert.match(css,/max-height: calc\(100dvh/);
  assert.doesNotMatch(view,/className="win-screen-card/);
 });
+
+test('reward modal has hidden scrollbars and compact responsive sizing without clipping actions',()=>{
+ const css=read('app/webapp/CaseOpening.module.css');
+ const jsx=read('app/webapp/CaseDetailExperience.jsx');
+ assert.match(css,/scrollbar-width: none/);
+ assert.match(css,/\.resultPanel::-webkit-scrollbar/);
+ assert.match(css,/overflow-y: auto/);
+ assert.match(css,/@media \(max-height: 590px\)/);
+ assert.match(css,/font-family: Inter/);
+ assert.match(css,/max-height: calc\(100dvh/);
+ assert.match(jsx,/ref=\{modalRef\} tabIndex=\{-1\}/);
+ assert.match(jsx,/modalRef\.current\?\.focus/);
+ assert.doesNotMatch(jsx,/closeButtonRef\.current\?\.focus/);
+});

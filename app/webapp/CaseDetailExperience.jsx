@@ -274,7 +274,7 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
 
 function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers }) {
   const { GiftMedia, isBalanceReward, rewardSubtitle, sellButtonText } = helpers;
-  const closeButtonRef = useRef(null);
+  const modalRef = useRef(null);
   const gift = opening?.gift;
   const isStars = Boolean(gift && isBalanceReward(gift));
 
@@ -283,7 +283,7 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
   useEffect(() => {
     if (!gift || typeof document === 'undefined') return undefined;
     const previousFocus = document.activeElement;
-    closeButtonRef.current?.focus({ preventScroll: true });
+    modalRef.current?.focus({ preventScroll: true });
     const handleKey = (event) => {
       if (event.key === 'Escape') {
         event.stopPropagation();
@@ -306,11 +306,11 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
     <div className={caseOpeningStyles.resultPortal}
       role="dialog" aria-modal="true" aria-labelledby="case-win-title"
       aria-describedby="case-win-description">
-      <div className={caseOpeningStyles.resultPanel}
+      <div className={caseOpeningStyles.resultPanel} ref={modalRef} tabIndex={-1}
         data-rarity={rarity} data-reward-kind={isStars ? 'stars' : 'collectible'}>
         <span className={caseOpeningStyles.resultAmbient} aria-hidden="true" />
         <span className={caseOpeningStyles.resultShimmer} aria-hidden="true" />
-        <button type="button" ref={closeButtonRef} className={caseOpeningStyles.resultClose}
+        <button type="button" className={caseOpeningStyles.resultClose}
           onClick={onClose} aria-label="Yutuq oynasini yopish">
           <svg viewBox="0 0 24 24" width="17" height="17" fill="none"
             stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
@@ -343,7 +343,7 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
             {isStars ? 'STARS REWARD' : rarity.toUpperCase()}
           </span>
           <strong id="case-win-title">{gift.title || 'Reward'}</strong>
-          <p id="case-win-description">{rewardSubtitle(gift)}</p>
+          <p id="case-win-description">{isStars ? 'Balansingiz muvaffaqiyatli yangilandi' : rewardSubtitle(gift)}</p>
         </div>
 
         <div className={caseOpeningStyles.resultStatus}>
