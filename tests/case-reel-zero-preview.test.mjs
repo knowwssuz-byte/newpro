@@ -23,7 +23,7 @@ test('zero can never overwrite the authoritative server winner',()=>{
 test('idle preview shows 0% three times per 11 cards',()=>{
  const idle=buildIdlePreviewStrip([possible,zero,zero2,hidden,empty]);
  assert.equal(idle.length,11);
- assert.equal(idle.filter(g=>g.id==='z').length,3);
+ assert.equal(idle.filter(g=>['z','z2'].includes(g.id)).length,3);
  assert.deepEqual(buildIdlePreviewStrip([]),[]);
 });
 test('server is still the only authority',()=>{
