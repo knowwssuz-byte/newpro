@@ -18,7 +18,7 @@ test('only the authorized backend response sets winning gift and balance',()=>{
   const main=read('app/webapp/WebAppClient.jsx');
   const server=read('app/api/open-case/route.js');
   assert.match(main,/apiPost\('\/api\/open-case', \{ caseId: caseItem\.id \}\)/);
-  assert.match(main,/const reel = buildOpeningReel\(latestGiftPool, result\.gift\)/);
+  assert.match(main,/const reel = buildOpeningReel\(displayGiftPool, result\.gift\)/);
   assert.match(main,/gift: result\.gift/);
   assert.match(main,/balanceAfter: result\.balanceAfter/);
   assert.match(server,/open_case_atomic/);

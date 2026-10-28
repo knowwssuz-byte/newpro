@@ -8,6 +8,7 @@ import AppIcon from './AppIcon';
 import BootLoader from './BootLoader';
 import WelcomeTour from './WelcomeTour';
 import caseOpeningStyles from './CaseOpening.module.css';
+import {buildPresentationReel} from '@/lib/caseReelPresentation.mjs';
 import {caseImageStyle} from '@/lib/caseImageLayout.mjs';
 import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
@@ -321,46 +322,7 @@ function randomItem(items) {
 }
 
 function buildOpeningReel(gifts = [], winningGift) {
-  const availableGifts = Array.isArray(gifts) ? gifts.filter(Boolean) : [];
-  const safeGifts = availableGifts.length
-    ? availableGifts
-    : [winningGift].filter(Boolean);
-  const reel = [];
-  let previousId = '';
-
-  const pickDifferent = () => {
-    if (!safeGifts.length) return null;
-    if (safeGifts.length === 1) return safeGifts[0];
-
-    for (let attempt = 0; attempt < 8; attempt += 1) {
-      const picked = randomItem(safeGifts);
-      if (String(picked?.id || '') !== previousId) {
-        previousId = String(picked?.id || '');
-        return picked;
-      }
-    }
-
-    const fallback = randomItem(safeGifts);
-    previousId = String(fallback?.id || '');
-    return fallback;
-  };
-
-  // Raffle logic: winner doim aniq indexga qo'yiladi.
-  // Keyin JS transition o'sha indexni marker markaziga olib keladi.
-  for (let index = 0; index < 48; index += 1) {
-    reel.push(pickDifferent());
-  }
-
-  if (winningGift) {
-    previousId = String(winningGift.id || '');
-    reel.push(winningGift);
-  }
-
-  for (let index = 0; index < 8; index += 1) {
-    reel.push(pickDifferent());
-  }
-
-  return reel.filter(Boolean);
+  return buildPresentationReel(gifts, winningGift);
 }
 
 function getWinningIndexFromReel(reel = []) {
@@ -957,7 +919,15 @@ export default function WebAppClient() {
           ? result.reelPool
           : activeGiftPool;
 
-      warmImageCacheFromData(latestGiftPool, result.gift);
+      // 0% collectibles are visual previews only and are never in the server draw.
+      const displayGiftPool = [
+        ...latestGiftPool,
+        ...caseGifts.filter(gift =>
+          eligibleGift(gift) && realChance(gift) === 0 &&
+          !latestGiftPool.some(item => String(item.id) === String(gift.id))
+        ),
+      ];
+      warmImageCacheFromData(displayGiftPool, result.gift);
       // A real server-authorized reward always wins. Decode only that media
       // (bounded to 850 ms) before revealing the reel; no global boot loader.
       const readyArtwork = imageUrlOf(result.gift);
@@ -967,7 +937,7 @@ export default function WebAppClient() {
           Math.max(0, 420 - ((typeof performance !== 'undefined' ? performance.now() : Date.now()) - preparationStarted)))),
       ]);
 
-      const reel = buildOpeningReel(latestGiftPool, result.gift);
+      const reel = buildOpeningReel(displayGiftPool, result.gift);
       const spinKey = Date.now();
       const winningIndex = getWinningIndexFromReel(reel);
 

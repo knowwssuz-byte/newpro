@@ -8,6 +8,7 @@ import AppIcon from './AppIcon';
 import StarIcon from './StarIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
 import {caseImageStyle} from '@/lib/caseImageLayout.mjs';
+import {buildIdlePreviewStrip} from '@/lib/caseReelPresentation.mjs';
 
 const CASE_ROLL_DURATION_MS = 4600;
 
@@ -223,6 +224,9 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
               }}
             >
               <GiftMedia gift={gift} preferStatic />
+              {Number(gift?.real_chance ?? gift?.chance ?? 0) === 0 && (
+                <span className={caseOpeningStyles.previewOnly} aria-label="Yutish ehtimoli nol">0%</span>
+              )}
             </div>
           ))}
 
@@ -256,6 +260,9 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
               }}
             >
               <GiftMedia gift={gift} preferStatic />
+              {Number(gift?.real_chance ?? gift?.chance ?? 0) === 0 && (
+                <span className={caseOpeningStyles.previewOnly} aria-label="Yutish ehtimoli nol">0%</span>
+              )}
             </div>
           ))}
 
@@ -358,10 +365,7 @@ export default function CaseDetailPage({
     typeof inlineOpening?.winningIndex === 'number'
       ? inlineOpening.winningIndex
       : getWinningIndexFromReel(inlineOpening?.reel || []);
-  const stripSource = previewGifts.length ? previewGifts : [];
-  const stripGifts = stripSource.length
-    ? Array.from({ length: Math.min(9, Math.max(7, stripSource.length)) }, (_, index) => stripSource[index % stripSource.length])
-    : [];
+  const stripGifts = buildIdlePreviewStrip(previewGifts);
 
   // Keep global body untouched: a fixed body moves the Telegram balance
   // header and dock. Playback stays in its own surface, with a skip option.
@@ -372,63 +376,43 @@ export default function CaseDetailPage({
 
 
   return (
-    <section className={`case-page-screen ${isSpinning ? 'is-inline-spinning' : ''} ${isResult ? 'has-inline-result' : ''}`}>
-      <div className="case-page-top">
-        <button
-          type="button"
-          className="case-page-back"
-          onClick={onBack}
-          disabled={isSpinning}
-          aria-label="Back"
-        >
-          ←
-        </button>
-        <div>
-          <span className="eyebrow">Case detail</span>
-          <h1>{caseItem.title}</h1>
-        </div>
+    <section className={`case-page-screen ${caseOpeningStyles.detailPage} ${isSpinning ? 'is-inline-spinning' : ''} ${isResult ? 'has-inline-result' : ''}`}>
+      <div className={`case-page-top ${caseOpeningStyles.detailTop}`}>
+        <button type="button" className={`case-page-back ${caseOpeningStyles.detailBack}`}
+          onClick={onBack} disabled={isSpinning} aria-label="Case ro‘yxatiga qaytish">←</button>
+        <div className={caseOpeningStyles.detailBreadcrumb}><span>THE COLLECTION</span><strong>Case opening</strong></div>
+        <span className={caseOpeningStyles.detailTopCount}>{previewGifts.length} ta sovg‘a</span>
       </div>
 
-      <div
-        className="case-page-hero premium-card inline-case-hero"
-        style={{
-          '--case-page-accent': caseAccent(caseItem),
-          '--case-page-badge': caseBadgeColor(caseItem),
-        }}
-      >
-        <span className="case-page-glow glow-one" aria-hidden="true" />
-        <span className="case-page-glow glow-two" aria-hidden="true" />
+      <div className={`case-page-hero inline-case-hero ${caseOpeningStyles.detailHero}`}
+        style={{'--case-page-accent':caseAccent(caseItem),'--case-page-badge':caseBadgeColor(caseItem)}}>
+        <header className={`case-page-copy ${caseOpeningStyles.detailHeading}`}>
+          <span className={caseOpeningStyles.detailEyebrow}>MYST / COLLECTIBLE DROP</span>
+          <div className={caseOpeningStyles.detailTitleRow}>
+            <div><h2>{caseItem.title}</h2><p>{caseItem.description || `${previewGifts.length} ta sovg‘adan tasodifiy yutuq.`}</p></div>
+            <span className={caseOpeningStyles.detailPrice}><StarIcon size={15}/> {isFree ? 'FREE' : formatPrice(caseItem.price)}</span>
+          </div>
+        </header>
 
-        <div className="case-page-copy">
-          <span className="case-page-pill">MYST · PREMIUM CASE</span>
-          <h2>{caseItem.title}</h2>
-          <p>{caseItem.description || `${readyGifts.length || gifts.length || 0} ta sovg‘adan tasodifiy yutuq.`}</p>
-          <span className={caseOpeningStyles.casePrice}><StarIcon size={16} /> {isFree ? 'Bepul' : formatPrice(caseItem.price) + ' Stars'}</span>
+        <div className={caseOpeningStyles.detailReelFrame}>
+          <div className={caseOpeningStyles.detailReelHeading}>
+            <span><i aria-hidden="true"/> MYST ROLL</span><small>MARKAZIY BELGI</small>
+          </div>
+          <InlineRaffleRoller opening={inlineOpening} idleGifts={stripGifts}
+            targetIndex={targetIndex} onRollComplete={onRollComplete} helpers={helpers}/>
+          <div className={caseOpeningStyles.detailReelCaption}>
+            <span>0% giftlar faqat ko‘rinadi</span><span>Natija serverda aniqlanadi</span>
+          </div>
         </div>
 
-        <CaseArtwork caseItem={caseItem} activating={isSpinning} />
-
-        <InlineRaffleRoller
-          opening={inlineOpening}
-          idleGifts={stripGifts}
-          targetIndex={targetIndex}
-          onRollComplete={onRollComplete}
-          helpers={helpers}
-        />
-
-        <button
-          type="button"
-          className={caseOpeningStyles.openButton}
+        <button type="button" className={`${caseOpeningStyles.openButton} ${caseOpeningStyles.detailOpen}`}
           disabled={busy || isSpinning || openableGifts.length === 0}
-          onClick={() => { cue('open'); onOpen(); }}
-          aria-busy={isSpinning}
-          aria-live="polite"
-        >
-          <AppIcon name="spark" />
+          onClick={() => { cue('open'); onOpen(); }} aria-busy={isSpinning} aria-live="polite">
+          <AppIcon name="spark"/>
           <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
         </button>
         {inlineOpening?.stage === 'rolling' && (
-          <button className={caseOpeningStyles.skipAnimation} type="button"
+          <button type="button" className={caseOpeningStyles.skipAnimation}
             onClick={() => onRollComplete(inlineOpening.spinKey)}>Animatsiyani o‘tkazib yuborish</button>
         )}
       </div>
@@ -444,7 +428,7 @@ export default function CaseDetailPage({
         />
       ) : null}
 
-      <div className="case-page-prizes-head">
+      <div className={`case-page-prizes-head ${caseOpeningStyles.detailPrizesHead}`}>
         <div>
           <span className="eyebrow">Inside this case</span>
           <h2>Sovg‘alar</h2>
@@ -452,10 +436,10 @@ export default function CaseDetailPage({
         <strong>{previewGifts.length || 0} ta</strong>
       </div>
 
-      <div className="case-page-prize-grid">
+      <div className={`case-page-prize-grid ${caseOpeningStyles.detailPrizeGrid}`}>
         {previewGifts.map((gift, index) => (
           <div
-            className="case-page-prize-card"
+            className={`case-page-prize-card ${caseOpeningStyles.detailPrizeCard}`}
             key={gift.id}
             style={{
               '--float-delay': `${(index % 6) * 0.13}s`,
@@ -463,12 +447,15 @@ export default function CaseDetailPage({
             }}
           >
             <span className="prize-card-shine" aria-hidden="true" />
+            {Number(gift.real_chance ?? gift.chance ?? 0) === 0 && (
+              <span className={caseOpeningStyles.detailPrizePreviewBadge}>0% · PREVIEW</span>
+            )}
             <div className="case-page-prize-image">
               <GiftMedia gift={gift} compact animateOnEnter />
             </div>
             <div className="case-page-prize-copy">
               <strong>{gift.title}</strong>
-              <span>{visibleChance(gift)}% · stock {gift.stock}</span>
+              <span>{visibleChance(gift)}% imkoniyat</span>
             </div>
           </div>
         ))}
