@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Check, Circle, Grid2X2, Plus, RotateCcw, Scissors, Shield, Sparkles, Swords, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Circle, Grid2X2, Plus, RotateCcw, Scissors, Shield, Sparkles, Users, X } from 'lucide-react';
 import styles from './PvpHub.module.css';
 import { evaluateBoard, resolveRps } from '@/lib/pvpGames.mjs';
 
@@ -22,8 +22,14 @@ function scoreBoard(score) {
 export function PvpEntryCard({ onClick }) {
   return (
     <button type="button" className={styles.entryCard} onClick={onClick}>
-      <span className={styles.entryIcon}><Image src="/feature/pvp-xo-card.webp" alt="" width={50} height={50} unoptimized className={styles.entryArtwork}/></span>
-      <span className={styles.entryText}><strong>PvP Arena</strong><small>X/O duellar va boshqa o‘yinlar</small></span>
+      <span className={styles.entryIcon}>
+        <Image src="/feature/pvp-xo-card.webp" alt="" width={100} height={100}
+          sizes="84px" unoptimized className={styles.entryArtwork}/>
+      </span>
+      <span className={styles.entryText}>
+        <strong>PvP Arena</strong>
+        <small>O‘yinlarni tanlash</small>
+      </span>
       <ArrowRight size={18} aria-hidden="true"/>
     </button>
   );
@@ -340,39 +346,48 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast})
  if(selected==='rps')return <div className={styles.root}>
   <RockPaperScissors onBack={()=>setSelected('list')}/>
  </div>;
- return <section className={styles.root}>
+ return <section className={`${styles.root} ${styles.catalogRoot}`}>
   <header className={styles.topbar}>
    <button type="button" className={styles.back} aria-label="Orqaga qaytish" onClick={onBack}>
     <ArrowLeft size={19}/>
    </button>
-   <div><small>MYST GAMES</small><strong>PvP Arena</strong></div>
+   <div><small>MYST ARCADE</small><strong>PvP Arena</strong></div>
    <span className={styles.localTag}><span className={styles.onlineDot}/> LIVE</span>
   </header>
-  <div className={styles.gameListHeading}>
-   <strong>O‘yinlar</strong>
-   <small>Rejimni tanlang</small>
+  <div className={styles.catalogHeading}>
+    <div>
+      <span className={styles.catalogKicker}>GAME COLLECTION</span>
+      <h1>O‘yinlar</h1>
+    </div>
+    <span className={styles.catalogCounter}>02</span>
   </div>
-  <div className={styles.list}>
-   <button type="button" className={`${styles.modeCard} ${styles.xoGameCard}`} onClick={()=>setSelected('xo')}>
-    <span className={styles.xoPoster}>
-     <Image src="/feature/pvp-xo-card.webp" alt="" width={96} height={96} unoptimized
-      className={styles.xoPosterImage}/>
+  <div className={styles.storeGrid}>
+   <button type="button" className={styles.storeItem}
+     onClick={()=>setSelected('xo')} aria-label="X/O Duel o‘yinini ochish">
+    <span className={styles.storeCover}>
+     <Image src="/feature/pvp-xo-card.webp" alt="" width={480} height={480}
+       sizes="(max-width: 480px) 44vw, 240px" unoptimized priority
+       className={styles.storeCoverImage}/>
     </span>
-    <span className={styles.modeInfo}>
-     <strong>X/O Duel</strong>
-     <small>Haqiqiy raqib · 5–50 Stars</small>
-     <em><Check size={12}/> O‘YNASH</em>
+    <span className={styles.storeLabelRow}>
+      <strong>X/O Duel</strong>
+      <ArrowUpRight size={17} aria-hidden="true"/>
     </span>
-    <ArrowRight size={18} aria-hidden="true"/>
    </button>
-   <button type="button" className={styles.modeCard} onClick={()=>setSelected('rps')}>
-    <span className={styles.modeIcon}><Scissors size={30}/></span>
-    <span className={styles.modeInfo}>
-      <strong>Tosh · Qog‘oz · Qaychi</strong>
-      <small>Bir qurilmada · bepul</small>
-      <em><Check size={12}/> O‘YNASH</em>
+   <button type="button" className={styles.storeItem}
+     onClick={()=>setSelected('rps')} aria-label="Tosh, Qog‘oz, Qaychi o‘yinini ochish">
+    <span className={`${styles.storeCover} ${styles.rpsCover}`}>
+      <span className={styles.rpsOrbit} aria-hidden="true"/>
+      <span className={styles.rpsSymbolBack} aria-hidden="true"><Scissors size={64} strokeWidth={2.2}/></span>
+      <span className={styles.rpsTokenOne} aria-hidden="true">✊</span>
+      <span className={styles.rpsTokenTwo} aria-hidden="true">✋</span>
+      <span className={styles.rpsTokenThree} aria-hidden="true">✌️</span>
+      <span className={styles.rpsLight} aria-hidden="true"/>
     </span>
-    <ArrowRight size={18} aria-hidden="true"/>
+    <span className={styles.storeLabelRow}>
+      <strong>Tosh · Qog‘oz · Qaychi</strong>
+      <ArrowUpRight size={17} aria-hidden="true"/>
+    </span>
    </button>
   </div>
  </section>;

@@ -21,3 +21,20 @@ test('Home PvP leads to game list and X/O image card, then live room flow',()=>{
  assert.match(css,/\.xoPosterImage\{/);
  assert.match(css,/object-fit:contain/);
 });
+
+test('PvP gallery uses two large square app icons and minimal labels',()=>{
+ const src=get('app/webapp/PvpHub.jsx');
+ const styles=get('app/webapp/PvpHub.module.css');
+ const catalog=src.slice(src.lastIndexOf('return <section className={`${styles.root} ${styles.catalogRoot}`}>'));
+ assert.match(catalog,/className=\{styles\.storeGrid\}/);
+ assert.match(catalog,/className=\{styles\.storeCover\}/);
+ assert.match(catalog,/className=\{styles\.storeCoverImage\}/);
+ assert.match(catalog,/className=\{styles\.rpsCover\}/);
+ assert.match(catalog,/<strong>X\/O Duel<\/strong>/);
+ assert.doesNotMatch(catalog,/Haqiqiy raqib · 5–50 Stars/);
+ assert.doesNotMatch(catalog,/O‘YNASH MUMKIN/);
+ assert.match(styles,/\.storeGrid\{[\s\S]*?grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+ assert.match(styles,/\.storeCover\{[\s\S]*?aspect-ratio:1\/1/);
+ assert.match(styles,/\.storeCoverImage\{[\s\S]*?object-fit:cover/);
+ assert.match(styles,/\.entryIcon\{[\s\S]*?flex:0 0 83px/);
+});
