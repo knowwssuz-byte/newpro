@@ -1990,6 +1990,11 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
   const [imageReady, setImageReady] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [imageAttempt, setImageAttempt] = useState(0);
+  useEffect(() => {
+    setImageReady(false);
+    setImageFailed(false);
+    setImageAttempt(0);
+  }, [caseItem.image_url]);
   const accent = caseAccent(caseItem);
   const badge = caseBadgeText(caseItem, gifts);
   const badgeColor = caseBadgeColor(caseItem);
@@ -2016,6 +2021,10 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
       />
 
       <div className={caseOpeningStyles.caseTileMedia}>
+        {caseItem.image_url && !imageFailed ? (
+          <img className={caseOpeningStyles.caseTileBackdrop} src={caseItem.image_url}
+            alt="" aria-hidden="true" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+        ) : null}
         <span className={caseOpeningStyles.caseTileHalo} aria-hidden="true" />
 
         {caseItem.image_url && !imageFailed ? (

@@ -19,6 +19,10 @@ function CaseArtwork({ caseItem, activating }) {
   return (
     <div className={caseOpeningStyles.caseStage} data-activating={activating ? 'true' : 'false'}
       aria-label="Case rasmi" role="img">
+      {caseItem?.image_url && !failed ? (
+        <img className={caseOpeningStyles.caseStageBackdrop} src={caseItem.image_url}
+          alt="" aria-hidden="true" decoding="async" loading="eager" />
+      ) : null}
       <span className={caseOpeningStyles.caseStageAura} aria-hidden="true" />
       {caseItem?.image_url && !failed ? (
         <img className={caseOpeningStyles.caseStageArt} src={caseItem.image_url}
