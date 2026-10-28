@@ -273,7 +273,6 @@ export default function DepositView({
   const [starsAmount, setStarsAmount] = useState('100');
   const [tonAmount, setTonAmount] = useState('1');
   const [giftUrl, setGiftUrl] = useState('');
-  const [giftNote, setGiftNote] = useState('');
   const [promoInput, setPromoInput] = useState('');
   const [promo, setPromo] = useState(null);
   const [promoError, setPromoError] = useState('');
@@ -281,6 +280,7 @@ export default function DepositView({
   const [showHistory, setShowHistory] = useState(false);
   const [tonTransferLink, setTonTransferLink] = useState('');
   const [tonFallbackOpen, setTonFallbackOpen] = useState(false);
+  const [tonTransferMode, setTonTransferMode] = useState('choice');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState('');
   const [error, setError] = useState('');
@@ -361,7 +361,7 @@ export default function DepositView({
       (wallet) => {
         if (wallet && mountedRef.current) {
           setError('');
-          setNotice('TON Connect wallet muvaffaqiyatli ulandi.');
+          setNotice('');
         }
       },
       (connectionError) => {
@@ -649,7 +649,9 @@ export default function DepositView({
   async function disconnectTonWallet() {
     await runAction('ton-disconnect', async () => {
       await tonConnectUI.disconnect();
-      setNotice('TON Connect wallet uzildi.');
+      setTonTransferMode('choice');
+      setTonFallbackOpen(false);
+      setNotice('');
     });
   }
 
@@ -827,14 +829,13 @@ export default function DepositView({
         {
           action: 'create_gift',
           giftUrl,
-          note: giftNote,
+          note: '',
         },
         { timeoutMs: 15_000 }
       );
 
       applyState(data);
       setGiftUrl('');
-      setGiftNote('');
       setNotice(
         `Gift request yaratildi. Giftni @${data.recipient || settings?.giftRecipient} ga yuboring.`
       );
@@ -885,6 +886,9 @@ export default function DepositView({
     tonWallet?.device?.appName ||
     tonWallet?.name ||
     'TON Wallet';
+  const tonManualSelected = tonTransferMode === 'manual';
+  const tonWalletActive = Boolean(tonConnectionRestored && tonAddress && tonWallet && !tonManualSelected);
+  const tonDetailsVisible = tonManualSelected || tonWalletActive;
   const expectedTonCredit = Math.max(
     0,
     Math.floor(number(tonAmount) * number(settings?.tonStarsRate))
@@ -912,7 +916,6 @@ export default function DepositView({
         </div>
       </header>
 
-      <div className={styles.compactSecurity}><ShieldIcon /> To‘lov tasdiqlangach balans avtomatik yangilanadi</div>
 
       {error ? (
         <div className={styles.alert} role="alert">
@@ -934,19 +937,16 @@ export default function DepositView({
           {
             id: 'stars',
             title: 'Stars',
-            caption: 'Avtomatik',
             ready: settings?.starsConfigured,
           },
           {
             id: 'ton',
             title: 'TON/GRAM',
-            caption: 'TON Connect',
             ready: settings?.tonConfigured,
           },
           {
             id: 'gift',
             title: 'Gift',
-            caption: 'Telegram',
             ready: settings?.giftConfigured,
           },
         ].map((item) => (
@@ -963,13 +963,16 @@ export default function DepositView({
               setPromoError('');
               setError('');
               setNotice('');
+              if (item.id === 'ton') {
+                setTonTransferMode('choice');
+                setTonFallbackOpen(false);
+              }
             }}
           >
             <span className={styles.methodGlow} aria-hidden="true" />
             <MethodIcon method={item.id} />
             <strong>{item.title}</strong>
-            <small>{loading ? '...' : item.ready ? item.caption : 'Sozlanmagan'}</small>
-            {item.id === 'stars' || item.id === 'ton' ? <em>AUTO</em> : null}
+            {!loading && !item.ready ? <small>Sozlanmagan</small> : null}
           </button>
         ))}
       </div>
@@ -980,7 +983,7 @@ export default function DepositView({
         </div>
       ) : null}
 
-      {!loading && method !== 'gift' ? (
+      {!loading && (method === 'stars' || (method === 'ton' && tonDetailsVisible)) ? (
         <div className={styles.promoArea}>
           <form className={styles.promoForm} onSubmit={applyPromo}>
             <label htmlFor="deposit-promocode">PROMOKOD <span>ixtiyoriy</span></label>
@@ -1008,23 +1011,14 @@ export default function DepositView({
                 aria-label="Promokodni olib tashlash">×</button>
             </div>
           ) : null}
-          <p className={styles.promoHelp}>6 soat ichida depozitni boshlang. Qayta kiritish vaqtni uzaytirmaydi; vaqtida yaratilgan invoice bonusi saqlanadi.</p>
         </div>
       ) : null}
 
       {!loading && method === 'stars' ? (
         <form className={`${styles.panel} ${styles.starsPanel}`} onSubmit={payWithStars}>
-          <div className={styles.panelHeading}>
-            <div>
-              <span>TELEGRAM STARS</span>
-              <h3>Avtomatik to‘ldirish</h3>
-            </div>
-            <span className={styles.autoBadge}><i /> AUTO</span>
-          </div>
-
-          <div className={styles.amountLabel}>
-            <span>Miqdor</span>
-            <small>{settings?.starsMin}–{formatBalance(settings?.starsMax)} Stars</small>
+          <div className={styles.compactSectionHeading}>
+            <StarsMark small />
+            <h3>Stars to‘ldirish</h3>
           </div>
 
           <div className={styles.amountInput}>
@@ -1074,214 +1068,127 @@ export default function DepositView({
             <span>{busy === 'stars' ? 'Invoice ochilmoqda...' : 'Telegram Stars bilan to‘lash'}</span>
           </button>
 
-          <p className={styles.panelFootnote}>
-            Telegram invoice tasdiqlangach, webhook balansni avtomatik yangilaydi.
-          </p>
         </form>
       ) : null}
 
       {!loading && method === 'ton' ? (
-        <div className={`${styles.panel} ${styles.tonPanel}`}>
-          <form onSubmit={payWithTonConnect}>
-            <div className={styles.panelHeading}>
-              <div>
-                <span>TON / GRAM NETWORK</span>
-                <h3>TON Connect orqali</h3>
-              </div>
-              <span className={styles.chainBadge}>AUTO</span>
-            </div>
-
-            {!settings?.tonConfigured ? (
-              <div className={styles.setupMessage}>
-                Admin panelda TON / GRAM wallet va kursni kiriting.
-              </div>
-            ) : (
-              <>
-                <div className={`${styles.walletConnect} ${
-                  tonAddress ? styles.walletConnected : ''
-                }`}>
-                  <TonMark />
-                  <div>
-                    <span>
-                      {!tonConnectionRestored
-                        ? 'TON Wallet'
-                        : tonAddress
-                          ? tonWalletName
-                          : 'TON Connect wallet'}
-                    </span>
-                    <strong>
-                      {!tonConnectionRestored
-                        ? '...'
-                        : tonAddress
-                          ? shortAddress(tonAddress)
-                          : 'Tonkeeper, Wallet yoki boshqa wallet'}
-                    </strong>
-                  </div>
-                  {tonAddress ? (
-                    <button
-                      type="button"
-                      onClick={disconnectTonWallet}
-                      disabled={Boolean(busy) || pendingTon?.status === 'confirming'}
-                    >
-                      Uzish
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={connectTonWallet}
-                      disabled={Boolean(busy) || !tonConnectionRestored}
-                    >
-                      Ulanish
-                    </button>
-                  )}
-                </div>
-
-                <div className={styles.rateLine}>
-                  <span>Joriy ichki kurs</span>
-                  <strong>1 TON / GRAM = {formatBalance(settings.tonStarsRate)} <StarsMark small /></strong>
-                </div>
-
-                <div className={styles.amountInput}>
-                  <TonMark />
-                  <input
-                    type="number"
-                    min={settings.tonMin}
-                    max={settings.tonMax}
-                    step="0.000000001"
-                    inputMode="decimal"
-                    value={tonAmount}
-                    onChange={(event) => setTonAmount(event.target.value)}
-                    aria-label="TON amount"
-                    required
-                  />
-                  <span>TON/GRAM</span>
-                </div>
-
-                <div className={styles.presetRow}>
-                  {TON_PRESETS.filter(
-                    (item) =>
-                      item >= number(settings.tonMin) &&
-                      item <= number(settings.tonMax)
-                  ).map((item) => (
-                    <button
-                      type="button"
-                      key={item}
-                      className={Number(tonAmount) === item ? styles.selectedPreset : ''}
-                      onClick={() => setTonAmount(String(item))}
-                    >
-                      {item}
-                    </button>
-                  ))}
-                </div>
-
-                <div className={styles.summary}>
-                  <span>Taxminiy balans</span>
-                  <strong><StarsMark small /> {formatBalance(expectedTonCredit + promoBonus)}</strong>
-                </div>
-
-                <button
-                  type="submit"
-                  className={`${styles.primaryButton} ${styles.tonButton}`}
-                  disabled={
-                    Boolean(busy) ||
-                    promoBlocksTonPayment ||
-                    !tonConnectionRestored ||
-                    pendingTon?.status === 'confirming'
-                  }
-                >
-                  {busy === 'ton' ? <span className={styles.buttonSpinner} /> : <TonMark small />}
-                  <span>
-                    {busy === 'ton'
-                      ? 'Walletga yuborilmoqda...'
-                      : pendingTon?.status === 'confirming'
-                        ? 'Blockchain tasdig‘i kutilmoqda'
-                        : tonAddress
-                          ? 'TON / GRAM bilan to‘lash'
-                          : 'Avval walletni ulang'}
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  className={styles.manualToggle}
+        <div className={`${styles.panel} ${styles.tonPanel} ${styles.depositCleanPanel}`}>
+          {!settings?.tonConfigured ? (
+            <div className={styles.setupMessage}>TON to‘ldirish hozircha mavjud emas.</div>
+          ) : (
+            <>
+              <div className={styles.tonChoiceGrid} role="group" aria-label="TON to‘lov turi">
+                <button type="button"
+                  className={`${styles.tonChoiceButton} ${styles.tonChoiceConnect} ${tonWalletActive ? styles.tonChoiceActive : ''}`}
                   onClick={() => {
-                    if (liveTonDeposit) {
-                      setTonFallbackOpen((current) => !current);
-                    } else {
-                      createManualTonInvoice();
-                    }
+                    setTonTransferMode('choice');
+                    setTonFallbackOpen(false);
+                    if (!tonAddress || !tonWallet) void connectTonWallet();
                   }}
-                  disabled={Boolean(busy) || (promoBlocksTonPayment && !liveTonDeposit) || pendingTon?.status === 'confirming'}
+                  disabled={Boolean(busy) || !tonConnectionRestored}
+                  aria-pressed={tonWalletActive}
                 >
-                  {busy === 'ton-manual'
-                    ? 'Manual invoice tayyorlanmoqda...'
-                    : tonFallbackOpen
-                      ? 'Manual usulni yopish'
-                      : 'Wallet ulanmasa — manual transfer'}
+                  <TonMark small />
+                  <span>{tonWalletActive ? 'Wallet Connected' : 'Connect Wallet'}</span>
                 </button>
-              </>
-            )}
-          </form>
+                <button type="button"
+                  className={`${styles.tonChoiceButton} ${styles.tonChoiceManual} ${tonManualSelected ? styles.tonChoiceActive : ''}`}
+                  onClick={() => {
+                    setTonTransferMode((current) => current === 'manual' ? 'choice' : 'manual');
+                    setTonFallbackOpen(false);
+                    setError('');
+                    setNotice('');
+                  }}
+                  disabled={Boolean(busy)}
+                  aria-pressed={tonManualSelected}
+                >
+                  <CopyIcon />
+                  <span>Manual Transfer</span>
+                </button>
+              </div>
+
+              {tonWalletActive ? (
+                <div className={styles.tonConnectedRow}>
+                  <span>{tonWalletName} · {shortAddress(tonAddress)}</span>
+                  <button type="button" onClick={disconnectTonWallet}
+                    disabled={Boolean(busy) || pendingTon?.status === 'confirming'}>Uzish</button>
+                </div>
+              ) : null}
+
+              {tonDetailsVisible ? (
+                <form className={styles.tonPaymentForm}
+                  onSubmit={tonManualSelected
+                    ? (event) => { event.preventDefault(); void createManualTonInvoice(); }
+                    : payWithTonConnect}>
+                  <div className={styles.amountInput}>
+                    <TonMark />
+                    <input type="number" min={settings.tonMin} max={settings.tonMax}
+                      step="0.000000001" inputMode="decimal" value={tonAmount}
+                      onChange={(event) => setTonAmount(event.target.value)}
+                      aria-label="TON amount" required />
+                    <span>TON</span>
+                  </div>
+                  <div className={styles.presetRow}>
+                    {TON_PRESETS.filter(item =>
+                      item >= number(settings.tonMin) && item <= number(settings.tonMax)
+                    ).map(item => (
+                      <button type="button" key={item}
+                        className={Number(tonAmount) === item ? styles.selectedPreset : ''}
+                        onClick={() => setTonAmount(String(item))}>{item}</button>
+                    ))}
+                  </div>
+                  <div className={styles.summary}>
+                    <span>Balansga</span>
+                    <strong><StarsMark small /> {formatBalance(expectedTonCredit + promoBonus)}</strong>
+                  </div>
+                  <button type="submit" className={`${styles.primaryButton} ${styles.tonButton}`}
+                    disabled={Boolean(busy) || promoBlocksTonPayment ||
+                      pendingTon?.status === 'confirming' || (!tonManualSelected && !tonWalletActive)}>
+                    {busy === 'ton' || busy === 'ton-manual'
+                      ? <span className={styles.buttonSpinner} /> : <TonMark small />}
+                    <span>
+                      {busy === 'ton' || busy === 'ton-manual'
+                        ? 'Tayyorlanmoqda...'
+                        : pendingTon?.status === 'confirming'
+                          ? 'Tekshirilmoqda'
+                          : tonManualSelected ? 'Manual invoice yaratish' : 'TON bilan to‘lash'}
+                    </span>
+                  </button>
+                </form>
+              ) : null}
+            </>
+          )}
 
           {liveTonDeposit && (
-            tonFallbackOpen || liveTonDeposit.status === 'confirming'
+            (tonManualSelected && tonFallbackOpen) || liveTonDeposit.status === 'confirming'
           ) ? (
             <div className={styles.tonInvoice}>
               <div className={styles.invoiceTop}>
-                <span>
-                  <i />
-                  {liveTonDeposit.status === 'confirming'
-                    ? ' BLOCKCHAIN TEKSHIRUVI'
-                    : ' TO‘LOV KUTILMOQDA'}
-                </span>
+                <span><i />{liveTonDeposit.status === 'confirming' ? 'TEKSHIRILMOQDA' : 'MANUAL TRANSFER'}</span>
                 <small>{dateTime(liveTonDeposit.expiresAt)} gacha</small>
               </div>
-
               <div className={styles.invoiceAmount}>
                 <TonMark />
                 <strong>{formatTon(liveTonDeposit.payAmount)}</strong>
-                <span>TON / GRAM</span>
+                <span>TON</span>
               </div>
-
               <div className={styles.invoiceRow}>
-                <div>
-                  <span>Wallet</span>
-                  <strong>{shortAddress(liveTonDeposit.tonWallet)}</strong>
-                </div>
-                <button type="button" onClick={() => copy(liveTonDeposit.tonWallet, 'Wallet nusxalandi')}>
-                  <CopyIcon />
-                </button>
+                <div><span>Qabul qiluvchi wallet</span><strong>{shortAddress(liveTonDeposit.tonWallet)}</strong></div>
+                <button type="button" aria-label="Wallet manzilini nusxalash"
+                  onClick={() => copy(liveTonDeposit.tonWallet, 'Wallet nusxalandi')}><CopyIcon /></button>
               </div>
-
               <div className={styles.invoiceRow}>
-                <div>
-                  <span>Comment — majburiy</span>
-                  <strong>{liveTonDeposit.tonMemo}</strong>
-                </div>
-                <button type="button" onClick={() => copy(liveTonDeposit.tonMemo, 'Comment nusxalandi')}>
-                  <CopyIcon />
-                </button>
+                <div><span>Comment (majburiy)</span><strong>{liveTonDeposit.tonMemo}</strong></div>
+                <button type="button" aria-label="Comment nusxalash"
+                  onClick={() => copy(liveTonDeposit.tonMemo, 'Comment nusxalandi')}><CopyIcon /></button>
               </div>
-
               {liveTonLink && liveTonDeposit.status !== 'confirming' ? (
-                <a
-                  className={styles.walletButton}
-                  href={liveTonLink}
-                  onClick={() => {
-                    setNotice(
-                      'Wallet ochildi. To‘lovdan keyin blockchain avtomatik tekshiriladi.'
-                    );
-                  }}
-                >
-                  <TonMark small />
-                  <span>Manual walletda ochish</span>
+                <a className={styles.walletButton} href={liveTonLink}
+                  onClick={() => setNotice('Wallet ochildi. Blockchain tasdig‘i kutilmoqda.')}>
+                  <TonMark small /><span>Walletda ochish</span>
                 </a>
               ) : null}
-
-              <p>
-                TON Connect ishlatilsa summa va comment avtomatik yuboriladi.
-                Manual usulda ularni o‘zgartirmang.
-              </p>
+              <p>Manual transferda summa va commentni aynan saqlang.</p>
             </div>
           ) : null}
         </div>
@@ -1289,12 +1196,9 @@ export default function DepositView({
 
       {!loading && method === 'gift' ? (
         <div className={`${styles.panel} ${styles.giftPanel}`}>
-          <div className={styles.panelHeading}>
-            <div>
-              <span>TELEGRAM COLLECTIBLE</span>
-              <h3>Gift orqali to‘ldirish</h3>
-            </div>
-            <span className={styles.reviewBadge}>CHECK</span>
+          <div className={styles.compactSectionHeading}>
+            <GiftMark small />
+            <h3>Gift to‘ldirish</h3>
           </div>
 
           {!settings?.giftConfigured ? (
@@ -1306,37 +1210,20 @@ export default function DepositView({
               <div className={styles.giftRecipient}>
                 <GiftMark />
                 <div>
-                  <span>Giftni shu akkauntga yuboring</span>
                   <strong>@{settings.giftRecipient}</strong>
                 </div>
                 <button type="button" onClick={openGiftRecipient}>Ochish</button>
               </div>
 
-              <ol className={styles.steps}>
-                <li><span>1</span><p>Telegram’da giftni <strong>@{settings.giftRecipient}</strong> ga yuboring.</p></li>
-                <li><span>2</span><p>Unique Gift bo‘lsa linkini kiriting; oddiy Gift uchun bu ixtiyoriy.</p></li>
-                <li><span>3</span><p>Gift kelishi bilan bot aniqlaydi, admin narxni tasdiqlaydi.</p></li>
-              </ol>
 
               <form onSubmit={submitGift}>
                 <label className={styles.textField}>
-                  <span>Gift link <small>Unique Gift uchun</small></span>
+                  <span>Gift link <small>ixtiyoriy</small></span>
                   <input
                     type="url"
                     value={giftUrl}
                     onChange={(event) => setGiftUrl(event.target.value)}
                     placeholder="https://t.me/nft/GiftName-123"
-                  />
-                </label>
-
-                <label className={styles.textField}>
-                  <span>Izoh <small>ixtiyoriy</small></span>
-                  <input
-                    type="text"
-                    value={giftNote}
-                    onChange={(event) => setGiftNote(event.target.value)}
-                    placeholder="Giftni yubordim"
-                    maxLength={500}
                   />
                 </label>
 
@@ -1346,7 +1233,7 @@ export default function DepositView({
                   disabled={Boolean(busy)}
                 >
                   {busy === 'gift' ? <span className={styles.buttonSpinner} /> : <GiftMark small />}
-                  <span>{busy === 'gift' ? 'Yuborilmoqda...' : 'Giftni tekshiruvga yuborish'}</span>
+                  <span>{busy === 'gift' ? 'Yuborilmoqda...' : 'Tekshiruvga yuborish'}</span>
                 </button>
               </form>
             </>

@@ -3746,3 +3746,70 @@
 .amountLabel small,.invoiceTop small{font-size:10px;line-height:1.4}
 .invoiceRow strong{font-size:11px;line-height:1.4}
 @media(max-width:460px){.amountInput input{font-size:clamp(26px,8vw,34px)}}
+
+
+/* DEPOSIT V4 | controlled TON disclosure and compact Stars / Gift cards */
+.page { max-width: 520px; }
+.methodGrid { gap: 7px; margin: 6px 0 10px; }
+.methodCard { min-height: 58px; gap: 3px; padding: 7px 4px; border-radius: 15px; }
+.methodCard strong { font-size: 12px; font-weight: 760; letter-spacing: -.02em; }
+.methodCard small { font-size: 9px; }
+.panel { padding: 13px !important; border-radius: 19px !important; }
+.starsPanel, .giftPanel, .tonPanel { background:
+  radial-gradient(circle at 95% -10%, rgba(132,97,194,.11), transparent 58%),
+  linear-gradient(145deg,rgba(28,24,43,.94),rgba(16,19,32,.96)); }
+.compactSectionHeading { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.compactSectionHeading h3 { margin: 0; font-size: 15px; font-weight: 790; letter-spacing: -.035em; color: #f5f2fc; }
+.compactSectionHeading .starsMark,
+.compactSectionHeading .giftMark { width: 29px; height: 29px; flex: 0 0 29px; }
+.starsPanel .amountInput { min-height: 59px; }
+.starsPanel .presetRow { margin: 7px 0 8px; }
+.starsPanel .summary { margin-bottom: 10px; }
+.giftPanel .giftRecipient { min-height: 54px; margin-bottom: 11px; border-radius: 14px; }
+.giftPanel .giftRecipient > div strong { font-size: 13px; font-weight: 780; }
+.giftPanel .giftRecipient button { min-height: 35px; font-size: 10px; font-weight: 760; }
+.giftPanel .textField { margin-bottom: 12px; }
+.giftPanel .textField input { min-height: 45px; font-size: 12px; }
+.giftPanel .textField > span { font-size: 11px; }
+.tonChoiceGrid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; }
+.tonChoiceButton { min-width: 0; min-height: 106px; padding: 14px 7px 12px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 11px;
+  border: 1px solid rgba(186,180,222,.22); border-radius: 17px;
+  background: linear-gradient(145deg,rgba(62,64,95,.42),rgba(24,29,49,.79));
+  color: #f7f8ff; font-size: 12px; line-height: 1.25; font-weight: 790;
+  font-family: inherit; cursor: pointer; text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+  transition: border-color .18s ease,background .18s ease,transform .18s ease; }
+.tonChoiceConnect { border-color: rgba(95,198,250,.27);
+  background: linear-gradient(145deg,rgba(33,110,156,.32),rgba(24,37,64,.8)); }
+.tonChoiceManual { border-color: rgba(171,147,241,.25); }
+.tonChoiceButton .tonMark { width: 36px; height: 36px; }
+.tonChoiceButton > svg { width: 29px; height: 29px; padding: 5px; border-radius: 10px;
+  color: #c3aff8; background: rgba(171,147,241,.15); box-sizing: content-box; }
+.tonChoiceButton:active { transform: scale(.984); }
+.tonChoiceButton:focus-visible { outline: 2px solid #b7dfff; outline-offset: 3px; }
+.tonChoiceButton:disabled { opacity: .52; cursor: not-allowed; }
+.tonChoiceActive { border-color: rgba(135,208,255,.58); box-shadow: inset 0 1px rgba(255,255,255,.17),0 0 0 1px rgba(109,186,240,.16); }
+.tonConnectedRow { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; min-width: 0; margin-top: 11px; padding: 9px 12px;
+  border: 1px solid rgba(89,203,165,.19); border-radius: 12px;
+  background: rgba(71,161,128,.075); color: #d0ede6; font-size: 11px; }
+.tonConnectedRow > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tonConnectedRow button { flex: 0 0 auto; padding: 6px 9px; border-radius: 8px;
+  border: 1px solid rgba(173,206,196,.19); background: rgba(255,255,255,.045);
+  color: #d6ebe7; font-size: 10px; cursor: pointer; }
+.tonPaymentForm { display: grid; gap: 0; margin-top: 13px; animation: depositFlowIn .24s ease-out both; }
+.tonPaymentForm .amountInput { min-height: 62px; }
+.tonPaymentForm .presetRow { grid-template-columns: repeat(4,minmax(0,1fr)); margin: 9px 0 5px; }
+.tonPaymentForm .summary { margin: 2px 0 9px; }
+.tonPaymentForm .primaryButton { min-height: 49px; }
+.tonInvoice { margin-top: 13px; }
+.tonInvoice > p { font-size: 10px; line-height: 1.4; }
+@keyframes depositFlowIn { from{opacity:0;transform:translateY(7px);}to{opacity:1;transform:translateY(0);} }
+@media(max-width:390px) {
+ .panel { padding: 11px !important; }
+ .tonChoiceGrid { gap: 7px; }
+ .tonChoiceButton { min-height: 98px; padding: 11px 6px; font-size: 11px; }
+ .compactSectionHeading { margin-bottom: 10px; }
+}
+@media(prefers-reduced-motion:reduce){.tonPaymentForm{animation:none}.tonChoiceButton{transition:none}}
