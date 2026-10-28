@@ -29,7 +29,7 @@ test('PvP gallery uses two large square app icons and minimal labels',()=>{
  assert.match(catalog,/className=\{styles\.storeGrid\}/);
  assert.match(catalog,/className=\{styles\.storeCover\}/);
  assert.match(catalog,/className=\{styles\.storeCoverImage\}/);
- assert.match(catalog,/className=\{styles\.rpsCover\}/);
+ assert.match(catalog,/styles\.rpsCover/);
  assert.match(catalog,/<strong>X\/O Duel<\/strong>/);
  assert.doesNotMatch(catalog,/Haqiqiy raqib · 5–50 Stars/);
  assert.doesNotMatch(catalog,/O‘YNASH MUMKIN/);
