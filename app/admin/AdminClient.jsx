@@ -460,6 +460,7 @@ export default function AdminClient() {
   const [libraryForm, setLibraryForm] = useState(emptyLibraryForm);
   const [giftForm, setGiftForm] = useState(emptyGiftForm);
   const [starsImageFile, setStarsImageFile] = useState(null);
+  const [sharedStarsArtworkUrl, setSharedStarsArtworkUrl] = useState('');
   const [starsImagePreview, setStarsImagePreview] = useState('');
   const starsFileInputRef = useRef(null);
 
@@ -523,6 +524,7 @@ export default function AdminClient() {
   function applyBootstrap(data) {
     setCases(sortCasesForDisplay(data.cases || []));
     setGifts(data.gifts || []);
+    setSharedStarsArtworkUrl(data.starsArtworkUrl || '');
     setUsers(data.users || []);
     setWithdrawals(data.withdrawals || []);
     setGiftLibrary(data.giftLibrary || []);
@@ -1068,7 +1070,7 @@ export default function AdminClient() {
     form.append('action','case_stars_reward_image_replace');
     form.append('gift_id',gift.id);
     form.append('image_file',file);
-    const result = await run(() => callAdminForm(form),'Stars mukofoti rasmi yangilandi ✅');
+    const result = await run(() => callAdminForm(form),'Barcha Stars mukofotlari rasmi yangilandi ✅');
     if(result) applyBootstrap(result);
   }
 
@@ -2143,13 +2145,14 @@ export default function AdminClient() {
               ) : (
                 <div className="admin-case-stars-reward">
                   <div className="admin-case-stars-image" aria-hidden="true">
-                    {starsImagePreview ? <img src={starsImagePreview} alt="" /> : <span>⭐</span>}
+                    {starsImagePreview || sharedStarsArtworkUrl ? <img src={starsImagePreview || sharedStarsArtworkUrl} alt="" /> : <span>⭐</span>}
                   </div>
                   <div>
                     <strong>+{money(giftForm.stars_amount || 0)} Stars</strong>
                     <p>Yutgan foydalanuvchining NewPro balansiga avtomatik qo‘shiladi. Telegram hamyoniga alohida yuborilmaydi.</p>
+                    <p><strong>Bitta umumiy Stars rasmi:</strong> istalgan Stars mukofotida yangi rasm qo‘ysangiz, qolgan Stars sovg‘alari ham shu rasm bilan yangilanadi.</p>
                     <label className="admin-stars-upload-control">
-                      <span>Stars mukofoti rasmi (PNG/JPG)</span>
+                      <span>Umumiy Stars rasmi (PNG/JPG)</span>
                       <input ref={starsFileInputRef} type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg"
                         disabled={busy} onChange={(event) => {
                           const file = event.target.files?.[0] || null;
@@ -2218,7 +2221,7 @@ export default function AdminClient() {
                   </div>
                   {gift.type === 'balance' && gift.source === 'case_stars' ? (
                     <label className="admin-stars-edit-image">
-                      <span>Rasmni almashtirish</span>
+                      <span>Barchasining rasmini almashtirish</span>
                       <input type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" disabled={busy}
                         aria-label={gift.title + ' Stars rasmini almashtirish'}
                         onChange={(event) => {

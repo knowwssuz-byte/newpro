@@ -9,6 +9,7 @@ import StarIcon from './StarIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
 import {caseImageStyle} from '@/lib/caseImageLayout.mjs';
 import {buildIdlePreviewStrip} from '@/lib/caseReelPresentation.mjs';
+import {sortCasePrizesHighToLow} from '@/lib/casePrizeOrder.mjs';
 
 const CASE_ROLL_DURATION_MS = 4600;
 
@@ -351,6 +352,7 @@ export default function CaseDetailPage({
   const isFree = Number(caseItem.price || 0) === 0;
   const openText = isFree ? 'OPEN' : `OPEN ${formatPrice(caseItem.price)}`;
   const previewGifts = readyGifts.length ? readyGifts : gifts;
+  const orderedPrizes = sortCasePrizesHighToLow(previewGifts);
   const inlineOpening = opening && String(opening.caseItem?.id) === String(caseItem.id) ? opening : null;
   const isSpinning = inlineOpening && inlineOpening.stage !== 'result';
   const isResult = inlineOpening?.stage === 'result';
@@ -443,7 +445,7 @@ export default function CaseDetailPage({
       </div>
 
       <div className={`case-page-prize-grid ${caseOpeningStyles.detailPrizeGrid}`}>
-        {previewGifts.map((gift, index) => (
+        {orderedPrizes.map((gift, index) => (
           <div
             className={`case-page-prize-card ${caseOpeningStyles.detailPrizeCard}`}
             key={gift.id}
