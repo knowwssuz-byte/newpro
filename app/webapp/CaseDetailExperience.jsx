@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import AppIcon from './AppIcon';
 import StarIcon from './StarIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
+import {caseImageStyle} from '@/lib/caseImageLayout.mjs';
 
 const CASE_ROLL_DURATION_MS = 4600;
 
@@ -18,7 +19,7 @@ function CaseArtwork({ caseItem, activating }) {
   useEffect(() => { setFailed(false); setReady(false); }, [caseItem?.image_url]);
   return (
     <div className={caseOpeningStyles.caseStage} data-activating={activating ? 'true' : 'false'}
-      aria-label="Case rasmi" role="img">
+      style={caseImageStyle(caseItem)} aria-label="Case rasmi" role="img">
       {caseItem?.image_url && !failed ? (
         <img className={caseOpeningStyles.caseStageBackdrop} src={caseItem.image_url}
           alt="" aria-hidden="true" decoding="async" loading="eager" />

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { UpgradeGiftThumb } from '../webapp/UpgradeGiftThumb';
 import { prepareCaseArtwork } from '@/lib/caseImageAutoFitBrowser.mjs';
+import { caseImageValues,caseImageStyle } from '@/lib/caseImageLayout.mjs';
 import './admin-catalog.css';
 
 const emptyCaseForm = {
@@ -201,6 +202,69 @@ function CaseImage({ caseItem }) {
   }
 
   return <img className="admin-gift-media admin-case-media" src={url} alt="" loading="lazy" draggable="false" />;
+}
+
+function CaseArtworkEditor({ caseItem, busy, onSave }) {
+  const [draft, setDraft] = useState(() => caseImageValues(caseItem));
+  const saved = caseImageValues(caseItem);
+
+  useEffect(() => {
+    setDraft(caseImageValues(caseItem));
+  }, [caseItem.id, caseItem.image_scale, caseItem.image_offset_x, caseItem.image_offset_y]);
+
+  const dirty = draft.scale !== saved.scale || draft.x !== saved.x || draft.y !== saved.y;
+  const style = caseImageStyle({image_scale:draft.scale,image_offset_x:draft.x,image_offset_y:draft.y});
+  const change = (field, value) => setDraft((before) => ({...before,[field]:Number(value)}));
+
+  return (
+    <div className="admin-case-art-editor">
+      <div className="admin-case-art-editor-head">
+        <strong>Rasm joylashuvini sozlash</strong>
+        <span>Jonli preview · telefon Case kartasi</span>
+      </div>
+      <div className="admin-case-art-workspace">
+        <div className="admin-case-art-sample" aria-label="Case kartasidagi rasm oldindan ko‘rinishi">
+          <div className="admin-case-art-sample-media" style={style}>
+            {caseItem.image_url ? (
+              <>
+                <img className="admin-case-art-sample-blur" src={caseItem.image_url} alt="" aria-hidden="true"/>
+                <img className="admin-case-art-sample-image" src={caseItem.image_url} alt={caseItem.title + ' preview'}/>
+              </>
+            ) : <span aria-hidden="true">📦</span>}
+            {Number(caseItem.price || 0) === 0 ? <span className="admin-case-art-free">FREE</span> : null}
+          </div>
+          <div className="admin-case-art-sample-bottom">
+            <strong>{caseItem.title}</strong>
+            <small>{Number(caseItem.price || 0) === 0 ? 'FREE' : money(caseItem.price) + ' ⭐'}</small>
+          </div>
+        </div>
+        <div className="admin-case-art-controls">
+          <label className="admin-case-art-control">
+            <span>Kattaligi <strong>{Math.round(draft.scale * 100)}%</strong></span>
+            <input type="range" min="65" max="250" step="5" value={Math.round(draft.scale*100)}
+              disabled={busy} onChange={(event)=>change('scale',Number(event.target.value)/100)} />
+          </label>
+          <label className="admin-case-art-control">
+            <span>Chapga / o‘ngga <strong>{draft.x>0?'+':''}{draft.x}%</strong></span>
+            <input type="range" min="-50" max="50" step="1" value={draft.x} disabled={busy}
+              onChange={(event)=>change('x',event.target.value)} />
+          </label>
+          <label className="admin-case-art-control">
+            <span>Tepaga / pastga <strong>{draft.y>0?'+':''}{draft.y}%</strong></span>
+            <input type="range" min="-50" max="50" step="1" value={draft.y} disabled={busy}
+              onChange={(event)=>change('y',event.target.value)} />
+          </label>
+          <p>Sozlama faqat shu Case’ga ta’sir qiladi. Saqlangach ilovada ham ko‘rinadi.</p>
+          <div className="admin-case-art-buttons">
+            <button type="button" className="admin-case-art-reset" disabled={busy}
+              onClick={()=>setDraft({scale:1,x:0,y:0})}>Standart holat</button>
+            <button type="button" className="admin-case-art-save" disabled={busy || !dirty}
+              onClick={()=>onSave(caseItem.id,draft)}>Saqlash</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function GiftImage({ gift, className = 'admin-gift-media' }) {
@@ -751,6 +815,15 @@ export default function AdminClient() {
     form.append('image_file', await prepareCaseArtwork(file));
     const response = await run(() => callAdminForm(form), 'Case rasmi yangilandi ✅');
     if (response) applyBootstrap(response);
+  }
+
+  async function saveCaseArtLayout(caseId, draft) {
+    if (busy) return;
+    const result = await run(
+      () => callAdmin('case_image_layout_update', {caseId,scale:draft.scale,x:draft.x,y:draft.y}),
+      'Case rasmi joylashuvi saqlandi ✅'
+    );
+    if(result?.case) setCases((current) => current.map((item) => item.id === caseId ? result.case : item));
   }
 
   async function updateCase(caseId, updates) {
@@ -1356,6 +1429,7 @@ export default function AdminClient() {
                     </button>
                     <button type="button" className="admin-danger-light" onClick={() => deleteCase(caseItem.id)}>Delete</button>
                   </div>
+                  <CaseArtworkEditor caseItem={caseItem} busy={busy} onSave={saveCaseArtLayout} />
                 </div>
               ))}
             </div>

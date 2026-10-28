@@ -940,6 +940,21 @@ export async function POST(request) {
       return json({ ok: true, case: data });
     }
 
+    if (action === 'case_image_layout_update') {
+      const caseId = clean(body.caseId), scale = Number(body.scale), x = Number(body.x), y = Number(body.y);
+      if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(caseId)
+          || !Number.isFinite(scale) || scale < .65 || scale > 2.5
+          || !Number.isSafeInteger(x) || x < -50 || x > 50
+          || !Number.isSafeInteger(y) || y < -50 || y > 50) {
+        return json({ok:false,error:'Rasm sozlamalari noto‘g‘ri.'},400);
+      }
+      const {data,error}=await supabase.from('cases')
+        .update({image_scale:scale,image_offset_x:x,image_offset_y:y})
+        .eq('id',caseId).is('archived_at',null).select('*').single();
+      if(error)throw error;
+      return json({ok:true,case:data});
+    }
+
     if (action === 'case_delete') {
       const { error } = await supabase.from('cases').update({ is_active: false, archived_at: new Date().toISOString() })
         .eq('id',body.caseId).is('archived_at',null);

@@ -1106,3 +1106,9 @@
   .caseTileImage { width: calc(100% - 6px); height: calc(100% - 6px); }
   .caseStageArt { width: 96%; height: 90%; }
 }
+
+/* Manual Case image layout: use independent transform properties so stage animation remains intact. */
+.caseTileImage,.caseStageArt{
+  translate:var(--case-image-x,0%) var(--case-image-y,0%);
+  scale:var(--case-image-scale,1);
+}

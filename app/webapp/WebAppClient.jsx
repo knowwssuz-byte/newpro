@@ -8,6 +8,7 @@ import AppIcon from './AppIcon';
 import BootLoader from './BootLoader';
 import WelcomeTour from './WelcomeTour';
 import caseOpeningStyles from './CaseOpening.module.css';
+import {caseImageStyle} from '@/lib/caseImageLayout.mjs';
 import liquidNavStyles from './LiquidGlassNav.module.css';
 import gameCardStyles from './PremiumGameCards.module.css';
 
@@ -2020,7 +2021,7 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
         onClick={() => onDetails(caseItem)}
       />
 
-      <div className={caseOpeningStyles.caseTileMedia}>
+      <div className={caseOpeningStyles.caseTileMedia} style={caseImageStyle(caseItem)}>
         {caseItem.image_url && !imageFailed ? (
           <img className={caseOpeningStyles.caseTileBackdrop} src={caseItem.image_url}
             alt="" aria-hidden="true" loading={eager ? 'eager' : 'lazy'} decoding="async" />
