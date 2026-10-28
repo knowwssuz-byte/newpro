@@ -8,7 +8,7 @@ const zero={id:'z',stock:5,is_active:true,real_chance:0};
 const zero2={id:'z2',stock:3,is_active:true,real_chance:0};
 const hidden={id:'h',stock:8,is_active:false,real_chance:0};
 const empty={id:'e',stock:0,is_active:true,real_chance:0};
-test('0% gifts appear more often visually while keeping the non-winning badge',()=>{
+test('0% gifts appear more often visually while server controls the winner',()=>{
  const reel=buildPresentationReel([possible,possible2,zero,zero2,hidden,empty],possible,()=>.35);
  assert.equal(reel.length,57);
  assert.strictEqual(reel[48],possible);
@@ -34,8 +34,11 @@ test('server is still the only authority',()=>{
  assert.doesNotMatch(detail,/Math\.random/);
  assert.doesNotMatch(detail,/<CaseArtwork/);
  assert.doesNotMatch(detail,/0% giftlar faqat ko‘rinadi/);
- assert.match(detail,/className=\{caseOpeningStyles\.previewOnly\}/);
- assert.match(detail,/Yutish ehtimoli nol/);
- assert.match(detail,/0% · PREVIEW/);
- assert.match(detail,/previewOnly/);
+ assert.doesNotMatch(detail,/className=\{caseOpeningStyles\.previewOnly\}/);
+ assert.doesNotMatch(detail,/0% · PREVIEW/);
+ assert.doesNotMatch(detail,/Yutish foizlari pastda/);
+ assert.doesNotMatch(detail,/detailPrizePreviewBadge/);
+ assert.match(detail,/Yutish ehtimollarini ko‘rish/);
+ assert.match(detail,/<strong>\{visibleChance\(gift\)\}%<\/strong>/);
+ assert.match(detail,/<details className=\{caseOpeningStyles\.detailOdds\}>/);
 });

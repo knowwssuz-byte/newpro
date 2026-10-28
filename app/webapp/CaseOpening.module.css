@@ -1164,12 +1164,10 @@
 .detailReelHeading>span{display:inline-flex;gap:7px;align-items:center;font-size:10px;letter-spacing:.13em;font-weight:900;color:#e2d4ef}
 .detailReelHeading i{height:7px;width:7px;border-radius:50%;background:#57d3aa;box-shadow:0 0 9px rgba(87,211,170,.45)}
 .detailReelHeading small{color:#857f9b;font-size:9px;font-weight:700;letter-spacing:.06em}
-.detailReelCaption{display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px 9px;margin:9px 4px 1px;font-size:9px;line-height:1.35;color:#928aab}
 .detailPage .detailReelFrame .roller{height:123px;margin:0;border:1px solid rgba(189,171,217,.22);border-radius:15px;background:linear-gradient(180deg,#222137,#131526);box-shadow:inset 0 1px rgba(255,255,255,.07),inset 0 -15px 31px rgba(0,0,0,.18)}
 .detailReelFrame .roller::before{width:45px;background:linear-gradient(90deg,#17182b 12%,transparent)}
 .detailReelFrame .roller::after{width:45px;background:linear-gradient(270deg,#17182b 12%,transparent)}
 .detailReelFrame .card{border:1px solid rgba(212,193,234,.24);border-radius:14px;box-shadow:inset 0 1px rgba(255,255,255,.17),0 4px 14px rgba(0,0,0,.2)}
-.previewOnly{position:absolute;z-index:4;right:5px;bottom:5px;display:grid;place-items:center;min-width:25px;height:17px;padding:0 3px;border-radius:5px;border:1px solid rgba(244,234,255,.3);background:rgba(14,10,29,.75);color:#fff;font-size:9px;font-weight:800;pointer-events:none}
 .detailPage .detailOpen{position:relative!important;z-index:3;width:100%;min-height:55px!important;height:55px!important;margin:0!important;border:1px solid rgba(213,189,249,.34)!important;border-radius:14px!important;background:linear-gradient(112deg,#9b70ce,#7c57b7 73%,#7552ae)!important;box-shadow:0 12px 26px rgba(95,59,148,.25),inset 0 1px rgba(255,255,255,.19)!important;font-size:14px!important;letter-spacing:.05em}
 .detailPage .detailOpen:disabled{opacity:.55!important;cursor:not-allowed}
 .detailPage .detailPrizesHead:global(.case-page-prizes-head){display:flex!important;align-items:center!important;justify-content:space-between!important;margin:10px 0 0!important;padding:0 3px!important;gap:10px!important}
@@ -1178,7 +1176,6 @@
 .detailPage .detailPrizeGrid:global(.case-page-prize-grid){display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important;margin:0!important;padding-bottom:calc(112px + env(safe-area-inset-bottom))!important;position:relative!important;overflow:visible!important}
 .detailPage .detailPrizeCard:global(.case-page-prize-card){position:relative!important;display:grid!important;grid-template-rows:minmax(77px,1fr) auto!important;gap:8px!important;min-height:143px!important;padding:9px!important;border:1px solid rgba(210,194,236,.17)!important;border-radius:16px!important;background:linear-gradient(160deg,#222034,#181b2b)!important;box-shadow:inset 0 1px rgba(255,255,255,.045)!important;overflow:hidden!important;animation:none!important;transform:none!important}
 .detailPage .detailPrizeCard:global(.case-page-prize-card)::before{opacity:.11!important}
-.detailPrizePreviewBadge{position:absolute;z-index:4;top:8px;right:8px;display:inline-flex;padding:4px 6px;background:rgba(15,12,30,.83);border:1px solid rgba(213,195,237,.23);border-radius:6px;font-size:9px;font-weight:800;color:#dacbea;pointer-events:none}
 .detailPage .detailPrizeCard :global(.case-page-prize-image){border-radius:12px!important;background:radial-gradient(ellipse,rgba(149,110,194,.13),transparent 75%)!important}
 .detailPage .detailPrizeCard :global(.case-page-prize-copy) strong{color:#f7f3ff!important;font-weight:750!important;font-size:11px!important}
 .detailPage .detailPrizeCard :global(.case-page-prize-copy) span{color:#b9a7cc!important;font-size:10px!important}
@@ -1193,3 +1190,19 @@
  .detailPage .detailPrizeCard:global(.case-page-prize-card){min-height:132px!important;grid-template-rows:76px auto!important}
 }
 @media(prefers-reduced-motion:reduce){.detailHero *{animation-duration:.01ms!important}}
+
+/* Case information, without visually distracting badges on the rolling artwork.
+   The real odds remain available before opening as a small accessible disclosure. */
+.detailOdds{position:relative;z-index:4;min-width:0;margin:0;border:1px solid rgba(185,168,221,.19);border-radius:12px;background:rgba(12,13,26,.33);overflow:hidden}
+.detailOdds>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:39px;padding:8px 12px;font-size:11px;font-weight:750;letter-spacing:.01em;color:#c7bbda;cursor:pointer;list-style:none;-webkit-tap-highlight-color:transparent}
+.detailOdds>summary::-webkit-details-marker{display:none}
+.detailOdds>summary>span{font-size:20px;font-weight:400;color:#b9a6d7;transition:transform .2s ease}
+.detailOdds[open]>summary>span{transform:rotate(180deg)}
+.detailOdds>summary:focus-visible{outline:2px solid #d1b2f5;outline-offset:-3px;border-radius:12px}
+.detailOddsContent{padding:0 12px 12px;color:#b9adc9}
+.detailOddsContent p{margin:0 0 10px;font-size:11px;line-height:1.5}
+.detailOddsContent ul{display:grid;gap:0;margin:0;padding:0;list-style:none;max-height:280px;overflow:auto;overscroll-behavior:contain}
+.detailOddsContent li{display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0;padding:9px 0;border-top:1px solid rgba(203,184,234,.11);font-size:11px}
+.detailOddsContent li>span{min-width:0;overflow-wrap:anywhere}
+.detailOddsContent li>strong{flex:0 0 auto;color:#f0d7ff;font-size:12px;font-variant-numeric:tabular-nums}
+@media(max-width:430px){.detailOdds>summary{min-height:38px;padding:8px 10px}.detailOddsContent{padding:0 10px 10px}}

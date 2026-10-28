@@ -224,9 +224,6 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
               }}
             >
               <GiftMedia gift={gift} preferStatic />
-              {Number(gift?.real_chance ?? gift?.chance ?? 0) === 0 && (
-                <span className={caseOpeningStyles.previewOnly} aria-label="Yutish ehtimoli nol">0%</span>
-              )}
             </div>
           ))}
 
@@ -260,9 +257,6 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
               }}
             >
               <GiftMedia gift={gift} preferStatic />
-              {Number(gift?.real_chance ?? gift?.chance ?? 0) === 0 && (
-                <span className={caseOpeningStyles.previewOnly} aria-label="Yutish ehtimoli nol">0%</span>
-              )}
             </div>
           ))}
 
@@ -400,10 +394,22 @@ export default function CaseDetailPage({
           </div>
           <InlineRaffleRoller opening={inlineOpening} idleGifts={stripGifts}
             targetIndex={targetIndex} onRollComplete={onRollComplete} helpers={helpers}/>
-          <div className={caseOpeningStyles.detailReelCaption}>
-            <span>Giftlar kolleksiyasi</span><span>Yutish foizlari pastda</span>
-          </div>
         </div>
+
+        <details className={caseOpeningStyles.detailOdds}>
+          <summary>Yutish ehtimollarini ko‘rish <span aria-hidden="true">⌄</span></summary>
+          <div className={caseOpeningStyles.detailOddsContent}>
+            <p>Reel — animatsiya. Sovg‘aning yutilish ehtimoli quyidagicha:</p>
+            <ul>
+              {previewGifts.map((gift) => (
+                <li key={gift.id}>
+                  <span>{gift.title}</span>
+                  <strong>{visibleChance(gift)}%</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </details>
 
         <button type="button" className={`${caseOpeningStyles.openButton} ${caseOpeningStyles.detailOpen}`}
           disabled={busy || isSpinning || openableGifts.length === 0}
@@ -447,15 +453,12 @@ export default function CaseDetailPage({
             }}
           >
             <span className="prize-card-shine" aria-hidden="true" />
-            {Number(gift.real_chance ?? gift.chance ?? 0) === 0 && (
-              <span className={caseOpeningStyles.detailPrizePreviewBadge}>0% · PREVIEW</span>
-            )}
             <div className="case-page-prize-image">
               <GiftMedia gift={gift} compact animateOnEnter />
             </div>
             <div className="case-page-prize-copy">
               <strong>{gift.title}</strong>
-              <span>{visibleChance(gift)}% imkoniyat</span>
+              <span>{gift.type === 'balance' ? 'Stars mukofoti' : 'Collectible Gift'}</span>
             </div>
           </div>
         ))}
