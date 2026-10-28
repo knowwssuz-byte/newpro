@@ -16,7 +16,7 @@ function cleanText(value) {
 
 function normalizeRewardType(value) {
   const type = cleanText(value).toLowerCase();
-  return type === 'balance' ? 'balance' : 'gift';
+  return type === 'balance'||type==='xp' ? type : 'gift';
 }
 
 function visibleChance(value) {
@@ -42,6 +42,7 @@ function normalizeRarity(value, chance) {
 
 function defaultBackground(rarity, rewardType = 'gift') {
   if (rewardType === 'balance') return '#facc15';
+  if (rewardType === 'xp') return '#a78bfa';
   if (rarity === 'mythic') return '#e11d48';
   if (rarity === 'legendary') return '#f59e0b';
   if (rarity === 'epic') return '#8b5cf6';
@@ -78,10 +79,10 @@ function publicGift(gift) {
 function validateRewardInput({ rewardType, title, value, imageUrl }) {
   if (title.length < 2) return 'Sovg‘a nomini yozing';
 
-  if (rewardType === 'balance') {
+  if (rewardType === 'balance'||rewardType==='xp') {
     const amount = toNumber(value);
 
-    if (amount <= 0) return 'Balans reward uchun summa 0 dan katta bo‘lishi kerak';
+    if (!Number.isSafeInteger(amount)||amount<=0||amount>100000) return 'Stars yoki XP 1–100000 oralig‘ida bo‘lishi kerak';
 
     return null;
   }
@@ -161,11 +162,11 @@ export async function POST(request) {
           case_id: cleanCaseId,
           title: cleanTitle,
           type: rewardType,
-          value: rewardType === 'balance' ? String(toNumber(cleanValue)) : cleanValue || String(salePrice || ''),
+          value: rewardType !== 'gift' ? String(toNumber(cleanValue)) : cleanValue || String(salePrice || ''),
           chance: numericChance,
           real_chance: numericRealChance,
           stock: numericStock,
-          image_url: rewardType === 'gift' ? cleanImage : (sharedImage || cleanImage || null),
+          image_url: rewardType === 'gift' ? cleanImage : rewardType === 'xp' ? '/rewards/xp-orb.svg' : (sharedImage || cleanImage || null),
           animation_url: null,
           background_value: finalBackground,
           rarity: finalRarity,
@@ -220,7 +221,7 @@ export async function POST(request) {
       if (image_url !== undefined) {
         const submittedImage = cleanText(image_url);
         const commonImage = currentGift.type === 'balance' ? await getSharedStarsArtworkUrl(supabase) : '';
-        updates.image_url = currentGift.type === 'balance' ? (commonImage || submittedImage || null)
+        updates.image_url = currentGift.type === 'xp' ? '/rewards/xp-orb.svg' : currentGift.type === 'balance' ? (commonImage || submittedImage || null)
           : (submittedImage || null);
       }
       if (animation_url !== undefined) updates.animation_url = null;

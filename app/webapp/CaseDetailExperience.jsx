@@ -277,6 +277,7 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
   const modalRef = useRef(null);
   const gift = opening?.gift;
   const isStars = Boolean(gift && isBalanceReward(gift));
+  const isXp=gift?.type==='xp';
 
   // Modal accessibility: focus the close control and support Escape, without
   // altering document body scroll or introducing heavy animation libraries.
@@ -307,7 +308,7 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
       role="dialog" aria-modal="true" aria-labelledby="case-win-title"
       aria-describedby="case-win-description">
       <div className={caseOpeningStyles.resultPanel} ref={modalRef} tabIndex={-1}
-        data-rarity={rarity} data-reward-kind={isStars ? 'stars' : 'collectible'}>
+        data-rarity={rarity} data-reward-kind={isStars ? 'stars' : isXp ? 'xp' : 'collectible'}>
         <span className={caseOpeningStyles.resultAmbient} aria-hidden="true" />
         <span className={caseOpeningStyles.resultShimmer} aria-hidden="true" />
         <button type="button" className={caseOpeningStyles.resultClose}
@@ -340,7 +341,7 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
 
         <div className={caseOpeningStyles.resultCopy}>
           <span className={caseOpeningStyles.resultRarity}>
-            {isStars ? 'STARS REWARD' : rarity.toUpperCase()}
+            {isStars ? 'STARS REWARD' : isXp ? 'LEVEL XP' : rarity.toUpperCase()}
           </span>
           <strong id="case-win-title">{gift.title || 'Reward'}</strong>
           <p id="case-win-description">{isStars ? 'Balansingiz muvaffaqiyatli yangilandi' : rewardSubtitle(gift)}</p>
@@ -354,7 +355,7 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
               <path d="M4 10l4 4 8-8"/>
             </svg>
           </span>
-          {isStars ? 'Stars balansga qo‘shildi' : 'Mukofot qo‘lga kiritildi'}
+          {isStars ? 'Stars balansga qo‘shildi' : isXp ? 'XP hisobingizga qo‘shildi' : 'Mukofot qo‘lga kiritildi'}
         </div>
 
         <div className={caseOpeningStyles.winActions}>
@@ -362,13 +363,13 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
             onClick={onAgain}>Yana ochish
             <span aria-hidden="true">↗</span>
           </button>
-          {!isStars && (
+          {!isStars && !isXp && (
             <button type="button" className={caseOpeningStyles.winSell}
               onClick={() => onSell(opening)}>{sellButtonText(gift)}</button>
           )}
           <div className={caseOpeningStyles.resultActionRow}>
-            <button type="button" className={caseOpeningStyles.winSecondary}
-              onClick={onInventory}>Inventar</button>
+            {!isXp ? <button type="button" className={caseOpeningStyles.winSecondary}
+              onClick={onInventory}>Inventar</button> : null}
             <button type="button" className={caseOpeningStyles.winSecondary}
               onClick={onClose}>Yopish</button>
           </div>
@@ -510,7 +511,7 @@ export default function CaseDetailPage({
             </div>
             <div className="case-page-prize-copy">
               <strong>{gift.title}</strong>
-              <span>{gift.type === 'balance' ? 'Stars mukofoti' : 'Collectible Gift'}</span>
+              <span>{gift.type === 'balance' ? 'Stars mukofoti' : gift.type === 'xp' ? 'Level XP' : 'Collectible Gift'}</span>
             </div>
           </div>
         ))}
