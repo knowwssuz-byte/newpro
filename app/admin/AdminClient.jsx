@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { UpgradeGiftThumb } from '../webapp/UpgradeGiftThumb';
+import { prepareCaseArtwork } from '@/lib/caseImageAutoFitBrowser.mjs';
 import './admin-catalog.css';
 
 const emptyCaseForm = {
@@ -728,7 +729,7 @@ export default function AdminClient() {
     formData.append('accent_color', caseForm.accent_color);
     formData.append('card_style', caseForm.card_style);
     formData.append('is_active', String(caseForm.is_active !== false));
-    formData.append('image_file', caseFile);
+    formData.append('image_file', await prepareCaseArtwork(caseFile));
 
     const data = await run(() => callAdminForm(formData), 'Case qo‘shildi ✅');
 
@@ -747,7 +748,7 @@ export default function AdminClient() {
     const form = new FormData();
     form.append('action', 'case_replace_image');
     form.append('case_id', caseItem.id);
-    form.append('image_file', file);
+    form.append('image_file', await prepareCaseArtwork(file));
     const response = await run(() => callAdminForm(form), 'Case rasmi yangilandi ✅');
     if (response) applyBootstrap(response);
   }

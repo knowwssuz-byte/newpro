@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { normalizeCaseArtwork } from '@/lib/caseImageProcessing.mjs';
 import { syncOwnedTelegramGifts, syncAvailableTelegramGifts } from '@/lib/telegramGiftSync';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
@@ -401,13 +400,11 @@ async function uploadCaseImage(supabase, file, title = '') {
     throw new Error('Case rasmi 12 MB dan oshmasligi kerak.');
   }
 
-  let buffer;
-  try {
-    // Convert every upload to 1024x1024 without trimming the subject.
-    buffer = await normalizeCaseArtwork(Buffer.from(await file.arrayBuffer()));
-  } catch {
-    throw new Error('Rasmni moslashtirib bo‘lmadi. Boshqa PNG, JPG yoki SVG yuklang.');
-  }
+  // Native image processing is intentionally not used in this API:
+  // sharp/libvips cannot always load in the Vercel Node runtime.
+  // Browser uploads are normalized beforehand; original assets still render
+  // safely with CSS object-fit:contain if the client conversion is unavailable.
+  const buffer = Buffer.from(await file.arrayBuffer());
 
   const prefix = clean(title)
     .toLowerCase()
@@ -417,13 +414,13 @@ async function uploadCaseImage(supabase, file, title = '') {
 
   const uploaded = await uploadPublicAsset(supabase, {
     buffer,
-    contentType: 'image/png',
+    contentType: contentTypeFromExt(ext),
     folder: 'manual-cases/images',
-    ext: 'png',
+    ext,
     prefix,
   });
 
-  return { imageUrl: uploaded.publicUrl, imageType: 'png' };
+  return { imageUrl: uploaded.publicUrl, imageType: ext };
 }
 
 async function insertGiftWithOptionalColumns(supabase, row, optionalRow) {

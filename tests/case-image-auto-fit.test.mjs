@@ -1,23 +1,29 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import sharp from 'sharp';
-import { normalizeCaseArtwork } from '../lib/caseImageProcessing.mjs';
+import {readFileSync} from 'node:fs';
+import {prepareCaseArtwork} from '../lib/caseImageAutoFitBrowser.mjs';
 
-for (const dimensions of [
-  {width:1536,height:1024}, // wide generated art
-  {width:1024,height:1024}, // normal square art
-  {width:768,height:1200}, // phone portrait art
-]) {
-  test(`case artwork ${dimensions.width}x${dimensions.height} automatically becomes uncropped square PNG`, async () => {
-    const original = await sharp({
-      create: { ...dimensions, channels: 4, background: {r: 36, g: 71, b: 155, alpha: 1} }
-    }).png().toBuffer();
-    const normalized = await normalizeCaseArtwork(original);
-    const meta = await sharp(normalized).metadata();
-    assert.equal(meta.format, 'png');
-    assert.equal(meta.width, 1024);
-    assert.equal(meta.height, 1024);
-    const centerPixel = await sharp(normalized).extract({ left:512, top:512, width:1,height:1 }).raw().toBuffer();
-    assert.deepEqual([...centerPixel].slice(0,3), [36,71,155]);
-  });
-}
+const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+
+test('Vercel admin route never imports sharp native binaries', () => {
+  const route = read('app/api/browser-admin/route.js');
+  assert.doesNotMatch(route, /import\s+.*normalizeCaseArtwork/);
+  assert.doesNotMatch(route, /from ['"]sharp['"]/);
+  assert.match(route, /const buffer = Buffer\.from\(await file\.arrayBuffer\(\)\)/);
+  assert.match(route, /contentType: contentTypeFromExt\(ext\)/);
+});
+
+test('case upload and replacement both auto-normalize in browser', () => {
+  const admin = read('app/admin/AdminClient.jsx');
+  assert.match(admin, /prepareCaseArtwork\(caseFile\)/);
+  assert.match(admin, /prepareCaseArtwork\(file\)/);
+  const helper = read('lib/caseImageAutoFitBrowser.mjs');
+  assert.match(helper, /Math\.min\(\(size - pad \* 2\)/);
+  assert.match(helper, /canvas\.toBlob\(resolve, 'image\/png'\)/);
+  assert.match(helper, /const size = 1024/);
+});
+
+test('browser helper falls back cleanly when browser APIs are unavailable', async () => {
+  const file = { name: 'safe.png', size: 5 };
+  assert.strictEqual(await prepareCaseArtwork(file), file);
+});
