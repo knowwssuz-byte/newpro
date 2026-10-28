@@ -70,3 +70,10 @@
 /* Gift inventory copy maintains a readable visual rhythm. */
 .section{font-family:var(--font-ui)}
 .heading h2,.heading h3,.cardTitle strong{font-family:var(--font-display);letter-spacing:-.025em}
+
+/* Pending shortcut is distinct from owned inventory copies. */
+.headingActions{display:flex;align-items:center;gap:8px;min-width:0}
+.pendingLink{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:39px;padding:7px 9px;border:1px solid rgba(225,180,99,.26);border-radius:12px;background:rgba(199,136,55,.11);color:#f3d4a3;font-family:inherit;font-size:11px;font-weight:790;white-space:nowrap;cursor:pointer}
+.pendingLink span{display:grid;place-items:center;min-width:21px;height:21px;border-radius:7px;background:rgba(244,195,111,.16);font-variant-numeric:tabular-nums}
+.pendingLink:focus-visible{outline:2px solid #f3d4a3;outline-offset:2px}
+@media(max-width:360px){.headingActions{gap:5px}.pendingLink{padding:6px;font-size:10px}.counter{min-width:39px;padding:0 7px}}

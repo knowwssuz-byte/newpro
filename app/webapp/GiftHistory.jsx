@@ -5,7 +5,7 @@ import { getGiftActivity } from '@/lib/inventory.mjs';
 import styles from './GiftHistory.module.css';
 
 const STATUS = {
-  pending: { name: 'Jarayonda', Icon: Clock3, className: 'pending' },
+  pending: { name: 'Pending', Icon: Clock3, className: 'pending' },
   approved: { name: 'Tasdiqlandi', Icon: CheckCircle2, className: 'completed' },
   rejected: { name: 'Rad etildi', Icon: XCircle, className: 'rejected' },
   sold: { name: 'Sotilgan', Icon: CheckCircle2, className: 'completed' },
@@ -34,11 +34,11 @@ export default function GiftHistory({ history = [], gifts = [], withdrawals = []
       </div>
       <div className={styles.summary}>
         <span className={styles.summaryGlyph}><HistoryIcon size={25}/></span>
-        <div><strong>Har bir sovg‘a nazoratda</strong><p>Yechish so‘rovlari, tasdiqlangan o‘tkazmalar va sotuvlar</p></div>
+        <div><strong>Har bir sovg‘a nazoratda</strong><p>Pending yechish so‘rovlari, tasdiqlangan va rad etilgan amallar</p></div>
       </div>
       <div className={styles.tabs} role="tablist" aria-label="Gift holatlari">
         <button role="tab" type="button" aria-selected={mode === 'pending'} className={mode === 'pending' ? styles.selected : ''} onClick={() => setMode('pending')}>
-          Jarayonda <b>{pending.length}</b>
+          Pending <b>{pending.length}</b>
         </button>
         <button role="tab" type="button" aria-selected={mode === 'completed'} className={mode === 'completed' ? styles.selected : ''} onClick={() => setMode('completed')}>
           Yakunlangan <b>{done.length}</b>
@@ -56,7 +56,7 @@ export default function GiftHistory({ history = [], gifts = [], withdrawals = []
                 </div>
                 <div className={styles.details}>
                   <strong title={row.gift?.title || ''}>{row.gift?.title || 'Gift'}</strong>
-                  <span>{row.kind === 'upgrade' ? 'Upgrade urinishida sarflangan' : row.kind === 'sale' ? 'Sotuv' : 'Gift o‘tkazish'}</span>
+                  <span>{row.kind === 'upgrade' ? 'Upgrade urinishida sarflangan' : row.kind === 'sale' ? 'Sotuv' : 'Yechish so‘rovi'}</span>
                   <small>{timeText(row.date)}</small>
                   {row.note ? <p>{row.note}</p> : null}
                 </div>
@@ -68,8 +68,8 @@ export default function GiftHistory({ history = [], gifts = [], withdrawals = []
             );
           })}
         </div>
-      ) : <div className={styles.empty}><HistoryIcon size={32}/><strong>{mode==='pending'?'Hozircha jarayondagi sovg‘a yo‘q':'Yakunlangan jarayonlar yo‘q'}</strong><p>So‘rov holati o‘zgarganda shu yerda ko‘rinadi.</p></div>}
-      <div className={styles.notice}>Rad etilgan o‘tkazish so‘rovidan keyin sovg‘a Inventory bo‘limiga qaytadi. Ma’lumotlar serverdan olinadi.</div>
+      ) : <div className={styles.empty}><HistoryIcon size={32}/><strong>{mode==='pending'?'Hozircha Pending so‘rov yo‘q':'Yakunlangan jarayonlar yo‘q'}</strong><p>So‘rov holati o‘zgarganda shu yerda ko‘rinadi.</p></div>}
+      <div className={styles.notice}>Rad etilgan yechish so‘rovidan keyin sovg‘a Inventory bo‘limiga qaytadi. Ma’lumotlar serverdan olinadi.</div>
     </section>
   );
 }

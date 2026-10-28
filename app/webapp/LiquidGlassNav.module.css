@@ -368,3 +368,7 @@
 .item .icon{width:24px!important;height:24px!important;min-width:24px!important;object-fit:contain!important;filter:drop-shadow(0 2px 3px rgba(72,65,128,.17))}
 .item.active .icon{filter:drop-shadow(0 2px 7px rgba(169,138,255,.32))}
 @media(max-width:370px){.item .icon{width:22px!important;height:22px!important;min-width:22px!important}}
+/* One-time red NEW marker for Referral, scoped to the nav icon only. */
+.iconWrap{position:relative;overflow:visible}
+.newBadge{position:absolute;z-index:8;top:-9px;right:-17px;display:grid;place-items:center;min-width:27px;height:15px;padding:0 4px;border:1px solid rgba(255,219,225,.66);border-radius:999px;background:linear-gradient(130deg,#ff4e5e,#d91d38);color:#fff;box-shadow:0 2px 8px rgba(215,31,65,.3);font-family:inherit;font-size:8px;font-weight:900;letter-spacing:.025em;line-height:1;pointer-events:none}
+@media(max-width:350px){.newBadge{top:-8px;right:-14px;min-width:24px;height:14px;font-size:7px;padding:0 3px}}

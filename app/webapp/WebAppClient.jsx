@@ -416,6 +416,7 @@ export default function WebAppClient() {
   const [inventoryGifts, setInventoryGifts] = useState([]);
   const [history, setHistory] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [referralNew, setReferralNew] = useState(true);
   const [upgradeRounds, setUpgradeRounds] = useState([]);
   const [upgradeCatalog, setUpgradeCatalog] = useState([]);
   const [featureSettings, setFeatureSettings] = useState({});
@@ -441,6 +442,7 @@ export default function WebAppClient() {
   const hasBootstrappedRef = useRef(false);
   const tourOpenedRef = useRef(false);
   const referralTrackedRef = useRef(false);
+  const historyReturnTabRef = useRef('home');
   const mountedRef = useRef(false);
 
   useEffect(() => {
@@ -464,6 +466,16 @@ export default function WebAppClient() {
   }, [uiSettings, settingsLoaded]);
 
   const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  // The red NEW badge only appears until the user first visits Referral.
+  useEffect(() => {
+    try { setReferralNew(window.localStorage.getItem('myst-referral-new-v1') !== 'seen'); }
+    catch { setReferralNew(true); }
+  }, []);
+  const markReferralSeen = useCallback(() => {
+    setReferralNew(false);
+    try { window.localStorage.setItem('myst-referral-new-v1', 'seen'); } catch {}
+  }, []);
+
   const giftsByCase = useMemo(() => groupGiftsByCase(gifts), [gifts]);
   const activeCases = useMemo(() => sortCasesForDisplay(cases.filter((item) => item.is_active !== false)), [cases]);
 
@@ -982,10 +994,11 @@ export default function WebAppClient() {
   async function createWithdraw(historyId) {
     const result = await runAction(
       () => apiPost('/api/withdraw', { historyId }),
-      'O‘tkazish so‘rovi yuborildi ✅'
+      'Yechish so‘rovi adminga yuborildi. Pending’da kuzatishingiz mumkin ✅'
     );
     if (!result) return null;
     if (result.request) {
+      // Update the client immediately: getInventoryRows removes pending copies.
       setWithdrawals((current) => [result.request, ...current.filter((request) => request.id !== result.request.id)]);
     }
     await loadApp({ silent: true });
@@ -1376,7 +1389,7 @@ export default function WebAppClient() {
             onClose={closeSettings}
             settings={uiSettings}
             onChange={setUiSettings}
-            onHistory={() => { setSettingsOpen(false); setOpening(null); setSelectedCase(null); setTab('history'); window.scrollTo({top:0,behavior:'auto'}); }}
+            onHistory={() => { historyReturnTabRef.current = 'home'; setSettingsOpen(false); setOpening(null); setSelectedCase(null); setTab('history'); window.scrollTo({top:0,behavior:'auto'}); }}
             telegramUser={telegramUser}
             profile={profile}
             onRefresh={async () => {
@@ -1476,7 +1489,7 @@ export default function WebAppClient() {
                 />
               ) : null}
 
-              {tab === 'history' ? <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab('home')} onRefresh={() => loadApp({silent:true})}/> : null}
+              {tab === 'history' ? <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
               {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
               {tab === 'pvp' ? <PvpHub onBack={closePvpHub} /> : null}
 
@@ -1524,6 +1537,11 @@ export default function WebAppClient() {
                   busy={busy}
                   onSell={sellInventoryReward}
                   onWithdraw={createWithdraw}
+                  onPending={() => {
+                    historyReturnTabRef.current = 'inventory';
+                    setTab('history');
+                    window.scrollTo({top:0,left:0,behavior:'auto'});
+                  }}
                 />
               ) : null}
 
@@ -1591,9 +1609,11 @@ export default function WebAppClient() {
                   item={item}
                   active={!selectedCase && tab === item.id}
                   disabled={isCaseOpening || rocketRoundActive || diceRoundActive}
+                  showNew={item.id === 'referral' && referralNew}
                   onClick={() => {
                     if (isCaseOpening || rocketRoundActive || diceRoundActive) return;
                     playNavFeedback(tg);
+                    if (item.id === 'referral') markReferralSeen();
                     setOpening(null);
                     setSelectedCase(null);
                     setTab(item.id);
@@ -1689,7 +1709,7 @@ function GlobalBalanceBar({
   );
 }
 
-function NavButton({ item, active, onClick, mobile = false, disabled = false }) {
+function NavButton({ item, active, onClick, mobile = false, disabled = false, showNew = false }) {
   const preventIconMenu = (event) => {
     event.preventDefault();
     return false;
@@ -1727,6 +1747,11 @@ function NavButton({ item, active, onClick, mobile = false, disabled = false }) 
           <Image className={iconClassName} src={item.image} alt="" width={32} height={32}
             priority unoptimized draggable={false} aria-hidden="true" />
         ) : <AppIcon name={item.icon} />}
+        {showNew ? (
+          <span className={mobile ? liquidNavStyles.newBadge : 'nav-new-badge'} aria-label="Yangi bo‘lim">
+            NEW
+          </span>
+        ) : null}
       </span>
       <strong className={labelClassName}>{item.label}</strong>
       {item.center ? <em className={homeDotClassName} /> : null}
@@ -2312,12 +2337,16 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   );
 }
 
-function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWithdraw }) {
+function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending }) {
   const [dialog, setDialog] = useState(null);
   const [visibleCount, setVisibleCount] = useState(24);
   const rows = useMemo(
     () => getInventoryRows(history, gifts, cases, withdrawals),
     [history, gifts, cases, withdrawals]
+  );
+  const pendingCount = useMemo(
+    () => withdrawals.filter((request) => String(request.status || '').toLowerCase() === 'pending').length,
+    [withdrawals]
   );
 
   useEffect(() => {
@@ -2345,9 +2374,15 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
           <h1>Inventory</h1>
           <p>Yutgan Telegram giftlaringiz shu yerda saqlanadi.</p>
         </div>
-        <span className={inventoryStyles.counter} aria-label={'Inventarda ' + rows.length + ' ta gift'}>
-          {rows.length}
-        </span>
+        <div className={inventoryStyles.headingActions}>
+          <button type="button" className={inventoryStyles.pendingLink}
+            onClick={onPending} aria-label={'Pending so‘rovlar: ' + pendingCount}>
+            Pending <span>{pendingCount}</span>
+          </button>
+          <span className={inventoryStyles.counter} aria-label={'Inventarda ' + rows.length + ' ta gift'}>
+            {rows.length}
+          </span>
+        </div>
       </div>
 
       {rows.length === 0 ? (
@@ -2362,16 +2397,12 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
           {rows.slice(0, visibleCount).map(({ item, gift, caseItem, request }, index) => {
             const price = giftSellPrice(gift);
             const requested = Boolean(request);
-            const requestStatus = String(request?.status || '');
-            const statusText = !requested ? 'INVENTORY'
-              : requestStatus === 'approved' ? 'TASDIQLANGAN'
-              : requestStatus === 'rejected' ? 'RAD ETILGAN' : 'SO‘ROV YUBORILGAN';
             return (
               <article className={inventoryStyles.card} key={item.id}>
                 <div className={inventoryStyles.artwork}>
-                  <span className={inventoryStyles.state + (requested ? ' ' + inventoryStyles.statePending : '')}>
-                    {statusText}
-                  </span>
+                  {request?.status === 'rejected' ? (
+                    <span className={inventoryStyles.state}>Qaytarildi</span>
+                  ) : null}
                   <GiftMedia gift={gift} animateOnEnter={index < 24} viewportLazy />
                 </div>
                 <div className={inventoryStyles.cardBody}>
@@ -2388,7 +2419,7 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
                     type="button"
                     className={inventoryStyles.action + ' ' + inventoryStyles.sell}
                     disabled={busy || requested || price <= 0}
-                    title={requested ? 'Bu gift bo‘yicha o‘tkazish so‘rovi bor' : price <= 0 ? 'Narx belgilanmagan' : 'Giftni Starsga sotish'}
+                    title={requested ? 'Bu gift bo‘yicha yechish so‘rovi bor' : price <= 0 ? 'Narx belgilanmagan' : 'Giftni Starsga sotish'}
                     onClick={() => setDialog({ kind: 'sell', item, gift, price })}
                   >
                     <AppIcon name="gift" /> Sotish
@@ -2397,10 +2428,10 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
                     type="button"
                     className={inventoryStyles.action + ' ' + inventoryStyles.transfer}
                     disabled={busy || requested}
-                    title={requested ? 'O‘tkazish so‘rovi ko‘rib chiqilmoqda' : 'Admin orqali giftni o‘tkazish'}
-                    onClick={() => setDialog({ kind: 'transfer', item, gift, price })}
+                    title={requested ? 'Yechish so‘rovi ko‘rib chiqilmoqda' : 'Giftni admin orqali yechish'}
+                    onClick={() => setDialog({ kind: 'withdraw', item, gift, price })}
                   >
-                    <AppIcon name="withdraw" /> {requested ? 'So‘rov bor' : 'O‘tkazish'}
+                    <AppIcon name="withdraw" /> {requested ? 'Pending' : 'Yechish'}
                   </button>
                 </div>
               </article>
@@ -2423,16 +2454,16 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
         <div className={inventoryStyles.dialogOverlay}>
           <div className={inventoryStyles.dialog} role="dialog" aria-modal="true" aria-labelledby="inventory-confirm-title" aria-describedby="inventory-confirm-details">
             <span className={inventoryStyles.dialogTag}>
-              {dialog.kind === 'sell' ? 'Gift savdosi' : 'Gift o‘tkazish'}
+              {dialog.kind === 'sell' ? 'Gift savdosi' : 'GIFT YECHISH'}
             </span>
             <h2 id="inventory-confirm-title">
-              {dialog.kind === 'sell' ? 'Giftni sotishni tasdiqlang' : 'O‘tkazish so‘rovi'}
+              {dialog.kind === 'sell' ? 'Giftni sotishni tasdiqlang' : 'Ishonchingiz komilmi?'}
             </h2>
             <p id="inventory-confirm-details">
               <strong>{dialog.gift?.title || 'Gift'}</strong>
               {dialog.kind === 'sell'
                 ? ' sotiladi va tasdiqlangach inventardan olib tashlanadi. Stars balansingizga qo‘shiladi.'
-                : ' uchun admin panelga o‘tkazish so‘rovi yuboriladi. Bu avtomatik Telegram transferi emas.'}
+                : ' uchun yechish so‘rovi admin paneliga yuboriladi. Sovg‘a Inventory’dan olinib, Pending bo‘limida ko‘rinadi.'}
             </p>
             {dialog.kind === 'sell' ? (
               <div className={inventoryStyles.dialogAmount}>
@@ -2443,12 +2474,12 @@ function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWit
             <small className={inventoryStyles.dialogNote}>
               {dialog.kind === 'sell'
                 ? 'Yakuniy sotish narxini server tekshiradi. Sotish amalga oshgach uni qaytarib bo‘lmaydi.'
-                : 'Admin so‘rovni tekshiradi. Tasdiqlash Telegramda yuborilganini anglatmaydi.'}
+                : 'Bu Telegram’ga avtomatik sovg‘a yuborish emas. Admin tekshiradi va tasdiqlaydi yoki rad etadi. Rad etilsa sovg‘a Inventory’ga qaytadi.'}
             </small>
             <div className={inventoryStyles.dialogActions}>
               <button type="button" className={inventoryStyles.cancel} disabled={busy} onClick={() => setDialog(null)}>Bekor qilish</button>
               <button type="button" className={inventoryStyles.confirm} disabled={busy} onClick={confirmAction}>
-                {busy ? 'Bajarilmoqda...' : dialog.kind === 'sell' ? 'Ha, sotish' : 'So‘rov yuborish'}
+                {busy ? 'Bajarilmoqda...' : dialog.kind === 'sell' ? 'Ha, sotish' : 'Ha, yechish'}
               </button>
             </div>
           </div>
