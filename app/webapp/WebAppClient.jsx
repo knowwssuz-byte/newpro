@@ -18,6 +18,7 @@ import { prepareFirstView, warmNearViewport, preloadDecodedImage } from '@/lib/m
 import DiceGame, { DiceLobbyCard } from './DiceGame';
 import PvpHub, { PvpEntryCard } from './PvpHub';
 import StarIcon from './StarIcon';
+import LevelRing from './LevelRing';
 import SettingsPanel from './SettingsPanel';
 import settingsStyles from './SettingsPanel.module.css';
 import inventoryStyles from './Inventory.module.css';
@@ -61,7 +62,7 @@ const emptyGiftForm = {
   value: '',
   chance: '10',
   real_chance: '10',
-  stock: '999',
+  stock: '10000',
   rarity: 'rare',
   image_url: '',
   animation_url: '',
@@ -145,7 +146,7 @@ function solidGiftBackground(value, fallback = '#2d3340') {
 }
 
 function rewardType(gift) {
-  return String(gift?.type || '').toLowerCase() === 'balance' ? 'balance' : 'gift';
+  const t=String(gift?.type||'').toLowerCase();return t==='balance'||t==='xp'?t:'gift';
 }
 
 function isBalanceReward(gift) {
@@ -158,11 +159,12 @@ function rewardValue(gift) {
 
 function rewardSubtitle(gift) {
   if (isBalanceReward(gift)) return `Balansga +${money(rewardValue(gift))} Stars qo‘shildi`;
+  if(rewardType(gift)==='xp')return `Level uchun +${money(rewardValue(gift))} XP qo‘shildi`;
   return gift?.value ? String(gift.value) : 'Gift reward';
 }
 
 function giftSellPrice(gift) {
-  if (!gift || isBalanceReward(gift)) return 0;
+  if (!gift || isBalanceReward(gift) || rewardType(gift)==='xp') return 0;
 
   const rawValue = gift.sell_price ?? gift.buy_price ?? gift.floor_price ?? 0;
   const number = Number(rawValue);
@@ -833,6 +835,7 @@ export default function WebAppClient() {
           ? {
               ...current,
               balance: completed.balanceAfter ?? completed.balance,
+              level_xp: completed.userXp ?? current.level_xp,
             }
           : current
       );
@@ -1124,7 +1127,7 @@ export default function WebAppClient() {
       const chanceNumber = Number(giftForm.chance);
       const stockNumber = Math.floor(Number(giftForm.stock));
       const cleanTitle = String(giftForm.title || '').trim();
-      const currentRewardType = giftForm.type === 'balance' ? 'balance' : 'gift';
+      const currentRewardType = ['balance','xp'].includes(giftForm.type) ? giftForm.type : 'gift';
       const balanceAmount = Number(giftForm.value || 0);
 
       if (!giftForm.case_id) throw new Error("Avval sovg'a qaysi casega qo'shilishini tanlang.");
@@ -1136,9 +1139,9 @@ export default function WebAppClient() {
         throw new Error("Stock kamida 1 bo'lishi kerak.");
       }
 
-      if (currentRewardType === 'balance') {
+      if (currentRewardType === 'balance' || currentRewardType === 'xp') {
         if (!Number.isFinite(balanceAmount) || balanceAmount <= 0) {
-          throw new Error('Balans reward uchun summa 0 dan katta bo‘lishi kerak.');
+          throw new Error('Stars yoki XP miqdori 0 dan katta bo‘lishi kerak.');
         }
       } else if (!giftImageFile && !giftForm.image_url) {
         throw new Error("Gift reward uchun sovg'a rasmi majburiy.");
@@ -1153,7 +1156,7 @@ export default function WebAppClient() {
         ...giftForm,
         type: currentRewardType,
         title: cleanTitle,
-        value: currentRewardType === 'balance' ? String(balanceAmount) : giftForm.value,
+        value: currentRewardType !== 'gift' ? String(balanceAmount) : giftForm.value,
         chance: chanceNumber,
         real_chance: Number(giftForm.real_chance ?? giftForm.chance ?? 0),
         stock: stockNumber,
@@ -1656,7 +1659,8 @@ function GlobalBalanceBar({
 
         <div className="home-user-zone">
           <div className="home-avatar-wrap">
-            <div className={`home-avatar ${avatarUrl ? 'has-photo' : ''}`}>
+            <LevelRing xp={profile?.level_xp || 0} compact>
+              <div className={`home-avatar ${avatarUrl ? 'has-photo' : ''}`}>
               {avatarUrl ? (
                 <Image
                   src={avatarUrl}
@@ -1671,7 +1675,8 @@ function GlobalBalanceBar({
               ) : (
                 telegramUser?.first_name?.[0] || 'U'
               )}
-            </div>
+              </div>
+            </LevelRing>
           </div>
 
           <button type="button" className={settingsStyles.gear} onClick={onSettings} aria-label="Sozlamalarni ochish" title="Sozlamalar">
@@ -2272,6 +2277,8 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
     );
   }
 
+  if(rewardType(gift)==='xp')return <img className={`${mediaClass} gift-media-visual xp-reward-art`}
+    src="/rewards/xp-orb.svg" alt={`+${rewardValue(gift)} XP`} loading="lazy" draggable={false}/>;
   if (isBalanceReward(gift)) {
     const starsImage = gift.image_url || gift.png_url || gift.webp_url || '';
     if (starsImage && brokenImageUrl !== starsImage) {
@@ -3183,9 +3190,9 @@ function ProfileView({
   return (
     <section className="screen-stack">
       <div className="profile-card premium-card">
-        <div className="home-avatar">
-          {telegramUser?.first_name?.[0] || 'U'}
-        </div>
+        <LevelRing xp={profile?.level_xp || 0}>
+          <div className="home-avatar">{telegramUser?.first_name?.[0] || 'U'}</div>
+        </LevelRing>
         <div>
           <h1>{telegramUser?.first_name || 'Telegram user'}</h1>
           <p>{telegramUser?.username ? `@${telegramUser.username}` : 'Telegram account'}</p>
@@ -3339,7 +3346,8 @@ function AdminPanel({
               <span>Type</span>
               <select value={giftForm.type} onChange={(event) => setGiftForm({ ...giftForm, type: event.target.value })}>
                 <option value="gift">Gift</option>
-                <option value="balance">Balance</option>
+                <option value="balance">Stars</option>
+                <option value="xp">Level XP</option>
               </select>
             </label>
             <label className="field">
