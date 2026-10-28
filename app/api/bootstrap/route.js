@@ -142,6 +142,7 @@ export async function POST(request) {
       featureSettings,
     });
   } catch (error) {
-    return jsonError(error.message || 'Server xatosi', 500);
+    console.error('[bootstrap]',String(error?.code||'ERROR').slice(0,45));
+    return jsonError('Ma’lumotlarni yuklab bo‘lmadi', 500);
   }
 }

@@ -73,6 +73,12 @@ function getBearer(request) {
   return value.slice(7).trim();
 }
 
+function sameAdminSecret(given,expected){
+ if(!given || !expected)return false;
+ const a=crypto.createHash('sha256').update(String(given)).digest();
+ const b=crypto.createHash('sha256').update(String(expected)).digest();
+ return crypto.timingSafeEqual(a,b);
+}
 function assertAdmin(request, body) {
   const expected = process.env.ADMIN_PANEL_KEY?.trim();
 
@@ -82,7 +88,7 @@ function assertAdmin(request, body) {
 
   const provided = getBearer(request) || body.get?.('adminKey') || body.adminKey || '';
 
-  if (!provided || provided !== expected) {
+  if (!sameAdminSecret(provided,expected)) {
     throw new Error('Admin kalit noto‘g‘ri.');
   }
 }

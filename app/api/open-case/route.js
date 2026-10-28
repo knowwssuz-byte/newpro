@@ -114,7 +114,8 @@ function mapRpcError(error) {
     };
   }
 
-  return { message, status: 500 };
+  console.error('[case:open]',String(error?.code||'DB_ERROR').slice(0,40));
+  return { message: 'Case ochishda server xatosi. Qayta urinib ko‘ring.', status: 500 };
 }
 
 function disclosedPool(gifts) {
@@ -364,6 +365,7 @@ export async function POST(request) {
       return jsonError(mapped.message, mapped.status);
     }
   } catch (error) {
-    return jsonError(error.message || 'Server xatosi', 500);
+    console.error('[case:open:unexpected]',String(error?.code||'ERROR').slice(0,50));
+    return jsonError('Case ochishda server xatosi', 500);
   }
 }

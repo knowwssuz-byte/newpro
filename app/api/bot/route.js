@@ -1,4 +1,5 @@
 import { handleTelegramUpdate } from '@/lib/telegramBot';
+import crypto from 'node:crypto';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -25,7 +26,9 @@ export async function POST(request) {
     return json({ ok: false, error: 'Webhook sozlanmagan' }, 503);
   }
   const incomingSecret = request.headers.get('x-telegram-bot-api-secret-token') || '';
-  if (incomingSecret !== expectedSecret) {
+  const a=crypto.createHash('sha256').update(incomingSecret).digest();
+  const b=crypto.createHash('sha256').update(expectedSecret).digest();
+  if (!incomingSecret || !crypto.timingSafeEqual(a,b)) {
     return json({ ok: false, error: 'Webhook secret noto‘g‘ri' }, 401);
   }
 

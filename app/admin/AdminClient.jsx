@@ -492,7 +492,8 @@ export default function AdminClient() {
   }, [giftForm.library_gift_id, giftLibrary]);
 
   useEffect(() => {
-    const key = window.localStorage.getItem('gift_myst_admin_key') || '';
+    window.localStorage.removeItem('gift_myst_admin_key');
+    const key = window.sessionStorage.getItem('gift_myst_admin_key') || '';
     if (key) {
       setAdminKey(key);
       setSaved(true);
@@ -793,12 +794,13 @@ export default function AdminClient() {
     const data = await run(() => callAdmin('bootstrap', {}, cleanKey), 'Admin panel ochildi ✅');
     if (!data) return;
 
-    window.localStorage.setItem('gift_myst_admin_key', cleanKey);
+    window.sessionStorage.setItem('gift_myst_admin_key', cleanKey);
     setSaved(true);
     applyBootstrap(data);
   }
 
   function logout() {
+    window.sessionStorage.removeItem('gift_myst_admin_key');
     window.localStorage.removeItem('gift_myst_admin_key');
     setSaved(false);
     setAdminKey('');
