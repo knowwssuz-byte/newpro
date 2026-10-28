@@ -19,3 +19,112 @@
 .admin-upgrade-library-item input{width:100%;box-sizing:border-box}
 .admin-upgrade-library-item button{min-height:40px}
 @media(max-width:520px){.admin-gift-selector-grid,.admin-upgrade-library-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.admin-gift-choice{padding:6px}.admin-upgrade-library-item{padding:8px}}
+
+/* Image-first gift cards: override legacy .browser-admin-form button !important rules. */
+.browser-admin-form .admin-gift-selector-grid > button.admin-gift-choice {
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:7px !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:auto !important;
+  min-height:180px !important;
+  padding:10px 8px !important;
+  border:1px solid rgba(197,169,248,.28) !important;
+  border-radius:15px !important;
+  background:linear-gradient(155deg,#272337,#15131f) !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.055) !important;
+  color:#f9f7ff !important;
+  white-space:normal !important;
+  overflow:visible !important;
+}
+.browser-admin-form .admin-gift-selector-grid > button.admin-gift-choice.is-selected {
+  border:2px solid #d9b4ff !important;
+  background:linear-gradient(155deg,#3a294b,#201827) !important;
+  box-shadow:0 0 0 2px rgba(180,127,253,.19),inset 0 1px rgba(255,255,255,.08) !important;
+}
+.browser-admin-form .admin-gift-selector-grid > button.admin-gift-choice:hover,
+.browser-admin-form .admin-gift-selector-grid > button.admin-gift-choice:focus-visible {
+  border-color:#e4c7ff !important;
+}
+.browser-admin-form .admin-gift-selector-grid .admin-gift-choice-art {
+  display:grid !important;
+  flex:0 0 110px !important;
+  place-items:center !important;
+  width:100% !important;
+  min-width:0 !important;
+  height:110px !important;
+  min-height:110px !important;
+  border-radius:12px !important;
+  overflow:hidden !important;
+  background:radial-gradient(circle at 50% 40%,rgba(136,102,192,.18),transparent 76%) !important;
+}
+.browser-admin-form .admin-gift-selector-grid > button.admin-gift-choice strong {
+  display:-webkit-box !important;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  overflow:hidden !important;
+  max-width:100% !important;
+  font-size:11.5px !important;
+  line-height:1.35 !important;
+  font-weight:800 !important;
+  text-align:center !important;
+  overflow-wrap:anywhere !important;
+}
+.browser-admin-form .admin-gift-selector-grid > button.admin-gift-choice small {
+  color:#e5ca8e !important;
+  font-size:11px !important;
+  line-height:1.3 !important;
+}
+.admin-gift-choice-art > .admin-static-preview,
+.admin-upgrade-library-item .admin-gift-choice-art > .admin-static-preview,
+.manual-library-media > .admin-static-preview,
+.manual-selected-preview > .admin-static-preview {
+  display:grid !important;
+  place-items:center !important;
+  flex:none !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  background:transparent !important;
+  border:0 !important;
+  border-radius:inherit !important;
+}
+.admin-static-preview > .admin-static-preview-inner {
+  display:grid !important;
+  place-items:center !important;
+  width:100% !important;
+  height:100% !important;
+  min-width:0 !important;
+  min-height:0 !important;
+}
+.admin-static-preview-inner img {
+  display:block !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:100% !important;
+  max-height:100% !important;
+  object-fit:contain !important;
+}
+.admin-static-placeholder {
+  display:grid !important;
+  place-items:center !important;
+  width:100%;
+  height:100%;
+  opacity:.45;
+  font-size:26px;
+}
+.admin-upgrade-library-item .admin-gift-choice-art {
+  display:grid !important;
+  place-items:center !important;
+  height:116px !important;
+  flex:0 0 116px;
+}
+@media(max-width:520px){
+  .browser-admin-form .admin-gift-selector-grid > button.admin-gift-choice {min-height:166px !important;padding:8px 6px !important;}
+  .browser-admin-form .admin-gift-selector-grid .admin-gift-choice-art {height:99px !important;min-height:99px !important;flex-basis:99px !important;}
+}

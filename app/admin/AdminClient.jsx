@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { UpgradeGiftThumb } from '../webapp/UpgradeGiftThumb';
 import './admin-catalog.css';
 
 const emptyCaseForm = {
@@ -206,7 +207,7 @@ function GiftImage({ gift, className = 'admin-gift-media' }) {
   const animationUrl = gift?.animation_url || '';
 
   if (!url && animationUrl) {
-    return <AdminLottie src={animationUrl} className={className} />;
+    return <GiftStaticPreview gift={gift} className={className} />;
   }
 
   if (!url) {
@@ -214,6 +215,44 @@ function GiftImage({ gift, className = 'admin-gift-media' }) {
   }
 
   return <img className={className} src={url} alt="" loading="lazy" draggable="false" />;
+}
+
+/**
+ * The library stores Telegram NFT artwork as .tgs (gzip Lottie), not as PNG.
+ * Render a real first-frame SVG preview, only when scrolled into view.
+ * Keeping this lazy prevents 90 simultaneous Lottie renders from blocking phones.
+ */
+function GiftStaticPreview({ gift, className }) {
+  const containerRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    setVisible(false);
+    const node = containerRef.current;
+    if (!node) return undefined;
+    if (typeof IntersectionObserver === 'undefined') {
+      setVisible(true);
+      return undefined;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) {
+        setVisible(true);
+        observer.disconnect();
+      }
+    }, { rootMargin: '180px 0px' });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [gift?.id, gift?.animation_url]);
+
+  return (
+    <span ref={containerRef} className={`${className} admin-static-preview`}>
+      {visible ? (
+        <UpgradeGiftThumb item={gift} className="admin-static-preview-inner" alt="" />
+      ) : (
+        <span className="admin-static-placeholder" aria-hidden="true">🎁</span>
+      )}
+    </span>
+  );
 }
 
 function AdminLottie({ src, className }) {
