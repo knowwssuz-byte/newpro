@@ -25,6 +25,8 @@ const emptyLibraryForm = {
 
 const emptyGiftForm = {
   case_id: '',
+  reward_kind: 'gift',
+  stars_amount: '50',
   library_gift_id: '',
   title: '',
   price: '',
@@ -960,18 +962,33 @@ export default function AdminClient() {
 
   async function createGiftFromLibrary(event) {
     event.preventDefault();
+    const isStars = giftForm.reward_kind === 'stars';
+    const chance = Number(giftForm.chance);
+    const actual = Number(giftForm.real_chance);
+    const stock = Number(giftForm.stock);
+    const amount = Number(giftForm.stars_amount);
+    if (!cases.some((item) => item.id === giftForm.case_id)) {
+      setError('Avval Case tanlang.'); return;
+    }
+    if (!Number.isFinite(chance) || chance < 0 || chance > 100 ||
+        !Number.isFinite(actual) || actual < 0 || actual > 100) {
+      setError('Ehtimol 0%–100% oralig‘ida bo‘lishi kerak.'); return;
+    }
+    if (!Number.isSafeInteger(stock) || stock < 1 || stock > 1000000) {
+      setError('Stock 1–1 000 000 oralig‘ida bo‘lishi kerak.'); return;
+    }
+    if (isStars && (!Number.isSafeInteger(amount) || amount < 1 || amount > 100000)) {
+      setError('Stars miqdori 1–100 000 orasida butun son bo‘lishi kerak.'); return;
+    }
+    if (!isStars && !giftForm.library_gift_id) {
+      setError('Gift bazadan sovg‘ani tanlang.'); return;
+    }
 
     const data = await run(
-      () =>
-        callAdmin('gift_create_from_library', {
-          giftData: {
-            ...giftForm,
-            chance: Number(giftForm.chance || 0),
-            real_chance: Number(giftForm.real_chance || giftForm.chance || 0),
-            stock: Number(giftForm.stock || 0),
-          },
-        }),
-      'Gift casega yuklandi ✅'
+      () => callAdmin(isStars ? 'case_stars_reward_create' : 'gift_create_from_library', {
+        giftData: { ...giftForm, stars_amount: amount, chance, real_chance: actual, stock },
+      }),
+      isStars ? 'Stars mukofoti Case’ga qo‘shildi ✅' : 'Gift Case’ga qo‘shildi ✅'
     );
 
     if (!data) return;
@@ -1982,7 +1999,7 @@ export default function AdminClient() {
               <div className="admin-form-heading">
                 <span>Case gift</span>
                 <h2>Casega gift qo‘shish</h2>
-                <p>Bazadan gift tanlang. Narx va fon avtomatik olinadi, ko‘rinadigan chance, haqiqiy chance va stock sozlanadi.</p>
+                <p>Telegram gift yoki Stars balans mukofoti qo‘shing. Yutish ehtimoli zaxirasi bor barcha mukofotlarning haqiqiy vaznidan hisoblanadi.</p>
               </div>
 
               <label>
@@ -1995,6 +2012,20 @@ export default function AdminClient() {
                 </select>
               </label>
 
+              <div className="admin-case-reward-switch" role="group" aria-label="Mukofot turi">
+                <button type="button" className={giftForm.reward_kind !== 'stars' ? 'chosen' : ''}
+                  aria-pressed={giftForm.reward_kind !== 'stars'} onClick={() => setGiftForm((current) => ({...current,reward_kind:'gift'}))}>
+                  🎁 Telegram Gift
+                </button>
+                <button type="button" className={giftForm.reward_kind === 'stars' ? 'chosen' : ''}
+                  aria-pressed={giftForm.reward_kind === 'stars'}
+                  onClick={() => setGiftForm((current) => ({...current,reward_kind:'stars'}))}>
+                  ⭐ Stars balans
+                </button>
+              </div>
+
+              {giftForm.reward_kind !== 'stars' ? (
+              <>
               <div className="admin-gift-selector" role="group" aria-label="Rasm orqali gift tanlash">
                 <label><span>Gift baza · {caseGiftChoices.length} ta</span>
                   <input type="search" value={caseGiftSearch} placeholder="Gift nomi yoki raqamini qidiring"
@@ -2037,21 +2068,36 @@ export default function AdminClient() {
                 <input type="number" value={giftForm.price} onChange={(event) => setGiftForm({ ...giftForm, price: event.target.value })} />
               </label>
 
+              </>
+              ) : (
+                <div className="admin-case-stars-reward">
+                  <div className="admin-case-stars-image" aria-hidden="true">⭐</div>
+                  <div>
+                    <strong>+{money(giftForm.stars_amount || 0)} Stars</strong>
+                    <p>Yutgan foydalanuvchining NewPro balansiga avtomatik qo‘shiladi. Telegram hamyoniga alohida yuborilmaydi.</p>
+                    <label><span>Beriladigan Stars miqdori</span>
+                      <input type="number" min="1" max="100000" step="1" required
+                        value={giftForm.stars_amount} onChange={(event) => setGiftForm((current) => ({...current,stars_amount:event.target.value}))}/>
+                    </label>
+                  </div>
+                </div>
+              )}
+
               <div className="browser-admin-two">
                 <label>
                   <span>Stock</span>
                   <input type="number" value={giftForm.stock} onChange={(event) => setGiftForm({ ...giftForm, stock: event.target.value })} />
                 </label>
                 <label>
-                  <span>Ko‘rinadigan chance %</span>
-                  <input type="number" value={giftForm.chance} onChange={(event) => setGiftForm({ ...giftForm, chance: event.target.value })} />
+                  <span>Katalogdagi belgilangan foiz (%)</span>
+                  <input type="number" min="0" max="100" step="0.01" value={giftForm.chance} onChange={(event) => setGiftForm({ ...giftForm, chance: event.target.value })} />
                 </label>
               </div>
 
               <label>
-                <span>Haqiqiy tushish chance %</span>
-                <input type="number" value={giftForm.real_chance} onChange={(event) => setGiftForm({ ...giftForm, real_chance: event.target.value })} />
-                <small className="manual-field-note">0 bo‘lsa gift case ichida ko‘rinadi, lekin umuman tushmaydi.</small>
+                <span>Haqiqiy tanlash vazni (%)</span>
+                <input type="number" min="0" max="100" step="0.01" value={giftForm.real_chance} onChange={(event) => setGiftForm({ ...giftForm, real_chance: event.target.value })} />
+                <small className="manual-field-note">Foydalanuvchiga haqiqiy yakuniy ehtimol ko‘rsatiladi. Barcha zaxirasi bor mukofotlarning vaznlari bo‘yicha hisoblanadi. 0 bo‘lsa mukofot tushmaydi.</small>
               </label>
 
               <label>
@@ -2065,8 +2111,8 @@ export default function AdminClient() {
                 </select>
               </label>
 
-              <button type="submit" disabled={busy || !giftForm.library_gift_id}>
-                {busy ? 'Yuklanmoqda...' : 'Yuklash'}
+              <button type="submit" disabled={busy || !giftForm.case_id || (giftForm.reward_kind !== 'stars' && !giftForm.library_gift_id)}>
+                {busy ? 'Yuklanmoqda...' : giftForm.reward_kind === 'stars' ? 'Stars qo‘shish' : 'Gift qo‘shish'}
               </button>
             </form>
 
@@ -2074,10 +2120,11 @@ export default function AdminClient() {
               <h2>Case giftlari</h2>
               {gifts.filter((gift) => gift.case_id && cases.some((item) => item.id === gift.case_id)).map((gift) => (
                 <div className="browser-admin-item" key={gift.id}>
-                  <GiftImage gift={gift} />
+                  {gift.type === 'balance' ? <span className="admin-stars-reward-thumb" aria-label="Stars">⭐</span> : <GiftImage gift={gift} />}
                   <div>
                     <strong>{gift.title}</strong>
-                    <p>{money(gift.floor_price || gift.value)} ⭐ · visible {gift.chance}% · real {gift.real_chance ?? gift.chance}% · stock {gift.stock}</p>
+                    <p>{gift.type === 'balance' ? '+'+money(gift.value)+' Stars · balans mukofoti' : money(gift.floor_price || gift.value)+' ⭐'}
+                      {' · weight '+(gift.real_chance ?? gift.chance)+' · stock '+gift.stock}</p>
                   </div>
                   <button type="button" onClick={() => updateGift(gift.id, { is_active: gift.is_active === false })}>
                     {gift.is_active === false ? 'Show' : 'Hide'}

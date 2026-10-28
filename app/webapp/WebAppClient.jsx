@@ -156,7 +156,7 @@ function rewardValue(gift) {
 }
 
 function rewardSubtitle(gift) {
-  if (isBalanceReward(gift)) return `Balance +${money(rewardValue(gift))}`;
+  if (isBalanceReward(gift)) return `Balansga +${money(rewardValue(gift))} Stars qo‘shildi`;
   return gift?.value ? String(gift.value) : 'Gift reward';
 }
 
@@ -2288,8 +2288,8 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
 
   if (isBalanceReward(gift)) {
     return (
-      <span className={`${mediaClass} balance-reward`}>
-        {coinIcon('prism')}
+      <span className={`${mediaClass} balance-reward`} aria-label={`+${rewardValue(gift)} Stars`}>
+        <StarIcon variant="reward" size={compact ? 26 : 50} />
       </span>
     );
   }

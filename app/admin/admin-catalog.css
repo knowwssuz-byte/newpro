@@ -1,3 +1,14 @@
+/* Case Stars creation selector and clear balance reward presentation. */
+.admin-case-reward-switch{display:grid;grid-template-columns:1fr 1fr;gap:9px;min-width:0}
+.browser-admin-form .admin-case-reward-switch button{min-height:48px;padding:10px 8px;background:#1b192a;color:#e4daf0;border:1px solid rgba(190,165,230,.28);border-radius:12px;cursor:pointer;font-size:12px;font-weight:760}
+.browser-admin-form .admin-case-reward-switch button.chosen{background:linear-gradient(115deg,#6c4da6,#473879);border-color:#d4b6ff;color:white;box-shadow:inset 0 1px rgba(255,255,255,.14)}
+.admin-case-stars-reward{display:grid;grid-template-columns:78px minmax(0,1fr);gap:14px;align-items:center;border:1px solid rgba(239,195,89,.32);border-radius:14px;background:linear-gradient(145deg,rgba(113,72,13,.18),rgba(33,28,44,.96));padding:12px;min-width:0}
+.admin-case-stars-image,.admin-stars-reward-thumb{display:grid;place-items:center;background:radial-gradient(circle,#eeb94e,#76511f);border-radius:12px;font-size:39px;min-height:78px;color:#f9d47b}
+.admin-case-stars-reward strong{font-size:16px;color:#ffde95}
+.admin-case-stars-reward p{font-size:11px;line-height:1.55;color:#bdb4c9}
+.admin-case-stars-reward label{display:grid;gap:6px;margin-top:10px}
+.admin-stars-reward-thumb{min-width:52px;min-height:55px;font-size:28px}
+@media(max-width:390px){.admin-case-stars-reward{grid-template-columns:1fr}.admin-case-stars-image{min-height:60px}}
 /* NewPro: image-first admin catalog and independent upgrade stock */
 .admin-case-list-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .admin-case-list-heading h2{margin:0}
