@@ -253,3 +253,95 @@ REVOKE ALL ON FUNCTION public.pvp_xo_command(bigint,text,uuid,text,integer,integ
 GRANT EXECUTE ON FUNCTION public.pvp_xo_eval(text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.pvp_xo_bot_pick(text) TO service_role;
 GRANT EXECUTE ON FUNCTION public.pvp_xo_command(bigint,text,uuid,text,integer,integer) TO service_role;
+
+-- Explicit lobby creation and selected-room joins.
+-- Rooms are free to create; stakes are escrowed atomically when a second player joins.
+CREATE OR REPLACE FUNCTION public.pvp_xo_create(p_user_id bigint, p_stake integer)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE m public.pvp_xo_matches%rowtype; user_balance numeric; uname text;
+BEGIN
+  IF p_stake NOT IN (5,10,25,50) OR p_stake IS NULL THEN RAISE EXCEPTION 'PVP_INVALID_ENTRY'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended('pvp:user:' || p_user_id::text,0));
+  SELECT u.balance INTO user_balance FROM public.users u
+   WHERE u.id=p_user_id AND COALESCE(u.is_banned,false)=false FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'PVP_USER_NOT_FOUND'; END IF;
+  SELECT * INTO m FROM public.pvp_xo_matches
+   WHERE (x_id=p_user_id OR o_id=p_user_id) AND status IN ('waiting','active')
+   ORDER BY created_at DESC LIMIT 1 FOR UPDATE;
+  IF FOUND AND m.status='waiting' AND m.created_at<clock_timestamp()-interval '4 minutes' THEN
+    UPDATE public.pvp_xo_matches SET status='cancelled',finished_at=now(),updated_at=now() WHERE id=m.id;
+    m.id:=NULL;
+  END IF;
+  IF m.id IS NULL THEN
+    IF user_balance<p_stake THEN RAISE EXCEPTION 'PVP_INSUFFICIENT_BALANCE'; END IF;
+    INSERT INTO public.pvp_xo_matches(mode,status,x_id,stake)
+    VALUES('online','waiting',p_user_id,p_stake) RETURNING * INTO m;
+  END IF;
+  SELECT COALESCE(NULLIF(first_name,''),NULLIF(username,''),'Player')
+   INTO uname FROM public.users WHERE id=m.x_id;
+  RETURN jsonb_build_object('match',to_jsonb(m) ||
+    jsonb_build_object('x_name',uname,'o_name',CASE WHEN m.mode='bot' THEN 'MYST BOT' ELSE 'Raqib kutilmoqda' END),
+    'balance',user_balance);
+END $function$;
+
+CREATE OR REPLACE FUNCTION public.pvp_xo_join(p_user_id bigint, p_match_id uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public', 'extensions'
+AS $function$
+DECLARE m public.pvp_xo_matches%rowtype; already_id uuid;
+ uid bigint; have_balance numeric; owner_balance numeric; result_balance numeric;
+ owner_banned boolean; joiner_banned boolean; n int; xn text; oname text;
+BEGIN
+ IF p_match_id IS NULL THEN RAISE EXCEPTION 'PVP_MATCH_NOT_FOUND'; END IF;
+ PERFORM pg_advisory_xact_lock(hashtextextended('pvp:user:'||p_user_id::text,0));
+ SELECT id INTO already_id FROM public.pvp_xo_matches
+  WHERE (x_id=p_user_id OR o_id=p_user_id) AND status IN ('waiting','active')
+  ORDER BY created_at DESC LIMIT 1;
+ IF already_id IS NOT NULL THEN
+   IF already_id<>p_match_id THEN RAISE EXCEPTION 'PVP_ALREADY_IN_GAME'; END IF;
+   SELECT * INTO m FROM public.pvp_xo_matches WHERE id=already_id FOR UPDATE;
+   IF m.status='active' AND m.o_id=p_user_id THEN
+      SELECT balance INTO result_balance FROM public.users WHERE id=p_user_id;
+      SELECT COALESCE(NULLIF(first_name,''),NULLIF(username,''),'Player') INTO xn FROM public.users WHERE id=m.x_id;
+      SELECT COALESCE(NULLIF(first_name,''),NULLIF(username,''),'Player') INTO oname FROM public.users WHERE id=m.o_id;
+      RETURN jsonb_build_object('match',to_jsonb(m)||jsonb_build_object('x_name',xn,'o_name',oname),'balance',result_balance);
+   END IF;
+   RAISE EXCEPTION 'PVP_ALREADY_IN_GAME';
+ END IF;
+ SELECT * INTO m FROM public.pvp_xo_matches WHERE id=p_match_id FOR UPDATE;
+ IF NOT FOUND OR m.status<>'waiting' OR m.mode<>'online' OR m.o_id IS NOT NULL
+  OR m.x_id=p_user_id OR m.created_at<clock_timestamp()-interval '4 minutes'
+ THEN RAISE EXCEPTION 'PVP_MATCH_UNAVAILABLE'; END IF;
+ -- Both balances are locked in ID order in the same transaction.
+ FOR uid IN SELECT id FROM public.users WHERE id IN(m.x_id,p_user_id) ORDER BY id LOOP
+   PERFORM 1 FROM public.users WHERE id=uid FOR UPDATE;
+ END LOOP;
+ SELECT balance,COALESCE(is_banned,false) INTO owner_balance,owner_banned FROM public.users WHERE id=m.x_id;
+ SELECT balance,COALESCE(is_banned,false) INTO have_balance,joiner_banned FROM public.users WHERE id=p_user_id;
+ IF owner_balance IS NULL OR have_balance IS NULL OR owner_banned OR joiner_banned
+ THEN RAISE EXCEPTION 'PVP_USER_NOT_FOUND'; END IF;
+ IF owner_balance<m.stake OR have_balance<m.stake THEN RAISE EXCEPTION 'PVP_INSUFFICIENT_BALANCE'; END IF;
+ UPDATE public.users SET balance=balance-m.stake,updated_at=now()
+  WHERE id IN(m.x_id,p_user_id) AND balance>=m.stake;
+ GET DIAGNOSTICS n=ROW_COUNT;
+ IF n<>2 THEN RAISE EXCEPTION 'PVP_INSUFFICIENT_BALANCE'; END IF;
+ INSERT INTO public.pvp_xo_ledger(match_id,user_id,kind,amount)
+ VALUES(m.id,m.x_id,'entry',-m.stake),(m.id,p_user_id,'entry',-m.stake);
+ UPDATE public.pvp_xo_matches SET o_id=p_user_id,status='active',deadline=now()+interval '90 seconds',updated_at=now()
+ WHERE id=m.id RETURNING * INTO m;
+ SELECT balance INTO result_balance FROM public.users WHERE id=p_user_id;
+ SELECT COALESCE(NULLIF(first_name,''),NULLIF(username,''),'Player') INTO xn FROM public.users WHERE id=m.x_id;
+ SELECT COALESCE(NULLIF(first_name,''),NULLIF(username,''),'Player') INTO oname FROM public.users WHERE id=m.o_id;
+ RETURN jsonb_build_object('match',to_jsonb(m)||jsonb_build_object('x_name',xn,'o_name',oname),'balance',result_balance);
+END $function$;
+
+REVOKE ALL ON FUNCTION public.pvp_xo_create(bigint,integer) FROM public,anon,authenticated;
+REVOKE ALL ON FUNCTION public.pvp_xo_join(bigint,uuid) FROM public,anon,authenticated;
+GRANT EXECUTE ON FUNCTION public.pvp_xo_create(bigint,integer) TO service_role;
+GRANT EXECUTE ON FUNCTION public.pvp_xo_join(bigint,uuid) TO service_role;

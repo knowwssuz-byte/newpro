@@ -6,7 +6,7 @@ test('PvP X/O route authenticates user and has server-only wallet operations',()
  const route=read('app/api/pvp-xo/route.js');
  assert.match(route,/readTelegramRequest\(request\)/);
  assert.match(route,/ensureUser\(auth\.telegramUser\)/);
- assert.match(route,/\.rpc\('pvp_xo_command'/);
+ assert.match(route,/db\.rpc\(rpc,payload\)/);
  assert.match(route,/STAKES=new Set\(\[5,10,25,50\]\)/);
  assert.match(route,/your_mark:String\(match\.x_id\)===userId\?'X'/);
  assert.doesNotMatch(route,/users\.update/);
@@ -23,7 +23,7 @@ test('PvP has live room creation/joining and authoritative board moves',()=>{
  assert.match(s,/const yourMark=match\?\.your_mark/);
  assert.match(s,/onBalanceRef\.current/);
  assert.match(s,/role="dialog" aria-modal="true"/);
- assert.match(s,/localStorage\.setItem\(SAVE_KEY,data\.match\.id\)/);
+ assert.match(s,/localStorage\.setItem\(SAVE_KEY,item\.id\)/);
 });
 test('PvP navigation wires API and balance without local-money modification',()=>{
  const app=read('app/webapp/WebAppClient.jsx');
@@ -48,4 +48,21 @@ test('New online PvP API never creates bot rooms',()=>{
  assert.match(api,/const ACTIONS=new Set\(\['list','create','join','state','move','cancel'\]\)/);
  assert.match(api,/rpc=action==='create'\?'pvp_xo_create':action==='join'\?'pvp_xo_join'/);
  assert.match(api,/const rooms=openRooms\.data\|\|\[\]/);
+});
+
+test('PvP lobby opens directly, shows rooms, and does not advertise bot play',()=>{
+ const page=read('app/webapp/PvpHub.jsx');
+ assert.doesNotMatch(page,/Play\. Compete\. /);
+ assert.doesNotMatch(page,/Bot bilan/);
+ assert.doesNotMatch(page,/setMode\('bot'\)/);
+ assert.match(page,/Yaratilgan o‘yinlar/);
+ assert.match(page,/Qo‘shilish/);
+ assert.match(page,/O‘yin yaratish/);
+ assert.match(page,/room\.stake/);
+ assert.match(page,/function VictoryReveal/);
+ assert.match(page,/pvp-victory-trophy\.svg/);
+ assert.match(page,/pvp-premium-3d-v30\.png/);
+ const css=read('app/webapp/PvpHub.module.css');
+ assert.match(css,/pvpConfettiFall/);
+ assert.match(css,/prefers-reduced-motion/);
 });
