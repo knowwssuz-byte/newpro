@@ -36,3 +36,21 @@ test('live price, actual rarity, inventory, safe skip and sound preference remai
   assert.match(page,/useCaseSound\(soundEnabled\)/);
   assert.match(page,/onRollComplete\(inlineOpening\.spinKey\)/);
 });
+
+test('reward result uses isolated premium modal with accessibly labeled close and responsive motion',()=>{
+ const view=read('app/webapp/CaseDetailExperience.jsx');
+ const css=read('app/webapp/CaseOpening.module.css');
+ assert.match(view,/className=\{caseOpeningStyles\.resultPortal\}/);
+ assert.match(view,/className=\{caseOpeningStyles\.resultArtwork\}/);
+ assert.match(view,/className=\{caseOpeningStyles\.resultStatus\}/);
+ assert.match(view,/onClick=\{onAgain\}/);
+ assert.match(view,/onClick=\{onInventory\}/);
+ assert.match(view,/onClick=\{onClose\}/);
+ assert.match(view,/onSell\(opening\)/);
+ assert.match(view,/aria-modal="true"/);
+ assert.match(view,/event\.key === 'Escape'/);
+ assert.match(css,/@keyframes mystRewardEnter/);
+ assert.match(css,/@media \(prefers-reduced-motion: reduce\)/);
+ assert.match(css,/max-height: calc\(100dvh/);
+ assert.doesNotMatch(view,/className="win-screen-card/);
+});

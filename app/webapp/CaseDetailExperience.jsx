@@ -273,55 +273,105 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
 }
 
 function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers }) {
-  const { GiftMedia, solidGiftBackground, defaultGiftBackground, isBalanceReward, rewardSubtitle, sellButtonText } = helpers;
-  if (!opening?.gift || typeof document === 'undefined') {
-    return null;
-  }
+  const { GiftMedia, isBalanceReward, rewardSubtitle, sellButtonText } = helpers;
+  const closeButtonRef = useRef(null);
+  const gift = opening?.gift;
+  const isStars = Boolean(gift && isBalanceReward(gift));
+
+  // Modal accessibility: focus the close control and support Escape, without
+  // altering document body scroll or introducing heavy animation libraries.
+  useEffect(() => {
+    if (!gift || typeof document === 'undefined') return undefined;
+    const previousFocus = document.activeElement;
+    closeButtonRef.current?.focus({ preventScroll: true });
+    const handleKey = (event) => {
+      if (event.key === 'Escape') {
+        event.stopPropagation();
+        onClose();
+      }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => {
+      document.removeEventListener('keydown', handleKey);
+      if (previousFocus?.isConnected && typeof previousFocus.focus === 'function') {
+        previousFocus.focus({ preventScroll: true });
+      }
+    };
+  }, [gift?.id, onClose]);
+
+  if (!gift || typeof document === 'undefined') return null;
+  const rarity = String(gift.rarity || 'common').toLowerCase();
 
   return createPortal(
-    <div
-      className={`win-screen-layer ${caseOpeningStyles.resultPortal}`}
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="case-win-title"
-    >
-      <div
-        className={`win-screen-card ${caseOpeningStyles.resultPanel} ${
-          isBalanceReward(opening.gift) ? 'balance-win' : ''
-        }`}
-        data-rarity={String(opening.gift?.rarity || 'common').toLowerCase()}
-        style={{
-          '--win-screen-bg': solidGiftBackground(
-            opening.gift?.background_value,
-            defaultGiftBackground(opening.gift?.rarity)
-          ),
-        }}
-      >
-        <span className="win-screen-shine" aria-hidden="true" />
-        <span className="win-screen-badge">YOU WON</span>
-        {opening.gift?.rarity && <span className={caseOpeningStyles.winRarity}>{opening.gift.rarity}</span>}
-        <span className={caseOpeningStyles.winHalo} aria-hidden="true" />
+    <div className={caseOpeningStyles.resultPortal}
+      role="dialog" aria-modal="true" aria-labelledby="case-win-title"
+      aria-describedby="case-win-description">
+      <div className={caseOpeningStyles.resultPanel}
+        data-rarity={rarity} data-reward-kind={isStars ? 'stars' : 'collectible'}>
+        <span className={caseOpeningStyles.resultAmbient} aria-hidden="true" />
+        <span className={caseOpeningStyles.resultShimmer} aria-hidden="true" />
+        <button type="button" ref={closeButtonRef} className={caseOpeningStyles.resultClose}
+          onClick={onClose} aria-label="Yutuq oynasini yopish">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none"
+            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+            <path d="M5 5l14 14M19 5L5 19"/>
+          </svg>
+        </button>
 
-        <div className="win-screen-media">
-          <GiftMedia gift={opening.gift} animate />
+        <header className={caseOpeningStyles.resultHeader}>
+          <div className={caseOpeningStyles.resultOverline}>
+            <span className={caseOpeningStyles.resultOverlineDot} aria-hidden="true" />
+            MYST REWARD
+          </div>
+          <h2 className={caseOpeningStyles.resultHeading}>Yutuq sizniki!</h2>
+          <p>Yangi mukofot qo‘lga kiritildi</p>
+        </header>
+
+        <div className={caseOpeningStyles.resultVisual}>
+          <span className={caseOpeningStyles.resultVisualGlow} aria-hidden="true" />
+          <span className={caseOpeningStyles.resultOrbit} aria-hidden="true" />
+          <span className={caseOpeningStyles.resultSparkleOne} aria-hidden="true">✦</span>
+          <span className={caseOpeningStyles.resultSparkleTwo} aria-hidden="true">✧</span>
+          <span className={caseOpeningStyles.resultSparkleThree} aria-hidden="true">✦</span>
+          <div className={caseOpeningStyles.resultArtwork}>
+            <GiftMedia gift={gift} animate />
+          </div>
         </div>
 
-        <div className="win-screen-copy">
-          <strong id="case-win-title">{opening.gift?.title || 'Reward'}</strong>
-          <p>{rewardSubtitle(opening.gift)}</p>
+        <div className={caseOpeningStyles.resultCopy}>
+          <span className={caseOpeningStyles.resultRarity}>
+            {isStars ? 'STARS REWARD' : rarity.toUpperCase()}
+          </span>
+          <strong id="case-win-title">{gift.title || 'Reward'}</strong>
+          <p id="case-win-description">{rewardSubtitle(gift)}</p>
+        </div>
+
+        <div className={caseOpeningStyles.resultStatus}>
+          <span className={caseOpeningStyles.resultCheck} aria-hidden="true">
+            <svg viewBox="0 0 20 20" width="13" height="13" fill="none"
+              stroke="currentColor" strokeWidth="2.3" strokeLinecap="round"
+              strokeLinejoin="round">
+              <path d="M4 10l4 4 8-8"/>
+            </svg>
+          </span>
+          {isStars ? 'Stars balansga qo‘shildi' : 'Mukofot qo‘lga kiritildi'}
         </div>
 
         <div className={caseOpeningStyles.winActions}>
-          {!isBalanceReward(opening.gift) ? (
-            <button type="button" className={caseOpeningStyles.winSell} onClick={() => onSell(opening)}>
-              {sellButtonText(opening.gift)}
-            </button>
-          ) : (
-            <span className={caseOpeningStyles.winCredited}>Balansga qo‘shildi</span>
+          <button type="button" className={caseOpeningStyles.winPrimary}
+            onClick={onAgain}>Yana ochish
+            <span aria-hidden="true">↗</span>
+          </button>
+          {!isStars && (
+            <button type="button" className={caseOpeningStyles.winSell}
+              onClick={() => onSell(opening)}>{sellButtonText(gift)}</button>
           )}
-          <button type="button" className={caseOpeningStyles.winPrimary} onClick={onInventory}>Inventar</button>
-          <button type="button" className={caseOpeningStyles.winSecondary} onClick={onAgain}>Yana ochish</button>
-          <button type="button" className={caseOpeningStyles.winSecondary} onClick={onClose}>Yopish</button>
+          <div className={caseOpeningStyles.resultActionRow}>
+            <button type="button" className={caseOpeningStyles.winSecondary}
+              onClick={onInventory}>Inventar</button>
+            <button type="button" className={caseOpeningStyles.winSecondary}
+              onClick={onClose}>Yopish</button>
+          </div>
         </div>
       </div>
     </div>,
