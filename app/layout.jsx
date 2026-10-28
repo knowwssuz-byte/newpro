@@ -7,6 +7,7 @@ import './webapp/compact-shell.css';
 import './typography.css';
 import { Manrope, Outfit } from 'next/font/google';
 import Script from 'next/script';
+import TelegramInteractionGuard from './webapp/TelegramInteractionGuard';
 
 // Variable families are downloaded during build and served from the NewPro domain.
 const manrope = Manrope({ subsets: ['latin', 'latin-ext'], variable: '--font-manrope', display: 'swap' });
@@ -46,6 +47,7 @@ export default function RootLayout({ children }) {
   addEventListener('unhandledrejection', recover);
 })();
 ` }} />
+        <TelegramInteractionGuard />
         {children}
       </body>
     </html>

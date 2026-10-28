@@ -9,3 +9,8 @@
 .level{position:absolute;z-index:2;left:50%;top:-4px;transform:translateX(-50%);white-space:nowrap;padding:3px 7px;border:1px solid rgba(229,199,255,.42);border-radius:100px;background:linear-gradient(115deg,#7655aa,#3a285c);box-shadow:0 3px 8px rgba(0,0,0,.34);color:#fff;font-family:Inter,system-ui,sans-serif;font-size:9px;font-weight:850;line-height:1}
 .compact .level{font-size:8px;top:-2px;padding:3px 6px}
 @media(prefers-reduced-motion:reduce){.progress{transition:none}}
+
+/* Header layout: level badge and ring are constrained within the 76px toolbar. */
+.compact{--size:53px!important}
+.compact .avatar{width:81%;height:81%}
+.compact .level{top:-1px!important;padding:2px 5px!important;font-size:7.8px!important;background:linear-gradient(140deg,#7953b2,#433160)!important}

@@ -13930,3 +13930,20 @@ body {
 }
 .initial-loader-screen .preload-brand strong{font-size:18px;letter-spacing:.22em;font-weight:950}
 .initial-loader-screen .preload-brand>span:last-child{font-size:10px;letter-spacing:.1em;color:#aaabc5}
+
+/* MYST: profile circle, settings and balance aligned across narrow devices. */
+.global-balance-bar.home-hero.premium-card{height:76px!important;min-height:76px!important;padding:8px clamp(8px,2.7vw,14px)!important;gap:clamp(6px,1.8vw,12px)!important;overflow:hidden!important}
+.global-balance-bar .home-user-zone{display:flex!important;align-items:center!important;gap:clamp(5px,1.5vw,10px)!important;min-width:0!important;flex:1 1 auto!important}
+.global-balance-bar .home-avatar-wrap{flex:0 0 53px!important;width:53px!important;height:53px!important;min-width:53px!important;position:relative!important;overflow:visible!important}
+.global-balance-bar .home-avatar-wrap .home-avatar{width:100%!important;height:100%!important;box-shadow:none!important;border:1px solid rgba(255,255,255,.13)!important;font-size:17px!important}
+.global-balance-bar .home-avatar-wrap .home-avatar img{width:100%!important;height:100%!important;object-fit:cover!important}
+.global-balance-bar .home-user-zone .home-balance-copy{min-width:0!important;flex:0 1 auto!important;padding:0!important}
+.global-balance-bar .home-user-zone .home-balance-copy strong{font-size:clamp(16px,4.1vw,23px)!important;letter-spacing:-.045em!important;white-space:nowrap!important;gap:4px!important}
+.global-balance-bar .home-user-zone .home-balance-copy .coin-icon{width:20px!important;height:20px!important;flex:0 0 20px!important}
+.global-balance-bar .deposit-button{flex:0 0 auto!important;min-width:0!important;width:auto!important;max-width:120px!important;height:39px!important;min-height:39px!important;padding:0 clamp(8px,2.4vw,14px)!important;font-size:clamp(11px,3.3vw,14px)!important;gap:5px!important}
+.global-balance-bar .home-user-zone button{flex-shrink:0!important}
+@media(max-width:390px){.global-balance-bar.home-hero.premium-card{padding:8px 8px!important;gap:6px!important}.global-balance-bar .home-user-zone{gap:5px!important}.global-balance-bar .home-user-zone .home-balance-copy strong{font-size:clamp(15px,4vw,17px)!important}.global-balance-bar .home-user-zone .home-balance-copy .coin-icon{width:17px!important;height:17px!important;flex-basis:17px!important}.global-balance-bar .deposit-button{font-size:11px!important;padding-inline:8px!important;gap:4px!important}.global-balance-bar .deposit-button svg{width:14px!important;height:14px!important}}
+@media(max-width:340px){.global-balance-bar .deposit-button{height:34px!important;min-height:34px!important}}
+/* Telegram WebView: suppress preview/copy URL callouts on non-editable media. */
+body img,body svg,body video,body canvas,body picture,body button,body a{-webkit-touch-callout:none!important;-webkit-user-drag:none!important}
+body img,body svg,body video,body canvas,body picture{-webkit-user-select:none!important;user-select:none!important}

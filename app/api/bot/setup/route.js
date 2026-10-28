@@ -1,42 +1,20 @@
-import { setupTelegramBot } from '@/lib/telegramBot';
-
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-
-function json(data, status = 200) {
-  return Response.json(data, { status });
+import crypto from 'node:crypto';
+import {setupTelegramBot} from '@/lib/telegramBot';
+export const runtime='nodejs';export const dynamic='force-dynamic';
+const json=(data,status=200)=>Response.json(data,{status,headers:{'Cache-Control':'no-store'}});
+function sameToken(a,b) {
+ if(!a||!b)return false;
+ return crypto.timingSafeEqual(crypto.createHash('sha256').update(a).digest(),
+                               crypto.createHash('sha256').update(b).digest());
 }
-
-export async function GET(request) {
-  const url = new URL(request.url);
-  const secret = url.searchParams.get('secret') || '';
-  const expectedSecret =
-    String(process.env.BOT_SETUP_SECRET || '').trim() ||
-    String(process.env.BOT_WEBHOOK_SECRET || '').trim();
-
-  // Never allow a public webhook reconfiguration endpoint without a secret.
-  if (!expectedSecret) return json({ ok: false, error: 'Bot setup kaliti sozlanmagan.' }, 503);
-  if (secret !== expectedSecret) {
-    return json({ ok: false, error: 'Setup secret noto‘g‘ri' }, 401);
-  }
-
-  try {
-    const result = await setupTelegramBot();
-
-    return json({
-      ok: true,
-      message: 'Bot webhook, menu button va commands sozlandi.',
-      ...result,
-    });
-  } catch (error) {
-    console.error('[bot:setup]', error);
-
-    return json(
-      {
-        ok: false,
-        error: error?.message || 'Bot setup xatosi',
-      },
-      500
-    );
-  }
+// Never take setup secrets in a URL, where proxies, browser history and logs capture them.
+export async function GET(){return json({ok:false,error:'Setup POST orqali bajariladi'},405)}
+export async function POST(request){
+ const expected=String(process.env.BOT_SETUP_SECRET||'').trim();
+ if(!expected)return json({ok:false,error:'Bot setup secret sozlanmagan'},503);
+ const auth=String(request.headers.get('authorization')||'');
+ const provided=auth.startsWith('Bearer ')?auth.slice(7).trim():'';
+ if(!sameToken(provided,expected))return json({ok:false,error:'Ruxsat yo‘q'},401);
+ try{const result=await setupTelegramBot();return json({ok:true,message:'Bot konfiguratsiyasi yangilandi',...result})}
+ catch(err){console.error('[bot:setup]',String(err?.message||'setup failed').slice(0,140));return json({ok:false,error:'Bot sozlanmadi'},500)}
 }
