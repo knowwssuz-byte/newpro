@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ArrowLeft, ArrowRight, Circle, Grid2X2, Plus, RotateCcw, Scissors, Shield, Sparkles, Swords, Users, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Circle, Grid2X2, Plus, RotateCcw, Scissors, Shield, Sparkles, Swords, Users, X } from 'lucide-react';
 import styles from './PvpHub.module.css';
 import { evaluateBoard, resolveRps } from '@/lib/pvpGames.mjs';
 
@@ -22,8 +22,8 @@ function scoreBoard(score) {
 export function PvpEntryCard({ onClick }) {
   return (
     <button type="button" className={styles.entryCard} onClick={onClick}>
-      <span className={styles.entryIcon}><Swords size={23}/></span>
-      <span className={styles.entryText}><strong>PvP Arena</strong><small>X/O · ochiq duellar va haqiqiy raqib</small></span>
+      <span className={styles.entryIcon}><Image src="/feature/pvp-xo-card.webp" alt="" width={50} height={50} unoptimized className={styles.entryArtwork}/></span>
+      <span className={styles.entryText}><strong>PvP Arena</strong><small>X/O duellar va boshqa o‘yinlar</small></span>
       <ArrowRight size={18} aria-hidden="true"/>
     </button>
   );
@@ -332,10 +332,48 @@ function RockPaperScissors({ onBack }) {
   );
 }
 export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast}) {
- const [rpsOpen,setRpsOpen]=useState(false);
- return <div className={styles.root}>
-   {rpsOpen ? <RockPaperScissors onBack={()=>setRpsOpen(false)}/> :
-    <TicTacToe onBack={onBack} apiPost={apiPost} balance={balance}
-      onBalanceChange={onBalanceChange} onToast={onToast} onRps={()=>setRpsOpen(true)}/>}
+ const [selected,setSelected]=useState('list');
+ if(selected==='xo')return <div className={styles.root}>
+  <TicTacToe onBack={()=>setSelected('list')} apiPost={apiPost} balance={balance}
+   onBalanceChange={onBalanceChange} onToast={onToast}/>
  </div>;
+ if(selected==='rps')return <div className={styles.root}>
+  <RockPaperScissors onBack={()=>setSelected('list')}/>
+ </div>;
+ return <section className={styles.root}>
+  <header className={styles.topbar}>
+   <button type="button" className={styles.back} aria-label="Orqaga qaytish" onClick={onBack}>
+    <ArrowLeft size={19}/>
+   </button>
+   <div><small>MYST GAMES</small><strong>PvP Arena</strong></div>
+   <span className={styles.localTag}><span className={styles.onlineDot}/> LIVE</span>
+  </header>
+  <div className={styles.gameListHeading}>
+   <strong>O‘yinlar</strong>
+   <small>Rejimni tanlang</small>
+  </div>
+  <div className={styles.list}>
+   <button type="button" className={`${styles.modeCard} ${styles.xoGameCard}`} onClick={()=>setSelected('xo')}>
+    <span className={styles.xoPoster}>
+     <Image src="/feature/pvp-xo-card.webp" alt="" width={96} height={96} unoptimized
+      className={styles.xoPosterImage}/>
+    </span>
+    <span className={styles.modeInfo}>
+     <strong>X/O Duel</strong>
+     <small>Haqiqiy raqib · 5–50 Stars</small>
+     <em><Check size={12}/> O‘YNASH</em>
+    </span>
+    <ArrowRight size={18} aria-hidden="true"/>
+   </button>
+   <button type="button" className={styles.modeCard} onClick={()=>setSelected('rps')}>
+    <span className={styles.modeIcon}><Scissors size={30}/></span>
+    <span className={styles.modeInfo}>
+      <strong>Tosh · Qog‘oz · Qaychi</strong>
+      <small>Bir qurilmada · bepul</small>
+      <em><Check size={12}/> O‘YNASH</em>
+    </span>
+    <ArrowRight size={18} aria-hidden="true"/>
+   </button>
+  </div>
+ </section>;
 }
