@@ -164,6 +164,11 @@ begin
    for update;
   if not found then raise exception 'PVP_MATCH_NOT_FOUND'; end if;
  end if;
+ -- Wait expires without charging either player.
+ if m.status='waiting' and m.created_at<now()-interval '4 minutes' then
+   update public.pvp_xo_matches set status='cancelled',finished_at=now(),updated_at=now()
+     where id=m.id returning * into m;
+ end if;
  -- Expired active games: current turn's opponent wins. Once-only payout under match lock.
  if m.status='active' and m.deadline<now() then
    outcome:=case when m.turn='X' then 'O' else 'X' end;

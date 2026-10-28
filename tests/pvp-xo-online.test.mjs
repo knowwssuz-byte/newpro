@@ -29,3 +29,14 @@ test('PvP navigation wires API and balance without local-money modification',()=
  assert.match(app,/balance=\{profile\?\.balance\}/);
  assert.match(app,/onBalanceChange=\{\(nextBalance\)=>setProfile/);
 });
+
+test('PvP SQL migration auto-cancels expired matchmaking and locks balance changes',()=>{
+ const sql=read('supabase/migrations/20261029_pvp_xo_arena.sql');
+ assert.match(sql,/m\.status='waiting' and m\.created_at<now\(\)-interval '4 minutes'/);
+ assert.match(sql,/for update skip locked/);
+ assert.match(sql,/pg_advisory_xact_lock\(78931,p_stake\)/);
+ assert.match(sql,/balance=balance-p_stake/);
+ assert.match(sql,/balance=balance\+m\.stake\*2/);
+ assert.match(sql,/pvp_xo_ledger/);
+ assert.match(sql,/revoke all on public\.pvp_xo_matches/ig);
+});
