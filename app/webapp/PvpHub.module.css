@@ -68,3 +68,96 @@
 .rpsResult .resetButton{margin:18px auto}
 @media(max-width:375px){.root{padding-inline:9px}.modeCard{gap:9px;padding:12px}.modeIcon{width:53px;height:53px;flex-basis:53px}.modeInfo strong{font-size:13px}.heroCopy{left:14px}.localTag{font-size:8px;padding:6px}}
 @media(prefers-reduced-motion:reduce){.modeCard,.entryCard{transition:none}}
+
+
+/* PVP ARENA V2 — compact mobile premium dual-mode XO */
+.root {padding:9px 10px 32px;max-width:525px;--pvp-border:rgba(187,167,231,.20);
+ background:radial-gradient(ellipse 66% 28% at 72% 2%,rgba(110,78,170,.13),transparent 70%);}
+.topbar{margin-bottom:10px;}
+.back{width:37px;height:37px;flex:0 0 37px;border-radius:12px}
+.topbar>div strong{font-size:17px}
+.localTag{background:rgba(83,185,147,.09);color:#a6ebca;border-color:rgba(111,205,169,.24);font-size:9px}
+.onlineDot,.arenaLive>span{display:inline-block;width:6px;height:6px;border-radius:50%;background:#68deb0;box-shadow:0 0 9px rgba(89,226,168,.65)}
+.hubIntro{padding:20px 13px 16px;border-radius:19px;margin-bottom:12px;
+ background:radial-gradient(circle at 95% 10%,rgba(151,113,227,.16),transparent 52%),linear-gradient(142deg,#201b31,#171b2c);
+ border:1px solid var(--pvp-border);}
+.hubIntro>span,.arenaIntro>span{font-size:9px;letter-spacing:.17em;font-weight:820;color:#b9a7e5}
+.hubIntro h1{font-size:clamp(24px,7.5vw,35px);line-height:1.06;font-weight:860;letter-spacing:-.055em;margin:9px 0 7px}
+.hubIntro h1 em{font-style:normal;color:#d5b4ff}
+.hubIntro p{font-size:11px;margin:0;color:#bdb7d2}
+.list{gap:9px}
+.modeCard{min-height:89px;gap:11px;padding:11px 12px;border-radius:17px}
+.modeIcon{width:53px;height:53px;flex-basis:53px;border-radius:14px}
+.modeInfo strong{font-size:14px;font-weight:810}
+.modeInfo small{font-size:10.5px}
+.arenaTop{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.inlineBack{align-self:auto;min-height:37px;padding:7px 11px}
+.arenaLive{display:flex;align-items:center;gap:6px;letter-spacing:.1em;color:#c8c4e3;font-size:10px;font-weight:800}
+.arenaIntro{text-align:center;margin:2px 0 17px}
+.arenaIntro h2{font-size:clamp(36px,10vw,48px);letter-spacing:-.075em;line-height:1;margin:10px 0 6px;font-weight:900}
+.arenaIntro h2 i{font-size:.43em;font-style:normal;letter-spacing:.02em;color:#8f7fac}
+.arenaIntro p{font-size:11px;color:#b9b1ce;margin:0}
+.gameSetup,.matchContent{width:100%;max-width:430px}
+.gameSetup{padding:13px;border:1px solid var(--pvp-border);border-radius:20px;background:linear-gradient(140deg,rgba(35,29,53,.9),rgba(18,22,36,.94));}
+.playModeTabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:4px;border-radius:13px;background:rgba(10,12,23,.49);border:1px solid rgba(194,178,230,.12)}
+.playModeTabs button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:42px;min-width:0;border:1px solid transparent;border-radius:10px;background:transparent;color:#a8a3bc;font-size:11px;font-weight:730;cursor:pointer}
+.playModeTabs button.modeSelected{background:linear-gradient(115deg,rgba(135,95,194,.4),rgba(89,77,146,.45));color:#fff;border-color:rgba(196,160,240,.25);box-shadow:inset 0 1px rgba(255,255,255,.1)}
+.stakeArea{margin:18px 0 14px}
+.stakeHeading{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-bottom:10px;font-size:11px}
+.stakeHeading strong{font-size:12px;font-weight:760}
+.stakeHeading span{font-variant-numeric:tabular-nums;color:#e5c289}
+.stakes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.stakes button{min-width:0;min-height:42px;border:1px solid rgba(182,166,209,.19);border-radius:11px;background:rgba(34,31,51,.81);color:#dad4e8;font-size:15px;font-weight:820;cursor:pointer}
+.stakes button b{font-size:11px;color:#eec27f}
+.stakes button.stakeSelected{border-color:rgba(225,187,110,.55);background:linear-gradient(130deg,rgba(158,104,61,.34),rgba(95,66,86,.31));color:#fff}
+.pot{display:flex;align-items:center;justify-content:space-between;margin:14px 1px 0;padding:10px 1px;border-top:1px solid rgba(221,209,244,.10);font-size:10px;color:#aaa5bf}
+.pot strong{color:#f7d49b;font-size:19px;font-weight:830}
+.playPrimary{width:100%;min-height:49px;display:flex;align-items:center;justify-content:center;gap:10px;padding:10px 12px;
+ border:1px solid rgba(224,198,251,.33);border-radius:13px;background:linear-gradient(110deg,#a87bdf,#8259c3);color:#fff;font-size:13px;font-weight:815;cursor:pointer;box-shadow:0 10px 27px rgba(96,52,154,.27),inset 0 1px rgba(255,255,255,.21)}
+.playPrimary>svg:last-child{margin-left:5px}
+.playPrimary:disabled{opacity:.55;cursor:wait}
+.playRule{color:#9f9bb3;font-size:9.5px;line-height:1.45;text-align:center;margin:11px 2px 0}
+.playerRow{display:grid;grid-template-columns:minmax(0,1fr) 29px minmax(0,1fr);gap:5px;align-items:center;width:100%;margin-bottom:12px}
+.playerBox{display:flex;align-items:center;gap:7px;min-width:0;min-height:61px;padding:8px 10px;border:1px solid rgba(190,171,227,.19);border-radius:13px;background:linear-gradient(145deg,#252239,#191c2d)}
+.playerBox.isMe{border-color:rgba(188,147,232,.46)}
+.playerBox>span{font-size:26px;line-height:1;font-weight:750}
+.playerSymbolX{color:#d7adff}.playerSymbolO{color:#9bddff}
+.playerBox>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.playerBox small{font-size:8px;letter-spacing:.11em;color:#9892b6;font-weight:720}
+.playerBox strong{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vsLabel{font-size:10px;font-weight:900;color:#a096c0;text-align:center}
+.matchStatus{min-height:37px;display:flex;align-items:center;justify-content:center;gap:12px;margin:0 0 9px;text-align:center}
+.matchStatus>span{font-size:13px;font-weight:780}
+.matchStatus small{font-size:11px;padding:5px 7px;background:rgba(191,157,233,.12);border-radius:7px;color:#d5c4ea;font-variant-numeric:tabular-nums}
+.winText{color:#a8ebcc}.loseText{color:#ffc8d1}.drawText{color:#ead9a5}
+.boardFrame{width:min(100%,370px);margin:0 auto;padding:10px;border:1px solid rgba(186,160,229,.26);border-radius:24px;
+ background:radial-gradient(circle at 50% 0%,rgba(151,106,217,.13),transparent 73%),linear-gradient(150deg,#29243c,#171b2d);
+ box-shadow:inset 0 1px rgba(255,255,255,.07),0 20px 48px rgba(0,0,0,.25)}
+.board{width:100%;aspect-ratio:1;gap:8px}
+.square{aspect-ratio:1;width:100%;height:auto;border-radius:15px;background:linear-gradient(160deg,#302b47,#1c2033);
+ border:1px solid rgba(191,175,235,.18);box-shadow:inset 0 1px rgba(255,255,255,.055);transition:background .16s,transform .16s}
+.square:not(:disabled):active{transform:scale(.95)}
+.square:not(:disabled):hover{background:#383052;border-color:rgba(223,189,255,.45)}
+.square.winning{background:linear-gradient(140deg,rgba(100,150,120,.32),rgba(93,71,133,.4));border-color:#98d9ba;box-shadow:0 0 16px rgba(124,224,179,.18)}
+.cellPoint{width:5px;height:5px;border-radius:50%;background:rgba(176,161,213,.18)}
+.gameFooter{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:11px 2px 13px;color:#9f9bb9;font-size:10px;letter-spacing:.05em;font-weight:800}
+.gameFooter span:first-child{color:#f7d69e}
+.potIcon{font-size:14px}
+.leaveLink{display:block;margin:4px auto;padding:8px 11px;border:0;background:transparent;color:#b1a9be;font-size:10px;cursor:pointer}
+.waitCard{display:flex;flex-direction:column;align-items:center;gap:12px;padding:26px 15px;border:1px solid var(--pvp-border);border-radius:20px;background:linear-gradient(135deg,#252139,#181b2d);text-align:center;width:100%;max-width:430px}
+.waitCard strong{font-size:20px;letter-spacing:-.04em}
+.waitCard p{margin:0;color:#aaa2c6;font-size:12px}
+.searchOrb{width:77px;height:77px;display:grid;place-items:center;border:1px solid rgba(188,140,234,.28);border-radius:50%;background:rgba(137,92,195,.19);color:#dac4fc;animation:pvpPulse 2s ease-in-out infinite}
+.cancelButton{padding:10px 16px;border:1px solid rgba(198,177,230,.26);border-radius:11px;color:#e6d9f5;background:rgba(137,107,170,.12);font-size:11px;cursor:pointer;margin-top:8px}
+.gameError{font-size:12px;color:#ffc4ce;padding:11px;border:1px solid rgba(244,115,150,.26);border-radius:10px;background:rgba(150,47,72,.12);width:100%;margin-top:10px}
+.confirmOverlay{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:18px;background:rgba(4,4,13,.77);backdrop-filter:blur(10px)}
+.confirmCard{width:min(100%,345px);padding:24px 18px;border:1px solid rgba(209,178,238,.29);border-radius:22px;background:linear-gradient(140deg,#292239,#161a2b);text-align:center;box-shadow:0 24px 72px rgba(0,0,0,.45)}
+.confirmCard>svg{color:#d3a6f1}.confirmCard h3{font-size:19px;margin:12px 0 8px}
+.confirmCard p{font-size:11px;color:#bdb1cd;line-height:1.5}
+.confirmCard>div{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:19px}
+.confirmCard button{min-height:43px;border:1px solid rgba(206,180,233,.23);border-radius:12px;background:rgba(175,136,204,.09);color:#f6f2ff;font-size:12px}
+.confirmCard button:last-child{background:#7f55b9;color:#fff}
+.spinner{width:17px;height:17px;border:2px solid rgba(255,255,255,.24);border-top-color:#fff;border-radius:50%;animation:pvpSpin .8s linear infinite}
+@keyframes pvpSpin{to{transform:rotate(360deg)}}@keyframes pvpPulse{50%{box-shadow:0 0 22px rgba(176,125,229,.18);transform:scale(1.045)}}
+@media(max-width:380px){.root{padding-inline:8px}.gameSetup{padding:10px}.boardFrame{padding:8px}.board{gap:6px}.square{border-radius:12px}.square svg{width:33px;height:33px}.playerBox{padding:6px}.playModeTabs button{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.searchOrb,.spinner{animation:none}.square{transition:none}}

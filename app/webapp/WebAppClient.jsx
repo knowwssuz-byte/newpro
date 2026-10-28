@@ -1480,7 +1480,10 @@ export default function WebAppClient() {
 
               {tab === 'history' ? <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
               {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
-              {tab === 'pvp' ? <PvpHub onBack={closePvpHub} /> : null}
+              {tab === 'pvp' ? <PvpHub onBack={closePvpHub} apiPost={apiPost}
+  balance={profile?.balance}
+  onBalanceChange={(nextBalance)=>setProfile(current=>current?{...current,balance:nextBalance}:current)}
+  onToast={showToast} /> : null}
 
               {tab === 'rocket' ? (
                 <RocketGame
