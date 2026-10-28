@@ -1887,7 +1887,7 @@ function HomeView({
             <AppIcon name="cases" />
           </span>
           <span className={gameCardStyles.actionCopy}>
-            <strong>CASES</strong>
+            <strong>Cases</strong>
             <small>Browse &amp; open</small>
           </span>
           <span className={gameCardStyles.actionChevron}><AppIcon name="chevronRight" /></span>
@@ -1898,7 +1898,7 @@ function HomeView({
             <AppIcon name="spark" />
           </span>
           <span className={gameCardStyles.actionCopy}>
-            <strong>UPGRADE</strong>
+            <strong>Upgrade</strong>
             <small>Gift Upgrade Lab</small>
           </span>
           <span className={gameCardStyles.actionChevron}><AppIcon name="chevronRight" /></span>

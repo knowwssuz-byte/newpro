@@ -231,33 +231,8 @@ body::before {
   font-weight: 520 !important;
 }
 
-/* Make the shortcuts read like real navigation instead of game promotions. */
-.premium-home > div:nth-child(2) > button:nth-child(1) > span:nth-child(2) strong,
-.premium-home > div:nth-child(2) > button:nth-child(2) > span:nth-child(2) strong,
-.premium-home > div:nth-child(2) > button:nth-child(1) > span:nth-child(2) small,
-.premium-home > div:nth-child(2) > button:nth-child(2) > span:nth-child(2) small {
-  font-size: 0 !important;
-}
-
-.premium-home > div:nth-child(2) > button:nth-child(1) > span:nth-child(2) strong::after {
-  content: "Cases";
-  font-size: 13px;
-}
-
-.premium-home > div:nth-child(2) > button:nth-child(1) > span:nth-child(2) small::after {
-  content: "Browse & open";
-  font-size: 10.5px;
-}
-
-.premium-home > div:nth-child(2) > button:nth-child(2) > span:nth-child(2) strong::after {
-  content: "Inventory";
-  font-size: 13px;
-}
-
-.premium-home > div:nth-child(2) > button:nth-child(2) > span:nth-child(2) small::after {
-  content: "Your rewards";
-  font-size: 10.5px;
-}
+/* Home shortcuts show their real JSX labels rather than outdated
+   Inventory/Your rewards pseudo-content. */
 
 .premium-home > div:nth-child(2) > button > b:last-child {
   color: rgba(255, 255, 255, 0.28) !important;
