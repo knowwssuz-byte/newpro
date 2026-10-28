@@ -26,3 +26,16 @@ test('Stars reward is shown as Star icon and credited balance win',()=>{
  const open=read('app/api/open-case/route.js');
  assert.match(open,/rpc\('open_case_atomic'/);
 });
+
+test('saved migration makes actual real_chance the winner weight',()=>{
+  const migration=read('supabase/migrations/20261028_case_stars_actual_odds.sql');
+  assert.match(migration,/SUM\(g\.real_chance\) OVER/);
+  assert.match(migration,/COALESCE\(SUM\(real_chance\), 0\)/);
+  assert.match(migration,/REVOKE EXECUTE/);
+  assert.match(migration,/TO service_role/);
+});
+test('admin predicts actual normalized chance for a new reward',()=>{
+ const admin=read('app/admin/AdminClient.jsx');
+ assert.match(admin,/starsProjectedChance/);
+ assert.match(admin,/weight \/ \(existing \+ weight\)/);
+});

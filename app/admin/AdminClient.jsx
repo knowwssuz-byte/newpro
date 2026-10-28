@@ -446,6 +446,14 @@ export default function AdminClient() {
   const caseGiftChoices = useMemo(() => giftLibrary.filter((gift) => gift.is_active !== false && (gift.title+' '+(gift.slug||'')).toLowerCase().includes(caseGiftSearch.toLowerCase())), [giftLibrary,caseGiftSearch]);
   const upgradeGiftChoices = useMemo(() => giftLibrary.filter((gift) => gift.is_active !== false && (gift.title+' '+(gift.slug||'')).toLowerCase().includes(upgradeGiftSearch.toLowerCase())), [giftLibrary,upgradeGiftSearch]);
   const upgradeStockByLibrary = useMemo(() => new Map(upgradeGifts.map((gift) => [gift.library_gift_id,gift])), [upgradeGifts]);
+  const starsProjectedChance = useMemo(() => {
+    const weight = Number(giftForm.real_chance);
+    const existing = gifts.filter((gift) =>
+      gift.case_id === giftForm.case_id && gift.is_active !== false && Number(gift.stock) > 0
+    ).reduce((sum, gift) => sum + Math.max(0, Number(gift.real_chance ?? gift.chance) || 0), 0);
+    return Number.isFinite(weight) && weight > 0 && existing + weight > 0
+      ? Math.round(weight / (existing + weight) * 10000) / 100 : 0;
+  }, [gifts, giftForm.case_id, giftForm.real_chance]);
   const selectedLibraryGift = useMemo(() => {
     return giftLibrary.find((gift) => gift.id === giftForm.library_gift_id) || null;
   }, [giftForm.library_gift_id, giftLibrary]);
@@ -2098,6 +2106,7 @@ export default function AdminClient() {
                 <span>Haqiqiy tanlash vazni (%)</span>
                 <input type="number" min="0" max="100" step="0.01" value={giftForm.real_chance} onChange={(event) => setGiftForm({ ...giftForm, real_chance: event.target.value })} />
                 <small className="manual-field-note">Foydalanuvchiga haqiqiy yakuniy ehtimol ko‘rsatiladi. Barcha zaxirasi bor mukofotlarning vaznlari bo‘yicha hisoblanadi. 0 bo‘lsa mukofot tushmaydi.</small>
+                <small className="manual-field-note">Yangi mukofot qo‘shilgandan keyingi taxminiy real ulush: <strong>{starsProjectedChance}%</strong> (mavjud zaxira va boshqa mukofotlar o‘zgarmasa). Bu qiymat barcha mukofotlarning vaznlariga nisbatan hisoblanadi.</small>
               </label>
 
               <label>
