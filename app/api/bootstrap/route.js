@@ -12,6 +12,7 @@ async function fetchCases(supabase, { onlyActive = false } = {}) {
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: false });
 
+  ordered = ordered.is('archived_at', null);
   if (onlyActive) ordered = ordered.eq('is_active', true);
 
   const result = await ordered;
@@ -26,6 +27,7 @@ async function fetchCases(supabase, { onlyActive = false } = {}) {
       .select('*')
       .order('created_at', { ascending: false });
 
+    fallback = fallback.is('archived_at',null);
     if (onlyActive) fallback = fallback.eq('is_active', true);
 
     const fallbackResult = await fallback;
@@ -71,7 +73,7 @@ export async function POST(request) {
       giftsQuery = giftsQuery.eq('is_active', true);
     }
 
-    const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult, upgradeResult] = await Promise.all([
+    const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult, upgradeResult, libraryResult] = await Promise.all([
       ensureUser(auth.telegramUser),
       fetchCases(supabase, { onlyActive: !auth.isAdmin }),
       giftsQuery,
@@ -89,6 +91,7 @@ export async function POST(request) {
         .limit(250),
       supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp', 'feature_upgrade']),
       supabase.from('upgrade_rounds').select('id,user_id,source_history_id,source_gift_id,target_gift_id,reward_history_id,source_price,target_price,chance,outcome,created_at').eq('user_id', auth.telegramUser.id).order('created_at', { ascending: false }).limit(50),
+      supabase.from('gift_library').select('id,title,price,buy_price,image_url,png_url,webp_url,animation_url,is_active,background_value').eq('is_active',true).order('title'),
     ]);
 
     if (dbUser.is_banned) {
@@ -99,6 +102,7 @@ export async function POST(request) {
     if (historyResult.error) throw new Error(historyResult.error.message);
     if (withdrawResult.error) throw new Error(withdrawResult.error.message);
     if (upgradeResult.error) throw new Error(upgradeResult.error.message);
+    if (libraryResult.error) throw new Error(libraryResult.error.message);
 
     // A player's owned gift may have since been disabled in the public case
     // catalog. Resolve inventory media/prices separately from active gifts.
@@ -110,6 +114,15 @@ export async function POST(request) {
       : { data: [], error: null };
     if (inventoryResult.error) throw new Error(inventoryResult.error.message);
 
+    const stockByLibrary=new Map((giftsResult.data||[]).filter((g)=>g.source==='upgrade_catalog'&&g.library_gift_id).map((g)=>[g.library_gift_id,g]));
+    const upgradeCatalog=(libraryResult.data||[]).map((lib)=>{
+      const stockGift=stockByLibrary.get(lib.id);
+      const price=Number(lib.buy_price||lib.price||0);
+      return {...lib,id:stockGift?.id||lib.id,library_gift_id:lib.id,
+        type:'gift',source:'upgrade_catalog',is_active:true,stock:Number(stockGift?.stock||0),
+        price,buy_price:price,sell_price:price,floor_price:price,
+        image_url:lib.image_url||lib.png_url||lib.webp_url||'',animation_url:lib.animation_url||''};
+    }).filter((item)=>item.price>0);
     const featureSettings = featureResult.error
       ? {}
       : Object.fromEntries((featureResult.data || []).map((item) => [item.key, item.value || {}]));
@@ -120,11 +133,12 @@ export async function POST(request) {
       telegramUser: auth.telegramUser,
       isAdmin: auth.isAdmin,
       cases,
-      gifts: auth.isAdmin ? (giftsResult.data || []) : giftsWithActualOdds(giftsResult.data || []),
+      gifts: auth.isAdmin ? (giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog') : giftsWithActualOdds((giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog')),
       history: historyResult.data || [],
       inventoryGifts: inventoryResult.data || [],
       withdrawals: withdrawResult.data || [],
       upgradeRounds: upgradeResult.data || [],
+      upgradeCatalog,
       featureSettings,
     });
   } catch (error) {

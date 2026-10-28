@@ -454,6 +454,7 @@ export default function WebAppClient() {
   const [history, setHistory] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
   const [upgradeRounds, setUpgradeRounds] = useState([]);
+  const [upgradeCatalog, setUpgradeCatalog] = useState([]);
   const [featureSettings, setFeatureSettings] = useState({});
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminWithdrawals, setAdminWithdrawals] = useState([]);
@@ -656,6 +657,7 @@ export default function WebAppClient() {
     setHistory(Array.isArray(data.history) ? data.history : []);
     setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
     setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
+    setUpgradeCatalog(Array.isArray(data.upgradeCatalog) ? data.upgradeCatalog : []);
     setFeatureSettings(data.featureSettings || {});
 
     if (Array.isArray(data.cases) && data.cases[0]?.id) {
@@ -1504,7 +1506,7 @@ export default function WebAppClient() {
               ) : null}
 
               {tab === 'history' ? <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab('home')} onRefresh={() => loadApp({silent:true})}/> : null}
-              {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={gifts} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
+              {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
               {tab === 'pvp' ? <PvpHub onBack={closePvpHub} /> : null}
 
               {tab === 'rocket' ? (

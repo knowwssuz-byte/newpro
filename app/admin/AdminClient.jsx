@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import './admin-catalog.css';
 
 const emptyCaseForm = {
   title: '',
@@ -289,6 +290,11 @@ export default function AdminClient() {
   const [giftLibrary, setGiftLibrary] = useState([]);
   const [giftLibrarySearch, setGiftLibrarySearch] = useState('');
   const [giftLibraryLimit, setGiftLibraryLimit] = useState(48);
+  const [caseGiftSearch, setCaseGiftSearch] = useState('');
+  const [upgradeGiftSearch, setUpgradeGiftSearch] = useState('');
+  const [upgradeGifts, setUpgradeGifts] = useState([]);
+  const [upgradeStockDrafts, setUpgradeStockDrafts] = useState({});
+
   const [giftSyncResult, setGiftSyncResult] = useState(null);
   const [giftSyncUserId, setGiftSyncUserId] = useState('');
   const [users, setUsers] = useState([]);
@@ -331,6 +337,9 @@ export default function AdminClient() {
   const [balanceUserId, setBalanceUserId] = useState('');
   const [balanceAmount, setBalanceAmount] = useState('');
 
+  const caseGiftChoices = useMemo(() => giftLibrary.filter((gift) => gift.is_active !== false && (gift.title+' '+(gift.slug||'')).toLowerCase().includes(caseGiftSearch.toLowerCase())), [giftLibrary,caseGiftSearch]);
+  const upgradeGiftChoices = useMemo(() => giftLibrary.filter((gift) => gift.is_active !== false && (gift.title+' '+(gift.slug||'')).toLowerCase().includes(upgradeGiftSearch.toLowerCase())), [giftLibrary,upgradeGiftSearch]);
+  const upgradeStockByLibrary = useMemo(() => new Map(upgradeGifts.map((gift) => [gift.library_gift_id,gift])), [upgradeGifts]);
   const selectedLibraryGift = useMemo(() => {
     return giftLibrary.find((gift) => gift.id === giftForm.library_gift_id) || null;
   }, [giftForm.library_gift_id, giftLibrary]);
@@ -372,6 +381,8 @@ export default function AdminClient() {
     setUsers(data.users || []);
     setWithdrawals(data.withdrawals || []);
     setGiftLibrary(data.giftLibrary || []);
+    setUpgradeGifts(data.upgradeGifts || []);
+    setUpgradeStockDrafts((previous) => Object.fromEntries((data.giftLibrary || []).map((gift) => [gift.id, previous[gift.id] ?? String((data.upgradeGifts || []).find((row) => row.library_gift_id === gift.id)?.stock ?? 0)])));
     setFeatureSettings(data.featureSettings || {});
     setDeposits(data.deposits || []);
     setPromoCodes(data.promoCodes || []);
@@ -412,7 +423,7 @@ export default function AdminClient() {
     const firstCaseId = sortedCases?.[0]?.id || '';
     setGiftForm((current) => ({
       ...current,
-      case_id: current.case_id || firstCaseId,
+      case_id: sortedCases.some((item) => item.id === current.case_id) ? current.case_id : firstCaseId,
     }));
   }
 
@@ -807,6 +818,23 @@ export default function AdminClient() {
     }));
   }
 
+  async function saveUpgradeStock(giftId) {
+    const stock = Number(upgradeStockDrafts[giftId] ?? 0);
+    if (!Number.isSafeInteger(stock) || stock < 0 || stock > 10000) {
+      setError('Stock 0 dan 10000 gacha butun son bo‘lishi kerak.');
+      return;
+    }
+    const result = await run(() => callAdmin('upgrade_stock_set', { libraryGiftId: giftId, stock }), 'Upgrade zaxirasi saqlandi ✅');
+    if (result) applyBootstrap(result);
+  }
+
+  async function archiveAllCases() {
+    if (!cases.length) return;
+    if (!window.confirm(cases.length + ' ta Case ro‘yxatdan olib tashlansinmi? Eski yutuqlar va foydalanuvchilar tarixi saqlanadi.')) return;
+    const result = await run(() => callAdmin('case_archive_all'), 'Case’lar arxivlandi ✅');
+    if (result) applyBootstrap(result);
+  }
+
   async function createGiftFromLibrary(event) {
     event.preventDefault();
 
@@ -1171,6 +1199,7 @@ export default function AdminClient() {
             ['cases', 'Cases'],
             ['library', 'Gift baza'],
             ['gifts', 'Casega gift'],
+            ['upgrade-gifts', 'Upgrade giftlari'],
             ['features', 'PVP / Rocket'],
             ['rocket', 'Rocket control'],
             ['dice', 'Dice settings'],
@@ -1241,7 +1270,11 @@ export default function AdminClient() {
             </form>
 
             <div className="browser-admin-list">
-              <h2>Cases</h2>
+              <div className="admin-case-list-heading">
+                <h2>Cases ({cases.length})</h2>
+                <button type="button" className="admin-danger-light" disabled={busy || !cases.length} onClick={archiveAllCases}>Hammasini olib tashlash</button>
+              </div>
+              {!cases.length ? <p className="manual-field-note">Hozir Case yo‘q. Yangi Case yarating.</p> : null}
               {sortCasesForDisplay(cases).map((caseItem, index) => (
                 <div className={`browser-admin-item admin-case-order-item ${caseItem.is_pinned ? 'is-pinned' : ''}`} key={caseItem.id}>
                   <CaseImage caseItem={caseItem} />
@@ -1783,6 +1816,32 @@ export default function AdminClient() {
           </section>
         ) : null}
 
+        {tab === 'upgrade-gifts' ? (
+          <section className="browser-admin-form admin-upgrade-library">
+            <div className="admin-form-heading">
+              <span>UPGRADE · GIFT BAZA</span>
+              <h2>Upgrade uchun giftlar</h2>
+              <p>Giftlar bazadan avtomatik olinadi. Faqat haqiqatan yetkazib bera oladigan giftlaringizga stock kiriting. 0 bo‘lsa foydalanuvchi giftni ko‘radi, lekin yuta olmaydi.</p>
+            </div>
+            <label><span>Gift qidirish · {upgradeGiftChoices.length} ta</span>
+              <input type="search" value={upgradeGiftSearch} placeholder="Gift qidiring" onChange={(event)=>setUpgradeGiftSearch(event.target.value)} />
+            </label>
+            <div className="admin-upgrade-library-grid">
+              {upgradeGiftChoices.slice(0,150).map((gift)=>{
+                const current=upgradeStockByLibrary.get(gift.id);
+                return <article key={gift.id} className="admin-upgrade-library-item">
+                  <div className="admin-gift-choice-art"><GiftImage gift={gift}/></div>
+                  <strong title={gift.title}>{gift.title}</strong>
+                  <small>{money(gift.buy_price || gift.price)} ⭐ · {current?.stock>0?'Mavjud':'Zaxira yo‘q'}</small>
+                  <label><span>Stock</span><input type="number" min="0" max="10000" step="1" value={upgradeStockDrafts[gift.id]??'0'}
+                    onChange={(event)=>setUpgradeStockDrafts((old)=>({...old,[gift.id]:event.target.value}))}/></label>
+                  <button type="button" disabled={busy} onClick={()=>saveUpgradeStock(gift.id)}>Saqlash</button>
+                </article>;
+              })}
+            </div>
+          </section>
+        ) : null}
+
         {tab === 'gifts' ? (
           <section className="browser-admin-grid catalog-gift-layout">
             <form className="browser-admin-form catalog-gift-form" onSubmit={createGiftFromLibrary}>
@@ -1802,17 +1861,25 @@ export default function AdminClient() {
                 </select>
               </label>
 
-              <label>
-                <span>Gift baza</span>
-                <select value={giftForm.library_gift_id} onChange={(event) => applyLibraryGift(event.target.value)} required>
-                  <option value="">Gift tanlang</option>
-                  {giftLibrary.filter((gift) => gift.is_active !== false).map((gift) => (
-                    <option key={gift.id} value={gift.id}>{gift.title} · {money(gift.price)} ⭐</option>
+              <div className="admin-gift-selector" role="group" aria-label="Rasm orqali gift tanlash">
+                <label><span>Gift baza · {caseGiftChoices.length} ta</span>
+                  <input type="search" value={caseGiftSearch} placeholder="Gift nomi yoki raqamini qidiring"
+                    onChange={(event) => setCaseGiftSearch(event.target.value)} />
+                </label>
+                <div className="admin-gift-selector-grid">
+                  {caseGiftChoices.slice(0,100).map((gift) => (
+                    <button key={gift.id} type="button" className={'admin-gift-choice'+(giftForm.library_gift_id===gift.id?' is-selected':'')}
+                      aria-pressed={giftForm.library_gift_id===gift.id} onClick={() => applyLibraryGift(gift.id)}>
+                      <span className="admin-gift-choice-art"><GiftImage gift={gift}/></span>
+                      <strong title={gift.title}>{gift.title}</strong>
+                      <small>{money(gift.price)} ⭐</small>
+                    </button>
                   ))}
-                </select>
-              </label>
+                </div>
+                {caseGiftChoices.length>100 ? <small>100 ta gift ko‘rsatilmoqda. Qidiruvdan foydalaning.</small>:null}
+              </div>
 
-                            {selectedLibraryGift ? (
+              {selectedLibraryGift ? (
                 <div className="selected-catalog-preview manual-selected-preview" style={{ '--telegram-gift-bg': selectedLibraryGift.background_value || 'linear-gradient(135deg,#7c3aed,#111827)' }}>
                   <GiftImage gift={selectedLibraryGift} />
                   <div>
@@ -1871,7 +1938,7 @@ export default function AdminClient() {
 
             <div className="browser-admin-list">
               <h2>Case giftlari</h2>
-              {gifts.map((gift) => (
+              {gifts.filter((gift) => gift.case_id && cases.some((item) => item.id === gift.case_id)).map((gift) => (
                 <div className="browser-admin-item" key={gift.id}>
                   <GiftImage gift={gift} />
                   <div>

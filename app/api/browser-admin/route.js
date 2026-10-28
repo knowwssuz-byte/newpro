@@ -109,7 +109,8 @@ async function fetchCasesForAdmin(supabase) {
     .select('*')
     .order('is_pinned', { ascending: false })
     .order('sort_order', { ascending: true })
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .is('archived_at', null);
 
   if (!ordered.error) return ordered.data || [];
 
@@ -119,7 +120,8 @@ async function fetchCasesForAdmin(supabase) {
     const fallback = await supabase
       .from('cases')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .is('archived_at', null);
 
     if (fallback.error) throw fallback.error;
 
@@ -169,6 +171,7 @@ async function bootstrap(supabase) {
     users,
     withdrawals,
     giftLibrary,
+    upgradeGifts,
     featureRows,
     deposits,
     depositSettings,
@@ -196,6 +199,7 @@ async function bootstrap(supabase) {
       'gift_library',
       supabase.from('gift_library').select('*').order('created_at', { ascending: false })
     ),
+    safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').eq('source','upgrade_catalog')),
     safeSelect(supabase, 'app_settings', supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp'])),
     safeSelect(
       supabase,
@@ -234,6 +238,7 @@ async function bootstrap(supabase) {
     users,
     withdrawals,
     giftLibrary,
+    upgradeGifts,
     featureSettings: Object.fromEntries((featureRows || []).map((item) => [item.key, item.value || {}])),
     deposits,
     promoCodes,
@@ -915,11 +920,41 @@ export async function POST(request) {
     }
 
     if (action === 'case_delete') {
-      const { error } = await supabase.from('cases').delete().eq('id', body.caseId);
-
+      const { error } = await supabase.from('cases').update({ is_active: false, archived_at: new Date().toISOString() })
+        .eq('id',body.caseId).is('archived_at',null);
       if (error) throw error;
+      return json({ok:true});
+    }
 
-      return json({ ok: true });
+    if (action === 'case_archive_all') {
+      const {data,error}=await supabase.from('cases').update({is_active:false,archived_at:new Date().toISOString()})
+        .is('archived_at',null).select('id');
+      if(error)throw error;
+      return json({ok:true,archivedCount:(data||[]).length,...(await bootstrap(supabase))});
+    }
+
+    if (action === 'upgrade_stock_set') {
+      const libraryGiftId=clean(body.libraryGiftId);
+      const stock=Number(body.stock);
+      if(!/^[0-9a-f-]{36}$/i.test(libraryGiftId)||!Number.isSafeInteger(stock)||stock<0||stock>10000)
+        return json({ok:false,error:'Gift yoki stock noto‘g‘ri.'},400);
+      const {data:lib,error:libErr}=await supabase.from('gift_library').select('*')
+        .eq('id',libraryGiftId).eq('is_active',true).maybeSingle();
+      if(libErr)throw libErr;
+      if(!lib)return json({ok:false,error:'Gift bazadan topilmadi.'},404);
+      const price=Number(lib.buy_price||lib.price||0);
+      if(!Number.isFinite(price)||price<=0)return json({ok:false,error:'Gift narxini to‘g‘rilang.'},400);
+      const payload={case_id:null,library_gift_id:lib.id,source:'upgrade_catalog',title:lib.title,
+        type:'gift',value:String(price),chance:0,real_chance:0,stock,is_active:true,
+        image_url:lib.image_url||lib.png_url||lib.webp_url||'',animation_url:lib.animation_url||'',
+        background_value:lib.background_value||'#252037',floor_price:price,buy_price:price,sell_price:price};
+      const {data:previous,error:readErr}=await supabase.from('gifts').select('id')
+        .eq('library_gift_id',lib.id).eq('source','upgrade_catalog').maybeSingle();
+      if(readErr)throw readErr;
+      const write=previous?await supabase.from('gifts').update(payload).eq('id',previous.id)
+        :await supabase.from('gifts').insert(payload);
+      if(write.error)throw write.error;
+      return json({ok:true,...(await bootstrap(supabase))});
     }
 
     if (action === 'gift_library_update') {

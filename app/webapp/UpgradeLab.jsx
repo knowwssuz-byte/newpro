@@ -49,9 +49,9 @@ function GiftPicker({mode,gifts,activeId,onChoose,onClose}) {
       </div>
       <p className={styles.resultCount}>{list.length} ta sovg‘a</p>
       <div className={styles.pickerList}>
-        {list.map(item=><button type="button" key={item.id} className={styles.pickRow} data-active={item.id===activeId} onClick={()=>onChoose(item)}>
+        {list.map(item=><button type="button" key={item.id} className={styles.pickRow} data-active={item.id===activeId} disabled={mode==='target'&&!item.available} style={mode==='target'&&!item.available?{opacity:.45,cursor:'not-allowed'}:undefined} onClick={()=>onChoose(item)}>
           <span className={styles.pickThumb}><UpgradeGiftThumb item={item} alt=""/></span>
-          <span className={styles.pickText}><strong>{item.title}</strong><small>{mode==='source'?'Inventaringizdagi sovg‘a':'Sovg‘alar katalogi'}</small></span>
+          <span className={styles.pickText}><strong>{item.title}</strong><small>{mode==='source'?'Inventaringizdagi sovg‘a':item.available?'Gift baza · mavjud':'Zaxira yo‘q'}</small></span>
           <span className={styles.pickPrice}><StarIcon variant="gold" size={14}/>{fmt(item.price)}</span>
         </button>)}
         {!list.length ? <div className={styles.emptyResult}>{mode==='source'?'Inventarda mos sovg‘a yo‘q':'Qimmatroq sovg‘a topilmadi'}</div>:null}
@@ -116,8 +116,9 @@ export default function UpgradeLab({
   const owned=useMemo(()=>getInventoryRows(history,inventoryGifts,cases,withdrawals)
     .map(({item,gift})=>normalizeUpgradeGift(gift,item.id)).filter(Boolean),
     [history,inventoryGifts,cases,withdrawals]);
-  const catalog=useMemo(()=>catalogGifts.filter(g=>g?.is_active!==false&&Number(g?.stock)>0)
-    .map(g=>normalizeUpgradeGift(g)).filter(Boolean).sort((a,b)=>a.price-b.price),
+  const catalog=useMemo(()=>catalogGifts.filter(g=>g?.is_active!==false)
+    .map(g=>{const item=normalizeUpgradeGift(g);return item?{...item,available:Number(g.stock)>0}:null;})
+    .filter(Boolean).sort((a,b)=>a.price-b.price),
     [catalogGifts]);
   const [sourceId,setSourceId]=useState(null);
   const [targetId,setTargetId]=useState(null);
@@ -142,7 +143,7 @@ export default function UpgradeLab({
 
   const source=owned.find(item=>item.id===sourceId)||null;
   const targets=useMemo(()=>source?catalog.filter(item=>item.price>source.price&&item.catalogId!==source.catalogId):[],[source,catalog]);
-  const goal=targets.find(item=>item.id===targetId)||null;
+  const goal=targets.find(item=>item.id===targetId&&item.available)||null;
   const estimatedChance=upgradeChance(source,goal);
   const chance=(phase==='rolling'||phase==='result')&&settledChance!==null?settledChance:estimatedChance;
   const multiplier=source&&goal?goal.price/source.price:0;
@@ -242,7 +243,7 @@ export default function UpgradeLab({
   };
 
   const chooseGift=item=>{
-    if(blocked)return;
+    if(blocked||(picker==='target'&&!item.available))return;
     if(picker==='source'){setSourceId(item.id);setTargetId(null)}
     else setTargetId(item.id);
     upgradeSound('select',soundEnabled);
