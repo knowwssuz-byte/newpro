@@ -33,7 +33,7 @@ function normalizeGift(gift) {
 }
 
 function rewardType(gift) {
-  return String(gift?.type || '').toLowerCase() === 'balance' ? 'balance' : 'gift';
+  const type=String(gift?.type||'').toLowerCase();return type==='balance'||type==='xp'?type:'gift';
 }
 
 function publicGift(gift) {
@@ -136,6 +136,7 @@ function formatRpcResponse(payload) {
   const rewardAmount = toNumber(data.rewardAmount ?? data.reward_amount);
   const totalChance = toNumber(data.totalChance ?? data.total_chance);
   const poolSize = toNumber(data.poolSize ?? data.pool_size);
+  const xpAwarded=rewardType(gift)==='xp'?Math.max(0,toNumber(gift?.value)):0;
 
   const oddsPool = disclosedPool(Array.isArray(data.reelPool || data.reel_pool)
     ? (data.reelPool || data.reel_pool) : []);
@@ -150,6 +151,7 @@ function formatRpcResponse(payload) {
     balanceAfter,
     price: toNumber(data.price),
     rewardAmount,
+    xpAwarded,
     history,
     reelPool: oddsPool,
     opening: {
@@ -173,7 +175,7 @@ async function openCaseWithRpc(supabase, userId, caseId) {
   const response = formatRpcResponse(data);
   const { data: currentUser } = await supabase
     .from('users')
-    .select('balance')
+    .select('balance,level_xp')
     .eq('id', userId)
     .maybeSingle();
 
@@ -184,6 +186,7 @@ async function openCaseWithRpc(supabase, userId, caseId) {
     response.balanceAfter = Number(currentUser.balance);
   }
 
+  if (currentUser?.level_xp != null) response.userXp=Number(currentUser.level_xp);
   return response;
 }
 
@@ -281,6 +284,7 @@ async function openCaseFallback(supabase, auth, dbUser, caseId) {
     );
   }
 
+  if(rewardType(updatedGift)==='xp') return jsonError('XP mukofoti atomik ochish orqali beriladi',503);
   const rewardAmount = rewardType(updatedGift) === 'balance' ? Math.max(0, toNumber(updatedGift.value)) : 0;
   const newBalance = userBalance - casePrice + rewardAmount;
 
