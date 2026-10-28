@@ -46,7 +46,12 @@ export async function POST(request) {
    p_match_id:id,p_mode:mode,p_stake:stake,p_cell:cell
   });
   if(error){const [message,status]=publicError(error);return jsonError(message,status);}
-  return Response.json({ok:true,...data},{headers:{'Cache-Control':'no-store'}});
+  const userId=String(auth.telegramUser.id);
+  const match=data?.match;
+  const assignedMatch=match
+    ? {...match,your_mark:String(match.x_id)===userId?'X':String(match.o_id)===userId?'O':null}
+    : null;
+  return Response.json({ok:true,...data,match:assignedMatch},{headers:{'Cache-Control':'no-store'}});
  }catch(e){
   console.error('[pvp-xo:route]',String(e?.message||'server error').slice(0,180));
   return jsonError('PvP so‘rovi bajarilmadi',500);

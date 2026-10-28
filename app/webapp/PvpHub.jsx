@@ -48,11 +48,12 @@ function TicTacToe({onBack,apiPost,balance,onBalanceChange,onToast}) {
  const [error,setError]=useState('');
  const [confirmExit,setConfirmExit]=useState(false);
  const syncBusy=useRef(false);
+ const onBalanceRef=useRef(onBalanceChange);
+ onBalanceRef.current=onBalanceChange;
  const actionBusy=useRef(false);
  const isLive=match?.status==='waiting'||match?.status==='active';
- const isX=match?.x_id!=null && String(match.x_id)===String(match?.viewer_id);
- // viewer_id is injected by the client from the match membership response.
- const yourMark=match?.your_mark || (match?.mode==='bot'?'X':isX?'X':'O');
+ // The server identifies our mark; never infer it from the first player slot.
+ const yourMark=match?.your_mark || 'X';
  const board=Array.from({length:9},(_,i)=>match?.board?.[i]&&match.board[i]!=='.'?match.board[i]:null);
  const result=evaluateBoard(board);
  const win=match?.status==='finished';
@@ -60,7 +61,7 @@ function TicTacToe({onBack,apiPost,balance,onBalanceChange,onToast}) {
  const won=win && match.winner===yourMark;
  const myTurn=match?.status==='active'&&match.turn===yourMark;
  const timeRemaining=match?.deadline?Math.max(0,Math.ceil((new Date(match.deadline).getTime()-Date.now())/1000)):null;
- const [clock,setClock]=useState(0);
+ const [,setClock]=useState(0);
  useEffect(()=>{
   if(!isLive)return undefined;
   const t=window.setInterval(()=>setClock(x=>x+1),1000);
@@ -73,12 +74,12 @@ function TicTacToe({onBack,apiPost,balance,onBalanceChange,onToast}) {
      return current;
    return data.match;
   });
-  if(data.balance!=null)onBalanceChange?.(Number(data.balance));
+  if(data.balance!=null)onBalanceRef.current?.(Number(data.balance));
   try{
    if(['active','waiting'].includes(data.match.status))localStorage.setItem(SAVE_KEY,data.match.id);
    else localStorage.removeItem(SAVE_KEY);
   }catch{}
- },[onBalanceChange]);
+ },[]);
  useEffect(()=>{
   let cancelled=false;
   try{
