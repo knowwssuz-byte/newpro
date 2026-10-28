@@ -63,12 +63,14 @@ const client = new TelegramClient(session, apiId, apiHash, {
 
   const saved = client.session.save();
   const outputPath = path.join(process.cwd(), 'telegram.session.txt');
-  fs.writeFileSync(outputPath, saved, 'utf8');
+  fs.writeFileSync(outputPath, saved, {encoding:'utf8',mode:0o600,flag:'w'});
+  try {fs.chmodSync(outputPath,0o600)}catch{ /* Windows may not support POSIX mode */ }
 
   console.log('\n✅ Session tayyor.');
   console.log(`Faylga yozildi: ${outputPath}`);
-  console.log('\nVercel ENV ichiga shuni qo‘ying:');
-  console.log(`TG_STRING_SESSION=${saved}`);
+  console.log('🔒 Maxfiy session terminalga chiqarilmadi.');
+  console.log('Vercel ENV uchun session qiymatini faqat lokal telegram.session.txt faylidan oling.');
+  console.log('Faylni hech kimga yubormang, commit qilmang.');
 
   await client.disconnect();
 })();

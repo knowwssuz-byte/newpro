@@ -6,3 +6,9 @@ node_modules/
 npm-debug.log*
 *.tsbuildinfo
 .DS_Store
+
+# Never commit Telegram login/session credentials or exported tokens
+telegram.session.txt
+*.session
+*.session.txt
+*.session.json
