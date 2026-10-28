@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import {getSharedStarsArtworkUrl,setSharedStarsArtworkUrl} from '@/lib/caseStarsArtwork.mjs';
 import { syncOwnedTelegramGifts, syncAvailableTelegramGifts } from '@/lib/telegramGiftSync';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
@@ -234,6 +235,7 @@ async function bootstrap(supabase) {
 
   return {
     cases: await normalizeCaseOrder(supabase, cases),
+    starsArtworkUrl: await getSharedStarsArtworkUrl(supabase),
     gifts,
     users,
     withdrawals,
@@ -473,11 +475,13 @@ async function createCaseStarsReward(supabase, data, file = null) {
   if (caseError) throw caseError;
   if (!currentCase) throw new Error('Faol Case topilmadi.');
 
-  let imageUrl = '';
+  const existingSharedImage = await getSharedStarsArtworkUrl(supabase);
+  let uploadedImage = '';
   if (file && typeof file.arrayBuffer === 'function' && file.size > 0) {
     const uploaded = await uploadStarsRewardImage(supabase,file,`stars-${amount}`);
-    imageUrl = uploaded.imageUrl;
+    uploadedImage = uploaded.imageUrl;
   }
+  const imageUrl = uploadedImage || existingSharedImage;
   const row = {
     case_id:caseId, title:`${amount.toLocaleString('en-US')} Stars`,
     type:'balance', value:String(amount),
@@ -490,6 +494,10 @@ async function createCaseStarsReward(supabase, data, file = null) {
   };
   const {data:gift,error} = await supabase.from('gifts').insert(row).select('*').single();
   if(error)throw error;
+  if(uploadedImage) {
+    const shared = await setSharedStarsArtworkUrl(supabase,uploadedImage);
+    return {...gift,image_url:shared.imageUrl};
+  }
   return gift;
 }
 
@@ -591,10 +599,8 @@ async function handleFormAction(request, formData, supabase) {
     if(!reward || reward.type !== 'balance' || reward.source !== 'case_stars')
       return json({ok:false,error:'Stars mukofoti topilmadi.'},404);
     const image = await uploadStarsRewardImage(supabase,formData.get('image_file'),reward.title);
-    const {data:gift,error} = await supabase.from('gifts')
-      .update({image_url:image.imageUrl}).eq('id',reward.id).eq('type','balance').select('*').single();
-    if(error)throw error;
-    return json({ok:true,gift,...(await bootstrap(supabase))});
+    const shared = await setSharedStarsArtworkUrl(supabase,image.imageUrl);
+    return json({ok:true,gift:{...reward,image_url:shared.imageUrl},updatedCount:shared.updatedCount,...(await bootstrap(supabase))});
   }
 
   if (action === 'gift_library_create') {
