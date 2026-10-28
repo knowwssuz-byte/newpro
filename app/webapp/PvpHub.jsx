@@ -41,8 +41,8 @@ function BoardCell({value,index,isWinning,onClick,disabled}) {
  return <button type="button" disabled={disabled}
    className={`${styles.square} ${value==='X'?styles.x:value==='O'?styles.o:''} ${isWinning?styles.winning:''}`}
    onClick={onClick} aria-label={`Katak ${index+1}: ${value||'bo‘sh'}`}>
-   {value==='X'?<X size={44} strokeWidth={2.8} aria-hidden="true"/>:
-    value==='O'?<Circle size={40} strokeWidth={2.8} aria-hidden="true"/>:
+   {value==='X'?<Image src="/pvp/xo/mark-x.svg" alt="" width={120} height={120} className={styles.symbolArt} draggable={false} unoptimized aria-hidden="true"/>:
+    value==='O'?<Image src="/pvp/xo/mark-o.svg" alt="" width={120} height={120} className={styles.symbolArt} draggable={false} unoptimized aria-hidden="true"/>:
     <span className={styles.cellPoint} aria-hidden="true"/>}
  </button>;
 }
@@ -253,12 +253,12 @@ function TicTacToe({onBack,apiPost,balance,onBalanceChange,onToast,onRps}) {
   {(match?.status==='active'||finished) ? <div className={styles.matchContent}>
    <div className={styles.playerRow}>
     <div className={`${styles.playerBox} ${yourMark==='X'?styles.isMe:''}`}>
-     <span className={styles.playerSymbolX}>×</span>
+     <span className={styles.playerSymbolX}><Image src="/pvp/xo/mark-x.svg" width={36} height={36} alt="" draggable={false} unoptimized/></span>
      <div><small>X PLAYER</small><strong>{match.x_name||'Player'}</strong></div>
     </div>
     <span className={styles.vsLabel}>VS</span>
     <div className={`${styles.playerBox} ${yourMark==='O'?styles.isMe:''}`}>
-     <span className={styles.playerSymbolO}>○</span>
+     <span className={styles.playerSymbolO}><Image src="/pvp/xo/mark-o.svg" width={36} height={36} alt="" draggable={false} unoptimized/></span>
      <div><small>O PLAYER</small><strong>{match.o_name||'Player'}</strong></div>
     </div>
    </div>
@@ -266,13 +266,13 @@ function TicTacToe({onBack,apiPost,balance,onBalanceChange,onToast,onRps}) {
     <span className={finished?(won?styles.winText:lost?styles.loseText:styles.drawText):''}>{label}</span>
     {!finished&&timeRemaining!==null?<small>{timeRemaining}s</small>:null}
    </div>
-   <div className={styles.boardFrame}><div className={styles.board} role="group" aria-label="X O o‘yin maydoni">
+   <div className={styles.boardFrame}><span className={styles.boardSheen} aria-hidden="true"/><div className={styles.board} role="group" aria-label="X O o‘yin maydoni">
     {board.map((value,i)=><BoardCell key={i} value={value} index={i}
       isWinning={Boolean(result?.winner!=='draw'&&result?.line?.includes(i))}
       disabled={!myTurn||Boolean(value)||Boolean(busy)||finished}
       onClick={()=>act('move',{matchId:match.id,cell:i})}/>)}
    </div></div>
-   <div className={styles.gameFooter}><span>★ {match.stake*2} Stars</span><span>ONLINE DUEL</span></div>
+   <div className={styles.gameFooter}><span>★ {match.stake*2} Stars</span><span className={styles.arenaStatusDot}/><span>ONLINE DUEL</span></div>
    {finished?<button type="button" className={styles.playPrimary} onClick={()=>{setWinDismissed(match.id);setMatch(null);setError('')}}>
      <RotateCcw size={17}/> Boshqa duel <ArrowRight size={17}/></button>
     : <button type="button" className={styles.leaveLink} onClick={()=>setConfirmExit(true)}>Duelni tark etish</button>}

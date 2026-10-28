@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 144 144"><defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e2faff"/><stop offset=".22" stop-color="#4fdaff"/><stop offset=".55" stop-color="#118bff"/><stop offset=".82" stop-color="#2465d9"/><stop offset="1" stop-color="#a8ffff"/></linearGradient><linearGradient id="shine" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#f2ffff" stop-opacity=".86"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><filter id="g"><feGaussianBlur stdDeviation="5"/></filter></defs>
+<path d="M36 18 72 54 108 18 126 36 90 72 126 108 108 126 72 90 36 126 18 108 54 72 18 36z" fill="#149cff" opacity=".5" filter="url(#g)"/>
+<path d="M36 21 72 55 108 21 123 36 89 72 123 108 108 123 72 89 36 123 21 108 55 72 21 36z" fill="url(#b)" stroke="#b1f4ff" stroke-width="3.2" stroke-linejoin="round"/>
+<path d="m39 29 33 32 33-32m-33 52-33 33m33-33 33 33" fill="none" stroke="url(#shine)" stroke-width="6" stroke-linecap="round" opacity=".9"/>
+<path d="M39 21 72 54 105 21M21 39l33 33-33 33M123 39 90 72l33 33M39 123l33-33 33 33" fill="none" stroke="#092b83" stroke-width="2" opacity=".46"/>
+</svg>
