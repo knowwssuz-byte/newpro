@@ -1,4 +1,5 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import {getSharedStarsArtworkUrl,setSharedStarsArtworkUrl} from '@/lib/caseStarsArtwork.mjs';
 import { jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
@@ -139,6 +140,7 @@ export async function POST(request) {
       const numericRealChance = realChanceValue(real_chance, numericChance);
       const numericStock = Math.floor(toNumber(stock));
       const cleanImage = cleanText(image_url);
+      const sharedImage = rewardType === 'balance' ? await getSharedStarsArtworkUrl(supabase) : '';
       const cleanAnimation = cleanText(animation_url);
       const finalRarity = normalizeRarity(rarity, numericChance);
       const finalBackground = cleanText(background_value) || defaultBackground(finalRarity, rewardType);
@@ -163,7 +165,7 @@ export async function POST(request) {
           chance: numericChance,
           real_chance: numericRealChance,
           stock: numericStock,
-          image_url: rewardType === 'gift' ? cleanImage : cleanImage || null,
+          image_url: rewardType === 'gift' ? cleanImage : (sharedImage || cleanImage || null),
           animation_url: null,
           background_value: finalBackground,
           rarity: finalRarity,
@@ -176,7 +178,6 @@ export async function POST(request) {
         .single();
 
       if (error) throw new Error(`${error.message}. Supabase SQL ichida real-chance-sell.sql ni run qiling.`);
-
       return Response.json({ ok: true, gift: publicGift(data) });
     }
 
@@ -216,7 +217,12 @@ export async function POST(request) {
         updates.real_chance = nextRealChance;
       }
       if (stock !== undefined) updates.stock = Math.max(0, Math.floor(toNumber(stock)));
-      if (image_url !== undefined) updates.image_url = cleanText(image_url) || null;
+      if (image_url !== undefined) {
+        const submittedImage = cleanText(image_url);
+        const commonImage = currentGift.type === 'balance' ? await getSharedStarsArtworkUrl(supabase) : '';
+        updates.image_url = currentGift.type === 'balance' ? (commonImage || submittedImage || null)
+          : (submittedImage || null);
+      }
       if (animation_url !== undefined) updates.animation_url = null;
       if (background_value !== undefined) updates.background_value = cleanText(background_value) || currentGift.background_value;
       if (rarity !== undefined) updates.rarity = normalizeRarity(rarity, updates.chance ?? currentGift.chance);
@@ -240,6 +246,14 @@ export async function POST(request) {
 
       if (error) throw new Error(`${error.message}. Supabase SQL ichida real-chance-sell.sql ni run qiling.`);
 
+      // If an admin updates one Stars artwork by URL, update every case Stars
+      // gift together; ordinary balance data is never touched.
+      const submittedImage = cleanText(image_url);
+      if (currentGift.type === 'balance' && image_url !== undefined &&
+          /^https?:\/\//i.test(submittedImage)) {
+        const result = await setSharedStarsArtworkUrl(supabase, submittedImage);
+        return Response.json({ ok: true, gift: publicGift({ ...data,image_url:result.imageUrl }) });
+      }
       return Response.json({ ok: true, gift: publicGift(data) });
     }
 

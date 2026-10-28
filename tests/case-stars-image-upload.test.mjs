@@ -25,7 +25,8 @@ test('existing stars reward image can be replaced without modifying odds or user
  const admin=read('app/admin/AdminClient.jsx'),api=read('app/api/browser-admin/route.js');
  assert.match(admin,/case_stars_reward_image_replace/);
  assert.match(api,/reward\.type !== 'balance' \|\| reward\.source !== 'case_stars'/);
- assert.match(api,/\.update\(\{image_url:image\.imageUrl\}\)/);
+ assert.match(api,/setSharedStarsArtworkUrl\(supabase,image\.imageUrl\)/);
+ assert.match(read('lib/caseStarsArtwork.mjs'),/\.eq\('type','balance'\)\.not\('case_id','is',null\)/);
 });
 test('balance rewards render their uploaded image in reel and win, fallback to Star icon',()=>{
  const client=read('app/webapp/WebAppClient.jsx');
