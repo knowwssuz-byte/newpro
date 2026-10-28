@@ -1642,3 +1642,9 @@
   .resultSparkleOne,.resultSparkleTwo,.resultSparkleThree { animation: none !important; }
   .winActions button,.resultClose { transition: none !important; }
 }
+
+/* Level XP reward has its own violet visual tone. */
+.resultPanel[data-reward-kind="xp"] { --reward-rgb: 169, 124, 249; }
+.resultPanel[data-reward-kind="xp"] .resultRarity { color: #e1c6ff; }
+.resultPanel[data-reward-kind="xp"] .resultStatus { border-color:rgba(180,140,241,.23);color:#e3d0ff;background:rgba(139,96,202,.09); }
+.resultPanel[data-reward-kind="xp"] .resultCheck { color:#dfc3ff;background:rgba(159,112,220,.16); }

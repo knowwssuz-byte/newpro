@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffe4b0"/><stop offset=".5" stop-color="#dfa45b"/><stop offset="1" stop-color="#996031"/></linearGradient><linearGradient id="d" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#b9a1f6"/><stop offset="1" stop-color="#55409c"/></linearGradient></defs>
+<circle cx="120" cy="120" r="104" fill="#211931" stroke="#9983db" stroke-width="3"/>
+<path d="M57 97h126v96a13 13 0 0 1-13 13H70a13 13 0 0 1-13-13z" fill="url(#d)" stroke="#e3c4ff" stroke-width="4"/>
+<path d="M48 93h144v33H48z" fill="url(#g)" stroke="#fff0c9" stroke-width="4"/>
+<path d="M109 95V206h22V95" fill="#f6d084" stroke="#fff5b4" stroke-width="3"/>
+<path d="M120 94c-27-43-69-48-66-21 2 17 27 19 66 21zm0 0c27-43 69-48 66-21-2 17-27 19-66 21z" fill="none" stroke="#f9d37e" stroke-width="12" stroke-linejoin="round"/>
+<path d="M63 166l12-8 12 8-12 8zM165 155l9-6 9 6-9 6z" fill="#e7d0ff" opacity=".65"/>
+<path d="M49 40l6 16 16 6-16 6-6 16-6-16-16-6 16-6zM190 32l4 12 12 4-12 4-4 12-4-12-12-4 12-4z" fill="#ffe6a4"/>
+</svg>
