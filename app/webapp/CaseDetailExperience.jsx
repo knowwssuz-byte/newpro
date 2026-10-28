@@ -383,7 +383,7 @@ export default function CaseDetailPage({
         <header className={`case-page-copy ${caseOpeningStyles.detailHeading}`}>
           <span className={caseOpeningStyles.detailEyebrow}>MYST / COLLECTIBLE DROP</span>
           <div className={caseOpeningStyles.detailTitleRow}>
-            <div><h2>{caseItem.title}</h2><p>{caseItem.description || `${previewGifts.length} ta sovg‘adan tasodifiy yutuq.`}</p></div>
+            <div><h2>{caseItem.title}</h2><p>{caseItem.description || (isFree ? 'Bepul Case sovg‘alari kolleksiyasi.' : `${previewGifts.length} ta sovg‘adan tasodifiy yutuq.`)}</p></div>
             <span className={caseOpeningStyles.detailPrice}><StarIcon size={15}/> {isFree ? 'FREE' : formatPrice(caseItem.price)}</span>
           </div>
         </header>
@@ -396,7 +396,7 @@ export default function CaseDetailPage({
             targetIndex={targetIndex} onRollComplete={onRollComplete} helpers={helpers}/>
         </div>
 
-        <details className={caseOpeningStyles.detailOdds}>
+        {!isFree ? <details className={caseOpeningStyles.detailOdds}>
           <summary>Yutish ehtimollarini ko‘rish <span aria-hidden="true">⌄</span></summary>
           <div className={caseOpeningStyles.detailOddsContent}>
             <p>Reel — animatsiya. Sovg‘aning yutilish ehtimoli quyidagicha:</p>
@@ -409,7 +409,7 @@ export default function CaseDetailPage({
               ))}
             </ul>
           </div>
-        </details>
+        </details> : null}
 
         <button type="button" className={`${caseOpeningStyles.openButton} ${caseOpeningStyles.detailOpen}`}
           disabled={busy || isSpinning || openableGifts.length === 0}

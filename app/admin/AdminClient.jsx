@@ -459,6 +459,16 @@ export default function AdminClient() {
   const [caseFile, setCaseFile] = useState(null);
   const [libraryForm, setLibraryForm] = useState(emptyLibraryForm);
   const [giftForm, setGiftForm] = useState(emptyGiftForm);
+  const [starsImageFile, setStarsImageFile] = useState(null);
+  const [starsImagePreview, setStarsImagePreview] = useState('');
+  const starsFileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (!starsImageFile) { setStarsImagePreview(''); return undefined; }
+    const objectUrl = URL.createObjectURL(starsImageFile);
+    setStarsImagePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [starsImageFile]);
   const [backgroundColor, setBackgroundColor] = useState('#7c3aed');
 
   const [balanceUserId, setBalanceUserId] = useState('');
@@ -1015,9 +1025,24 @@ export default function AdminClient() {
     }
 
     const data = await run(
-      () => callAdmin(isStars ? 'case_stars_reward_create' : 'gift_create_from_library', {
-        giftData: { ...giftForm, stars_amount: amount, chance, real_chance: actual, stock },
-      }),
+      () => {
+        if (!isStars) {
+          return callAdmin('gift_create_from_library', {
+            giftData: { ...giftForm, chance, real_chance: actual, stock },
+          });
+        }
+        const form = new FormData();
+        form.append('action','case_stars_reward_create_upload');
+        form.append('case_id',giftForm.case_id);
+        form.append('stars_amount',String(amount));
+        form.append('stock',String(stock));
+        form.append('chance',String(chance));
+        form.append('real_chance',String(actual));
+        form.append('rarity',giftForm.rarity);
+        form.append('is_active',String(giftForm.is_active !== false));
+        if (starsImageFile) form.append('image_file',starsImageFile);
+        return callAdminForm(form);
+      },
       isStars ? 'Stars mukofoti Case’ga qo‘shildi ✅' : 'Gift Case’ga qo‘shildi ✅'
     );
 
@@ -1029,6 +1054,22 @@ export default function AdminClient() {
       case_id: current.case_id,
       background_value: current.background_value,
     }));
+    setStarsImageFile(null);
+    if(starsFileInputRef.current)starsFileInputRef.current.value='';
+  }
+
+  async function replaceStarsRewardImage(gift, file) {
+    if (!file || busy) return;
+    if (!['image/png','image/jpeg'].includes(file.type) || file.size > 8 * 1024 * 1024) {
+      setError('Stars rasmi PNG/JPG va 8 MB dan kichik bo‘lishi kerak.');
+      return;
+    }
+    const form = new FormData();
+    form.append('action','case_stars_reward_image_replace');
+    form.append('gift_id',gift.id);
+    form.append('image_file',file);
+    const result = await run(() => callAdminForm(form),'Stars mukofoti rasmi yangilandi ✅');
+    if(result) applyBootstrap(result);
   }
 
   async function updateFeatureAnimation(event) {
@@ -2101,10 +2142,28 @@ export default function AdminClient() {
               </>
               ) : (
                 <div className="admin-case-stars-reward">
-                  <div className="admin-case-stars-image" aria-hidden="true">⭐</div>
+                  <div className="admin-case-stars-image" aria-hidden="true">
+                    {starsImagePreview ? <img src={starsImagePreview} alt="" /> : <span>⭐</span>}
+                  </div>
                   <div>
                     <strong>+{money(giftForm.stars_amount || 0)} Stars</strong>
                     <p>Yutgan foydalanuvchining NewPro balansiga avtomatik qo‘shiladi. Telegram hamyoniga alohida yuborilmaydi.</p>
+                    <label className="admin-stars-upload-control">
+                      <span>Stars mukofoti rasmi (PNG/JPG)</span>
+                      <input ref={starsFileInputRef} type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg"
+                        disabled={busy} onChange={(event) => {
+                          const file = event.target.files?.[0] || null;
+                          if (file && (!['image/png','image/jpeg'].includes(file.type) || file.size > 8*1024*1024)) {
+                            setError('PNG yoki JPG, maksimum 8 MB yuklang.');
+                            event.target.value = '';
+                            setStarsImageFile(null);
+                            return;
+                          }
+                          setError('');
+                          setStarsImageFile(file);
+                        }}/>
+                      <small>Rasm bo‘lmasa oddiy ⭐ belgisi chiqadi.</small>
+                    </label>
                     <label><span>Beriladigan Stars miqdori</span>
                       <input type="number" min="1" max="100000" step="1" required
                         value={giftForm.stars_amount} onChange={(event) => setGiftForm((current) => ({...current,stars_amount:event.target.value}))}/>
@@ -2151,12 +2210,24 @@ export default function AdminClient() {
               <h2>Case giftlari</h2>
               {gifts.filter((gift) => gift.case_id && cases.some((item) => item.id === gift.case_id)).map((gift) => (
                 <div className="browser-admin-item" key={gift.id}>
-                  {gift.type === 'balance' ? <span className="admin-stars-reward-thumb" aria-label="Stars">⭐</span> : <GiftImage gift={gift} />}
+                  {gift.type === 'balance' && !gift.image_url ? <span className="admin-stars-reward-thumb" aria-label="Stars">⭐</span> : <GiftImage gift={gift} />}
                   <div>
                     <strong>{gift.title}</strong>
                     <p>{gift.type === 'balance' ? '+'+money(gift.value)+' Stars · balans mukofoti' : money(gift.floor_price || gift.value)+' ⭐'}
                       {' · weight '+(gift.real_chance ?? gift.chance)+' · stock '+gift.stock}</p>
                   </div>
+                  {gift.type === 'balance' && gift.source === 'case_stars' ? (
+                    <label className="admin-stars-edit-image">
+                      <span>Rasmni almashtirish</span>
+                      <input type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" disabled={busy}
+                        aria-label={gift.title + ' Stars rasmini almashtirish'}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          event.target.value = '';
+                          if (file) void replaceStarsRewardImage(gift,file);
+                        }}/>
+                    </label>
+                  ) : null}
                   <CaseRewardRealChanceEditor gift={gift} busy={busy} onSave={updateGift} />
                   <button type="button" onClick={() => updateGift(gift.id, { is_active: gift.is_active === false })}>
                     {gift.is_active === false ? 'Show' : 'Hide'}

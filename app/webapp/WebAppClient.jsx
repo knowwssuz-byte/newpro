@@ -2257,6 +2257,12 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   }
 
   if (isBalanceReward(gift)) {
+    const starsImage = gift.image_url || gift.png_url || gift.webp_url || '';
+    if (starsImage && brokenImageUrl !== starsImage) {
+      return <img className={`${mediaClass} gift-media-visual balance-reward-art`}
+        src={starsImage} alt={`+${rewardValue(gift)} Stars`} loading={preferStatic ? 'eager' : 'lazy'}
+        decoding="async" draggable={false} onError={() => setBrokenImageUrl(starsImage)} />;
+    }
     return (
       <span className={`${mediaClass} balance-reward`} aria-label={`+${rewardValue(gift)} Stars`}>
         <StarIcon variant="reward" size={compact ? 26 : 50} />

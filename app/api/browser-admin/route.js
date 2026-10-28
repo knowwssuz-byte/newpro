@@ -453,6 +453,57 @@ async function insertGiftWithOptionalColumns(supabase, row, optionalRow) {
   throw error;
 }
 
+async function createCaseStarsReward(supabase, data, file = null) {
+  const caseId = clean(data.case_id);
+  const amount = Number(data.stars_amount);
+  const stock = Number(data.stock);
+  const chance = Number(data.chance);
+  const realChance = Number(data.real_chance);
+  if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(caseId))
+    throw new Error('Case tanlanmagan.');
+  if (!Number.isSafeInteger(amount) || amount < 1 || amount > 100000)
+    throw new Error('Stars 1–100 000 orasida bo‘lishi kerak.');
+  if (!Number.isSafeInteger(stock) || stock < 1 || stock > 1000000)
+    throw new Error('Stock 1–1 000 000 oralig‘ida bo‘lishi kerak.');
+  if (!Number.isFinite(chance) || chance < 0 || chance > 100 ||
+      !Number.isFinite(realChance) || realChance < 0 || realChance > 100)
+    throw new Error('Foiz 0–100 orasida bo‘lishi kerak.');
+  const { data: currentCase, error: caseError } = await supabase.from('cases')
+    .select('id').eq('id',caseId).eq('is_active',true).is('archived_at',null).maybeSingle();
+  if (caseError) throw caseError;
+  if (!currentCase) throw new Error('Faol Case topilmadi.');
+
+  let imageUrl = '';
+  if (file && typeof file.arrayBuffer === 'function' && file.size > 0) {
+    const uploaded = await uploadStarsRewardImage(supabase,file,`stars-${amount}`);
+    imageUrl = uploaded.imageUrl;
+  }
+  const row = {
+    case_id:caseId, title:`${amount.toLocaleString('en-US')} Stars`,
+    type:'balance', value:String(amount),
+    chance, real_chance:realChance, stock,
+    image_url:imageUrl || null, animation_url:null,
+    background_value:'#e9ac3d',
+    rarity:clean(data.rarity || 'common'),
+    floor_price:0, sell_price:0, buy_price:0,
+    source:'case_stars', is_active:data.is_active !== false,
+  };
+  const {data:gift,error} = await supabase.from('gifts').insert(row).select('*').single();
+  if(error)throw error;
+  return gift;
+}
+
+// Only raster images for balance rewards; don't execute untrusted SVG.
+async function uploadStarsRewardImage(supabase,file,title) {
+  if (!file || typeof file.arrayBuffer !== 'function' || file.size <= 0)
+    throw new Error('Stars mukofoti uchun PNG yoki JPG tanlang.');
+  if (file.size > 8 * 1024 * 1024)
+    throw new Error('Stars rasmi 8 MB dan kichik bo‘lishi kerak.');
+  if (!['png','jpg'].includes(extensionFromFile(file)))
+    throw new Error('Stars rasmi faqat PNG yoki JPG bo‘lishi mumkin.');
+  return uploadGiftImage(supabase,file,title);
+}
+
 async function handleFormAction(request, formData, supabase) {
   const action = clean(formData.get('action'));
 
@@ -515,6 +566,35 @@ async function handleFormAction(request, formData, supabase) {
       .eq('id', caseId).is('archived_at', null).select('*').single();
     if (error) throw error;
     return json({ ok: true, case: changed, ...(await bootstrap(supabase)) });
+  }
+
+  if (action === 'case_stars_reward_create_upload') {
+    const gift = await createCaseStarsReward(supabase, {
+      case_id: formData.get('case_id'),
+      stars_amount: formData.get('stars_amount'),
+      stock: formData.get('stock'),
+      chance: formData.get('chance'),
+      real_chance: formData.get('real_chance'),
+      rarity: formData.get('rarity'),
+      is_active: formData.get('is_active') !== 'false',
+    }, formData.get('image_file'));
+    return json({ok:true,gift,...(await bootstrap(supabase))});
+  }
+
+  if (action === 'case_stars_reward_image_replace') {
+    const giftId = clean(formData.get('gift_id'));
+    if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(giftId))
+      return json({ok:false,error:'Stars mukofoti topilmadi.'},400);
+    const {data:reward,error:lookupError} = await supabase.from('gifts')
+      .select('id,title,type,source').eq('id',giftId).maybeSingle();
+    if(lookupError)throw lookupError;
+    if(!reward || reward.type !== 'balance' || reward.source !== 'case_stars')
+      return json({ok:false,error:'Stars mukofoti topilmadi.'},404);
+    const image = await uploadStarsRewardImage(supabase,formData.get('image_file'),reward.title);
+    const {data:gift,error} = await supabase.from('gifts')
+      .update({image_url:image.imageUrl}).eq('id',reward.id).eq('type','balance').select('*').single();
+    if(error)throw error;
+    return json({ok:true,gift,...(await bootstrap(supabase))});
   }
 
   if (action === 'gift_library_create') {
@@ -1087,47 +1167,7 @@ export async function POST(request) {
     }
 
     if (action === 'case_stars_reward_create') {
-      const data = body.giftData || {};
-      const caseId = clean(data.case_id);
-      const amount = Number(data.stars_amount);
-      const stock = Number(data.stock);
-      const chance = Number(data.chance);
-      const realChance = Number(data.real_chance);
-      if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(caseId)) {
-        return json({ok:false,error:'Case tanlanmagan.'},400);
-      }
-      if (!Number.isSafeInteger(amount) || amount < 1 || amount > 100000) {
-        return json({ok:false,error:'Stars 1–100 000 orasida bo‘lishi kerak.'},400);
-      }
-      if (!Number.isSafeInteger(stock) || stock < 1 || stock > 1000000) {
-        return json({ok:false,error:'Stock 1–1 000 000 oralig‘ida bo‘lishi kerak.'},400);
-      }
-      if (!Number.isFinite(chance) || chance < 0 || chance > 100 ||
-          !Number.isFinite(realChance) || realChance < 0 || realChance > 100) {
-        return json({ok:false,error:'Foiz 0–100 orasida bo‘lishi kerak.'},400);
-      }
-      const {data:currentCase,error:caseError} = await supabase.from('cases')
-        .select('id').eq('id',caseId).eq('is_active',true).is('archived_at',null).maybeSingle();
-      if (caseError) throw caseError;
-      if (!currentCase) return json({ok:false,error:'Faol Case topilmadi.'},404);
-      const starsGift = {
-        case_id:caseId,
-        title:`${amount.toLocaleString('en-US')} Stars`,
-        type:'balance',
-        value:String(amount),
-        chance,
-        real_chance:realChance,
-        stock,
-        image_url:null,
-        animation_url:null,
-        background_value:'#e9ac3d',
-        rarity:clean(data.rarity || 'common'),
-        floor_price:0, sell_price:0, buy_price:0,
-        source:'case_stars',
-        is_active:data.is_active !== false,
-      };
-      const {data:gift,error} = await supabase.from('gifts').insert(starsGift).select('*').single();
-      if(error) throw error;
+      const gift = await createCaseStarsReward(supabase, body.giftData || {});
       return json({ok:true,gift,...(await bootstrap(supabase))});
     }
 
