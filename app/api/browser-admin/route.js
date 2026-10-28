@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { normalizeCaseArtwork } from '@/lib/caseImageProcessing.mjs';
 import { syncOwnedTelegramGifts, syncAvailableTelegramGifts } from '@/lib/telegramGiftSync';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
@@ -393,12 +394,21 @@ async function uploadCaseImage(supabase, file, title = '') {
   }
 
   const ext = extensionFromFile(file);
-
   if (!['png', 'jpg', 'svg'].includes(ext)) {
     throw new Error('Case rasmi faqat PNG, JPG yoki SVG bo‘lishi kerak.');
   }
+  if (file.size > 12 * 1024 * 1024) {
+    throw new Error('Case rasmi 12 MB dan oshmasligi kerak.');
+  }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  let buffer;
+  try {
+    // Convert every upload to 1024x1024 without trimming the subject.
+    buffer = await normalizeCaseArtwork(Buffer.from(await file.arrayBuffer()));
+  } catch {
+    throw new Error('Rasmni moslashtirib bo‘lmadi. Boshqa PNG, JPG yoki SVG yuklang.');
+  }
+
   const prefix = clean(title)
     .toLowerCase()
     .replace(/[^a-z0-9а-яё]+/gi, '-')
@@ -407,16 +417,13 @@ async function uploadCaseImage(supabase, file, title = '') {
 
   const uploaded = await uploadPublicAsset(supabase, {
     buffer,
-    contentType: contentTypeFromExt(ext),
+    contentType: 'image/png',
     folder: 'manual-cases/images',
-    ext,
+    ext: 'png',
     prefix,
   });
 
-  return {
-    imageUrl: uploaded.publicUrl,
-    imageType: ext,
-  };
+  return { imageUrl: uploaded.publicUrl, imageType: 'png' };
 }
 
 async function insertGiftWithOptionalColumns(supabase, row, optionalRow) {
