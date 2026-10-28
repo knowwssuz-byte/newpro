@@ -23,8 +23,8 @@ export function PvpEntryCard({ onClick }) {
   return (
     <button type="button" className={styles.entryCard} onClick={onClick}>
       <span className={styles.entryIcon}>
-        <Image src="/feature/pvp-xo-card.webp" alt="" width={100} height={100}
-          sizes="84px" unoptimized className={styles.entryArtwork}/>
+        <Image src="/feature/pvp-xo-card-hd.webp" alt="" width={160} height={160}
+          sizes="104px" unoptimized className={styles.entryArtwork}/>
       </span>
       <span className={styles.entryText}>
         <strong>PvP Arena</strong>
@@ -355,18 +355,14 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast})
    <span className={styles.localTag}><span className={styles.onlineDot}/> LIVE</span>
   </header>
   <div className={styles.catalogHeading}>
-    <div>
-      <span className={styles.catalogKicker}>GAME COLLECTION</span>
-      <h1>O‘yinlar</h1>
-    </div>
-    <span className={styles.catalogCounter}>02</span>
+    <h1>O‘yinlar</h1>
   </div>
   <div className={styles.storeGrid}>
    <button type="button" className={styles.storeItem}
      onClick={()=>setSelected('xo')} aria-label="X/O Duel o‘yinini ochish">
     <span className={styles.storeCover}>
-     <Image src="/feature/pvp-xo-card.webp" alt="" width={480} height={480}
-       sizes="(max-width: 480px) 44vw, 240px" unoptimized priority
+     <Image src="/feature/pvp-xo-card-hd.webp" alt="" width={896} height={896}
+       sizes="(max-width: 600px) 90vw, 350px" unoptimized priority
        className={styles.storeCoverImage}/>
     </span>
     <span className={styles.storeLabelRow}>

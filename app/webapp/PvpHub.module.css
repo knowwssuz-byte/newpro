@@ -495,3 +495,85 @@
 @media(prefers-reduced-motion:reduce){
   .storeCover{transition:none}
 }
+
+/* PvP gallery V5: true 896px icon source and extra-large app-store tiles.
+   On narrow phones a single 320–360px icon is legible at 3x density. */
+.catalogRoot{
+  width:min(100%,760px);
+  max-width:760px;
+  padding-inline:clamp(8px,3.4vw,20px);
+}
+.catalogHeading{margin:4px 3px 19px}
+.catalogHeading h1{
+  font-family:Inter,"SF Pro Display",system-ui,sans-serif;
+  font-size:clamp(25px,7vw,33px);
+  font-weight:860;
+  line-height:1.07;
+  letter-spacing:-.054em;
+  color:#fcfaff;
+}
+.storeGrid{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+  column-gap:clamp(16px,3vw,24px);
+  row-gap:23px;
+  justify-items:center;
+}
+.storeItem{
+  width:100%;
+  max-width:370px;
+  gap:13px;
+}
+.storeCover{
+  border-radius:clamp(28px,7vw,39px);
+  border-color:rgba(244,205,133,.24);
+  box-shadow:0 14px 32px rgba(4,5,17,.34),0 2px 8px rgba(3,3,10,.23);
+}
+.storeCoverImage{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  image-rendering:auto;
+  filter:none;
+  transform:none;
+  opacity:1;
+}
+.storeLabelRow{min-height:29px;padding:0 5px}
+.storeLabelRow strong{
+  font-family:Inter,"SF Pro Display",system-ui,sans-serif;
+  font-size:clamp(16px,4.6vw,19px);
+  font-weight:770;
+  letter-spacing:-.043em;
+  line-height:1.25;
+}
+.entryIcon{
+  flex:0 0 99px;
+  width:99px;
+  height:99px;
+  border-radius:22px;
+  border-color:rgba(248,203,130,.33);
+}
+.entryCard{
+  min-height:124px;
+  padding:11px 13px;
+  gap:15px;
+}
+.entryText strong{font-size:18px}
+.entryArtwork{image-rendering:auto;filter:none;opacity:1}
+@media(max-width:585px){
+  .storeGrid{grid-template-columns:minmax(0,1fr);gap:24px}
+  .storeItem{max-width:min(100%,365px)}
+  .catalogRoot{padding-inline:clamp(10px,3vw,16px)}
+}
+@media(max-width:390px){
+  .storeGrid{gap:22px}
+  .storeItem{max-width:min(100%,344px)}
+  .storeCover{border-radius:30px}
+  .storeLabelRow strong{font-size:17px}
+  .entryIcon{flex-basis:90px;width:90px;height:90px;border-radius:20px}
+  .entryCard{min-height:115px;padding:10px;gap:12px}
+}
+@media(max-width:340px){
+  .storeCover{border-radius:25px}
+  .storeLabelRow strong{font-size:16px}
+  .entryIcon{flex-basis:80px;width:80px;height:80px}
+}
