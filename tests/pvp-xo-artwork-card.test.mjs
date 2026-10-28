@@ -45,7 +45,7 @@ test('HD X/O source and large mobile icon do not apply blur',()=>{
  assert.match(jsx,/width=\{896\} height=\{896\}/);
  assert.match(css,/@media \(max-width: 585px\)\s*\{[\s\S]*?\.storeGrid\s*\{\s*grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\)/);
  assert.match(css,/\.storeItem\s*\{[\s\S]*?max-width:\s*none/);
- assert.match(css,/\.storeCoverImage\{[\s\S]*?filter:none/);
+ assert.match(css,/\.storeCoverImage\s*\{[\s\S]*?filter:\s*none/);
  assert.match(css,/\.entryIcon\{[\s\S]*?flex:0 0 99px/);
  assert.doesNotMatch(jsx,/src="\/feature\/pvp-xo-card\.webp"/);
 });
