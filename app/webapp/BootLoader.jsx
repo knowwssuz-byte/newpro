@@ -1,15 +1,9 @@
 import styles from './BootLoader.module.css';
 
-const messages = {
-  connecting: 'Telegram bilan ulanish',
-  syncing: 'Ma’lumotlarni olish',
-  visuals: 'Rasmlarni tayyorlash',
-};
-
-export default function BootLoader({ status = 'connecting', error = '', onRetry }) {
+export default function BootLoader({ error = '', onRetry }) {
   return (
     <main className={styles.screen} role="status" aria-live="polite"
-      aria-label={error ? 'MYST yuklashda muammo' : 'MYST yuklanmoqda: ' + (messages[status] || messages.connecting)}>
+      aria-label={error ? 'MYST yuklashda muammo' : 'MYST yuklanmoqda'}>
       <div className={styles.center}>
         <div className={styles.identity} aria-hidden="true">
           <span className={styles.wordmark} data-text="MYST">MYST</span>

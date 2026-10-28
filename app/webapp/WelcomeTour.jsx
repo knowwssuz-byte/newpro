@@ -94,18 +94,18 @@ export default function WelcomeTour({ onFinish }) {
 
         <div className={styles.body}>
           <div className={styles.hero} key={'hero-' + slide.step}>
-            <span className={styles.heroGlow} aria-hidden="true" />
-            <span className={styles.heroOrbit} aria-hidden="true" />
-            <div className={styles.imageFrame}>
-              <Image src={slide.image} alt="" className={styles.heroImage} width={768} height={768}
-                unoptimized loading="eager" fetchPriority={index === 0 ? 'high' : 'auto'} draggable={false} />
+            <div className={styles.heroVisual}>
+              <span className={styles.heroGlow} aria-hidden="true" />
+              <span className={styles.heroOrbit} aria-hidden="true" />
+              <div className={styles.imageFrame}>
+                <Image src={slide.image} alt="" className={styles.heroImage} width={768} height={768}
+                  unoptimized loading="eager" fetchPriority={index === 0 ? 'high' : 'auto'} draggable={false} />
+              </div>
             </div>
-            <span className={styles.heroBadge} aria-hidden="true">
-              <AppIcon name={slide.badgeIcon} /> {slide.badge}
-            </span>
-            <span className={styles.starsBadge} aria-hidden="true">
-              <StarIcon size={22} /> <span>Telegram<small>Stars</small></span>
-            </span>
+            <div className={styles.heroMeta} aria-hidden="true">
+              <span className={styles.heroBadge}><AppIcon name={slide.badgeIcon} /> {slide.badge}</span>
+              <span className={styles.starsBadge}><StarIcon size={20} /> <span>Telegram<small>Stars</small></span></span>
+            </div>
             <span className={styles.heroCaption} aria-hidden="true">{slide.detail}</span>
           </div>
 

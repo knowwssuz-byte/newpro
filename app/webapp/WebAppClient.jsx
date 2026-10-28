@@ -2769,7 +2769,7 @@ function BonusView({ apiPost, tg, onToast, onBalanceChange, userId }) {
                       disabled={Boolean(actionTaskId)}
                       onClick={() => claimTask(task)}
                     >
-                      {acting ? 'Checking…' : 'Claim'}
+                      {acting ? '...' : 'Claim'}
                     </button>
                   ) : waiting ? (
                     <button

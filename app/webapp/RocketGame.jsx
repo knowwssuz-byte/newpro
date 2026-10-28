@@ -724,7 +724,7 @@ const FlightScene = memo(function FlightScene({
           {crashed
             ? 'ROUND ENDED'
             : presentation.stale
-              ? 'SYNCING'
+              ? 'ROCKET'
             : visuallyFlying
               ? 'FLYING'
               : 'BETS OPEN'}
@@ -1724,8 +1724,8 @@ export default function RocketGame({
   const actionState = useMemo(() => {
     if (initializing) {
       return {
-        label: 'Connecting…',
-        sublabel: 'Server vaqti tekshirilmoqda',
+        label: 'Rocket',
+        sublabel: '',
         disabled: true,
         kind: 'bet',
       };
@@ -1733,8 +1733,8 @@ export default function RocketGame({
 
     if (pendingAction === 'place') {
       return {
-        label: 'Bet placed',
-        sublabel: `Take off in ${(countdownMs / 1000).toFixed(1)}s • confirming`,
+        label: 'Bet sent',
+        sublabel: '',
         disabled: true,
         kind: 'placed',
       };
@@ -1743,9 +1743,7 @@ export default function RocketGame({
     if (pendingAction === 'cashout') {
       return {
         label: 'Cash out sent',
-        sublabel: `Locked at server time • ${formatMultiplier(
-          liveMultiplier
-        )}`,
+        sublabel: '',
         disabled: true,
         kind: 'cashoutPending',
       };
@@ -1863,14 +1861,6 @@ export default function RocketGame({
     if (Date.now() - primaryPointerAtRef.current < 450) return;
     primaryAction();
   };
-  const connectionLabel =
-    connection === 'live'
-      ? 'LIVE'
-      : connection === 'offline'
-        ? 'OFFLINE'
-        : connection === 'reconnecting'
-          ? 'RECONNECTING'
-          : 'SYNCING';
   const outcomeSource = String(round?.outcomeSource || 'automatic');
   const operatorControlled =
     outcomeSource === 'manual' || outcomeSource === 'forced';
@@ -1904,7 +1894,6 @@ export default function RocketGame({
             </div>
             <span className={styles.vendorEyebrow}>MYST · LIVE GAME</span>
             <strong>ROCKET</strong>
-            <span className={styles.vendorDescription}>Jonli raund sinxronlanmoqda</span>
             <div className={styles.vendorProgress} aria-hidden="true">
               <LineWobble size={158} stroke={3} color="#77b9ff" speed={1.5} bgOpacity={0.15} />
             </div>
@@ -1929,15 +1918,13 @@ export default function RocketGame({
         </div>
 
         <div className={styles.headerTools}>
-          <span
-            className={`${styles.connectionPill} ${
-              connection !== 'live' ? styles.connectionWeak : ''
-            }`}
-          >
-            <i />
-            <SignalIcon />
-            <b>{connectionLabel}</b>
-          </span>
+          {connection === 'offline' ? (
+            <span className={`${styles.connectionPill} ${styles.connectionWeak}`} role="status">
+              <i />
+              <SignalIcon />
+              <b>OFFLINE</b>
+            </span>
+          ) : null}
           <span className={styles.balancePill}>
             <StarCoin />
             <strong>{formatStars(balance)}</strong>

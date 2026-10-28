@@ -126,3 +126,45 @@
   .hero,.copy,.imageFrame{animation:none;}
   .page *{transition:none!important;}
 }
+
+/* Responsive isolation v2: artwork, captions and reading area never overlap. */
+.page {height:100svh;height:100dvh;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;}
+.shell {min-height:100dvh;height:auto;display:flex;flex-direction:column;gap:clamp(10px,1.7dvh,18px);}
+.body {min-height:0;flex:1 0 auto;}
+.hero {height:auto;min-width:0;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;}
+.heroVisual {position:relative;isolation:isolate;flex:0 0 auto;width:min(100%,50dvh,490px);aspect-ratio:1;}
+.heroMeta {position:relative;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;max-width:100%;}
+.heroBadge,.starsBadge {position:static;inset:auto;min-height:38px;padding:7px 10px;}
+.heroCaption {position:static;inset:auto;display:block;text-align:center;margin:0;line-height:1.35;}
+.copy h1 {overflow-wrap:break-word;}
+.footer {flex:0 0 auto;margin-top:auto;}
+@media(max-width:720px) {
+  .shell {width:min(calc(100% - 30px),500px);gap:10px;}
+  .body {display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch;gap:clamp(8px,1.8dvh,18px);}
+  .hero {margin:0;gap:0;flex:0 0 auto;}
+  .heroVisual {width:min(78vw,30dvh,300px);}
+  .heroMeta,.heroCaption {display:none;}
+  .copy {min-width:0;padding:0 1px;}
+  .copy h1 {font-size:clamp(25px,6.8vw,37px);line-height:1.11;margin:8px 0 10px;}
+  .copy p {font-size:12px;line-height:1.5;}
+  .points {margin:12px 0 0;}
+  .footer {grid-template-columns:minmax(0,1fr);gap:5px;padding:3px 0 0;}
+  .dots button {min-height:32px;}
+  .next,.back {min-height:48px;}
+}
+@media(max-width:720px) and (max-height:740px) {
+  .shell {gap:8px;}
+  .body {gap:8px;}
+  .heroVisual {width:min(74vw,27dvh,255px);}
+  .copy h1 {font-size:clamp(24px,6.4vw,34px);margin:7px 0 8px;}
+  .points {margin-top:9px;}
+}
+@media(max-width:720px) and (max-height:570px) {
+  .heroVisual {width:min(72vw,25dvh,190px);}
+  .points {display:none;}
+  .copy p {line-height:1.4;}
+}
+@media(max-width:355px) {
+  .shell {width:calc(100% - 22px);}
+  .copy h1 {font-size:24px;}
+}

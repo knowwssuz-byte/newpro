@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft, ArrowUpDown, CheckCircle2, ChevronDown, Clock3, Info, LockKeyhole,
+  ArrowLeft, ArrowUpDown, CheckCircle2, ChevronDown, Clock3, Info,
   RotateCcw, Search, ShieldCheck, Sparkles, Volume2, VolumeX, X, Zap,
 } from 'lucide-react';
 import { getInventoryRows } from '@/lib/inventory.mjs';
@@ -265,7 +265,7 @@ export default function UpgradeLab({
     <div className={styles.stage} data-phase={phase} data-win={phase==='result'&&won}>
       <canvas ref={confettiRef} className={styles.confetti} aria-hidden="true"/>
       <div className={styles.wheelSection}>
-        <div className={styles.wheelCaption}><span className={styles.microTitle}>UPGRADE WHEEL</span><span><ShieldCheck size={13}/> SERVER SETTLED</span></div>
+        <div className={styles.wheelCaption}><span className={styles.microTitle}>UPGRADE WHEEL</span></div>
         <UpgradeWheel chance={chance} rotation={rotation} rolling={phase==='rolling'} reduceMotion={reduceMotion} onRest={finishSpin}/>
         <div className={styles.chanceLine} aria-live="polite">
           <span>WIN CHANCE</span>
@@ -289,14 +289,9 @@ export default function UpgradeLab({
         <button type="button" className={styles.improve} disabled={!source||!goal||blocked||estimatedChance<=0}
           onClick={()=>{setConfirm(true);setError('')}}>
           {blocked?<RotateCcw size={19} className={styles.spinIcon}/>:<ChevronMark small/>}
-          <strong>{phase==='checking'?'SERVER TEKSHIRMOQDA…':phase==='rolling'?'UPGRADING…':'IMPROVE'}</strong>
+          <strong>{blocked?'UPGRADING…':'IMPROVE'}</strong>
         </button>
         {error?<p role="alert" className={styles.error}>{error}</p>:null}
-        <div className={styles.status} role="status" aria-live="polite" data-state={phase==='result'?(won?'won':'lost'):phase}>
-          <span>{phase==='checking'?'Sovg‘a va zaxira tekshirilmoqda…':phase==='rolling'?'Natija bazaga yozildi. Baraban aylanmoqda…':
-            phase==='result'?(won?'Upgrade muvaffaqiyatli!':'Upgrade amalga oshmadi'):'Server natijani tasdiqlaydi'}</span>
-          <span><LockKeyhole size={13}/> SECURE</span>
-        </div>
         {phase==='result'?<div className={styles.winnerLine} data-result={won?'won':'lost'}>
           {won&&resultGift?<UpgradeGiftThumb item={resultGift} alt={resultGift.title}/>:won?<CheckCircle2 size={22}/>:<Info size={22}/>}
           <div><strong>{won?'UPGRADE SUCCESS':'UPGRADE FINISHED'}</strong>
@@ -304,7 +299,7 @@ export default function UpgradeLab({
         </div>:null}
         {!owned.length&&phase!=='result'?<p className={styles.emptyHint}>Upgrade boshlash uchun inventaringizda sovg‘a bo‘lishi kerak.</p>:null}
         <div className={styles.footnote}><Info size={14}/>
-          <span>{multiplier?multiplier.toFixed(2)+'× · ':''}Yutqazsangiz, berilgan sovg‘a yo‘qoladi. Ehtimol serverda hisoblanadi; har bir urinishning natijasi saqlanadi.</span>
+          <span>{multiplier?multiplier.toFixed(2)+'× · ':''}Yutqazsangiz, berilgan sovg‘a qaytarilmaydi.</span>
         </div>
       </div>
     </div>

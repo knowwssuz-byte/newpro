@@ -311,7 +311,7 @@ export default function DiceGame({
         </button>
         <div className={styles.brand}>
           <span className={styles.logo}><Image src="/feature/dice/dice-logo.png" alt="" width={768} height={768} priority /></span>
-          <div><h1>DICE</h1><span>0–100 • SERVER RNG</span></div>
+          <div><h1>DICE</h1><span>0–100</span></div>
         </div>
         <div className={styles.balance}>{starIcon(styles.star)}<strong>{formatStars(balance)}</strong></div>
       </header>

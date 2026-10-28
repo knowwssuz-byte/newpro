@@ -975,9 +975,8 @@ export default function DepositView({
       </div>
 
       {loading ? (
-        <div className={styles.loadingCard}>
-          <span />
-          <p>Deposit tizimi sinxronlanmoqda...</p>
+        <div className={styles.loadingCard} role="status" aria-label="Balans ochilmoqda">
+          <span aria-hidden="true" />
         </div>
       ) : null}
 
@@ -1105,14 +1104,14 @@ export default function DepositView({
                   <div>
                     <span>
                       {!tonConnectionRestored
-                        ? 'Wallet tiklanmoqda...'
+                        ? 'TON Wallet'
                         : tonAddress
                           ? tonWalletName
                           : 'TON Connect wallet'}
                     </span>
                     <strong>
                       {!tonConnectionRestored
-                        ? 'Ulanish tekshirilmoqda'
+                        ? '...'
                         : tonAddress
                           ? shortAddress(tonAddress)
                           : 'Tonkeeper, Wallet yoki boshqa wallet'}
