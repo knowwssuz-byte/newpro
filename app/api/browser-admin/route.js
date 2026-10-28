@@ -496,6 +496,23 @@ async function handleFormAction(request, formData, supabase) {
     return json({ ok: true, case: data, ...boot });
   }
 
+  if (action === 'case_replace_image') {
+    const caseId = clean(formData.get('case_id'));
+    if (!/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(caseId)) {
+      return json({ ok: false, error: 'Case ID noto‘g‘ri.' }, 400);
+    }
+    const { data: found, error: lookupError } = await supabase.from('cases')
+      .select('id,title').eq('id', caseId).is('archived_at', null).maybeSingle();
+    if (lookupError) throw lookupError;
+    if (!found) return json({ ok: false, error: 'Case topilmadi.' }, 404);
+    const uploaded = await uploadCaseImage(supabase, formData.get('image_file'), found.title);
+    const { data: changed, error } = await supabase.from('cases')
+      .update({ image_url: uploaded.imageUrl, updated_at: new Date().toISOString() })
+      .eq('id', caseId).is('archived_at', null).select('*').single();
+    if (error) throw error;
+    return json({ ok: true, case: changed, ...(await bootstrap(supabase)) });
+  }
+
   if (action === 'gift_library_create') {
     const title = clean(formData.get('title'));
     const price = toNumber(formData.get('price'), 0);

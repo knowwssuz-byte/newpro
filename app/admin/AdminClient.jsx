@@ -742,6 +742,16 @@ export default function AdminClient() {
     if (input) input.value = '';
   }
 
+  async function replaceCaseImage(caseItem, file) {
+    if (!file || busy) return;
+    const form = new FormData();
+    form.append('action', 'case_replace_image');
+    form.append('case_id', caseItem.id);
+    form.append('image_file', file);
+    const response = await run(() => callAdminForm(form), 'Case rasmi yangilandi ✅');
+    if (response) applyBootstrap(response);
+  }
+
   async function updateCase(caseId, updates) {
     await run(() => callAdmin('case_update', { caseId, updates }), 'Case yangilandi ✅');
     await bootstrap();
@@ -1325,6 +1335,16 @@ export default function AdminClient() {
                   </div>
 
                   <div className="case-order-actions">
+                    <label className="admin-case-replace-image">
+                      <span>Rasmni almashtirish</span>
+                      <input type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,.png,.jpg,.jpeg,.svg"
+                        aria-label={`${caseItem.title} rasmini almashtirish`} disabled={busy}
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          event.target.value = '';
+                          if (file) void replaceCaseImage(caseItem, file);
+                        }} />
+                    </label>
                     <button type="button" onClick={() => togglePinCase(caseItem)}>
                       {caseItem.is_pinned ? 'Unpin' : 'Pin'}
                     </button>
