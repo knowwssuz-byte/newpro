@@ -2,8 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
-// Keep authenticated database calls next to Supabase ap-northeast-1 (Tokyo).
-export const preferredRegion = 'hnd1';
+// Function deployment region is configured for all APIs in vercel.json.
 export const dynamic = 'force-dynamic';
 
 async function fetchCases(supabase, { onlyActive = false } = {}) {
