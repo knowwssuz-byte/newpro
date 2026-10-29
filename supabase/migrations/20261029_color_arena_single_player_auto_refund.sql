@@ -67,7 +67,7 @@ begin
     return 'WAITING';
   end if;
   return v.status;
-end $function$
+end $function$;
 
 revoke execute on function public.color_arena_tick(uuid) from public,anon,authenticated;
 grant execute on function public.color_arena_tick(uuid) to service_role;
