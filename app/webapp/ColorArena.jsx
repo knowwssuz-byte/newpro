@@ -56,10 +56,9 @@ function ArenaCanvas({room,clockOffset,audioController}) {
     let lastT=null,lastAudioTime=-Infinity,lastPaintTime=-Infinity;
     const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
     const render=now=>{
-      if(!alive)return;
+      frame=0;
+      if(!alive || document.hidden)return;
       const el=canvas.current;
-      // Skip compositing when the user is on another tab or the screen is off.
-      if(document.hidden){frame=requestAnimationFrame(render);return;}
       if(reducedMotion && now-lastPaintTime<100){frame=requestAnimationFrame(render);return;}
       lastPaintTime=now;
       if(!el)return;
@@ -162,19 +161,29 @@ function ArenaCanvas({room,clockOffset,audioController}) {
       if(orb.current){
         orb.current.style.display=active?'block':'none';
         if(active){
-          orb.current.style.left=(point[0]*100)+'%';
-          orb.current.style.top=(point[1]*100)+'%';
+          // Single GPU-friendly transform; animating left/top triggers layout.
+          const xpos=(point[0]*n).toFixed(2),ypos=(point[1]*n).toFixed(2);
           const velocity=trajectory?billiardVelocity(trajectory,t):[0,0];
           const speed=Math.hypot(...velocity);
           orb.current.style.setProperty('--ring-spin',ringRotation(t,seed)+'deg');
           orb.current.style.setProperty('--ring-intensity',(1+Math.min(.25,speed*.012)).toFixed(3));
-          orb.current.style.transform='translate(-50%,-50%) scale('+(room.status==='RESULT'?1.14:1)+')';
+          orb.current.style.transform='translate3d('+xpos+'px,'+ypos+'px,0) translate(-50%,-50%) scale('+
+            (room.status==='RESULT'?1.14:1)+')';
         }
       }
       frame=requestAnimationFrame(render);
     };
-    frame=requestAnimationFrame(render);
-    return()=>{alive=false;cancelAnimationFrame(frame);};
+    const onVisibility=()=>{
+      if(document.hidden){cancelAnimationFrame(frame);frame=0;}
+      else if(alive && !frame)frame=requestAnimationFrame(render);
+    };
+    document.addEventListener('visibilitychange',onVisibility);
+    if(!document.hidden)frame=requestAnimationFrame(render);
+    return()=>{
+      alive=false;
+      document.removeEventListener('visibilitychange',onVisibility);
+      cancelAnimationFrame(frame);
+    };
   },[room?.roundId,room?.status,room?.winnerId,room?.target?.x,room?.target?.y,key,seed,trajectory]);
   return <div className={styles.boardShell}>
     <div className={styles.board} aria-label="Stavkalarga mos, egri chegarali rangli maydon">
