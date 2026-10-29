@@ -2285,6 +2285,7 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
   const containerRef = useRef(null);
   const [failed, setFailed] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
+  const [animationReady, setAnimationReady] = useState(false);
 
   useEffect(() => {
     let animation = null;
@@ -2293,6 +2294,7 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
     async function loadAnimation() {
       try {
         setFailed(false);
+        setAnimationReady(false);
         if (!animate) {
           if (fallbackUrl) return;
           const url = await createTgsPreview(src);
@@ -2309,6 +2311,9 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
           loop: false,
           autoplay: true,
           animationData,
+        });
+        animation.addEventListener('DOMLoaded', () => {
+          if (!cancelled) setAnimationReady(true);
         });
         animation.addEventListener('complete', () => {
           if (!cancelled && animation) {
@@ -2331,12 +2336,16 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
     };
   }, [src, animate, fallbackUrl]);
 
+  // Keep the static thumbnail visible until Lottie has inserted its first SVG.
+  // The canvas and poster share one grid cell, so no one-frame empty flash.
+  const showPoster = !animate || !animationReady || failed;
+  const poster = fallbackUrl || previewUrl;
   return (
-    <span className={`${className} tgs-gift-media`}>
-      {!animate && (fallbackUrl || previewUrl) ? <img src={fallbackUrl || previewUrl} className="tgs-static-preview" alt="" draggable="false" /> : null}
-      {animate ? <span ref={containerRef} className="tgs-gift-canvas" /> : null}
-      {failed && fallbackUrl ? <img src={fallbackUrl} className="tgs-static-preview" alt="" draggable="false" /> : null}
-      {failed && !fallbackUrl ? <AppIcon name="gift" /> : null}
+    <span className={`${className} tgs-gift-media`} data-animation-ready={animationReady ? 'true' : 'false'}>
+      {showPoster && poster ? <img src={poster} className="tgs-static-preview" alt="" draggable="false" /> : null}
+      {animate ? <span ref={containerRef} className="tgs-gift-canvas"
+        style={{visibility: animationReady && !failed ? 'visible' : 'hidden'}} /> : null}
+      {showPoster && !poster ? <span className="tgs-pending-fallback"><AppIcon name="gift" /></span> : null}
     </span>
   );
 }
