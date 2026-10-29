@@ -3,6 +3,7 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {ArrowLeft,Plus,Users,Timer,RefreshCw,Eye,Crown,Volume2,VolumeX,Gift,ShieldCheck,Check,ChevronRight,Sparkles,X} from 'lucide-react';
 import {createClient} from '@supabase/supabase-js';
+import {createPortal} from 'react-dom';
 import {orderedShares,renderBands,labelPoint,orientPoint,boundaryAt,arenaColorForSeat} from '@/lib/colorArenaGeometry.mjs';
 import {createBilliardPath,projectHitToRegion,billiardVelocity,ringRotation} from '@/lib/colorArenaBallPhysics.mjs';
 import {createArenaAudio} from '@/lib/colorArenaAudio.mjs';
@@ -383,9 +384,9 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
       </div>
       {canBet?<div className={styles.betSwitch} role="group" aria-label="Stavka turi">
         <button type="button" aria-pressed={wagerMode==='stars'}
-          onClick={()=>setWagerMode('stars')}>★ Stars</button>
+          onClick={()=>setWagerMode('stars')}><Sparkles size={16}/> Stars</button>
         <button type="button" aria-pressed={wagerMode==='gift'}
-          onClick={()=>setWagerMode('gift')}>🎁 Gift tikish</button>
+          onClick={()=>setWagerMode('gift')}><Gift size={16}/> Giftlar</button>
       </div>:null}
       {canBet&&wagerMode==='stars'&&!myBet?<div className={styles.betPanel}>
         <div className={styles.panelHead}>
@@ -476,7 +477,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
           <ShieldCheck size={16}/>
           <span>Gift raund davomida bloklanadi. G‘olib tikilgan giftlarning haqiqiy egasiga aylanadi.</span>
         </div>
-        {confirmGift&&selectedGift?<div className={styles.giftConfirmBackdrop}
+        {confirmGift&&selectedGift&&typeof document!=='undefined'?createPortal(<div className={styles.giftConfirmBackdrop}
           role="presentation" onClick={()=>setConfirmGift(false)}>
           <div className={styles.giftConfirm} role="dialog" aria-modal="true"
             aria-label="Gift stavkasini tasdiqlash" onClick={e=>e.stopPropagation()}>
@@ -496,7 +497,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
             <button type="button" className={styles.giftCancel}
               onClick={()=>setConfirmGift(false)}>Bekor qilish</button>
           </div>
-        </div>:null}
+        </div>,document.body):null}
       </div>:null}
       <div className={styles.playersTitle}>
         <strong>O‘yinchilar</strong><span>{fmt(room.players.length)} ta hudud · TOP 12</span>
