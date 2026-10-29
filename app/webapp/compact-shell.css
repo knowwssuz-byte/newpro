@@ -26,12 +26,12 @@ html{background-color:#080a12}
 /* Visual-only correction. Do not change the wallet/deposit positions or avatar click action. */
 .global-balance-bar .home-user-zone > .home-avatar-wrap {
   position: relative !important;
-  left: -4px !important;
+  left: -10px !important;
   top: -11px !important;
 }
 @media (max-width: 380px) {
   .global-balance-bar .home-user-zone > .home-avatar-wrap {
-    left: -3px !important;
+    left: -9px !important;
     top: -9px !important;
   }
 }
