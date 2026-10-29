@@ -37,6 +37,6 @@ test('server and browser assets have safe separate cache policies and Tokyo data
   const next=read('next.config.mjs');
   assert.deepEqual(JSON.parse(cfg).regions,['hnd1']);
   assert.match(next,/source:'\/api\/:path\*'.*no-store/);
-  assert.match(next,/source:'\/feature\/nav\/:path\*'.*max-age=604800/);
+  assert.match(next,/source:'\/feature\/nav\/:path\*'.*max-age=3600/);
   assert.match(next,/source:'\/onboarding\/:path\*'.*max-age=604800/);
 });
