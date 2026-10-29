@@ -6,7 +6,18 @@ const securityHeaders=[
  {key:'Strict-Transport-Security',value:'max-age=31536000; includeSubDomains'},
  {key:'Content-Security-Policy',value:"object-src 'none'; base-uri 'self'; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org; form-action 'self'; upgrade-insecure-requests"}
 ];
-const nextConfig={async headers(){return [
+const nextConfig={
+ images:{
+  remotePatterns:[
+   {protocol:'https',hostname:'ylcipsfuojjvsqowbpol.supabase.co',pathname:'/storage/v1/object/public/**'},
+   {protocol:'https',hostname:'newpro-blue.vercel.app',pathname:'/**'}
+  ],
+  formats:['image/webp'],
+  imageSizes:[48,64,96,128,160,192,256,384],
+  deviceSizes:[320,420,640,768,1080,1280],
+  minimumCacheTTL:3600
+ },
+ async headers(){return [
  {source:'/:path*',headers:securityHeaders},
  {source:'/api/:path*',headers:[{key:'Cache-Control',value:'no-store'}]},
  {source:'/feature/game-banners/:path*',headers:[{key:'Cache-Control',value:'public, max-age=86400, stale-while-revalidate=604800'}]},
