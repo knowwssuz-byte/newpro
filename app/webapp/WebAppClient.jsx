@@ -420,6 +420,7 @@ export default function WebAppClient() {
   const [startParam, setStartParam] = useState('');
   const [tab, setTab] = useState('home');
   const [settingsOpen, setSettingsOpen] = useState(false);
+  useEffect(() => { if (tab === 'inventory') setInventoryVisited(true); }, [tab]);
   const [uiSettings, setUiSettings] = useState(DEFAULT_UI_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [adminTab, setAdminTab] = useState('cases');
@@ -443,6 +444,7 @@ export default function WebAppClient() {
   const [gifts, setGifts] = useState([]);
   const [inventoryGifts, setInventoryGifts] = useState([]);
   const [history, setHistory] = useState([]);
+  const [inventoryVisited, setInventoryVisited] = useState(false);
   const [withdrawals, setWithdrawals] = useState([]);
   const [upgradeRounds, setUpgradeRounds] = useState([]);
   const [upgradeCatalog, setUpgradeCatalog] = useState([]);
@@ -1627,24 +1629,6 @@ export default function WebAppClient() {
                 />
               ) : null}
 
-              {tab === 'inventory' ? extrasState !== 'ready' ?
-                <DeferredDataLoader title="Inventory yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : (
-                <InventoryView
-                  history={history}
-                  gifts={inventoryGifts}
-                  cases={cases}
-                  withdrawals={withdrawals}
-                  busy={busy}
-                  onSell={sellInventoryReward}
-                  onWithdraw={createWithdraw}
-                  onPending={() => {
-                    historyReturnTabRef.current = 'inventory';
-                    setTab('history');
-                    window.scrollTo({top:0,left:0,behavior:'auto'});
-                  }}
-                />
-              ) : null}
-
               {tab === 'bonus' ? (
                 <BonusView
                   apiPost={apiPost}
@@ -1666,6 +1650,36 @@ export default function WebAppClient() {
                 />
               ) : null}
             </>
+          )}
+          {/* Keep the visited Inventory media tree mounted while switching tabs.
+              This avoids restarting animated GIF/WebP, TGS, and video gifts
+              and prevents lazy media placeholders flashing on every return. */}
+          {(inventoryVisited || tab === 'inventory') && (
+            <div
+              data-inventory-keepalive="true"
+              hidden={tab !== 'inventory' || Boolean(selectedCase)}
+              aria-hidden={tab !== 'inventory' || Boolean(selectedCase)}
+              style={tab !== 'inventory' || selectedCase ? {display:'none'} : undefined}
+            >
+              {extrasState !== 'ready' ?
+                <DeferredDataLoader title="Inventory yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> :
+                <InventoryView
+                  active={tab === 'inventory' && !selectedCase}
+                  history={history}
+                  gifts={inventoryGifts}
+                  cases={cases}
+                  withdrawals={withdrawals}
+                  busy={busy}
+                  onSell={sellInventoryReward}
+                  onWithdraw={createWithdraw}
+                  onPending={() => {
+                    historyReturnTabRef.current = 'inventory';
+                    setTab('history');
+                    window.scrollTo({top:0,left:0,behavior:'auto'});
+                  }}
+                />
+              }
+            </div>
           )}
         </main>
 
@@ -2486,9 +2500,10 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   );
 }
 
-function InventoryView({ history, gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending }) {
+function InventoryView({ active = true, history, gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending }) {
   const [dialog, setDialog] = useState(null);
   const [visibleCount, setVisibleCount] = useState(24);
+  useEffect(() => { if (!active) setDialog(null); }, [active]);
   const rows = useMemo(
     () => getInventoryRows(history, gifts, cases, withdrawals),
     [history, gifts, cases, withdrawals]
