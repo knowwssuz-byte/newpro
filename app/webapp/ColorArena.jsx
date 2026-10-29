@@ -207,6 +207,32 @@ function ArenaCanvas({room,clockOffset,audioController}) {
 }
 export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChange}) {
   const [room,setRoom]=useState(null);
+  const [soundOn,setSoundOn]=useState(false);
+  const audio=useRef(null),playedVictory=useRef(null);
+  // Audio is opt-in: only initialize Web Audio when the user taps sound.
+  const toggleSound=()=>{
+    if(!audio.current)audio.current=createArenaAudio();
+    const enabled=!soundOn;
+    audio.current.setMuted(!enabled);
+    setSoundOn(enabled);
+  };
+  useEffect(()=>()=>audio.current?.dispose(),[]);
+  useEffect(()=>{
+    if(!audio.current)return;
+    if(!soundOn){audio.current.stopRoll();return;}
+    if(room?.status==='ROLLING')audio.current.startRoll();
+    else audio.current.stopRoll();
+    if(room?.status==='RESULT'&&playedVictory.current!==room.roundId){
+      playedVictory.current=room.roundId;
+      audio.current.win();
+    }
+  },[room?.status,room?.roundId,soundOn]);
+  useEffect(()=>{
+    const pause=()=>{if(document.hidden)audio.current?.stopRoll();
+      else if(soundOn&&room?.status==='ROLLING')audio.current?.startRoll();};
+    document.addEventListener('visibilitychange',pause);
+    return()=>document.removeEventListener('visibilitychange',pause);
+  },[soundOn,room?.status]);
   const balanceCallback=useRef(onBalanceChange);
   balanceCallback.current=onBalanceChange;
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(''),[error,setError]=useState('');
@@ -220,7 +246,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
     if(data?.serverNow)setOffset(Number(data.serverNow)-Date.now());
     if(data?.room)setRoom(previous=>{
       if(previous?.id===data.room.id && previous.roundId===data.room.roundId &&
-         Number(previous.version)>Number(data.room.version))return previous;
+         Number(previous.version)>=Number(data.room.version))return previous;
       return data.room;
     });
   },[]);
@@ -290,6 +316,11 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
       <button type="button" className={styles.back} onClick={onBack} aria-label="PvP bo‘limiga qaytish">
         <ArrowLeft size={19}/></button>
       <strong className={styles.compactTitle}>COLOR ARENA</strong>
+      <button type="button" className={styles.soundButton} onClick={toggleSound}
+        aria-label={soundOn?'Arena ovozini o‘chirish':'Arena ovozini yoqish'}
+        aria-pressed={soundOn} title={soundOn?'Ovozni o‘chirish':'Ovozni yoqish'}>
+        {soundOn?<Volume2 size={18}/>:<VolumeX size={18}/>}
+      </button>
       <span className={styles.round}>#{room?.roundNo||'—'}</span>
     </header>
     {loading&&!room?<div className={styles.notice}>Arena yuklanmoqda…</div>:null}
@@ -302,7 +333,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
             room.status==='ROLLING'?seconds(room.rollEndsAt)+'s':
             room.status==='RESULT'?'FINISH':room.status==='LOCKED'?'READY':'●'}</strong></div>
       </div>
-      <ArenaCanvas room={room} clockOffset={offset}/>
+      <ArenaCanvas room={room} clockOffset={offset} audioController={soundOn?audio.current:null}/>
       {canBet&&!myBet?<div className={styles.betPanel}>
         <div className={styles.panelHead}>
           <strong>Stavka qo‘yish</strong><span>Min {room.minStake} {STARS}</span>
