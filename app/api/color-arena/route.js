@@ -28,7 +28,8 @@ function dbMessage(error) {
     ARENA_NO_USER:['O‘yinchi topilmadi',403],
     ARENA_INVALID_ENTRY:['Stavka yoki xona sozlamasi noto‘g‘ri',400],
     ARENA_STALE_ROUND:['Raund yangilangan, qayta tekshiring',409],
-    ARENA_NOT_FINISHABLE:['Raund hali yakunlanmagan',409]
+    ARENA_NOT_FINISHABLE:['Raund hali yakunlanmagan',409],
+    ARENA_MIN_PLAYERS:['O‘yinchilar yetarli emas, stavkalar qaytarildi',409]
   };
   for (const [code,result] of Object.entries(entries)) if(raw.includes(code))return result;
   if(error?.code==='PGRST202'||error?.code==='42P01')return ['COLOR ARENA bazasi o‘rnatilmagan',503];
@@ -140,22 +141,33 @@ export async function POST(request){
       const giftIds=[...new Set(rows.map(r=>r.gift_id).filter(Boolean))];
       const [gf,wd,locked]=await Promise.all([
         giftIds.length?db.from('gifts')
-          .select('id,title,type,image_url,animation_url,sell_price,buy_price,floor_price')
+          .select('id,title,type,rarity,image_url,animation_url,library_gift_id,sell_price,buy_price,floor_price')
           .in('id',giftIds):Promise.resolve({data:[]}),
         rows.length?db.from('withdraw_requests').select('history_id')
-          .in('history_id',rows.map(r=>r.id)):Promise.resolve({data:[]}),
+          .in('history_id',rows.map(r=>r.id)).in('status',['pending','approved']):Promise.resolve({data:[]}),
         rows.length?db.from('color_arena_gift_stakes').select('history_id')
           .in('history_id',rows.map(r=>r.id)).eq('status','locked'):Promise.resolve({data:[]})
       ]);
-      const gifts=new Map((dbThrow(gf)||[]).map(g=>[g.id,g]));
+      const giftRows=dbThrow(gf)||[];
+      const libraryIds=[...new Set(giftRows.map(g=>g.library_gift_id).filter(Boolean))];
+      const libResult=libraryIds.length
+        ? await db.from('gift_library')
+          .select('id,image_url,png_url,webp_url,animation_url')
+          .in('id',libraryIds)
+        : {data:[]};
+      const library=new Map((dbThrow(libResult)||[]).map(x=>[x.id,x]));
+      const gifts=new Map(giftRows.map(g=>[g.id,g]));
       const blocked=new Set([...(dbThrow(wd)||[]),...(dbThrow(locked)||[])].map(r=>r.history_id));
       const inventory=rows.filter(r=>!blocked.has(r.id)).map(r=>{
         const gift=gifts.get(r.gift_id);
         if(!gift||String(gift.type||'gift').toLowerCase()!=='gift')return null;
         const value=Math.floor(Math.max(0,Number(gift.sell_price??gift.buy_price??gift.floor_price??0)));
         if(!Number.isSafeInteger(value)||value<1||value>200000)return null;
-        return {historyId:r.id,title:gift.title,imageUrl:gift.image_url,
-          animationUrl:gift.animation_url,value};
+        const lib=library.get(gift.library_gift_id);
+        const imageUrl=gift.image_url||lib?.image_url||lib?.png_url||lib?.webp_url||'';
+        const animationUrl=gift.animation_url||lib?.animation_url||'';
+        return {historyId:r.id,title:gift.title,rarity:gift.rarity||'',
+          imageUrl,animationUrl,value};
       }).filter(Boolean);
       return json({inventory,serverNow:Date.now()});
     }
