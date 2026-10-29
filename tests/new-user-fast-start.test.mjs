@@ -40,3 +40,16 @@ test('server and browser assets have safe separate cache policies and Tokyo data
   assert.match(next,/source:'\/feature\/nav\/:path\*'.*max-age=3600/);
   assert.match(next,/source:'\/onboarding\/:path\*'.*max-age=604800/);
 });
+
+test('large public case and gift artwork use optimized responsive image requests',()=>{
+  const app=read('app/webapp/WebAppClient.jsx');
+  const detail=read('app/webapp/CaseDetailExperience.jsx');
+  const cfg=read('next.config.mjs');
+  assert.match(app,/<Image[\\s\\S]*?className=\\{caseOpeningStyles\\.caseTileImage\\}/);
+  assert.match(app,/const readyArtwork = previewImageUrl\\(imageUrlOf\\(result\\.gift\\)\\)/);
+  assert.match(app,/function previewImageUrl\\(url\\)/);
+  assert.match(app,/&_?w=384&q=76/);
+  assert.match(detail,/className=\\{caseOpeningStyles\\.caseStageArt\\}/);
+  for(const quality of ['72','75','76','78'])assert.match(cfg,new RegExp('qualities:\\[[^\\]]*'+quality));
+  assert.match(cfg,/hostname:'ylcipsfuojjvsqowbpol\\.supabase\\.co'/);
+});
