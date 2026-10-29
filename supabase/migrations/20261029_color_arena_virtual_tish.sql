@@ -156,8 +156,8 @@ begin
     values(p_room,v_room.round_id,p_user,v_count,p_stake);
   update public.color_arena_rooms set
     total_stake=total_stake+p_stake,
-    status=case when status='WAITING' then 'BETTING' else status end,
-    betting_ends_at=case when status='WAITING' then clock_timestamp()+interval '30 seconds' else betting_ends_at end,
+    status=case when status='WAITING' and v_count>=1 then 'BETTING' else status end,
+    betting_ends_at=case when status='WAITING' and v_count>=1 then clock_timestamp()+interval '30 seconds' else betting_ends_at end,
     version=version+1,updated_at=now() where id=p_room;
   insert into public.color_arena_ledger(user_id,room_id,round_id,request_id,kind,amount)
     values(p_user,p_room,v_room.round_id,p_request,'stake',-p_stake);
