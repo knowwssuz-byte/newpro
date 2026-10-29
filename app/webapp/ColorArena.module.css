@@ -78,3 +78,36 @@
 .error{padding:12px;margin:13px 0;border-radius:12px;background:rgba(195,71,94,.14);border:1px solid rgba(255,113,145,.32);color:#ffb6c5;font-size:11px}
 @media(max-width:360px){.header h2{font-size:19px}.stats small{font-size:7px}.stats>div{padding:10px 7px}.wallet{padding:10px 11px}.wallet strong{font-size:20px}.betRow .primary{padding-inline:10px;font-size:11px}.areaTag{max-width:24%}}
 @media(prefers-reduced-motion:reduce){.orb:after,.victory,.victoryParticles i{animation:none!important}}
+
+
+/* PBR-inspired sphere: moving anisotropic highlights, rim and contact lighting. */
+.orb{
+  isolation:isolate;
+  will-change:transform,left,top;
+  filter:brightness(var(--ball-brightness,1));
+  background:
+    radial-gradient(ellipse 28% 21% at 29% 20%,rgba(255,255,255,.99) 0%,rgba(255,255,255,.18) 74%,transparent 100%),
+    radial-gradient(circle at 26% 21%,#f8fcff 0%,#d3e2ff 16%,#8598c6 35%,#454f7e 55%,#11182e 76%,#909dc8 90%,#e8eaff 100%);
+  border:1px solid rgba(245,248,255,.77);
+  box-shadow:
+    inset -6px -7px 8px rgba(3,7,27,.56),
+    inset 3px 4px 6px rgba(255,255,255,.65),
+    0 0 0 1px rgba(180,209,253,.34),
+    0 0 29px rgba(197,219,255,.58),
+    3px 10px 15px rgba(0,3,14,.66);
+}
+.orb:before{
+  content:"";position:absolute;inset:3px;border-radius:inherit;
+  background:conic-gradient(from 10deg,transparent 0deg,rgba(255,255,255,.6) 28deg,transparent 65deg,
+    rgba(37,52,96,.62) 165deg,transparent 220deg,rgba(211,233,255,.27) 309deg,transparent 360deg);
+  opacity:.6;mix-blend-mode:screen;pointer-events:none;
+  transform:rotate(var(--ball-rotation,0deg));
+}
+.orb:after{
+  content:"";position:absolute;inset:-5px;
+  border-radius:50%;border:1px solid rgba(225,242,255,.33);
+  box-shadow:0 0 11px rgba(206,227,255,.35);
+  animation:ringPulse 1.2s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+@media(prefers-reduced-motion:reduce){.orb:after{animation:none}}
