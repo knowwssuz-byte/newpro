@@ -352,3 +352,8 @@
  .giftChoice{padding-inline:5px}.giftChoiceValue{font-size:14px}
  .premiumGiftPanel{padding:11px 8px}.giftChoiceLabel{font-size:7px}}
 @media(prefers-reduced-motion:reduce){.giftChoice,.giftSkeleton{animation:none;transition:none}}
+
+/* Polished wagering mode selector with stable vector icons. */
+.betSwitch button{display:flex;align-items:center;justify-content:center;gap:8px}
+.betSwitch button svg{flex:none;opacity:.84}
+.betSwitch button[aria-pressed="true"] svg{opacity:1;filter:drop-shadow(0 0 6px rgba(222,199,255,.3))}
