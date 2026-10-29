@@ -1,14 +1,14 @@
 'use client';
 
 import {useCallback,useEffect,useRef,useState} from 'react';
-import {ArrowLeft,ArrowRight,Plus,Users,Shield,Timer,RefreshCw,Eye,Coins,Crown} from 'lucide-react';
+import {ArrowLeft,Plus,Users,Timer,RefreshCw,Eye,Crown} from 'lucide-react';
 import {createClient} from '@supabase/supabase-js';
 import {orderedShares,renderBands,labelPoint,orientPoint,boundaryAt,arenaColorForSeat} from '@/lib/colorArenaGeometry.mjs';
 import {createBilliardPath,projectHitToRegion,billiardVelocity} from '@/lib/colorArenaBallPhysics.mjs';
 import styles from './ColorArena.module.css';
 
 const KEY='myst:color-arena-room';
-const TISH='✦';
+const STARS='★';
 const fmt=n=>Number(n||0).toLocaleString('en-US');
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
 const ease=t=>1-Math.pow(1-clamp(t,0,1),3);
@@ -178,14 +178,16 @@ function ArenaCanvas({room,clockOffset}) {
           {Array.from({length:26},(_,i)=><i key={i} style={{'--i':i,'--dx':(i*37)%105-52,'--dy':(i*53)%100-65,'--delay':i%6}}/>)}
         </div>
         <Crown size={28}/><span>G‘OLIB</span><strong>{room.winnerName||'Player'}</strong>
-        <b>+{fmt(room.pot)} {TISH}</b>
+        <b>+{fmt(room.pot)} {STARS}</b>
       </div>:null}
     </div>
     <div className={styles.boardFooter}><span><i/> FAIR AREA SYSTEM</span><span>100% TAQSIMLANGAN</span></div>
   </div>;
 }
-export default function ColorArena({onBack,apiPost,onToast}) {
-  const [room,setRoom]=useState(null),[tish,setTish]=useState(null);
+export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChange}) {
+  const [room,setRoom]=useState(null);
+  const balanceCallback=useRef(onBalanceChange);
+  balanceCallback.current=onBalanceChange;
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(''),[error,setError]=useState('');
   const [stake,setStake]=useState(10),[raise,setRaise]=useState(10);
   const [clock,setClock]=useState(Date.now()),[offset,setOffset]=useState(0);
@@ -193,7 +195,7 @@ export default function ColorArena({onBack,apiPost,onToast}) {
   const call=useCallback((action,payload={})=>
     apiPost('/api/color-arena',{action,...payload},{timeoutMs:14000}),[apiPost]);
   const apply=useCallback(data=>{
-    if(data?.balance!=null)setTish(Number(data.balance));
+    if(data?.balance!=null)balanceCallback.current?.(Number(data.balance));
     if(data?.serverNow)setOffset(Number(data.serverNow)-Date.now());
     if(data?.room)setRoom(previous=>{
       if(previous?.id===data.room.id && previous.roundId===data.room.roundId &&
@@ -248,8 +250,7 @@ export default function ColorArena({onBack,apiPost,onToast}) {
       const result=await call(action,payload);
       apply(result);
       pending.current.delete(nonceKey);
-      onToast?.(action==='raise'?'Hududingiz kengaydi':
-        action==='join'?'Ommaviy arenaga qo‘shildingiz':'Stavka qaytarildi');
+      onToast?.(action==='raise'?'Stavka oshirildi':action==='join'?'Stavka qabul qilindi':'Stavka qaytarildi');
     }catch(e){
       setError(e?.message||'So‘rov bajarilmadi. Qayta urinib ko‘ring.');
       // The same request ID is retained so retry cannot double-debit.
@@ -260,11 +261,6 @@ export default function ColorArena({onBack,apiPost,onToast}) {
   const myBet=room?.players?.find(p=>p.isMe);
   const canBet=room&&['WAITING','BETTING'].includes(room.status)
     &&(room.status==='WAITING'||seconds(room.bettingEndsAt)>0);
-  const status={
-    WAITING:'O‘YINCHILAR KUTILMOQDA',BETTING:'STAVKALAR OCHIQ',
-    LOCKED:'MAYDON TASDIQLANDI',ROLLING:'SHAR HARAKATDA',
-    RESULT:'RAUND YAKUNLANDI',CANCELLED:'ARENA YOPILDI'
-  }[room?.status];
   const leaders=room?.players
     ?[...room.players].sort((a,b)=>b.stake-a.stake).slice(0,12):[];
   if(myBet&&!leaders.some(p=>p.id===myBet.id))leaders.push(myBet);
@@ -272,21 +268,13 @@ export default function ColorArena({onBack,apiPost,onToast}) {
     <header className={styles.header}>
       <button type="button" className={styles.back} onClick={onBack} aria-label="PvP bo‘limiga qaytish">
         <ArrowLeft size={19}/></button>
-      <div><small>PVP / OMMAVIY MAYDON</small><h2>COLOR <em>ARENA</em></h2></div>
-      <span className={styles.live}><i/> LIVE</span>
+      <strong className={styles.compactTitle}>COLOR ARENA</strong>
+      <span className={styles.round}>#{room?.roundNo||'—'}</span>
     </header>
-    <div className={styles.wallet}>
-      <div><Coins size={20}/><span>VIRTUAL TISH <small>Pulga almashtirilmaydi</small></span></div>
-      <strong>{tish===null?'…':fmt(tish)} <b>{TISH}</b></strong>
-    </div>
-    {loading&&!room?<div className={styles.notice}>Ommaviy arena yuklanmoqda…</div>:null}
+    {loading&&!room?<div className={styles.notice}>Arena yuklanmoqda…</div>:null}
     {room?<div className={styles.inRoom}>
-      <div className={styles.roundTop}>
-        <span className={styles.status}><i/>{status}</span>
-        <span className={styles.round}>ROUND #{room.roundNo}</span>
-      </div>
       <div className={styles.stats}>
-        <div><small>UMUMIY FOND</small><strong>{fmt(room.pot)} <b>{TISH}</b></strong></div>
+        <div><small>UMUMIY FOND</small><strong>{fmt(room.pot)} <b>{STARS}</b></strong></div>
         <div><small>O‘YINCHILAR</small><strong><Users size={15}/>{fmt(room.players.length)} <b>∞</b></strong></div>
         <div><small>{room.status==='BETTING'?'STAVKA VAQTI':'BOSQICH'}</small>
           <strong><Timer size={15}/>{room.status==='BETTING'?seconds(room.bettingEndsAt)+'s':
@@ -303,13 +291,13 @@ export default function ColorArena({onBack,apiPost,onToast}) {
             borderColor:arenaColorForSeat(p.seat),color:arenaColorForSeat(p.seat)
           }}>{(p.name||'P')[0]}</span>
           <span className={styles.playerName}>{p.name}{p.isMe?<small>SIZ</small>:null}</span>
-          <strong>{fmt(p.stake)} {TISH}</strong>
+          <strong>{fmt(p.stake)} {STARS}</strong>
           <b style={{color:arenaColorForSeat(p.seat)}}>{p.percentage.toFixed(2)}%</b>
         </div>):<p className={styles.notice}>Birinchi stavkani qo‘ying, hududingiz paydo bo‘ladi.</p>}
       </div>
       {canBet&&!myBet?<div className={styles.betPanel}>
         <div className={styles.panelHead}>
-          <strong>Ommaviy arenaga qo‘shilish</strong><span>Min {room.minStake} {TISH}</span>
+          <strong>Stavka qo‘yish</strong><span>Min {room.minStake} {STARS}</span>
         </div>
         <div className={styles.quick}>
           {[room.minStake,25,50,100].filter((v,i,a)=>a.indexOf(v)===i).map(n=>
@@ -319,7 +307,7 @@ export default function ColorArena({onBack,apiPost,onToast}) {
           <input aria-label="Stavka miqdori" type="number" min={room.minStake} max="200000"
             value={stake} onChange={e=>setStake(e.target.value)}/>
           <button type="button" className={styles.primary}
-            disabled={!!busy||Number(stake)<room.minStake||Number(stake)>Number(tish)}
+            disabled={!!busy||Number(stake)<room.minStake||Number(stake)>Number(balance||0)}
             onClick={()=>act('join',{stake:Number(stake)})}>
             <Plus size={16}/> Qo‘shilish
           </button>
@@ -327,7 +315,7 @@ export default function ColorArena({onBack,apiPost,onToast}) {
       </div>:null}
       {canBet&&myBet?<div className={styles.betPanel}>
         <div className={styles.panelHead}><strong>Hududingizni kengaytiring</strong>
-          <span>{fmt(myBet.stake)} {TISH} tikilgan</span></div>
+          <span>{fmt(myBet.stake)} {STARS} tikilgan</span></div>
         <div className={styles.quick}>
           {[5,10,25,50,100].map(n=><button type="button" key={n} onClick={()=>setRaise(n)}>{n}</button>)}
         </div>
@@ -335,34 +323,26 @@ export default function ColorArena({onBack,apiPost,onToast}) {
           <input type="number" min="1" max="200000" aria-label="Qo‘shimcha stavka"
             value={raise} onChange={e=>setRaise(e.target.value)}/>
           <button type="button" className={styles.primary}
-            disabled={!!busy||Number(raise)<1||Number(raise)>Number(tish)}
+            disabled={!!busy||Number(raise)<1||Number(raise)>Number(balance||0)}
             onClick={()=>act('raise',{amount:Number(raise)})}>
             <Plus size={16}/> Oshirish</button>
         </div>
       </div>:null}
-      {room.status==='WAITING'?<p className={styles.notice}>
-        Kamida 2 o‘yinchi stavka qo‘ygach 30 soniyalik raund avtomatik boshlanadi.
-      </p>:null}
+      {room.status==='WAITING'?<p className={styles.hint}>Ikkinchi o‘yinchi kutilmoqda</p>:null}
       {room.status==='WAITING'&&myBet&&room.players.length===1?
         <button type="button" className={styles.cancel} disabled={!!busy}
           onClick={()=>act('leave')}>O‘yin boshlanmasidan stavkani qaytarish</button>:null}
-      {['LOCKED','ROLLING','RESULT'].includes(room.status)?<p className={styles.notice}>
-        Stavkalar yopilgan. Keyingi raund avtomatik ochiladi; arena doim shu yerda.
-      </p>:null}
+
       <div className={styles.history}><h4><Eye size={15}/> So‘nggi g‘oliblar</h4>
         {room.history.length?room.history.map(h=><div key={h.round_id}>
           <span>#{h.round_no}</span>
           <strong>Player {String(h.winner_id).slice(-4)}</strong>
-          <b>+{fmt(h.pot)} {TISH}</b>
+          <b>+{fmt(h.pot)} {STARS}</b>
         </div>):<small>Hozircha g‘oliblar tarixi yo‘q.</small>}
       </div>
     </div>:null}
     {!room&&!loading?<button type="button" className={styles.primary} onClick={()=>void refresh(false)}>
       <RefreshCw size={16}/> Arenaga qayta ulanish</button>:null}
     {error?<p role="alert" className={styles.error}>{error}</p>:null}
-    <div className={styles.disclaimer}><Shield size={16}/>
-      Bitta umumiy arena. O‘yinchilar soniga belgilangan limit yo‘q.
-      TISH — faqat o‘yin ichidagi bepul virtual kredit.
-    </div>
   </section>;
 }

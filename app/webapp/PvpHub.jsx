@@ -351,7 +351,8 @@ function RockPaperScissors({ onBack }) {
 export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast}) {
  const [selected,setSelected]=useState('list');
  if(selected==='color')return <div className={styles.root}>
-  <ColorArena onBack={()=>setSelected('list')} apiPost={apiPost} onToast={onToast}/>
+  <ColorArena onBack={()=>setSelected('list')} apiPost={apiPost} balance={balance}
+    onBalanceChange={onBalanceChange} onToast={onToast}/>
  </div>;
  if(selected==='xo')return <div className={styles.root}>
   <TicTacToe onBack={()=>setSelected('list')} apiPost={apiPost} balance={balance}

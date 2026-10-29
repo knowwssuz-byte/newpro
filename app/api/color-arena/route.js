@@ -14,7 +14,7 @@ function parseIntStrict(value,min,max) {
 function dbMessage(error) {
   const raw=String(error?.message||'');
   const entries={
-    ARENA_NO_TISH:['TISH balansingiz yetarli emas',400],
+    ARENA_NO_STARS:['Stars balansingiz yetarli emas',400],
     ARENA_BETS_LOCKED:['Stavka qabul qilish tugagan',409],
     ARENA_MIN_STAKE:['Xonaning minimal stavkasi bajarilmadi',400],
     ARENA_ALREADY_JOINED:['Siz allaqachon shu raunddasiz',409],
@@ -68,7 +68,7 @@ async function roomState(db,id,userId,includeHistory=true) {
     db.rpc('color_arena_public_players',{p_round:room.round_id}),
     includeHistory?db.from('color_arena_history')
       .select('round_id,round_no,winner_id,pot,created_at')
-      .eq('room_id',room.id).order('created_at',{ascending:false}).limit(8)
+      .eq('room_id',room.id).eq('currency','stars').order('created_at',{ascending:false}).limit(8)
       :Promise.resolve({data:[]})
   ]);
   const bets=dbThrow(b)||[],history=dbThrow(h)||[];
@@ -123,7 +123,8 @@ export async function POST(request){
     }
     const state=await roomState(db,roomId,id);
     if(!state)return jsonError('Xona topilmadi',404);
-    return json({balance:dbThrow(await db.rpc('color_arena_wallet_init',{p_user:id})),
+    const balanceData=dbThrow(await db.from('users').select('balance').eq('id',id).single());
+    return json({balance:Number(balanceData.balance),
       serverNow:Date.now(),room:state});
   }catch(error){
     const [message,status]=dbMessage(error);

@@ -1334,7 +1334,7 @@ export default function WebAppClient() {
 
     if (!Number.isFinite(value)) return;
 
-    setProfile((current) => (current ? { ...current, balance: value } : current));
+    setProfile((current) => (current && Number(current.balance) !== value ? { ...current, balance: value } : current));
   }, []);
 
   const openDeposit = useCallback((returnTab = 'home') => {
@@ -1494,7 +1494,7 @@ export default function WebAppClient() {
               {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
               {tab === 'pvp' ? <PvpHub onBack={closePvpHub} apiPost={apiPost}
   balance={profile?.balance}
-  onBalanceChange={(nextBalance)=>setProfile(current=>current?{...current,balance:nextBalance}:current)}
+  onBalanceChange={updateRocketBalance}
   onToast={showToast} /> : null}
 
               {tab === 'rocket' ? (
