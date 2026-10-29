@@ -209,7 +209,7 @@ function ArenaCanvas({room,clockOffset,audioController}) {
           {Array.from({length:26},(_,i)=><i key={i} style={{'--i':i,'--dx':(i*37)%105-52,'--dy':(i*53)%100-65,'--delay':i%6}}/>)}
         </div>
         <Crown size={28}/><span>G‘OLIB</span><strong>{room.winnerName||'Player'}</strong>
-        <b>+{fmt(room.pot)} {STARS}</b>
+        <b>+{fmt(room.prizeStars??room.pot)} {STARS}{room.giftPotCount>0?' + '+room.giftPotCount+' gift':''}</b>
       </div>:null}
     <div className={styles.boardFooter}><span><i/> FAIR AREA SYSTEM</span><span>100% TAQSIMLANGAN</span></div>
   </div>;
@@ -250,6 +250,8 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
   balanceCallback.current=onBalanceChange;
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(''),[error,setError]=useState('');
   const [stake,setStake]=useState(10),[raise,setRaise]=useState(10);
+  const [wagerMode,setWagerMode]=useState('stars'),[giftInventory,setGiftInventory]=useState([]);
+  const [giftLoading,setGiftLoading]=useState(false),[chosenGift,setChosenGift]=useState(null);
   const [clock,setClock]=useState(Date.now()),[offset,setOffset]=useState(0);
   const syncBusy=useRef(false),pending=useRef(new Map());
   const call=useCallback((action,payload={})=>
@@ -297,12 +299,24 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
         filter:'room_id=eq.'+room.id},()=>{void refresh(true);}).subscribe();
     return()=>{void client.removeChannel(channel);};
   },[room?.id,refresh]);
+  const loadGiftInventory=useCallback(async()=>{
+    setGiftLoading(true);
+    try{
+      const data=await call('inventory');
+      setGiftInventory(data.inventory||[]);
+    }catch(e){setError(e?.message||'Giftlar yuklanmadi');}
+    finally{setGiftLoading(false);}
+  },[call]);
+  useEffect(()=>{if(wagerMode==='gift'&&room?.status==='WAITING'||wagerMode==='gift'&&room?.status==='BETTING')
+    void loadGiftInventory();
+  },[wagerMode,room?.roundId,loadGiftInventory]);
+
   async function act(action,payload={}){
     if(busy)return;
     setBusy(action);setError('');
     const nonceKey=action+':'+JSON.stringify(payload);
     try{
-      if(action==='join'||action==='raise'){
+      if(action==='join'||action==='raise'||action==='gift'){
         const requestId=pending.current.get(nonceKey)||makeId();
         pending.current.set(nonceKey,requestId);
         payload={...payload,requestId};
@@ -310,7 +324,13 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
       const result=await call(action,payload);
       apply(result);
       pending.current.delete(nonceKey);
-      onToast?.(action==='raise'?'Stavka oshirildi':action==='join'?'Stavka qabul qilindi':'Stavka qaytarildi');
+      if(action==='gift'){
+        setGiftInventory(current=>current.filter(g=>g.historyId!==payload.historyId));
+        setChosenGift(null);
+        if(typeof window!=='undefined')window.dispatchEvent(new Event('myst:inventory-change'));
+      }
+      onToast?.(action==='raise'?'Stavka oshirildi':
+        action==='gift'?'Gift arenaga tikildi':action==='join'?'Stavka qabul qilindi':'Stavka qaytarildi');
     }catch(e){
       setError(e?.message||'So‘rov bajarilmadi. Qayta urinib ko‘ring.');
       // The same request ID is retained so retry cannot double-debit.
@@ -347,7 +367,18 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
             room.status==='RESULT'?'FINISH':room.status==='LOCKED'?'READY':'●'}</strong></div>
       </div>
       <ArenaCanvas room={room} clockOffset={offset} audioController={soundOn?audio.current:null}/>
-      {canBet&&!myBet?<div className={styles.betPanel}>
+      <div className={styles.prizeLine}>
+        <span>Mukofot: <b>{fmt(room.prizeStars??room.pot)} ★</b>
+        {room.giftPotCount>0?<b> + {room.giftPotCount} gift</b>:null}</span>
+        <span>Platforma ulushi: {((room.feeBps||0)/100).toFixed(1)}%</span>
+      </div>
+      {canBet?<div className={styles.betSwitch} role="group" aria-label="Stavka turi">
+        <button type="button" aria-pressed={wagerMode==='stars'}
+          onClick={()=>setWagerMode('stars')}>★ Stars</button>
+        <button type="button" aria-pressed={wagerMode==='gift'}
+          onClick={()=>setWagerMode('gift')}>🎁 Gift tikish</button>
+      </div>:null}
+      {canBet&&wagerMode==='stars'&&!myBet?<div className={styles.betPanel}>
         <div className={styles.panelHead}>
           <strong>Stavka qo‘yish</strong><span>Min {room.minStake} {STARS}</span>
         </div>
@@ -365,7 +396,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
           </button>
         </div>
       </div>:null}
-      {canBet&&myBet?<div className={styles.betPanel}>
+      {canBet&&wagerMode==='stars'&&myBet?<div className={styles.betPanel}>
         <div className={styles.panelHead}><strong>Hududingizni kengaytiring</strong>
           <span>{fmt(myBet.stake)} {STARS} tikilgan</span></div>
         <div className={styles.quick}>
@@ -379,6 +410,32 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
             onClick={()=>act('raise',{amount:Number(raise)})}>
             <Plus size={16}/> Oshirish</button>
         </div>
+      </div>:null}
+      {canBet&&wagerMode==='gift'?<div className={styles.giftStakePanel}>
+        <div className={styles.panelHead}>
+          <strong>Inventardan gift tanlang</strong>
+          <button type="button" className={styles.giftRefresh}
+            disabled={giftLoading} onClick={()=>void loadGiftInventory()}>
+            <RefreshCw size={14}/> Yangilash
+          </button>
+        </div>
+        <small>Giftning belgilangan Stars qiymati maydon ulushiga qo‘shiladi.</small>
+        {giftLoading?<p className={styles.notice}>Giftlar yuklanmoqda…</p>:
+          !giftInventory.length?<p className={styles.notice}>Tikish mumkin bo‘lgan gift topilmadi.</p>:
+          <div className={styles.giftGrid}>
+            {giftInventory.map(g=><button key={g.historyId} type="button"
+              aria-pressed={chosenGift===g.historyId}
+              onClick={()=>setChosenGift(g.historyId)}>
+              {g.imageUrl?<img src={g.imageUrl} loading="lazy" alt="" />:
+                <span aria-hidden="true">🎁</span>}
+              <strong>{g.title}</strong><small>{fmt(g.value)} ★ qiymat</small>
+            </button>)}
+          </div>}
+        {chosenGift?<button type="button" className={styles.primary}
+          disabled={!!busy} onClick={()=>act('gift',{historyId:chosenGift})}>
+          <Plus size={16}/> Tanlangan giftni tikish
+        </button>:null}
+        <small>Gift raund yakunigacha bloklanadi. G‘olib tikilgan giftlarni oladi.</small>
       </div>:null}
       <div className={styles.playersTitle}>
         <strong>O‘yinchilar</strong><span>{fmt(room.players.length)} ta hudud · TOP 12</span>
