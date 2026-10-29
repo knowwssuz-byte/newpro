@@ -118,3 +118,64 @@
 .compactTitle{flex:1;min-width:0;font:900 17px/1.1 var(--font-outfit),system-ui,sans-serif;letter-spacing:-.035em;color:#f5f0ff}
 .header .round{padding:7px 9px;border:1px solid rgba(190,163,255,.17);border-radius:10px;background:rgba(114,84,174,.1);font-size:11px;letter-spacing:.03em;color:#c5b4fd}
 .hint{margin:11px 2px 0;color:#9ca6c2;font-size:11px;line-height:1.4}
+
+
+/* COLOR ARENA v3 — precision crosshair spinner. Only its center determines a win. */
+.soundButton{
+  display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;
+  border:1px solid rgba(191,170,255,.26);border-radius:11px;
+  background:linear-gradient(145deg,rgba(92,83,151,.25),rgba(24,26,49,.94));
+  color:#cfc5f8;box-shadow:inset 0 1px rgba(255,255,255,.11);
+  -webkit-tap-highlight-color:transparent;
+}
+.soundButton[aria-pressed="true"]{border-color:rgba(115,240,220,.45);color:#95f8e6}
+.soundButton:focus-visible{outline:2px solid #b59bff;outline-offset:2px}
+.ring{
+  position:absolute;z-index:7;display:none;
+  width:clamp(22px,10%,42px);aspect-ratio:1;border-radius:50%;
+  border:3px solid #f8fbff;box-sizing:border-box;
+  background:rgba(11,20,38,.08);pointer-events:none;
+  box-shadow:inset 0 0 0 1px rgba(30,40,85,.95),
+    0 0 0 1px rgba(170,211,255,.8),0 0 9px rgba(181,228,255,.94),
+    0 0 26px rgba(118,171,255,.66),0 5px 11px rgba(0,0,0,.48);
+  filter:brightness(var(--ring-intensity,1));
+  will-change:left,top,transform;
+}
+.ring:before{
+  content:"";position:absolute;inset:-3px;border-radius:50%;border:3px solid transparent;
+  background:conic-gradient(from 0deg,#e0f4ff 0deg,#4bcafe 58deg,#3e4d9d 98deg,
+    #fdf0af 138deg,#7d56f9 212deg,#b7eeff 289deg,#e0f4ff 360deg) border-box;
+  -webkit-mask:linear-gradient(#fff 0 0) padding-box,linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  transform:rotate(var(--ring-spin,0deg));
+}
+.ringCross{
+  position:absolute;inset:17%;border-radius:50%;display:grid;place-items:center;
+  filter:drop-shadow(0 1px 1px #04091a) drop-shadow(0 0 2px #f5fdff);
+}
+.ringCross:before,.ringCross:after{content:"";position:absolute;background:#fff;
+  border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.7),0 0 5px #e3fdff}
+.ringCross:before{width:2px;height:100%}
+.ringCross:after{width:100%;height:2px}
+.ringDot{
+  position:relative;z-index:1;width:5px;height:5px;border-radius:50%;
+  background:#ffe59c;border:1px solid #fff;
+  box-shadow:0 0 0 1px #0a0f24,0 0 7px #ffdd86;
+}
+.winStrip{
+  position:relative;display:flex;align-items:center;justify-content:center;
+  gap:7px;min-height:41px;padding:7px 9px;margin-top:8px;
+  border:1px solid rgba(250,215,140,.5);border-radius:12px;
+  background:linear-gradient(110deg,rgba(97,76,65,.65),rgba(29,26,53,.96));
+  color:#fff2cc;box-shadow:inset 0 1px rgba(255,255,255,.15),0 0 20px rgba(236,194,110,.14);
+  animation:stripWin .3s ease-out both;
+}
+.winStrip svg{flex:none;color:#f6c878;width:20px;height:20px}
+.winStrip span{font-size:9px;letter-spacing:.1em;font-weight:900}
+.winStrip strong{font-size:12px;max-width:35%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.winStrip b{font-size:12px;color:#a5f1c9;white-space:nowrap}
+.winStrip .victoryParticles{inset:0;overflow:hidden}
+@keyframes stripWin{from{opacity:.25;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+  .ring,.ring:before,.winStrip{animation:none!important;transition:none!important}
+}
