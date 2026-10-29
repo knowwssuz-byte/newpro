@@ -9,7 +9,7 @@ create table if not exists public.color_arena_rooms(
   id uuid primary key default gen_random_uuid(),
   owner_id bigint not null references public.users(id),
   status text not null default 'WAITING'
-    check(status in ('WAITING','BETTING','LOCKED','ROLLING','RESULT')),
+    check(status in ('WAITING','BETTING','LOCKED','ROLLING','RESULT','CANCELLED')),
   min_stake integer not null check(min_stake between 5 and 500),
   max_players integer not null check(max_players between 2 and 8),
   round_no integer not null default 1,
@@ -211,7 +211,8 @@ begin
     insert into public.color_arena_events(room_id) values(p_room);
     return 'LOCKED';
   end if;
-  if v.status='LOCKED' and clock_timestamp()>=v.rolling_at then
+  if v.status='LOCKED' and v.finish_x is not null and v.finish_y is not null
+     and clock_timestamp()>=v.rolling_at then
     update public.color_arena_rooms set status='ROLLING',version=version+1,updated_at=now() where id=p_room;
     insert into public.color_arena_events(room_id) values(p_room);
     return 'ROLLING';
@@ -228,7 +229,23 @@ begin
   return v.status;
 end $$;
 
--- The server supplies CSPRNG coordinates. SQL determines the winner from the frozen stake geometry.
+-- A roll target must be committed before any ball movement starts.
+create or replace function public.color_arena_plan(p_room uuid,p_round uuid,p_x numeric,p_y numeric)
+returns boolean language plpgsql security invoker set search_path='' as $
+declare v public.color_arena_rooms%rowtype;
+begin
+  select * into v from public.color_arena_rooms where id=p_room for update;
+  if not found or v.round_id<>p_round then raise exception 'ARENA_STALE_ROUND'; end if;
+  if v.finish_x is not null then return true; end if;
+  if v.status<>'LOCKED' or p_x is null or p_y is null or p_x<0 or p_x>=1 or p_y<0 or p_y>=1 then
+    raise exception 'ARENA_NOT_PLANNABLE'; end if;
+  update public.color_arena_rooms set finish_x=p_x,finish_y=p_y,version=version+1,updated_at=now()
+  where id=p_room;
+  insert into public.color_arena_events(room_id) values(p_room);
+  return true;
+end $;
+
+-- The server supplies CSPRNG coordinates before ROLLING; SQL determines the winner from the frozen geometry.
 -- Each internal wave boundary has integral 0 over y, so actual geometric area equals stake/pot.
 create or replace function public.color_arena_finish(p_room uuid,p_round uuid,p_x numeric,p_y numeric)
 returns bigint language plpgsql security invoker set search_path='' as $$
@@ -241,7 +258,7 @@ begin
   if v.round_id<>p_round then raise exception 'ARENA_STALE_ROUND'; end if;
   if v.status='RESULT' then return v.winner_id; end if;
   if v.status<>'ROLLING' or clock_timestamp()<v.roll_ends_at then raise exception 'ARENA_NOT_FINISHABLE'; end if;
-  if p_x is null or p_y is null or p_x<0 or p_x>=1 or p_y<0 or p_y>=1 then
+  if p_x is null or p_y is null or p_x<>v.finish_x or p_y<>v.finish_y or p_x<0 or p_x>=1 or p_y<0 or p_y>=1 then
     raise exception 'ARENA_INVALID_POINT'; end if;
   v_frequency:=1+(v.seed%2);
   v_seedphase:=(v.seed%360)::numeric/360;
@@ -286,14 +303,13 @@ begin
     insert into public.color_arena_ledger(user_id,room_id,round_id,kind,amount)
       values(r.user_id,v.id,v.round_id,'refund',r.stake);
   end loop;
-  delete from public.color_arena_bets where round_id=v.round_id;
-  delete from public.color_arena_rooms where id=v.id;
+  update public.color_arena_rooms set status='CANCELLED',total_stake=0,version=version+1,updated_at=now() where id=v.id;
   insert into public.color_arena_events(room_id) values(v.id);
   return true;
 end $$;
 revoke execute on function public.color_arena_wallet_init(bigint),public.color_arena_create(bigint,integer,integer,integer,uuid),
   public.color_arena_join(uuid,bigint,integer,uuid),public.color_arena_raise(uuid,bigint,integer,uuid),
-  public.color_arena_tick(uuid),public.color_arena_finish(uuid,uuid,numeric,numeric),
+  public.color_arena_tick(uuid),public.color_arena_plan(uuid,uuid,numeric,numeric),public.color_arena_finish(uuid,uuid,numeric,numeric),
   public.color_arena_cancel(uuid,bigint)
 from public,anon,authenticated;
 grant execute on function public.color_arena_wallet_init(bigint),public.color_arena_create(bigint,integer,integer,integer,uuid),
