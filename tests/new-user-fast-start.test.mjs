@@ -45,11 +45,11 @@ test('large public case and gift artwork use optimized responsive image requests
   const app=read('app/webapp/WebAppClient.jsx');
   const detail=read('app/webapp/CaseDetailExperience.jsx');
   const cfg=read('next.config.mjs');
-  assert.match(app,/<Image[\\s\\S]*?className=\\{caseOpeningStyles\\.caseTileImage\\}/);
-  assert.match(app,/const readyArtwork = previewImageUrl\\(imageUrlOf\\(result\\.gift\\)\\)/);
-  assert.match(app,/function previewImageUrl\\(url\\)/);
-  assert.match(app,/&_?w=384&q=76/);
-  assert.match(detail,/className=\\{caseOpeningStyles\\.caseStageArt\\}/);
-  for(const quality of ['72','75','76','78'])assert.match(cfg,new RegExp('qualities:\\[[^\\]]*'+quality));
-  assert.match(cfg,/hostname:'ylcipsfuojjvsqowbpol\\.supabase\\.co'/);
+  assert.ok(app.includes('className={caseOpeningStyles.caseTileImage}'));
+  assert.ok(app.includes('const readyArtwork = previewImageUrl(imageUrlOf(result.gift))'));
+  assert.ok(app.includes('function previewImageUrl(url)'));
+  assert.ok(app.includes('&w=384&q=76'));
+  assert.ok(detail.includes('className={caseOpeningStyles.caseStageArt}'));
+  assert.ok(cfg.includes('qualities:[72,75,76,78]'));
+  assert.ok(cfg.includes("hostname:'ylcipsfuojjvsqowbpol.supabase.co'"));
 });
