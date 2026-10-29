@@ -231,7 +231,7 @@ end $$;
 
 -- A roll target must be committed before any ball movement starts.
 create or replace function public.color_arena_plan(p_room uuid,p_round uuid,p_x numeric,p_y numeric)
-returns boolean language plpgsql security invoker set search_path='' as $
+returns boolean language plpgsql security invoker set search_path='' as $colorplan$
 declare v public.color_arena_rooms%rowtype;
 begin
   select * into v from public.color_arena_rooms where id=p_room for update;
@@ -243,7 +243,7 @@ begin
   where id=p_room;
   insert into public.color_arena_events(room_id) values(p_room);
   return true;
-end $;
+end $colorplan$;
 
 -- The server supplies CSPRNG coordinates before ROLLING; SQL determines the winner from the frozen geometry.
 -- Each internal wave boundary has integral 0 over y, so actual geometric area equals stake/pot.
