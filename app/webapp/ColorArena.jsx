@@ -1,13 +1,13 @@
 'use client';
 
-import {useCallback,useEffect,useRef,useState} from 'react';
-import {ArrowLeft,Plus,Users,Timer,RefreshCw,Eye,Crown} from 'lucide-react';
+import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import {ArrowLeft,Plus,Users,Timer,RefreshCw,Eye,Crown,Volume2,VolumeX} from 'lucide-react';
 import {createClient} from '@supabase/supabase-js';
 import {orderedShares,renderBands,labelPoint,orientPoint,boundaryAt,arenaColorForSeat} from '@/lib/colorArenaGeometry.mjs';
-import {createBilliardPath,projectHitToRegion,billiardVelocity} from '@/lib/colorArenaBallPhysics.mjs';
+import {createBilliardPath,projectHitToRegion,billiardVelocity,ringRotation} from '@/lib/colorArenaBallPhysics.mjs';
+import {createArenaAudio} from '@/lib/colorArenaAudio.mjs';
 import styles from './ColorArena.module.css';
 
-const KEY='myst:color-arena-room';
 const STARS='★';
 const fmt=n=>Number(n||0).toLocaleString('en-US');
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
@@ -18,15 +18,20 @@ function makeId(){
   bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
   return [...bytes].map((b,i)=>[4,6,8,10].includes(i)?'-'+b.toString(16).padStart(2,'0'):b.toString(16).padStart(2,'0')).join('');
 }
-function ArenaCanvas({room,clockOffset}) {
+function ArenaCanvas({room,clockOffset,audioController}) {
   const canvas=useRef(null),orb=useRef(null),state=useRef(null);
   const players=room?.players||[];
   const seed=Number(room?.seed||0);
-  const shares=orderedShares(players);
-  const finalPoint=room?.target?projectHitToRegion(room.target,shares,seed,boundaryAt):null;
-  const visualPoint=finalPoint?orientPoint(finalPoint.x,finalPoint.y,seed):null;
-  const trajectory=visualPoint?createBilliardPath({x:visualPoint[0],y:visualPoint[1]},seed,room.roundNo):null;
   const key=players.map(p=>p.seat+':'+p.stake).join('|')+'-'+room?.roundId;
+  const shares=useMemo(()=>orderedShares(players),[key]);
+  const trajectory=useMemo(()=>{
+    if(!room?.target || shares.length<2)return null;
+    const finalPoint=projectHitToRegion(room.target,shares,seed,boundaryAt);
+    const visualPoint=orientPoint(finalPoint.x,finalPoint.y,seed);
+    return createBilliardPath({x:visualPoint[0],y:visualPoint[1]},seed,room.roundNo);
+  },[key,seed,room?.target?.x,room?.target?.y,room?.roundNo]);
+  const offsetRef=useRef(clockOffset),audioRef=useRef(audioController);
+  offsetRef.current=clockOffset;audioRef.current=audioController;
   // Reconciled area transitions: interpolate shares, not independently moved paths.
   // This preserves a gap-free partition *at every animation frame*.
   if(!state.current||state.current.roundId!==room?.roundId){
@@ -48,9 +53,14 @@ function ArenaCanvas({room,clockOffset}) {
     const terrainCtx=background.getContext('2d');
     if(!terrainCtx)return;
     let lastTerrainTime=-Infinity,terrainPainted=false;
+    let lastT=null,lastAudioTime=-Infinity,lastPaintTime=-Infinity;
+    const reducedMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
     const render=now=>{
-      if(!alive)return;
+      frame=0;
+      if(!alive || document.hidden)return;
       const el=canvas.current;
+      if(reducedMotion && now-lastPaintTime<100){frame=requestAnimationFrame(render);return;}
+      lastPaintTime=now;
       if(!el)return;
       const width=el.clientWidth||320,dpr=Math.min(window.devicePixelRatio||1,2);
       const size=Math.round(width*dpr);
@@ -109,10 +119,18 @@ function ArenaCanvas({room,clockOffset}) {
       ctx.drawImage(background,0,0,n,n);
       const active=['LOCKED','ROLLING','RESULT'].includes(room?.status);
       const t=room?.status==='RESULT'?1:room?.status==='LOCKED'?0:clamp(
-        (Date.now()+clockOffset-Date.parse(room?.rollingAt))/
+        (Date.now()+offsetRef.current-Date.parse(room?.rollingAt))/
         Math.max(1,Date.parse(room?.rollEndsAt)-Date.parse(room?.rollingAt)),0,1);
       const point=trajectory?trajectory.position(t):[.5,.5];
       if(trajectory && room?.status==='ROLLING'){
+        // Sound follows server-synchronized wall impacts, never React renders.
+        // Fast-forwarding from a background tab does not replay missed hits.
+        if(lastT!==null && t>=lastT && t-lastT<.08 && !document.hidden){
+          const collisions=trajectory.impacts.filter(hit=>hit.t>lastT && hit.t<=t);
+          if(collisions.length)audioRef.current?.impact(1-t*.55);
+        }
+        lastT=t;
+        if(now-lastAudioTime>95){audioRef.current?.progress(t);lastAudioTime=now;}
         // Specular wall impacts, reflective sparks, motion blur and a soft shadow.
         const intensity=1-t;
         ctx.save();
@@ -143,20 +161,30 @@ function ArenaCanvas({room,clockOffset}) {
       if(orb.current){
         orb.current.style.display=active?'block':'none';
         if(active){
-          orb.current.style.left=(point[0]*100)+'%';
-          orb.current.style.top=(point[1]*100)+'%';
+          // Single GPU-friendly transform; animating left/top triggers layout.
+          const xpos=(point[0]*n).toFixed(2),ypos=(point[1]*n).toFixed(2);
           const velocity=trajectory?billiardVelocity(trajectory,t):[0,0];
           const speed=Math.hypot(...velocity);
-          orb.current.style.setProperty('--ball-rotation',((t*960+Math.atan2(velocity[1],velocity[0])*180/Math.PI)||0)+'deg');
-          orb.current.style.setProperty('--ball-brightness',(1+Math.min(.25,speed*.015)).toFixed(3));
-          orb.current.style.transform='translate(-50%,-50%) scale('+(room.status==='RESULT'?1.14:1)+')';
+          orb.current.style.setProperty('--ring-spin',ringRotation(t,seed)+'deg');
+          orb.current.style.setProperty('--ring-intensity',(1+Math.min(.25,speed*.012)).toFixed(3));
+          orb.current.style.transform='translate3d('+xpos+'px,'+ypos+'px,0) translate(-50%,-50%) scale('+
+            (room.status==='RESULT'?1.14:1)+')';
         }
       }
       frame=requestAnimationFrame(render);
     };
-    frame=requestAnimationFrame(render);
-    return()=>{alive=false;cancelAnimationFrame(frame);};
-  },[room,key,seed,clockOffset]);
+    const onVisibility=()=>{
+      if(document.hidden){cancelAnimationFrame(frame);frame=0;}
+      else if(alive && !frame)frame=requestAnimationFrame(render);
+    };
+    document.addEventListener('visibilitychange',onVisibility);
+    if(!document.hidden)frame=requestAnimationFrame(render);
+    return()=>{
+      alive=false;
+      document.removeEventListener('visibilitychange',onVisibility);
+      cancelAnimationFrame(frame);
+    };
+  },[room?.roundId,room?.status,room?.winnerId,room?.target?.x,room?.target?.y,key,seed,trajectory]);
   return <div className={styles.boardShell}>
     <div className={styles.board} aria-label="Stavkalarga mos, egri chegarali rangli maydon">
       <canvas ref={canvas} className={styles.canvas}/>
@@ -172,20 +200,52 @@ function ArenaCanvas({room,clockOffset}) {
           <small>{(entry.share*100).toFixed(1)}%</small>
         </div>;
       })}
-      <span ref={orb} className={styles.orb} aria-hidden="true"/>
-      {room?.status==='RESULT' ? <div className={styles.victory}>
+      <span ref={orb} className={styles.ring} aria-hidden="true">
+        <span className={styles.ringCross}><i className={styles.ringDot}/></span>
+      </span>
+    </div>
+      {room?.status==='RESULT' ? <div className={styles.winStrip}>
         <div className={styles.victoryParticles} aria-hidden="true">
           {Array.from({length:26},(_,i)=><i key={i} style={{'--i':i,'--dx':(i*37)%105-52,'--dy':(i*53)%100-65,'--delay':i%6}}/>)}
         </div>
         <Crown size={28}/><span>G‘OLIB</span><strong>{room.winnerName||'Player'}</strong>
         <b>+{fmt(room.pot)} {STARS}</b>
       </div>:null}
-    </div>
     <div className={styles.boardFooter}><span><i/> FAIR AREA SYSTEM</span><span>100% TAQSIMLANGAN</span></div>
   </div>;
 }
 export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChange}) {
   const [room,setRoom]=useState(null);
+  const [soundOn,setSoundOn]=useState(false);
+  const audio=useRef(null),playedVictory=useRef(null);
+  // Audio is opt-in: only initialize Web Audio when the user taps sound.
+  const toggleSound=()=>{
+    if(!audio.current)audio.current=createArenaAudio();
+    const enabled=!soundOn;
+    const resume=audio.current.setMuted(!enabled);
+    setSoundOn(enabled);
+    if(enabled && room?.status==='ROLLING'){
+      // Unsupported mobile AudioContext may return false instead of a Promise.
+      void Promise.resolve(resume).then(ok=>{if(ok)audio.current?.startRoll();});
+    }
+  };
+  useEffect(()=>()=>audio.current?.dispose(),[]);
+  useEffect(()=>{
+    if(!audio.current)return;
+    if(!soundOn){audio.current.stopRoll();return;}
+    if(room?.status==='ROLLING')audio.current.startRoll();
+    else audio.current.stopRoll();
+    if(room?.status==='RESULT'&&playedVictory.current!==room.roundId){
+      playedVictory.current=room.roundId;
+      audio.current.win();
+    }
+  },[room?.status,room?.roundId,soundOn]);
+  useEffect(()=>{
+    const pause=()=>{if(document.hidden)audio.current?.stopRoll();
+      else if(soundOn&&room?.status==='ROLLING')audio.current?.startRoll();};
+    document.addEventListener('visibilitychange',pause);
+    return()=>document.removeEventListener('visibilitychange',pause);
+  },[soundOn,room?.status]);
   const balanceCallback=useRef(onBalanceChange);
   balanceCallback.current=onBalanceChange;
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(''),[error,setError]=useState('');
@@ -199,7 +259,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
     if(data?.serverNow)setOffset(Number(data.serverNow)-Date.now());
     if(data?.room)setRoom(previous=>{
       if(previous?.id===data.room.id && previous.roundId===data.room.roundId &&
-         Number(previous.version)>Number(data.room.version))return previous;
+         Number(previous.version)>=Number(data.room.version))return previous;
       return data.room;
     });
   },[]);
@@ -269,6 +329,11 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
       <button type="button" className={styles.back} onClick={onBack} aria-label="PvP bo‘limiga qaytish">
         <ArrowLeft size={19}/></button>
       <strong className={styles.compactTitle}>COLOR ARENA</strong>
+      <button type="button" className={styles.soundButton} onClick={toggleSound}
+        aria-label={soundOn?'Arena ovozini o‘chirish':'Arena ovozini yoqish'}
+        aria-pressed={soundOn} title={soundOn?'Ovozni o‘chirish':'Ovozni yoqish'}>
+        {soundOn?<Volume2 size={18}/>:<VolumeX size={18}/>}
+      </button>
       <span className={styles.round}>#{room?.roundNo||'—'}</span>
     </header>
     {loading&&!room?<div className={styles.notice}>Arena yuklanmoqda…</div>:null}
@@ -281,7 +346,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
             room.status==='ROLLING'?seconds(room.rollEndsAt)+'s':
             room.status==='RESULT'?'FINISH':room.status==='LOCKED'?'READY':'●'}</strong></div>
       </div>
-      <ArenaCanvas room={room} clockOffset={offset}/>
+      <ArenaCanvas room={room} clockOffset={offset} audioController={soundOn?audio.current:null}/>
       {canBet&&!myBet?<div className={styles.betPanel}>
         <div className={styles.panelHead}>
           <strong>Stavka qo‘yish</strong><span>Min {room.minStake} {STARS}</span>
