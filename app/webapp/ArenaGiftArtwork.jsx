@@ -22,7 +22,8 @@ function cachedAnimation(src){
 const extension=(s,re)=>re.test(String(s||'').split('?')[0]);
 
 export default function ArenaGiftArtwork({gift,selected=false}){
-  const root=useRef(null),canvas=useRef(null),animation=useRef(null);
+  const root=useRef(null),canvas=useRef(null),animation=useRef(null),selectedRef=useRef(selected);
+  selectedRef.current=selected;
   const [visible,setVisible]=useState(false);
   const [loaded,setLoaded]=useState(false);
   const [imageFailed,setImageFailed]=useState(false);
@@ -55,12 +56,13 @@ export default function ArenaGiftArtwork({gift,selected=false}){
           JSON.parse(JSON.stringify(data));
         instance=mod.default.loadAnimation({
           container:canvas.current,renderer:'svg',animationData:cloned,
-          loop:selected,autoplay:selected,rendererSettings:{preserveAspectRatio:'xMidYMid meet'}
+          loop:false,autoplay:false,rendererSettings:{preserveAspectRatio:'xMidYMid meet'}
         });
         animation.current=instance;
         instance.addEventListener('DOMLoaded',()=>{
           if(cancelled)return;
-          if(!selected)instance.goToAndStop(0,true);
+          if(selectedRef.current){instance.loop=true;instance.play();}
+          else instance.goToAndStop(0,true);
           setLoaded(true);
         });
         instance.addEventListener('data_failed',()=>{if(!cancelled)setLoaded(false);});
