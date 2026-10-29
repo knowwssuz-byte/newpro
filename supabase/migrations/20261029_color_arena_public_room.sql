@@ -83,3 +83,29 @@ begin
   insert into public.color_arena_events(room_id) values(v.id);
   return v_winner;
 end $finish_public$;
+
+-- A lone participant may withdraw before the public game actually starts.
+-- Reset the waiting round ID after refund to keep idempotent refunds unique.
+create or replace function public.color_arena_leave_waiting(p_user bigint,p_room uuid)
+returns boolean language plpgsql security invoker set search_path='' as $leave_waiting$
+declare v public.color_arena_rooms%rowtype; v_stake bigint;
+begin
+  select * into v from public.color_arena_rooms where id=p_room for update;
+  if not found or not v.is_public or v.status<>'WAITING' then
+    raise exception 'ARENA_CANNOT_CANCEL'; end if;
+  select stake into v_stake from public.color_arena_bets
+    where round_id=v.round_id and user_id=p_user for update;
+  if not found then raise exception 'ARENA_NOT_PLAYER'; end if;
+  if (select count(*) from public.color_arena_bets where round_id=v.round_id)<>1 then
+    raise exception 'ARENA_CANNOT_CANCEL'; end if;
+  update public.color_arena_wallets set balance=balance+v_stake where user_id=p_user;
+  insert into public.color_arena_ledger(user_id,room_id,round_id,kind,amount)
+    values(p_user,v.id,v.round_id,'refund',v_stake);
+  delete from public.color_arena_bets where round_id=v.round_id;
+  update public.color_arena_rooms set total_stake=0,round_id=gen_random_uuid(),
+    round_no=round_no+1,version=version+1,updated_at=now() where id=v.id;
+  insert into public.color_arena_events(room_id) values(v.id);
+  return true;
+end $leave_waiting$;
+revoke all on function public.color_arena_leave_waiting(bigint,uuid) from public,anon,authenticated;
+grant execute on function public.color_arena_leave_waiting(bigint,uuid) to service_role;
