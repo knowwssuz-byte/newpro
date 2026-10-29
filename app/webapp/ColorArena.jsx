@@ -282,19 +282,6 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
             room.status==='RESULT'?'FINISH':room.status==='LOCKED'?'READY':'●'}</strong></div>
       </div>
       <ArenaCanvas room={room} clockOffset={offset}/>
-      <div className={styles.playersTitle}>
-        <strong>O‘yinchilar</strong><span>{fmt(room.players.length)} ta hudud · TOP 12</span>
-      </div>
-      <div className={styles.players}>
-        {leaders.length?leaders.map(p=><div className={styles.player} key={p.seat}>
-          <span className={styles.playerAvatar} style={{
-            borderColor:arenaColorForSeat(p.seat),color:arenaColorForSeat(p.seat)
-          }}>{(p.name||'P')[0]}</span>
-          <span className={styles.playerName}>{p.name}{p.isMe?<small>SIZ</small>:null}</span>
-          <strong>{fmt(p.stake)} {STARS}</strong>
-          <b style={{color:arenaColorForSeat(p.seat)}}>{p.percentage.toFixed(2)}%</b>
-        </div>):<p className={styles.notice}>Birinchi stavkani qo‘ying, hududingiz paydo bo‘ladi.</p>}
-      </div>
       {canBet&&!myBet?<div className={styles.betPanel}>
         <div className={styles.panelHead}>
           <strong>Stavka qo‘yish</strong><span>Min {room.minStake} {STARS}</span>
@@ -328,6 +315,19 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
             <Plus size={16}/> Oshirish</button>
         </div>
       </div>:null}
+      <div className={styles.playersTitle}>
+        <strong>O‘yinchilar</strong><span>{fmt(room.players.length)} ta hudud · TOP 12</span>
+      </div>
+      <div className={styles.players}>
+        {leaders.length?leaders.map(p=><div className={styles.player} key={p.seat}>
+          <span className={styles.playerAvatar} style={{
+            borderColor:arenaColorForSeat(p.seat),color:arenaColorForSeat(p.seat)
+          }}>{(p.name||'P')[0]}</span>
+          <span className={styles.playerName}>{p.name}{p.isMe?<small>SIZ</small>:null}</span>
+          <strong>{fmt(p.stake)} {STARS}</strong>
+          <b style={{color:arenaColorForSeat(p.seat)}}>{p.percentage.toFixed(2)}%</b>
+        </div>):<p className={styles.notice}>Birinchi stavkani qo‘ying, hududingiz paydo bo‘ladi.</p>}
+      </div>
       {room.status==='WAITING'?<p className={styles.hint}>Ikkinchi o‘yinchi kutilmoqda</p>:null}
       {room.status==='WAITING'&&myBet&&room.players.length===1?
         <button type="button" className={styles.cancel} disabled={!!busy}
