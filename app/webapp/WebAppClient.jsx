@@ -90,6 +90,18 @@ const GIFT_BACKGROUND_PRESETS = [
 ];
 
 
+function canOptimizePublicRaster(src){
+  if(typeof src!=='string'||!/\.(?:png|jpe?g|webp)(?:[?#]|$)/i.test(src))return false;
+  try{
+    const u=new URL(src);
+    return u.protocol==='https:' && (
+      u.hostname==='ylcipsfuojjvsqowbpol.supabase.co' &&
+      u.pathname.startsWith('/storage/v1/object/public/') ||
+      u.hostname==='newpro-blue.vercel.app'
+    );
+  }catch{return false;}
+}
+
 function imageUrlOf(item) {
   return item?.image_url || item?.png_url || item?.webp_url || '';
 }
@@ -2396,6 +2408,13 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   if (isBalanceReward(gift)) {
     const starsImage = gift.image_url || gift.png_url || gift.webp_url || '';
     if (starsImage && brokenImageUrl !== starsImage) {
+      if(canOptimizePublicRaster(starsImage)){
+        return <Image className={`${mediaClass} gift-media-visual balance-reward-art`}
+          src={starsImage} width={320} height={320}
+          sizes={compact ? '88px' : '(max-width:600px) 42vw, 220px'} quality={76}
+          alt={`+${rewardValue(gift)} Stars`} loading={preferStatic ? 'eager' : 'lazy'}
+          decoding="async" draggable={false} onError={() => setBrokenImageUrl(starsImage)} />;
+      }
       return <img className={`${mediaClass} gift-media-visual balance-reward-art`}
         src={starsImage} alt={`+${rewardValue(gift)} Stars`} loading={preferStatic ? 'eager' : 'lazy'}
         decoding="async" draggable={false} onError={() => setBrokenImageUrl(starsImage)} />;
@@ -2421,6 +2440,15 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   }
 
   if (imageUrl && brokenImageUrl !== imageUrl) {
+    if (canOptimizePublicRaster(imageUrl)) {
+      return <Image
+        className={`${mediaClass} gift-media-visual`}
+        src={imageUrl} alt="" width={320} height={320}
+        sizes={compact ? '88px' : '(max-width:600px) 42vw, 220px'} quality={76}
+        loading={preferStatic ? 'eager' : 'lazy'} decoding="async"
+        onError={() => setBrokenImageUrl(imageUrl)} draggable={false}
+        aria-hidden="true" />;
+    }
     return (
       <img
         className={`${mediaClass} gift-media-visual`}
