@@ -106,11 +106,20 @@ function imageUrlOf(item) {
   return item?.image_url || item?.png_url || item?.webp_url || '';
 }
 
+function previewImageUrl(url) {
+  // Reuse the same public Next Image optimization path used by the card.
+  // Never download 1–2 MB original PNG merely to warm its tiny preview.
+  return canOptimizePublicRaster(url)
+    ? '/_next/image?url='+encodeURIComponent(url)+'&w=384&q=76'
+    : url;
+}
+
 function warmImageCacheFromData(...groups) {
   if (typeof window === 'undefined') return;
-  warmNearViewport(groups.flat().filter(Boolean).map((item) =>
+  const urls=groups.flat().filter(Boolean).map((item) =>
     typeof item === 'string' ? item : imageUrlOf(item)
-  ), window.navigator?.connection);
+  ).filter(Boolean).map(previewImageUrl);
+  warmNearViewport(urls, window.navigator?.connection);
 }
 
 function defaultGiftBackground(rarity = 'rare') {
@@ -1021,7 +1030,7 @@ export default function WebAppClient() {
       warmImageCacheFromData(displayGiftPool, result.gift);
       // A real server-authorized reward always wins. Decode only that media
       // (bounded to 850 ms) before revealing the reel; no global boot loader.
-      const readyArtwork = imageUrlOf(result.gift);
+      const readyArtwork = previewImageUrl(imageUrlOf(result.gift));
       await Promise.allSettled([
         preloadDecodedImage(readyArtwork, { priority: 'high', timeoutMs: 850 }),
         new Promise((resolve) => window.setTimeout(resolve,
