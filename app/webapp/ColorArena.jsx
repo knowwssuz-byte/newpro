@@ -138,7 +138,7 @@ export default function ColorArena({onBack,apiPost,onToast}) {
   const [create,setCreate]=useState(false),[min,setMin]=useState(10),[max,setMax]=useState(6);
   const [stake,setStake]=useState(10),[raise,setRaise]=useState(10),[clock,setClock]=useState(Date.now());
   const [offset,setOffset]=useState(0);
-  const refreshBusy=useRef(false),pending=useRef(new Map());
+  const refreshBusy=useRef(new Set()),pending=useRef(new Map());
   const update=useCallback(data=>{
     if(data.balance!=null)setTish(Number(data.balance));
     if(data.serverNow)setOffset(Number(data.serverNow)-Date.now());
@@ -149,8 +149,9 @@ export default function ColorArena({onBack,apiPost,onToast}) {
   },[]);
   const call=useCallback((action,payload={})=>apiPost('/api/color-arena',{action,...payload},{timeoutMs:12000}),[apiPost]);
   const refresh=useCallback(async(id,quiet=true)=>{
-    if(refreshBusy.current)return;
-    refreshBusy.current=true;
+    const refreshKey=id||'lobby';
+    if(refreshBusy.current.has(refreshKey))return;
+    refreshBusy.current.add(refreshKey);
     try{
       const data=await call(id?'state':'list',id?{roomId:id}:{});
       if(id){update(data);}
@@ -162,7 +163,7 @@ export default function ColorArena({onBack,apiPost,onToast}) {
       if(!quiet)setError('');
       return data;
     }catch(e){if(!quiet)setError(e?.message||'Ulanib bo‘lmadi');return null;}
-    finally{refreshBusy.current=false;setLoading(false);}
+    finally{refreshBusy.current.delete(refreshKey);setLoading(false);}
   },[call,update]);
   useEffect(()=>{
     let stopped=false;
