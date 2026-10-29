@@ -5,7 +5,7 @@ import {ensureUser,readTelegramRequest,jsonError} from '@/lib/telegramAuth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ACTIONS=new Set(['state','join','raise','leave']);
+const ACTIONS=new Set(['state','join','raise','leave','inventory','gift']);
 const json=(value)=>Response.json({ok:true,...value},{headers:{'Cache-Control':'no-store'}});
 function parseIntStrict(value,min,max) {
   const n=Number(value);
@@ -15,6 +15,9 @@ function dbMessage(error) {
   const raw=String(error?.message||'');
   const entries={
     ARENA_NO_STARS:['Stars balansingiz yetarli emas',400],
+    ARENA_GIFT_UNAVAILABLE:['Gift inventarda mavjud emas yoki band qilingan',409],
+    ARENA_GIFT_ESCROWED:['Gift arena natijasi chiqquncha bloklangan',409],
+    ARENA_GIFT_VALUE_INVALID:['Giftning stavka qiymati mos kelmaydi',400],
     ARENA_BETS_LOCKED:['Stavka qabul qilish tugagan',409],
     ARENA_MIN_STAKE:['Xonaning minimal stavkasi bajarilmadi',400],
     ARENA_ALREADY_JOINED:['Siz allaqachon shu raunddasiz',409],
@@ -64,20 +67,29 @@ async function advance(db,id) {
 async function roomState(db,id,userId,includeHistory=true) {
   const room=await advance(db,id);
   if(!room)return null;
-  const [b,h]=await Promise.all([
+  const [b,h,g]=await Promise.all([
     db.rpc('color_arena_public_players',{p_round:room.round_id}),
     includeHistory?db.from('color_arena_history')
       .select('round_id,round_no,winner_id,pot,created_at')
       .eq('room_id',room.id).eq('currency','stars').order('created_at',{ascending:false}).limit(8)
-      :Promise.resolve({data:[]})
+      :Promise.resolve({data:[]}),
+    db.from('color_arena_gift_stakes').select('history_id,owner_id,value_stars,status,winner_id')
+      .eq('round_id',room.round_id).in('status',['locked','settled'])
   ]);
-  const bets=dbThrow(b)||[],history=dbThrow(h)||[];
+  const bets=dbThrow(b)||[],history=dbThrow(h)||[],giftStakes=dbThrow(g)||[];
+  const giftValue=giftStakes.reduce((sum,item)=>sum+Number(item.value_stars),0);
+  const starsPot=Math.max(0,Number(room.total_stake)-giftValue);
+  const feeBps=Number(room.fee_bps)||0;
+  const feeStars=Math.floor(starsPot*feeBps/10000);
   const winner=bets.find(v=>String(v.id)===String(room.winner_id));
   const pot=Number(room.total_stake)||0;
   return {
     id:room.id,roundId:room.round_id,roundNo:room.round_no,version:room.version,
     status:room.status,minStake:room.min_stake,maxPlayers:null,
     pot,seed:room.seed,bettingEndsAt:room.betting_ends_at,
+    starsPot,feeBps,feeStars,prizeStars:starsPot-feeStars,
+    giftPotCount:giftStakes.length,giftValue,
+    myGiftIds:giftStakes.filter(g=>String(g.owner_id)===String(userId)).map(g=>g.history_id),
     rollingAt:room.rolling_at,rollEndsAt:room.roll_ends_at,resultEndsAt:room.result_ends_at,
     winnerId:room.winner_id,winnerName:winner?.name||null,
     // The target is only disclosed when animation is allowed to begin.
@@ -100,7 +112,7 @@ export async function POST(request){
     const db=getSupabaseAdmin(),id=Number(auth.telegramUser.id);
     const input=auth.body||{},action=String(input.action||'state');
     if(!ACTIONS.has(action))return jsonError('Noto‘g‘ri amal',400);
-    if(['join','raise'].includes(action)&&!UUID.test(String(input.requestId||'')))
+    if(['join','raise','gift'].includes(action)&&!UUID.test(String(input.requestId||'')))
       return jsonError('So‘rov ID noto‘g‘ri',400);
     // One authoritative public room; caller cannot choose wager destination.
     const publicRoom=dbThrow(await db.from('color_arena_rooms')
@@ -109,7 +121,39 @@ export async function POST(request){
     const roomId=publicRoom.id;
     if(input.roomId!=null && String(input.roomId)!==roomId)
       return jsonError('Faqat ommaviy arena mavjud',400);
-    if(action==='join'||action==='raise'){
+    if(action==='inventory'){
+      // Never trust any gift ID from the browser. Query caller-owned unsold
+      // inventory, excluding withdrawals and gifts already escrowed.
+      const rows=dbThrow(await db.from('open_history').select('id,gift_id')
+        .eq('user_id',id).is('sold_at',null).is('upgraded_at',null)
+        .order('created_at',{ascending:false}).limit(120));
+      const giftIds=[...new Set(rows.map(r=>r.gift_id).filter(Boolean))];
+      const [gf,wd,locked]=await Promise.all([
+        giftIds.length?db.from('gifts')
+          .select('id,title,type,image_url,animation_url,sell_price,buy_price,floor_price')
+          .in('id',giftIds):Promise.resolve({data:[]}),
+        rows.length?db.from('withdraw_requests').select('history_id')
+          .in('history_id',rows.map(r=>r.id)):Promise.resolve({data:[]}),
+        rows.length?db.from('color_arena_gift_stakes').select('history_id')
+          .in('history_id',rows.map(r=>r.id)).eq('status','locked'):Promise.resolve({data:[]})
+      ]);
+      const gifts=new Map((dbThrow(gf)||[]).map(g=>[g.id,g]));
+      const blocked=new Set([...(dbThrow(wd)||[]),...(dbThrow(locked)||[])].map(r=>r.history_id));
+      const inventory=rows.filter(r=>!blocked.has(r.id)).map(r=>{
+        const gift=gifts.get(r.gift_id);
+        if(!gift||String(gift.type||'gift').toLowerCase()!=='gift')return null;
+        const value=Math.floor(Math.max(0,Number(gift.sell_price??gift.buy_price??gift.floor_price??0)));
+        if(!Number.isSafeInteger(value)||value<1||value>200000)return null;
+        return {historyId:r.id,title:gift.title,imageUrl:gift.image_url,
+          animationUrl:gift.animation_url,value};
+      }).filter(Boolean);
+      return json({inventory,serverNow:Date.now()});
+    }
+    if(action==='gift'){
+      if(!UUID.test(String(input.historyId||'')))return jsonError('Gift ID noto‘g‘ri',400);
+      dbThrow(await db.rpc('color_arena_stake_gift',{p_room:roomId,p_user:id,
+        p_history:input.historyId,p_request:input.requestId}));
+    }else if(action==='join'||action==='raise'){
       const amount=parseIntStrict(action==='join'?input.stake:input.amount,
         action==='join'?5:1,200000);
       if(amount===null)return jsonError('Stavka noto‘g‘ri',400);
