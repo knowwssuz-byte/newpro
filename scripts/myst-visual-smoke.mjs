@@ -65,7 +65,18 @@ for (const viewport of [
   await context.route('**/api/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
     if (pathname === '/api/bootstrap') await delay(190);
-    const value = pathname === '/api/bootstrap' ? data : { ok: true };
+    let value = { ok: true };
+    if (pathname === '/api/bootstrap') {
+      const phase = route.request().postDataJSON()?.phase || 'full';
+      value = phase === 'essential'
+        ? { ok:true, phase, user:data.user, telegramUser:data.telegramUser,
+            isAdmin:data.isAdmin, cases:data.cases, gifts:data.gifts,
+            featureSettings:data.featureSettings }
+        : phase === 'extras'
+          ? { ok:true, phase, history:data.history, inventoryGifts:data.inventoryGifts,
+              withdrawals:data.withdrawals, upgradeRounds:data.upgradeRounds, upgradeCatalog:[] }
+          : { ...data, phase };
+    }
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(value) });
   });
   const page = await context.newPage();
@@ -166,7 +177,7 @@ for (const viewport of [
   }
   if (viewport.name === 'iphone-size') {
     // An actual route change must use a small local skeleton, never a full-screen boot.
-    await page.getByRole('button', { name: /UPGRADE/ }).first().click();
+    await page.getByRole('button', { name: /Upgrade/i }).first().click();
     await page.getByRole('img', { name: /Upgrade barabani/ }).waitFor({ timeout: 10000 });
     assert.equal(await page.getByRole('status', { name: 'MYST yuklanmoqda' }).count(), 0);
     await page.getByRole('button', { name: 'Orqaga' }).click();
