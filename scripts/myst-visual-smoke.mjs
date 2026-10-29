@@ -125,16 +125,20 @@ for (const viewport of [
   const inventoryNav = page.locator('nav[aria-label="Bottom navigation"]').getByRole('button',{name:/Inventory/i});
   const homeNav = page.locator('nav[aria-label="Bottom navigation"]').getByRole('button',{name:/Home/i});
   await inventoryNav.click();
-  await page.locator('[data-inventory-keepalive] .gift-media').first().waitFor({timeout:8000});
+  await page.locator('[data-inventory-keepalive] img.gift-media-visual').first().waitFor({timeout:8000});
+  await page.waitForFunction(() => {
+    const image=document.querySelector('[data-inventory-keepalive] img.gift-media-visual');
+    return image?.complete && image?.naturalWidth > 0;
+  }, null, {timeout:8000});
   await page.evaluate(() => {
-    window.__giftMediaBeforeTabSwitch=document.querySelector('[data-inventory-keepalive] .gift-media');
+    window.__giftMediaBeforeTabSwitch=document.querySelector('[data-inventory-keepalive] img.gift-media-visual');
   });
   await homeNav.click();
   assert.equal(await page.locator('[data-inventory-keepalive]').isVisible(),false,
     'Visited Inventory must be hidden, not removed');
   await inventoryNav.click();
   assert.equal(await page.evaluate(() =>
-    window.__giftMediaBeforeTabSwitch===document.querySelector('[data-inventory-keepalive] .gift-media')),
+    window.__giftMediaBeforeTabSwitch===document.querySelector('[data-inventory-keepalive] img.gift-media-visual')),
     true,'Gift media must retain DOM identity and animation state across tab switches');
   await homeNav.click();
 
