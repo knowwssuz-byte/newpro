@@ -2122,18 +2122,24 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
 
       <div className={caseOpeningStyles.caseTileMedia} style={caseImageStyle(caseItem)}>
         {caseItem.image_url && !imageFailed ? (
-          <img className={caseOpeningStyles.caseTileBackdrop} src={caseItem.image_url}
-            alt="" aria-hidden="true" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+          <Image className={caseOpeningStyles.caseTileBackdrop} src={caseItem.image_url}
+            alt="" aria-hidden="true" width={480} height={480}
+            sizes="(max-width:600px) 46vw, 240px" quality={72}
+            loading={eager ? 'eager' : 'lazy'} decoding="async" />
         ) : null}
         <span className={caseOpeningStyles.caseTileHalo} aria-hidden="true" />
 
         {caseItem.image_url && !imageFailed ? (
-          <img
+          <Image
             key={imageAttempt}
             className={caseOpeningStyles.caseTileImage}
             data-ready={imageReady}
             src={caseItem.image_url}
             alt=""
+            width={480}
+            height={480}
+            sizes="(max-width:600px) 46vw, 240px"
+            quality={72}
             loading={eager ? 'eager' : 'lazy'}
             decoding="async"
             fetchPriority={eager ? 'auto' : 'low'}
