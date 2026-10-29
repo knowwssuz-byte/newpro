@@ -29,7 +29,7 @@ test('PvP navigation wires API and balance without local-money modification',()=
  const app=read('app/webapp/WebAppClient.jsx');
  assert.match(app,/tab === 'pvp' \? <PvpHub/);
  assert.match(app,/balance=\{profile\?\.balance\}/);
- assert.match(app,/onBalanceChange=\{\(nextBalance\)=>setProfile/);
+ assert.match(app,/onBalanceChange=\{updateRocketBalance\}/);
 });
 
 test('PvP SQL migration auto-cancels expired matchmaking and locks balance changes',()=>{
