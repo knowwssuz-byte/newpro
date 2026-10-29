@@ -3,7 +3,8 @@
 import {useCallback,useEffect,useRef,useState} from 'react';
 import {ArrowLeft,ArrowRight,Plus,Users,Shield,Timer,RefreshCw,Eye,Coins,Crown} from 'lucide-react';
 import {createClient} from '@supabase/supabase-js';
-import {ARENA_COLORS,orderedShares,renderPolygon,labelPoint,orientPoint} from '@/lib/colorArenaGeometry.mjs';
+import {orderedShares,renderBands,labelPoint,orientPoint,boundaryAt,arenaColorForSeat} from '@/lib/colorArenaGeometry.mjs';
+import {createBilliardPath,projectHitToRegion,billiardVelocity} from '@/lib/colorArenaBallPhysics.mjs';
 import styles from './ColorArena.module.css';
 
 const KEY='myst:color-arena-room';
@@ -17,24 +18,14 @@ function makeId(){
   bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;
   return [...bytes].map((b,i)=>[4,6,8,10].includes(i)?'-'+b.toString(16).padStart(2,'0'):b.toString(16).padStart(2,'0')).join('');
 }
-function waveReflect(x){
-  const n=((x%2)+2)%2;
-  return n<=1?n:2-n;
-}
-function ballPosition(target,t,seed){
-  const [tx,ty]=orientPoint(target.x,target.y,seed);
-  if(t>=1)return [tx,ty];
-  const p=ease(t),sway=Math.sin(Math.PI*t)*Math.pow(1-t,.26);
-  return [
-    waveReflect(.5+(tx-.5)*p + Math.sin(t*42+0.2)*.78*sway),
-    waveReflect(.5+(ty-.5)*p + Math.sin(t*36+1.5)*.72*sway),
-  ];
-}
 function ArenaCanvas({room,clockOffset}) {
   const canvas=useRef(null),orb=useRef(null),state=useRef(null);
   const players=room?.players||[];
   const seed=Number(room?.seed||0);
   const shares=orderedShares(players);
+  const finalPoint=room?.target?projectHitToRegion(room.target,shares,seed,boundaryAt):null;
+  const visualPoint=finalPoint?orientPoint(finalPoint.x,finalPoint.y,seed):null;
+  const trajectory=visualPoint?createBilliardPath({x:visualPoint[0],y:visualPoint[1]},seed,room.roundNo):null;
   const key=players.map(p=>p.seat+':'+p.stake).join('|')+'-'+room?.roundId;
   // Reconciled area transitions: interpolate shares, not independently moved paths.
   // This preserves a gap-free partition *at every animation frame*.
@@ -52,6 +43,7 @@ function ArenaCanvas({room,clockOffset}) {
   useEffect(()=>{
     if(!canvas.current)return;
     let alive=true,frame=0,ctx=canvas.current.getContext('2d');
+    if(!ctx)return;
     const render=now=>{
       if(!alive)return;
       const el=canvas.current;
@@ -68,19 +60,23 @@ function ArenaCanvas({room,clockOffset}) {
         const data=state.current;
         const t=data.start?ease((now-data.start)/670):1;
         const vals=shares.map((v,i)=>({...v,share:data.from[i]*(1-t)+data.to[i]*t}));
+        const polygons=renderBands(vals,seed,vals.length>300?14:vals.length>80?24:48);
         vals.forEach((entry,i)=>{
-          const polygon=renderPolygon(vals,seed,i);
+          const polygon=polygons[i];
           if(polygon.length===0)return;
           ctx.beginPath();polygon.forEach(([x,y],j)=>j?ctx.lineTo(x*n,y*n):ctx.moveTo(x*n,y*n));ctx.closePath();
-          const color=ARENA_COLORS[entry.seat%ARENA_COLORS.length];
+          const color=arenaColorForSeat(entry.seat);
           ctx.save();
           ctx.fillStyle=color;
           ctx.globalAlpha=room.status==='RESULT'&&String(room.winnerId)!==String(entry.id)?0.23:0.74;
           ctx.fill();
           ctx.globalAlpha=1;
-          const glow=ctx.createLinearGradient(0,0,n,n);glow.addColorStop(0,'rgba(255,255,255,.22)');glow.addColorStop(.4,'rgba(255,255,255,0)');glow.addColorStop(1,'rgba(0,0,20,.35)');
-          ctx.fillStyle=glow;ctx.fill();
-          ctx.shadowBlur=room.status==='RESULT'&&String(room.winnerId)===String(entry.id)?30:12;
+          if(vals.length<80){
+            const glow=ctx.createLinearGradient(0,0,n,n);glow.addColorStop(0,'rgba(255,255,255,.22)');
+            glow.addColorStop(.4,'rgba(255,255,255,0)');glow.addColorStop(1,'rgba(0,0,20,.35)');
+            ctx.fillStyle=glow;ctx.fill();
+          }
+          ctx.shadowBlur=vals.length>80?0:room.status==='RESULT'&&String(room.winnerId)===String(entry.id)?30:12;
           ctx.shadowColor=color;ctx.lineWidth=2.3;ctx.strokeStyle=color;ctx.stroke();
           ctx.shadowBlur=0;ctx.lineWidth=.5;ctx.strokeStyle='rgba(255,255,255,.36)';ctx.stroke();
           if(room.status==='RESULT'&&String(room.winnerId)===String(entry.id)){
@@ -89,17 +85,49 @@ function ArenaCanvas({room,clockOffset}) {
           ctx.restore();
         });
       }
+      const active=['LOCKED','ROLLING','RESULT'].includes(room?.status);
+      const t=room?.status==='RESULT'?1:room?.status==='LOCKED'?0:clamp(
+        (Date.now()+clockOffset-Date.parse(room?.rollingAt))/
+        Math.max(1,Date.parse(room?.rollEndsAt)-Date.parse(room?.rollingAt)),0,1);
+      const point=trajectory?trajectory.position(t):[.5,.5];
+      if(trajectory && room?.status==='ROLLING'){
+        // Specular wall impacts, reflective sparks, motion blur and a soft shadow.
+        const intensity=1-t;
+        ctx.save();
+        for(let i=11;i>0;i--){
+          const pp=trajectory.position(Math.max(0,t-i*.0028));
+          const alpha=(12-i)/12*.16*intensity;
+          ctx.beginPath();ctx.arc(pp[0]*n,pp[1]*n,(4+(12-i)*.45)*Math.min(1,n/360),0,Math.PI*2);
+          ctx.fillStyle='rgba(196,223,255,'+alpha+')';ctx.fill();
+        }
+        for(const impact of trajectory.impacts){
+          const age=t-impact.t;
+          if(age<0||age>.047)continue;
+          const fade=1-age/.047;
+          const x=impact.x*n,y=impact.y*n;
+          const halo=ctx.createRadialGradient(x,y,0,x,y,27*fade+5);
+          halo.addColorStop(0,'rgba(255,247,222,'+(.7*fade)+')');
+          halo.addColorStop(1,'rgba(184,213,255,0)');
+          ctx.fillStyle=halo;ctx.beginPath();ctx.arc(x,y,27*fade+5,0,Math.PI*2);ctx.fill();
+          ctx.lineWidth=1.4;ctx.strokeStyle='rgba(229,237,255,'+(.8*fade)+')';
+          for(let j=0;j<6;j++){
+            const angle=j*Math.PI/3+impact.t*20;
+            ctx.beginPath();ctx.moveTo(x+Math.cos(angle)*5,y+Math.sin(angle)*5);
+            ctx.lineTo(x+Math.cos(angle)*(7+22*(1-fade)),y+Math.sin(angle)*(7+22*(1-fade)));ctx.stroke();
+          }
+        }
+        ctx.restore();
+      }
       if(orb.current){
-        const active=['LOCKED','ROLLING','RESULT'].includes(room?.status);
         orb.current.style.display=active?'block':'none';
         if(active){
-          const t=room.status==='RESULT'?1:room.status==='LOCKED'?0:clamp(
-            (Date.now()+clockOffset-Date.parse(room.rollingAt))/
-            Math.max(1,Date.parse(room.rollEndsAt)-Date.parse(room.rollingAt)),0,1);
-          const [x,y]=room.target?ballPosition(room.target,t,seed):[.5,.5];
-          orb.current.style.left=(x*100)+'%';
-          orb.current.style.top=(y*100)+'%';
-          orb.current.style.transform='translate(-50%,-50%) scale('+(room.status==='RESULT'?1.22:1)+')';
+          orb.current.style.left=(point[0]*100)+'%';
+          orb.current.style.top=(point[1]*100)+'%';
+          const velocity=trajectory?billiardVelocity(trajectory,t):[0,0];
+          const speed=Math.hypot(...velocity);
+          orb.current.style.setProperty('--ball-rotation',((t*960+Math.atan2(velocity[1],velocity[0])*180/Math.PI)||0)+'deg');
+          orb.current.style.setProperty('--ball-brightness',(1+Math.min(.25,speed*.015)).toFixed(3));
+          orb.current.style.transform='translate(-50%,-50%) scale('+(room.status==='RESULT'?1.14:1)+')';
         }
       }
       frame=requestAnimationFrame(render);
@@ -113,7 +141,7 @@ function ArenaCanvas({room,clockOffset}) {
       {shares.map((entry,i)=>{
         const [x,y]=labelPoint(shares,seed,i);
         return <div key={entry.seat} className={styles.areaTag}
-          style={{left:(x*100)+'%',top:(y*100)+'%',borderColor:ARENA_COLORS[entry.seat%8],
+          style={{left:(x*100)+'%',top:(y*100)+'%',borderColor:arenaColorForSeat(entry.seat),
             display:entry.share<.065?'none':undefined}}>
           <span className={styles.areaAvatar}>{(entry.name||'P')[0]}</span>
           <strong>{entry.name}</strong>
