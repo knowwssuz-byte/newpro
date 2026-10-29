@@ -13,6 +13,7 @@ const nextConfig={
    {protocol:'https',hostname:'newpro-blue.vercel.app',pathname:'/**'}
   ],
   formats:['image/webp'],
+  qualities:[72,75,76,78],
   imageSizes:[48,64,96,128,160,192,256,384],
   deviceSizes:[320,420,640,768,1080,1280],
   minimumCacheTTL:3600
