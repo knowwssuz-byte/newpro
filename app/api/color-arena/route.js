@@ -76,7 +76,17 @@ async function roomState(db,id,userId,includeHistory=true) {
     db.from('color_arena_gift_stakes').select('history_id,owner_id,value_stars,status,winner_id')
       .eq('round_id',room.round_id).in('status',['locked','settled'])
   ]);
-  const bets=dbThrow(b)||[],history=dbThrow(h)||[],giftStakes=dbThrow(g)||[];
+  const bets=dbThrow(b)||[],historyRaw=dbThrow(h)||[],giftStakes=dbThrow(g)||[];
+  const historyRounds=historyRaw.map(h=>h.round_id);
+  const [feeHist,giftHist]=historyRounds.length?await Promise.all([
+    db.from('color_arena_platform_revenue').select('round_id,net_stars').in('round_id',historyRounds),
+    db.from('color_arena_gift_stakes').select('round_id').in('round_id',historyRounds)
+  ]):[{data:[]},{data:[]}];
+  const netStars=new Map((dbThrow(feeHist)||[]).map(r=>[r.round_id,Number(r.net_stars)]));
+  const giftCounts=new Map();
+  for(const g of dbThrow(giftHist)||[])giftCounts.set(g.round_id,(giftCounts.get(g.round_id)||0)+1);
+  const history=historyRaw.map(h=>({...h,
+    pot:netStars.get(h.round_id)??Number(h.pot),giftCount:giftCounts.get(h.round_id)||0}));
   const giftValue=giftStakes.reduce((sum,item)=>sum+Number(item.value_stars),0);
   const starsPot=Math.max(0,Number(room.total_stake)-giftValue);
   const feeBps=Number(room.fee_bps)||0;
