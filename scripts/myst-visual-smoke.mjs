@@ -20,7 +20,11 @@ const data = {
   telegramUser: { id: 24680, first_name: 'Test', last_name: 'Account' },
   isAdmin: false,
   cases: [{ id: 'case-test', title: 'Demo case', description: 'Preview', price: 0, image_url: '/cases/starter.svg', is_active: true, sort_order: 0 }],
-  gifts: [], inventoryGifts: [], history: [], withdrawals: [], upgradeRounds: [], featureSettings: {},
+  gifts: [], inventoryGifts: [
+    {id:'gift-1',title:'Mock Telegram Gift',type:'gift',sell_price:30,stock:1,
+      image_url:'/gifts/telegram-collectible.svg'}
+  ], history: [{id:'won-1',gift_id:'gift-1',case_id:'case-test',sold_at:null}],
+  withdrawals: [], upgradeRounds: [], featureSettings: {},
 };
 const telegramScript = `window.Telegram={WebApp:{initData:'mocked-session',initDataUnsafe:{user:{id:24680,first_name:'Test',last_name:'Account'}},ready(){},expand(){},MainButton:{hide(){}},BackButton:{hide(){}},HapticFeedback:{notificationOccurred(){},impactOccurred(){}},platform:'android',version:'8.0'}};`;
 const browser = await chromium.launch({ headless: true, args: ['--no-sandbox'] });
@@ -115,6 +119,24 @@ for (const viewport of [
   assert.ok(width.scroll <= width.viewport + 2, `Horizontal overflow on ${viewport.name}: ${JSON.stringify(width)}`);
   assert.notEqual(width.background, 'rgb(255, 255, 255)', 'White background must not flash');
   await page.screenshot({ path: `${artifacts}/${viewport.name}-home.png`, fullPage: true });
+
+  // The gift media node must survive menu changes; otherwise its animated
+  // WebP/TGS/video restarts and briefly vanishes on every return.
+  const inventoryNav = page.locator('nav[aria-label="Bottom navigation"]').getByRole('button',{name:/Inventory/i});
+  const homeNav = page.locator('nav[aria-label="Bottom navigation"]').getByRole('button',{name:/Home/i});
+  await inventoryNav.click();
+  await page.locator('[data-inventory-keepalive] .gift-media').first().waitFor({timeout:8000});
+  await page.evaluate(() => {
+    window.__giftMediaBeforeTabSwitch=document.querySelector('[data-inventory-keepalive] .gift-media');
+  });
+  await homeNav.click();
+  assert.equal(await page.locator('[data-inventory-keepalive]').isVisible(),false,
+    'Visited Inventory must be hidden, not removed');
+  await inventoryNav.click();
+  assert.equal(await page.evaluate(() =>
+    window.__giftMediaBeforeTabSwitch===document.querySelector('[data-inventory-keepalive] .gift-media')),
+    true,'Gift media must retain DOM identity and animation state across tab switches');
+  await homeNav.click();
 
   // Fixed viewport controls must remain at identical screen coordinates while
   // the CONTENT moves. The test-only spacer guarantees a meaningful scroll,
