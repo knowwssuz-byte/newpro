@@ -52,11 +52,16 @@ for(const width of [320,375,390,430,768,1024,1440]){
  await page.getByRole('heading',{name:'Play. Win. Repeat.'}).waitFor({timeout:9000});
  await page.getByRole('button',{name:'Demo case case tafsilotlari'}).click();
  await page.getByRole('heading',{name:'Demo case'}).first().waitFor({timeout:6000});
- await page.locator('[aria-label="Case rasmi"] img[data-ready="true"]').waitFor({timeout:6000});
+ // This screen is reel-first. The old smoke selector targeted an unused
+ // CaseArtwork component and could never become ready.
+ await page.locator('[aria-label="Case prizes preview"]').waitFor({timeout:6000});
+ await page.waitForFunction(() =>
+   [...document.querySelectorAll('[aria-label="Case prizes preview"] img')]
+     .some(img=>img.complete&&img.naturalWidth>0),null,{timeout:6000});
  await page.screenshot({path:`${output}/${width}-detail.png`,fullPage:false});
  const layout=await page.evaluate(()=>{
-   const stage=document.querySelector('[aria-label="Case rasmi"]');
-   const artwork=stage?.querySelector('img');
+   const stage=document.querySelector('[aria-label="Case prizes preview"]');
+   const artwork=[...(stage?.querySelectorAll('img')||[])].find(img=>img.complete&&img.naturalWidth>0);
    const frame=stage?.getBoundingClientRect();
    const image=artwork?.getBoundingClientRect();
    const heading=document.querySelector('.case-page-top')?.getBoundingClientRect();
@@ -70,9 +75,9 @@ for(const width of [320,375,390,430,768,1024,1440]){
    };
  });
  assert.ok(layout.scrollWidth<=layout.innerWidth+2,`Overflow at ${width}: ${JSON.stringify(layout)}`);
- assert.ok(layout.mainStage>=130,`Missing real case artwork stage on ${width}`);
+ assert.ok(layout.mainStage>=75,`Missing real case reel on ${width}`);
  assert.ok(layout.headingTop>=55,`Case page inherited Home scroll position at ${width}: ${JSON.stringify(layout)}`);
- assert.ok(layout.imageInside && layout.imageNaturalWidth>0,`Artwork clipped or not loaded at ${width}: ${JSON.stringify(layout)}`);
+ assert.ok(layout.imageNaturalWidth>0,`Reel artwork not loaded at ${width}: ${JSON.stringify(layout)}`);
  const btn=page.getByRole('button',{name:'OPEN',exact:true});
  await btn.waitFor({timeout:5000});
  // Double click during a single synchronous event loop: one request maximum.

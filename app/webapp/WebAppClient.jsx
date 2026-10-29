@@ -15,8 +15,8 @@ import gameCardStyles from './PremiumGameCards.module.css';
 
 import RouteSkeleton from './RouteSkeleton';
 import { prepareFirstView, warmNearViewport, preloadDecodedImage } from '@/lib/mystAssetReadiness.mjs';
-import DiceGame, { DiceLobbyCard } from './DiceGame';
-import PvpHub, { PvpEntryCard } from './PvpHub';
+import DiceLobbyCard from './DiceLobbyCard';
+import PvpEntryCard from './PvpEntryCard';
 import StarIcon from './StarIcon';
 import LevelRing from './LevelRing';
 import SettingsPanel from './SettingsPanel';
@@ -25,6 +25,12 @@ import { getInventoryRows } from '@/lib/inventory.mjs';
 import GiftHistory from './GiftHistory';
 
 
+const DiceGame = dynamic(() => import('./DiceGame'), {
+  ssr: false, loading: () => <RouteSkeleton title="Dice ochilmoqda" />,
+});
+const PvpHub = dynamic(() => import('./PvpHub'), {
+  ssr: false, loading: () => <RouteSkeleton title="PvP ochilmoqda" />,
+});
 const RocketGame = dynamic(() => import('./RocketGame'), { ssr: false, loading: () => <RouteSkeleton title="Rocket tayyorlanmoqda" /> });
 const UpgradeLab = dynamic(() => import('./UpgradeLab'), { ssr: false, loading: () => <RouteSkeleton title="Upgrade tayyorlanmoqda" /> });
 const DepositView = dynamic(() => import('./DepositView'), { ssr: false, loading: () => <RouteSkeleton title="Balans sahifasi ochilmoqda" /> });
@@ -84,15 +90,36 @@ const GIFT_BACKGROUND_PRESETS = [
 ];
 
 
+function canOptimizePublicRaster(src){
+  if(typeof src!=='string'||!/\.(?:png|jpe?g|webp)(?:[?#]|$)/i.test(src))return false;
+  try{
+    const u=new URL(src);
+    return u.protocol==='https:' && (
+      u.hostname==='ylcipsfuojjvsqowbpol.supabase.co' &&
+      u.pathname.startsWith('/storage/v1/object/public/') ||
+      u.hostname==='newpro-blue.vercel.app'
+    );
+  }catch{return false;}
+}
+
 function imageUrlOf(item) {
   return item?.image_url || item?.png_url || item?.webp_url || '';
 }
 
+function previewImageUrl(url) {
+  // Reuse the same public Next Image optimization path used by the card.
+  // Never download 1–2 MB original PNG merely to warm its tiny preview.
+  return canOptimizePublicRaster(url)
+    ? '/_next/image?url='+encodeURIComponent(url)+'&w=384&q=76'
+    : url;
+}
+
 function warmImageCacheFromData(...groups) {
   if (typeof window === 'undefined') return;
-  warmNearViewport(groups.flat().filter(Boolean).map((item) =>
+  const urls=groups.flat().filter(Boolean).map((item) =>
     typeof item === 'string' ? item : imageUrlOf(item)
-  ), window.navigator?.connection);
+  ).filter(Boolean).map(previewImageUrl);
+  warmNearViewport(urls, window.navigator?.connection);
 }
 
 function defaultGiftBackground(rarity = 'rare') {
@@ -419,6 +446,7 @@ export default function WebAppClient() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [upgradeRounds, setUpgradeRounds] = useState([]);
   const [upgradeCatalog, setUpgradeCatalog] = useState([]);
+  const [extrasState, setExtrasState] = useState('idle');
   const [featureSettings, setFeatureSettings] = useState({});
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminWithdrawals, setAdminWithdrawals] = useState([]);
@@ -440,6 +468,7 @@ export default function WebAppClient() {
   const pvpReturnTabRef = useRef('home');
   const depositReturnTabRef = useRef('home');
   const hasBootstrappedRef = useRef(false);
+  const extrasRequestRef = useRef(null);
   const tourOpenedRef = useRef(false);
   const referralTrackedRef = useRef(false);
   const historyReturnTabRef = useRef('home');
@@ -481,17 +510,42 @@ export default function WebAppClient() {
   );
 
   useEffect(() => {
-    // Prime visible assets during Telegram startup.
+    // Decode the first 1-2 visible assets early but never delay auth on images.
     void prepareFirstView();
   }, []);
 
   useEffect(() => {
-    // The two homepage banners use next/image's optimized URLs, so do not
-    // prefetch the original uncompressed images in parallel.
-    warmImageCacheFromData(
-      activeCases.slice(0, 3),
-      selectedCase ? (giftsByCase[selectedCase.id] || []).slice(0, 6) : []
-    );
+    // The code for advanced games is split from Home. Fetch once in idle time,
+    // AFTER the intro stage, so entry into PvP and Dice feels instant.
+    if (loading || showWelcomeTour || !initData) return;
+    const connection=window.navigator?.connection;
+    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType||'')) return;
+    let cancelled=false,idle=null;
+    const timer=window.setTimeout(()=>{
+      if (cancelled) return;
+      const warm=()=>{
+        if (cancelled) return;
+        void import('./PvpHub');
+        void import('./DiceGame');
+      };
+      if ('requestIdleCallback' in window) idle=window.requestIdleCallback(warm,{timeout:2400});
+      else warm();
+    },1700);
+    return()=>{
+      cancelled=true;
+      window.clearTimeout(timer);
+      if(idle!=null && 'cancelIdleCallback' in window) window.cancelIdleCallback(idle);
+    };
+  }, [loading, showWelcomeTour, initData]);
+
+  useEffect(() => {
+    // Large remote gift art must not compete with HTML, fonts and onboarding.
+    // Warm only the next likely image once the interactive UI has settled.
+    const candidates=selectedCase
+      ? (giftsByCase[selectedCase.id] || []).slice(0, 2)
+      : activeCases.slice(0, 1);
+    const timer=window.setTimeout(() => warmImageCacheFromData(candidates), 1100);
+    return () => window.clearTimeout(timer);
   }, [activeCases, giftsByCase, selectedCase]);
 
   // Welcome is chosen during bootstrap (before loader removal), preventing
@@ -563,7 +617,7 @@ export default function WebAppClient() {
 
 
   useEffect(() => {
-    if (!initData) return;
+    if (!initData || !profile?.id) return;
 
     let cancelled = false;
 
@@ -585,7 +639,7 @@ export default function WebAppClient() {
     return () => {
       cancelled = true;
     };
-  }, [apiPost, initData]);
+  }, [apiPost, initData, profile?.id]);
 
   const apiFormPost = useCallback(
     async (url, formData) => {
@@ -614,20 +668,20 @@ export default function WebAppClient() {
   const applyBootstrapData = useCallback((data) => {
     if (!data) return;
 
-    setProfile(data.user || null);
-    setTelegramUser(data.telegramUser || null);
-    setIsAdmin(Boolean(data.isAdmin));
+    if ('user' in data) setProfile(data.user || null);
+    if ('telegramUser' in data) setTelegramUser(data.telegramUser || null);
+    if ('isAdmin' in data) setIsAdmin(Boolean(data.isAdmin));
     // Old cached snapshots (or an unexpected server payload) may contain
     // incompatible field types; never crash the first React render.
-    const safeGifts = Array.isArray(data.gifts) ? data.gifts : [];
-    setCases(Array.isArray(data.cases) ? data.cases : []);
-    setGifts(safeGifts);
-    setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : safeGifts);
-    setHistory(Array.isArray(data.history) ? data.history : []);
-    setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
-    setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
-    setUpgradeCatalog(Array.isArray(data.upgradeCatalog) ? data.upgradeCatalog : []);
-    setFeatureSettings(data.featureSettings || {});
+    if ('cases' in data) setCases(Array.isArray(data.cases) ? data.cases : []);
+    if ('gifts' in data) setGifts(Array.isArray(data.gifts) ? data.gifts : []);
+    if ('inventoryGifts' in data) setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : []);
+    if ('history' in data) setHistory(Array.isArray(data.history) ? data.history : []);
+    if ('withdrawals' in data) setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
+    if ('upgradeRounds' in data) setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
+    if ('upgradeCatalog' in data) setUpgradeCatalog(Array.isArray(data.upgradeCatalog) ? data.upgradeCatalog : []);
+    if ('featureSettings' in data) setFeatureSettings(data.featureSettings || {});
+    if (data.phase === 'extras' || data.phase === 'full') setExtrasState('ready');
 
     if (Array.isArray(data.cases) && data.cases[0]?.id) {
       setGiftForm((current) => (
@@ -643,6 +697,29 @@ export default function WebAppClient() {
 
   }, []);
 
+  const loadExtras = useCallback(() => {
+    if (extrasRequestRef.current) return extrasRequestRef.current;
+    setExtrasState('loading');
+    const promise = apiPost('/api/bootstrap', { phase: 'extras' }, { timeoutMs: 15000 })
+      .then((data) => {
+        if (mountedRef.current) applyBootstrapData(data);
+        return true;
+      })
+      .catch((err) => {
+        if (mountedRef.current) setExtrasState('error');
+        // Inventory is optional at first paint; it must not hide the Home screen.
+        console.warn('[bootstrap extras]',err?.status||'transient');
+        return false;
+      })
+      .finally(() => { extrasRequestRef.current = null; });
+    extrasRequestRef.current = promise;
+    return promise;
+  }, [apiPost, applyBootstrapData]);
+
+  useEffect(() => {
+    if (['history','inventory','upgrade'].includes(tab) && extrasState==='idle') void loadExtras();
+  }, [tab,extrasState,loadExtras]);
+
   const loadApp = useCallback(
     async ({ silent = false } = {}) => {
       if (!initData) return false;
@@ -654,12 +731,26 @@ export default function WebAppClient() {
       }
       setError('');
       try {
-        const data = await apiPost('/api/bootstrap', {}, { timeoutMs: 15000 });
+        // Initial authentication is essential-only; browsing history and
+        // inventory never blocks the first interactive screen.
+        const phase = !wasReady && !silent ? 'essential' : 'full';
+        let data;
+        try {
+          data = await apiPost('/api/bootstrap', { phase }, { timeoutMs: 15000 });
+        } catch (firstError) {
+          const retryable = !firstError?.status || firstError.status>=500;
+          if (!retryable) throw firstError;
+          // GET-like bootstrap is safe to retry; money actions are NEVER retried.
+          await new Promise((resolve) => window.setTimeout(resolve, 350));
+          data = await apiPost('/api/bootstrap', { phase }, { timeoutMs: 15000 });
+        }
         if (!mountedRef.current) return false;
         applyBootstrapData(data);
-        if (!silent && !wasReady) {
-          setBootStatus('visuals');
-          await prepareFirstView().catch(() => ({ ready: false, timedOut: true }));
+        if (phase === 'essential') {
+          // Image decoding already started in the first effect. Never await it.
+          // This removes the former 950ms post-authentication stall.
+          void prepareFirstView();
+          void loadExtras();
         }
         return true;
       } catch (err) {
@@ -680,7 +771,7 @@ export default function WebAppClient() {
         if (mountedRef.current) setLoading(false);
       }
     },
-    [apiPost, applyBootstrapData, initData]
+    [apiPost, applyBootstrapData, initData, loadExtras]
   );
 
   useEffect(() => {
@@ -769,7 +860,9 @@ export default function WebAppClient() {
 
 
   useEffect(() => {
-    if (!initData || referralTrackedRef.current) return;
+    // This independent request can be expensive on first login; start after
+    // the essential bootstrap has already rendered the user shell.
+    if (!initData || !profile?.id || referralTrackedRef.current) return;
 
     referralTrackedRef.current = true;
     const cleanStartParam = String(startParam || '').trim();
@@ -788,7 +881,7 @@ export default function WebAppClient() {
       .catch((err) => {
         console.warn('Referral device check failed:', err?.message || err);
       });
-  }, [apiPost, initData, showToast, startParam, tg]);
+  }, [apiPost, initData, profile?.id, showToast, startParam, tg]);
 
   async function runAction(callback, successText, { silent = false } = {}) {
     if (actionLockRef.current) return null;
@@ -937,7 +1030,7 @@ export default function WebAppClient() {
       warmImageCacheFromData(displayGiftPool, result.gift);
       // A real server-authorized reward always wins. Decode only that media
       // (bounded to 850 ms) before revealing the reel; no global boot loader.
-      const readyArtwork = imageUrlOf(result.gift);
+      const readyArtwork = previewImageUrl(imageUrlOf(result.gift));
       await Promise.allSettled([
         preloadDecodedImage(readyArtwork, { priority: 'high', timeoutMs: 850 }),
         new Promise((resolve) => window.setTimeout(resolve,
@@ -1490,8 +1583,10 @@ export default function WebAppClient() {
                 />
               ) : null}
 
-              {tab === 'history' ? <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
-              {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
+              {tab === 'history' ? extrasState !== 'ready' ?
+                <DeferredDataLoader title="Tarix yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
+              {tab === 'upgrade' ? extrasState !== 'ready' ?
+                <DeferredDataLoader title="Upgrade tayyorlanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
               {tab === 'pvp' ? <PvpHub onBack={closePvpHub} apiPost={apiPost}
   balance={profile?.balance}
   onBalanceChange={updateRocketBalance}
@@ -1532,7 +1627,8 @@ export default function WebAppClient() {
                 />
               ) : null}
 
-              {tab === 'inventory' ? (
+              {tab === 'inventory' ? extrasState !== 'ready' ?
+                <DeferredDataLoader title="Inventory yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : (
                 <InventoryView
                   history={history}
                   gifts={inventoryGifts}
@@ -1819,6 +1915,17 @@ function PromoImageCard({
   );
 }
 
+function DeferredDataLoader({title,failed,onRetry}){
+  return <div>
+    <RouteSkeleton title={title}/>
+    {failed ? <button type="button" onClick={onRetry}
+      style={{display:'block',margin:'10px auto',padding:'11px 17px',
+        borderRadius:12,background:'#6850b8',color:'white'}}>
+      Qayta yuklash
+    </button> : null}
+  </div>;
+}
+
 function HomeGameBanner({
   variant,
   badge,
@@ -2036,18 +2143,24 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
 
       <div className={caseOpeningStyles.caseTileMedia} style={caseImageStyle(caseItem)}>
         {caseItem.image_url && !imageFailed ? (
-          <img className={caseOpeningStyles.caseTileBackdrop} src={caseItem.image_url}
-            alt="" aria-hidden="true" loading={eager ? 'eager' : 'lazy'} decoding="async" />
+          <Image className={caseOpeningStyles.caseTileBackdrop} src={caseItem.image_url}
+            alt="" aria-hidden="true" width={480} height={480}
+            sizes="(max-width:600px) 46vw, 240px" quality={72}
+            loading={eager ? 'eager' : 'lazy'} decoding="async" />
         ) : null}
         <span className={caseOpeningStyles.caseTileHalo} aria-hidden="true" />
 
         {caseItem.image_url && !imageFailed ? (
-          <img
+          <Image
             key={imageAttempt}
             className={caseOpeningStyles.caseTileImage}
             data-ready={imageReady}
             src={caseItem.image_url}
             alt=""
+            width={480}
+            height={480}
+            sizes="(max-width:600px) 46vw, 240px"
+            quality={72}
             loading={eager ? 'eager' : 'lazy'}
             decoding="async"
             fetchPriority={eager ? 'auto' : 'low'}
@@ -2304,6 +2417,13 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   if (isBalanceReward(gift)) {
     const starsImage = gift.image_url || gift.png_url || gift.webp_url || '';
     if (starsImage && brokenImageUrl !== starsImage) {
+      if(canOptimizePublicRaster(starsImage)){
+        return <Image className={`${mediaClass} gift-media-visual balance-reward-art`}
+          src={starsImage} width={320} height={320}
+          sizes={compact ? '88px' : '(max-width:600px) 42vw, 220px'} quality={76}
+          alt={`+${rewardValue(gift)} Stars`} loading={preferStatic ? 'eager' : 'lazy'}
+          decoding="async" draggable={false} onError={() => setBrokenImageUrl(starsImage)} />;
+      }
       return <img className={`${mediaClass} gift-media-visual balance-reward-art`}
         src={starsImage} alt={`+${rewardValue(gift)} Stars`} loading={preferStatic ? 'eager' : 'lazy'}
         decoding="async" draggable={false} onError={() => setBrokenImageUrl(starsImage)} />;
@@ -2329,6 +2449,15 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   }
 
   if (imageUrl && brokenImageUrl !== imageUrl) {
+    if (canOptimizePublicRaster(imageUrl)) {
+      return <Image
+        className={`${mediaClass} gift-media-visual`}
+        src={imageUrl} alt="" width={320} height={320}
+        sizes={compact ? '88px' : '(max-width:600px) 42vw, 220px'} quality={76}
+        loading={preferStatic ? 'eager' : 'lazy'} decoding="async"
+        onError={() => setBrokenImageUrl(imageUrl)} draggable={false}
+        aria-hidden="true" />;
+    }
     return (
       <img
         className={`${mediaClass} gift-media-visual`}

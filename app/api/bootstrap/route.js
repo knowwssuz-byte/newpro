@@ -2,6 +2,7 @@ import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
+// Function deployment region is configured for all APIs in vercel.json.
 export const dynamic = 'force-dynamic';
 
 async function fetchCases(supabase, { onlyActive = false } = {}) {
@@ -66,6 +67,12 @@ export async function POST(request) {
     }
 
     const supabase = getSupabaseAdmin();
+    // First paint only needs the user, case catalog, gifts and game switches.
+    // Long inventory/history/upgrade requests are fetched after Home is usable.
+    const phase = auth.body?.phase === 'essential' ? 'essential'
+      : auth.body?.phase === 'extras' ? 'extras' : 'full';
+    const wantsEssential = phase !== 'extras';
+    const wantsExtra = phase !== 'essential';
 
     let giftsQuery = supabase.from('gifts').select('*').order('created_at', { ascending: false });
 
@@ -75,23 +82,26 @@ export async function POST(request) {
 
     const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult, upgradeResult, libraryResult] = await Promise.all([
       ensureUser(auth.telegramUser),
-      fetchCases(supabase, { onlyActive: !auth.isAdmin }),
-      giftsQuery,
-      supabase
+      wantsEssential ? fetchCases(supabase, { onlyActive: !auth.isAdmin }) : Promise.resolve([]),
+      wantsEssential ? giftsQuery :
+        (auth.isAdmin
+          ? supabase.from('gifts').select('id,source,library_gift_id,stock,is_active').eq('source','upgrade_catalog')
+          : supabase.from('gifts').select('id,source,library_gift_id,stock,is_active').eq('source','upgrade_catalog').eq('is_active',true)),
+      wantsExtra ? supabase
         .from('open_history')
         .select('*')
         .eq('user_id', auth.telegramUser.id)
         .order('created_at', { ascending: false })
-        .limit(250),
-      supabase
+        .limit(250) : Promise.resolve({ data: [], error: null }),
+      wantsExtra ? supabase
         .from('withdraw_requests')
         .select('*')
         .eq('user_id', auth.telegramUser.id)
         .order('created_at', { ascending: false })
-        .limit(250),
-      supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp', 'feature_upgrade']),
-      supabase.from('upgrade_rounds').select('id,user_id,source_history_id,source_gift_id,target_gift_id,reward_history_id,source_price,target_price,chance,outcome,created_at').eq('user_id', auth.telegramUser.id).order('created_at', { ascending: false }).limit(50),
-      supabase.from('gift_library').select('id,title,price,buy_price,image_url,png_url,webp_url,animation_url,is_active,background_value').eq('is_active',true).order('title'),
+        .limit(250) : Promise.resolve({ data: [], error: null }),
+      wantsEssential ? supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp', 'feature_upgrade']) : Promise.resolve({ data: [], error: null }),
+      wantsExtra ? supabase.from('upgrade_rounds').select('id,user_id,source_history_id,source_gift_id,target_gift_id,reward_history_id,source_price,target_price,chance,outcome,created_at').eq('user_id', auth.telegramUser.id).order('created_at', { ascending: false }).limit(50) : Promise.resolve({ data: [], error: null }),
+      wantsExtra ? supabase.from('gift_library').select('id,title,price,buy_price,image_url,png_url,webp_url,animation_url,is_active,background_value').eq('is_active',true).order('title') : Promise.resolve({ data: [], error: null }),
     ]);
 
     if (dbUser.is_banned) {
@@ -129,18 +139,25 @@ export async function POST(request) {
 
     return Response.json({
       ok: true,
-      user: dbUser,
-      telegramUser: auth.telegramUser,
-      isAdmin: auth.isAdmin,
-      cases,
-      gifts: auth.isAdmin ? (giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog') : giftsWithActualOdds((giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog')),
-      history: historyResult.data || [],
-      inventoryGifts: inventoryResult.data || [],
-      withdrawals: withdrawResult.data || [],
-      upgradeRounds: upgradeResult.data || [],
-      upgradeCatalog,
-      featureSettings,
-    });
+      phase,
+      ...(wantsEssential ? {
+        user: dbUser,
+        telegramUser: auth.telegramUser,
+        isAdmin: auth.isAdmin,
+        cases,
+        gifts: auth.isAdmin
+          ? (giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog')
+          : giftsWithActualOdds((giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog')),
+        featureSettings,
+      } : {}),
+      ...(wantsExtra ? {
+        history: historyResult.data || [],
+        inventoryGifts: inventoryResult.data || [],
+        withdrawals: withdrawResult.data || [],
+        upgradeRounds: upgradeResult.data || [],
+        upgradeCatalog,
+      } : {}),
+    }, { headers: { 'Cache-Control': 'private, no-store' } });
   } catch (error) {
     console.error('[bootstrap]',String(error?.code||'ERROR').slice(0,45));
     return jsonError('Ma’lumotlarni yuklab bo‘lmadi', 500);

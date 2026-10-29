@@ -15,7 +15,8 @@ test('Home Upgrade shortcut shows Upgrade title and navigates to live Upgrade la
   assert.match(home, /<small>Gift Upgrade Lab<\/small>/);
   assert.match(web, /onGoUpgrade=\{openUpgradeLab\}/);
   assert.match(web, /setTab\('upgrade'\)/);
-  assert.match(web, /tab === 'upgrade' \? <UpgradeLab/);
+  assert.match(web, /tab === 'upgrade' \? extrasState !== 'ready'/);
+  assert.match(web, /<UpgradeLab history=\{history\}/);
 });
 test('Home shortcut CSS no longer falsely changes Upgrade into Inventory', () => {
   const css = read('app/webapp/premium-polish.css');
