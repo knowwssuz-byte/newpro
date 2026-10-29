@@ -84,7 +84,10 @@ export async function POST(request) {
     const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult, upgradeResult, libraryResult] = await Promise.all([
       ensureUser(auth.telegramUser),
       wantsEssential ? fetchCases(supabase, { onlyActive: !auth.isAdmin }) : Promise.resolve([]),
-      wantsEssential ? giftsQuery : Promise.resolve({ data: [], error: null }),
+      wantsEssential ? giftsQuery :
+        (auth.isAdmin
+          ? supabase.from('gifts').select('id,source,library_gift_id,stock,is_active').eq('source','upgrade_catalog')
+          : supabase.from('gifts').select('id,source,library_gift_id,stock,is_active').eq('source','upgrade_catalog').eq('is_active',true)),
       wantsExtra ? supabase
         .from('open_history')
         .select('*')
