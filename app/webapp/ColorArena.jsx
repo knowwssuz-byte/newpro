@@ -225,8 +225,8 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
     const resume=audio.current.setMuted(!enabled);
     setSoundOn(enabled);
     if(enabled && room?.status==='ROLLING'){
-      // Unlock happens in this tap handler. Resume asynchronously on Safari.
-      void resume?.then(ok=>{if(ok)audio.current?.startRoll();});
+      // Unsupported mobile AudioContext may return false instead of a Promise.
+      void Promise.resolve(resume).then(ok=>{if(ok)audio.current?.startRoll();});
     }
   };
   useEffect(()=>()=>audio.current?.dispose(),[]);
