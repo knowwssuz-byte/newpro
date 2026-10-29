@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Circle, Grid2X2, Plus, RotateCcw, Scissors, Shield, Sparkles, Users, X } from 'lucide-react';
 import styles from './PvpHub.module.css';
+import ColorArena from './ColorArena';
 import { evaluateBoard, resolveRps } from '@/lib/pvpGames.mjs';
 
 const OPTIONS = [
@@ -349,6 +350,9 @@ function RockPaperScissors({ onBack }) {
 }
 export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast}) {
  const [selected,setSelected]=useState('list');
+ if(selected==='color')return <div className={styles.root}>
+  <ColorArena onBack={()=>setSelected('list')} apiPost={apiPost} onToast={onToast}/>
+ </div>;
  if(selected==='xo')return <div className={styles.root}>
   <TicTacToe onBack={()=>setSelected('list')} apiPost={apiPost} balance={balance}
    onBalanceChange={onBalanceChange} onToast={onToast}/>
@@ -368,6 +372,15 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast})
     <h1>O‘yinlar</h1>
   </div>
   <div className={styles.storeGrid}>
+   <button type="button" className={styles.storeItem}
+     onClick={()=>setSelected('color')} aria-label="COLOR ARENA multiplayer o‘yinini ochish">
+    <span className={styles.storeCover}>
+     <Image src="/pvp/color-arena-cover.svg" alt="" width={800} height={800}
+       sizes="(max-width: 600px) 90vw, 350px" unoptimized
+       className={styles.storeCoverImage}/>
+    </span>
+    <span className={styles.storeLabelRow}><strong>Color Arena</strong><ArrowUpRight size={17} aria-hidden="true"/></span>
+   </button>
    <button type="button" className={styles.storeItem}
      onClick={()=>setSelected('xo')} aria-label="X/O Duel o‘yinini ochish">
     <span className={styles.storeCover}>
