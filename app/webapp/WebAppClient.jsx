@@ -15,8 +15,8 @@ import gameCardStyles from './PremiumGameCards.module.css';
 
 import RouteSkeleton from './RouteSkeleton';
 import { prepareFirstView, warmNearViewport, preloadDecodedImage } from '@/lib/mystAssetReadiness.mjs';
-import DiceGame, { DiceLobbyCard } from './DiceGame';
-import PvpHub, { PvpEntryCard } from './PvpHub';
+import DiceLobbyCard from './DiceLobbyCard';
+import PvpEntryCard from './PvpEntryCard';
 import StarIcon from './StarIcon';
 import LevelRing from './LevelRing';
 import SettingsPanel from './SettingsPanel';
@@ -25,6 +25,12 @@ import { getInventoryRows } from '@/lib/inventory.mjs';
 import GiftHistory from './GiftHistory';
 
 
+const DiceGame = dynamic(() => import('./DiceGame'), {
+  ssr: false, loading: () => <RouteSkeleton title="Dice ochilmoqda" />,
+});
+const PvpHub = dynamic(() => import('./PvpHub'), {
+  ssr: false, loading: () => <RouteSkeleton title="PvP ochilmoqda" />,
+});
 const RocketGame = dynamic(() => import('./RocketGame'), { ssr: false, loading: () => <RouteSkeleton title="Rocket tayyorlanmoqda" /> });
 const UpgradeLab = dynamic(() => import('./UpgradeLab'), { ssr: false, loading: () => <RouteSkeleton title="Upgrade tayyorlanmoqda" /> });
 const DepositView = dynamic(() => import('./DepositView'), { ssr: false, loading: () => <RouteSkeleton title="Balans sahifasi ochilmoqda" /> });
