@@ -21,3 +21,17 @@
 
 /* Prevent a white document flash between BootLoader removal and the first UI frame. */
 html{background-color:#080a12}
+
+/* MYST avatar alignment: profile ring and LVL badge share the Stars wallet centerline. */
+/* Visual-only correction. Do not change the wallet/deposit positions or avatar click action. */
+.global-balance-bar .home-user-zone > .home-avatar-wrap {
+  position: relative !important;
+  left: -4px !important;
+  top: -11px !important;
+}
+@media (max-width: 380px) {
+  .global-balance-bar .home-user-zone > .home-avatar-wrap {
+    left: -3px !important;
+    top: -9px !important;
+  }
+}
