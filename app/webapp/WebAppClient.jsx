@@ -420,7 +420,12 @@ export default function WebAppClient() {
   const [startParam, setStartParam] = useState('');
   const [tab, setTab] = useState('home');
   const [settingsOpen, setSettingsOpen] = useState(false);
-  useEffect(() => { if (tab === 'inventory') setInventoryVisited(true); }, [tab]);
+  useEffect(() => {
+    if (tab === 'inventory') {
+      setInventoryVisited(true);
+      setInventoryReplay(n => n+1);
+    }
+  }, [tab]);
   const [uiSettings, setUiSettings] = useState(DEFAULT_UI_SETTINGS);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [adminTab, setAdminTab] = useState('cases');
@@ -444,7 +449,9 @@ export default function WebAppClient() {
   const [gifts, setGifts] = useState([]);
   const [inventoryGifts, setInventoryGifts] = useState([]);
   const [history, setHistory] = useState([]);
+  const [escrowedGiftIds,setEscrowedGiftIds] = useState([]);
   const [inventoryVisited, setInventoryVisited] = useState(false);
+  const [inventoryReplay, setInventoryReplay] = useState(0);
   const [withdrawals, setWithdrawals] = useState([]);
   const [upgradeRounds, setUpgradeRounds] = useState([]);
   const [upgradeCatalog, setUpgradeCatalog] = useState([]);
@@ -679,6 +686,7 @@ export default function WebAppClient() {
     if ('gifts' in data) setGifts(Array.isArray(data.gifts) ? data.gifts : []);
     if ('inventoryGifts' in data) setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : []);
     if ('history' in data) setHistory(Array.isArray(data.history) ? data.history : []);
+    if ('escrowedGiftIds' in data) setEscrowedGiftIds(Array.isArray(data.escrowedGiftIds) ? data.escrowedGiftIds : []);
     if ('withdrawals' in data) setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
     if ('upgradeRounds' in data) setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
     if ('upgradeCatalog' in data) setUpgradeCatalog(Array.isArray(data.upgradeCatalog) ? data.upgradeCatalog : []);
@@ -721,6 +729,12 @@ export default function WebAppClient() {
   useEffect(() => {
     if (['history','inventory','upgrade'].includes(tab) && extrasState==='idle') void loadExtras();
   }, [tab,extrasState,loadExtras]);
+
+  useEffect(()=>{
+    const handle=()=>void loadExtras();
+    window.addEventListener('myst:inventory-change',handle);
+    return()=>window.removeEventListener('myst:inventory-change',handle);
+  },[loadExtras]);
 
   const loadApp = useCallback(
     async ({ silent = false } = {}) => {
@@ -1665,7 +1679,9 @@ export default function WebAppClient() {
                 <DeferredDataLoader title="Inventory yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> :
                 <InventoryView
                   active={tab === 'inventory' && !selectedCase}
+                  replayToken={inventoryReplay}
                   history={history}
+                  escrowedGiftIds={escrowedGiftIds}
                   gifts={inventoryGifts}
                   cases={cases}
                   withdrawals={withdrawals}
@@ -2281,7 +2297,7 @@ async function createTgsPreview(src) {
   return tgsPreviewCache.get(src);
 }
 
-function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '' }) {
+function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '', replayToken = 0 }) {
   const containerRef = useRef(null);
   const [failed, setFailed] = useState(false);
   const [previewUrl, setPreviewUrl] = useState('');
@@ -2334,7 +2350,7 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
         animation.destroy();
       }
     };
-  }, [src, animate, fallbackUrl]);
+  }, [src, animate, fallbackUrl, replayToken]);
 
   // Keep the static thumbnail visible until Lottie has inserted its first SVG.
   // The canvas and poster share one grid cell, so no one-frame empty flash.
@@ -2345,7 +2361,7 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
       {showPoster && poster ? <img src={poster} className="tgs-static-preview" alt="" draggable="false" /> : null}
       {animate ? <span ref={containerRef} className="tgs-gift-canvas"
         style={{visibility: animationReady && !failed ? 'visible' : 'hidden'}} /> : null}
-      {showPoster && !poster ? <span className="tgs-pending-fallback"><AppIcon name="gift" /></span> : null}
+      {showPoster && !poster ? <span className="tgs-pending-fallback" aria-hidden="true" /> : null}
     </span>
   );
 }
@@ -2353,12 +2369,17 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
 // Image formats do not expose a reliable end-of-loop event across WebViews.
 // Show the motion on entry and settle to the still thumbnail after a limited
 // preview window. TGS/Lottie uses its actual complete event (above).
-function OneShotImageGift({ src, still, className, play = true }) {
+function OneShotImageGift({ src, still, className, play = true, replayToken = 0 }) {
   const [loaded, setLoaded] = useState(false);
   const [ended, setEnded] = useState(false);
   const imageRef = useRef(null);
   const canvasRef = useRef(null);
-  useEffect(() => { setLoaded(false); setEnded(false); }, [src, play]);
+  useEffect(() => {
+    setLoaded(false);setEnded(false);
+    // Reassigning src restarts cached animated WebP/GIF on WebKit and Chromium.
+    const img=imageRef.current;
+    if(img && replayToken>0){img.removeAttribute('src');img.src=src;}
+  }, [src, play, replayToken]);
   useEffect(() => {
     if (!loaded) return undefined;
     // GIF/WebP do not expose a finished event; freeze the preview after
@@ -2384,7 +2405,7 @@ function OneShotImageGift({ src, still, className, play = true }) {
           Otherwise quick route changes show a blank canvas for one frame. */}
       {!loaded && !ended && (still ?
         <img className="gift-once-img" src={still} alt="" draggable={false} aria-hidden="true" /> :
-        <span className="gift-pending-poster"><AppIcon name="gift" /></span>)}
+        <span className="gift-pending-poster" aria-hidden="true" />)}
       <img ref={imageRef} src={src} alt="" decoding="async" draggable={false}
         onLoad={() => setLoaded(true)}
         className="gift-once-img" style={{
@@ -2407,7 +2428,7 @@ function OneShotVideoGift({ src, still, className }) {
         preload="auto" poster={still || undefined} aria-hidden="true" />;
 }
 
-function GiftMedia({ gift, compact = false, preferStatic = false, animate = false, animateOnEnter = false, viewportLazy = false }) {
+function GiftMedia({ gift, compact = false, preferStatic = false, animate = false, animateOnEnter = false, viewportLazy = false, replayToken = 0 }) {
   const giftAnimationsEnabled = useContext(GiftAnimationContext);
   const [brokenImageUrl, setBrokenImageUrl] = useState('');
   const mediaClass = compact ? 'gift-media compact' : 'gift-media';
@@ -2432,7 +2453,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
 
   // Do not instantiate distant TGS/Lottie previews and animated image decoders.
   if (!nearViewport) {
-    return <span ref={visibilityRef} className={mediaClass} aria-hidden="true"><AppIcon name="gift" /></span>;
+    return <span ref={visibilityRef} className={mediaClass+' gift-shimmer-placeholder'} aria-hidden="true" />;
   }
 
   if (!gift) {
@@ -2470,13 +2491,13 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   const animationUrl = gift.animation_url || '';
   const playOnce = giftAnimationsEnabled && !preferStatic && (animate || animateOnEnter);
   if (animationUrl && isTgsAnimationUrl(animationUrl)) {
-    return <TelegramTgsAnimation src={animationUrl} className={mediaClass} animate={playOnce} fallbackUrl={imageUrl} />;
+    return <TelegramTgsAnimation src={animationUrl} className={mediaClass} animate={playOnce} fallbackUrl={imageUrl} replayToken={replayToken} />;
   }
   if (playOnce && /\\.(mp4|webm|mov)(?:[?#]|$)/i.test(animationUrl)) {
     return <OneShotVideoGift src={animationUrl} still={imageUrl} className={mediaClass} />;
   }
   if (playOnce && animationUrl && isImageAnimationUrl(animationUrl)) {
-    return <OneShotImageGift src={animationUrl} still={imageUrl && imageUrl !== animationUrl ? imageUrl : ''} className={mediaClass} />;
+    return <OneShotImageGift src={animationUrl} still={imageUrl && imageUrl !== animationUrl ? imageUrl : ''} className={mediaClass} replayToken={replayToken} />;
   }
 
   if (imageUrl && brokenImageUrl !== imageUrl) {
@@ -2507,7 +2528,7 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   }
 
   if (animationUrl && isImageAnimationUrl(animationUrl)) {
-    return <OneShotImageGift src={animationUrl} still="" className={mediaClass} play={false} />;
+    return <OneShotImageGift src={animationUrl} still="" className={mediaClass} play={false} replayToken={replayToken} />;
   }
 
   return (
@@ -2517,13 +2538,13 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   );
 }
 
-function InventoryView({ active = true, history, gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending }) {
+function InventoryView({ active = true, replayToken = 0, history, escrowedGiftIds = [], gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending }) {
   const [dialog, setDialog] = useState(null);
   const [visibleCount, setVisibleCount] = useState(24);
   useEffect(() => { if (!active) setDialog(null); }, [active]);
   const rows = useMemo(
-    () => getInventoryRows(history, gifts, cases, withdrawals),
-    [history, gifts, cases, withdrawals]
+    () => getInventoryRows(history, gifts, cases, withdrawals).filter(r=>!escrowedGiftIds.includes(r.item.id)),
+    [history, gifts, cases, withdrawals, escrowedGiftIds]
   );
   const pendingCount = useMemo(
     () => withdrawals.filter((request) => String(request.status || '').toLowerCase() === 'pending').length,
@@ -2584,7 +2605,7 @@ function InventoryView({ active = true, history, gifts, cases, withdrawals, busy
                   {request?.status === 'rejected' ? (
                     <span className={inventoryStyles.state}>Qaytarildi</span>
                   ) : null}
-                  <GiftMedia gift={gift} animateOnEnter={index < 24} viewportLazy />
+                  <GiftMedia gift={gift} animateOnEnter={index < 24} viewportLazy replayToken={replayToken} />
                 </div>
                 <div className={inventoryStyles.cardBody}>
                   <h3 className={inventoryStyles.title} title={gift?.title || ''}>{gift?.title || 'Collectible Gift'}</h3>

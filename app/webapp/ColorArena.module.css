@@ -179,3 +179,36 @@
 @media(prefers-reduced-motion:reduce){
   .ring,.ring:before,.winStrip{animation:none!important;transition:none!important}
 }
+
+
+/* Transparent mixed-Stars/gift escrow and compact mobile inventory chooser. */
+.prizeLine{display:flex;justify-content:space-between;gap:9px;flex-wrap:wrap;margin:10px 2px 0;
+  color:#adb4d0;font-size:10px;line-height:1.5}
+.prizeLine b{color:#c5f9e6;font-weight:900;margin-left:4px}
+.prizeLine span:last-child{color:#d5bfdc}
+.betSwitch{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:13px;
+  border:1px solid rgba(172,151,241,.19);border-radius:14px;padding:4px;background:rgba(15,20,42,.68)}
+.betSwitch button{border:1px solid transparent;border-radius:10px;padding:10px 9px;
+  color:#b4b8db;background:transparent;font-size:12px;font-weight:850}
+.betSwitch button[aria-pressed="true"]{color:#f7f4ff;border-color:rgba(190,157,255,.31);
+  background:linear-gradient(115deg,#6c50ac,#38315e);box-shadow:inset 0 1px rgba(255,255,255,.14)}
+.giftStakePanel{display:grid;gap:10px;margin-top:10px;padding:13px;
+  border:1px solid rgba(188,162,252,.25);border-radius:17px;background:rgba(26,28,53,.9)}
+.giftStakePanel>small{font-size:10px;color:#a9b1cf;line-height:1.5}
+.giftRefresh{display:flex;align-items:center;gap:5px;color:#b7a4ec;font-size:11px}
+.giftGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+  max-height:240px;overflow:auto;overscroll-behavior:contain}
+.giftGrid button{min-width:0;min-height:125px;padding:7px;display:flex;flex-direction:column;
+  align-items:center;gap:4px;border:1px solid rgba(189,169,255,.19);
+  background:rgba(12,16,33,.8);color:#eeeafd;border-radius:12px}
+.giftGrid button[aria-pressed="true"]{border-color:#94e9e5;box-shadow:inset 0 0 0 1px #94e9e5}
+.giftGrid img{width:65px;height:65px;max-width:100%;object-fit:contain}
+.giftGrid button>span{font-size:34px;line-height:65px}
+.giftGrid strong{font-size:10px;max-width:100%;overflow:hidden;white-space:nowrap;
+  text-overflow:ellipsis}
+.giftGrid small{font-size:10px;color:#d6c7ff}
+@media(max-width:345px){.giftGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.gift-shimmer-placeholder,.tgs-pending-fallback,.gift-pending-poster{
+  background:radial-gradient(circle at 50% 40%,rgba(138,113,215,.16),rgba(16,19,40,.09) 70%);
+  border-radius:12px;
+}

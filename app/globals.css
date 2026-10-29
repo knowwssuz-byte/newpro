@@ -14256,3 +14256,12 @@ body img,body svg,body video,body canvas,body picture{-webkit-user-select:none!i
 .gift-once-media > .gift-once-img,
 .gift-once-media > .gift-pending-poster {grid-area:1 / 1;max-width:100%;max-height:100%;}
 .gift-once-media > .gift-pending-poster {display:grid;place-items:center;width:100%;height:100%;}
+
+
+/* Animated gift loading should never flash the generic Gift icon through art. */
+.gift-shimmer-placeholder,.tgs-pending-fallback,.gift-pending-poster{
+  background:radial-gradient(circle at 45% 36%,rgba(155,124,242,.16),rgba(21,24,44,.08) 75%);
+  border-radius:12px;pointer-events:none;
+}
+.tgs-gift-media .tgs-pending-fallback,
+.gift-once-media .gift-pending-poster{width:100%;height:100%}
