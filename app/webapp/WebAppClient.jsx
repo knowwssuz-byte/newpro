@@ -449,6 +449,7 @@ export default function WebAppClient() {
   const [gifts, setGifts] = useState([]);
   const [inventoryGifts, setInventoryGifts] = useState([]);
   const [history, setHistory] = useState([]);
+  const [escrowedGiftIds,setEscrowedGiftIds] = useState([]);
   const [inventoryVisited, setInventoryVisited] = useState(false);
   const [inventoryReplay, setInventoryReplay] = useState(0);
   const [withdrawals, setWithdrawals] = useState([]);
@@ -685,6 +686,7 @@ export default function WebAppClient() {
     if ('gifts' in data) setGifts(Array.isArray(data.gifts) ? data.gifts : []);
     if ('inventoryGifts' in data) setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : []);
     if ('history' in data) setHistory(Array.isArray(data.history) ? data.history : []);
+    if ('escrowedGiftIds' in data) setEscrowedGiftIds(Array.isArray(data.escrowedGiftIds) ? data.escrowedGiftIds : []);
     if ('withdrawals' in data) setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
     if ('upgradeRounds' in data) setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
     if ('upgradeCatalog' in data) setUpgradeCatalog(Array.isArray(data.upgradeCatalog) ? data.upgradeCatalog : []);
@@ -727,6 +729,12 @@ export default function WebAppClient() {
   useEffect(() => {
     if (['history','inventory','upgrade'].includes(tab) && extrasState==='idle') void loadExtras();
   }, [tab,extrasState,loadExtras]);
+
+  useEffect(()=>{
+    const handle=()=>void loadExtras();
+    window.addEventListener('myst:inventory-change',handle);
+    return()=>window.removeEventListener('myst:inventory-change',handle);
+  },[loadExtras]);
 
   const loadApp = useCallback(
     async ({ silent = false } = {}) => {
@@ -1673,6 +1681,7 @@ export default function WebAppClient() {
                   active={tab === 'inventory' && !selectedCase}
                   replayToken={inventoryReplay}
                   history={history}
+                  escrowedGiftIds={escrowedGiftIds}
                   gifts={inventoryGifts}
                   cases={cases}
                   withdrawals={withdrawals}
@@ -2529,13 +2538,13 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   );
 }
 
-function InventoryView({ active = true, replayToken = 0, history, gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending }) {
+function InventoryView({ active = true, replayToken = 0, history, escrowedGiftIds = [], gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending }) {
   const [dialog, setDialog] = useState(null);
   const [visibleCount, setVisibleCount] = useState(24);
   useEffect(() => { if (!active) setDialog(null); }, [active]);
   const rows = useMemo(
-    () => getInventoryRows(history, gifts, cases, withdrawals),
-    [history, gifts, cases, withdrawals]
+    () => getInventoryRows(history, gifts, cases, withdrawals).filter(r=>!escrowedGiftIds.includes(r.item.id)),
+    [history, gifts, cases, withdrawals, escrowedGiftIds]
   );
   const pendingCount = useMemo(
     () => withdrawals.filter((request) => String(request.status || '').toLowerCase() === 'pending').length,
