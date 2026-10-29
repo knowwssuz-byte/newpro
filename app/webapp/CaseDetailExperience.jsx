@@ -4,6 +4,7 @@
 // This keeps roulette motion, result artwork and lifecycle code out of boot.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import Image from 'next/image';
 import AppIcon from './AppIcon';
 import StarIcon from './StarIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
@@ -23,13 +24,16 @@ function CaseArtwork({ caseItem, activating }) {
     <div className={caseOpeningStyles.caseStage} data-activating={activating ? 'true' : 'false'}
       style={caseImageStyle(caseItem)} aria-label="Case rasmi" role="img">
       {caseItem?.image_url && !failed ? (
-        <img className={caseOpeningStyles.caseStageBackdrop} src={caseItem.image_url}
-          alt="" aria-hidden="true" decoding="async" loading="eager" />
+        <Image className={caseOpeningStyles.caseStageBackdrop} src={caseItem.image_url}
+          alt="" aria-hidden="true" width={960} height={960}
+          sizes="(max-width:600px) 96vw, 480px" quality={78} decoding="async" loading="eager" />
       ) : null}
       <span className={caseOpeningStyles.caseStageAura} aria-hidden="true" />
       {caseItem?.image_url && !failed ? (
-        <img className={caseOpeningStyles.caseStageArt} src={caseItem.image_url}
-          alt="" decoding="async" loading="eager" fetchPriority="high"
+        <Image className={caseOpeningStyles.caseStageArt} src={caseItem.image_url}
+          alt="" width={960} height={960}
+          sizes="(max-width:600px) 96vw, 480px" quality={78}
+          decoding="async" loading="eager" fetchPriority="high"
           data-ready={ready ? 'true' : 'false'}
           onLoad={() => setReady(true)} onError={() => setFailed(true)} draggable={false} />
       ) : (
