@@ -144,7 +144,7 @@ export async function POST(request){
           .select('id,title,type,rarity,image_url,animation_url,library_gift_id,sell_price,buy_price,floor_price')
           .in('id',giftIds):Promise.resolve({data:[]}),
         rows.length?db.from('withdraw_requests').select('history_id')
-          .in('history_id',rows.map(r=>r.id)):Promise.resolve({data:[]}),
+          .in('history_id',rows.map(r=>r.id)).in('status',['pending','approved']):Promise.resolve({data:[]}),
         rows.length?db.from('color_arena_gift_stakes').select('history_id')
           .in('history_id',rows.map(r=>r.id)).eq('status','locked'):Promise.resolve({data:[]})
       ]);
