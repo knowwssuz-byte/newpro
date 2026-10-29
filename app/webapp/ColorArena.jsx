@@ -459,7 +459,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
         {room.history.length?room.history.map(h=><div key={h.round_id}>
           <span>#{h.round_no}</span>
           <strong>Player {String(h.winner_id).slice(-4)}</strong>
-          <b>+{fmt(h.pot)} {STARS}</b>
+          <b>+{fmt(h.pot)} {STARS}{h.giftCount>0?' + '+h.giftCount+' gift':''}</b>
         </div>):<small>Hozircha g‘oliblar tarixi yo‘q.</small>}
       </div>
     </div>:null}
