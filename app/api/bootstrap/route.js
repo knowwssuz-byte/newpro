@@ -80,7 +80,7 @@ export async function POST(request) {
       giftsQuery = giftsQuery.eq('is_active', true);
     }
 
-    const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult, upgradeResult, libraryResult] = await Promise.all([
+    const [dbUser, cases, giftsResult, historyResult, withdrawResult, featureResult, upgradeResult, libraryResult, escrowResult] = await Promise.all([
       ensureUser(auth.telegramUser),
       wantsEssential ? fetchCases(supabase, { onlyActive: !auth.isAdmin }) : Promise.resolve([]),
       wantsEssential ? giftsQuery :
@@ -102,6 +102,8 @@ export async function POST(request) {
       wantsEssential ? supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp', 'feature_upgrade']) : Promise.resolve({ data: [], error: null }),
       wantsExtra ? supabase.from('upgrade_rounds').select('id,user_id,source_history_id,source_gift_id,target_gift_id,reward_history_id,source_price,target_price,chance,outcome,created_at').eq('user_id', auth.telegramUser.id).order('created_at', { ascending: false }).limit(50) : Promise.resolve({ data: [], error: null }),
       wantsExtra ? supabase.from('gift_library').select('id,title,price,buy_price,image_url,png_url,webp_url,animation_url,is_active,background_value').eq('is_active',true).order('title') : Promise.resolve({ data: [], error: null }),
+      wantsExtra ? supabase.from('color_arena_gift_stakes').select('history_id')
+        .eq('owner_id',auth.telegramUser.id).eq('status','locked') : Promise.resolve({data:[],error:null}),
     ]);
 
     if (dbUser.is_banned) {
@@ -113,6 +115,7 @@ export async function POST(request) {
     if (withdrawResult.error) throw new Error(withdrawResult.error.message);
     if (upgradeResult.error) throw new Error(upgradeResult.error.message);
     if (libraryResult.error) throw new Error(libraryResult.error.message);
+    if (escrowResult.error) throw new Error(escrowResult.error.message);
 
     // A player's owned gift may have since been disabled in the public case
     // catalog. Resolve inventory media/prices separately from active gifts.
@@ -152,6 +155,7 @@ export async function POST(request) {
       } : {}),
       ...(wantsExtra ? {
         history: historyResult.data || [],
+        escrowedGiftIds: (escrowResult.data||[]).map(r=>r.history_id),
         inventoryGifts: inventoryResult.data || [],
         withdrawals: withdrawResult.data || [],
         upgradeRounds: upgradeResult.data || [],
