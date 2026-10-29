@@ -224,5 +224,17 @@ begin
   return true;
 end $stars_leave$;
 
--- Set the next public round's fee only after the previous round has settled.
--- Recreate from the existing base tick function without changing state timing.
+-- Snapshot configured fee when a fresh round ID is created.
+create or replace function public.arena_fee_new_round()
+returns trigger language plpgsql security invoker set search_path='' as $fee_round$
+begin
+ if new.round_id is distinct from old.round_id then
+   select fee_bps into new.fee_bps from public.color_arena_fee_settings where id=true;
+   new.fee_bps:=coalesce(new.fee_bps,0);
+ end if;
+ return new;
+end $fee_round$;
+drop trigger if exists arena_fee_start_round on public.color_arena_rooms;
+create trigger arena_fee_start_round before update of round_id on public.color_arena_rooms
+ for each row execute function public.arena_fee_new_round();
+revoke all on function public.arena_fee_new_round() from public,anon,authenticated;
