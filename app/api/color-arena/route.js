@@ -109,7 +109,7 @@ export async function POST(request){
     const balance=dbThrow(await db.rpc('color_arena_wallet_init',{p_user:id}));
     if(action==='list'){
       const rooms=dbThrow(await db.from('color_arena_rooms')
-        .select('id,owner_id,status,min_stake,max_players,total_stake,betting_ends_at,created_at')
+        .select('id,round_id,owner_id,status,min_stake,max_players,total_stake,betting_ends_at,created_at')
         .in('status',['WAITING','BETTING']).order('updated_at',{ascending:false}).limit(28))||[];
       const ids=rooms.map(r=>r.id);
       const bets=ids.length?dbThrow(await db.from('color_arena_bets')
@@ -119,16 +119,16 @@ export async function POST(request){
       const users=owners.length?dbThrow(await db.from('users').select('id,first_name,username').in('id',owners)):[];
       const names=new Map(users.map(x=>[String(x.id),x.first_name||x.username||'Player']));
       // Also recover the player's latest room after a browser refresh.
-      const myRecent=dbThrow(await db.from('color_arena_bets').select('room_id')
+      const myRecent=dbThrow(await db.from('color_arena_bets').select('room_id,round_id')
         .eq('user_id',id).order('id',{ascending:false}).limit(8))||[];
       let myRoomId=null;
       if(myRecent.length){
-        const recentRooms=dbThrow(await db.from('color_arena_rooms').select('id,status')
+        const recentRooms=dbThrow(await db.from('color_arena_rooms').select('id,round_id,status')
           .in('id',myRecent.map(x=>x.room_id)).neq('status','CANCELLED'))||[];
-        myRoomId=myRecent.map(x=>x.room_id).find(x=>recentRooms.some(z=>z.id===x&&z.status!=='RESULT'))||null;
+        myRoomId=myRecent.find(x=>recentRooms.some(z=>z.id===x.room_id&&z.round_id===x.round_id&&z.status!=='RESULT'))?.room_id||null;
       }
       const count=new Map();const mine=new Set();
-      for(const b of bets){count.set(b.room_id,(count.get(b.room_id)||0)+1);if(String(b.user_id)===String(id))mine.add(b.room_id);}
+      for(const b of bets){const current=rooms.find(r=>r.id===b.room_id);if(!current||current.round_id!==b.round_id)continue;count.set(b.room_id,(count.get(b.room_id)||0)+1);if(String(b.user_id)===String(id))mine.add(b.room_id);}
       return json({balance,serverNow:Date.now(),myRoomId,rooms:rooms.map(r=>({
         id:r.id,name:String(names.get(String(r.owner_id))||'Player').slice(0,24),
         status:r.status,minStake:r.min_stake,maxPlayers:r.max_players,
