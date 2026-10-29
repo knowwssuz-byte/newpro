@@ -86,7 +86,7 @@ async function roomState(db,id,userId,includeHistory=true) {
     players:bets.map(v=>({
       id:v.id,seat:v.seat,stake:Number(v.stake),name:v.name||'Player',
       percentage:pot?Number((Number(v.stake)/pot*100).toFixed(3)):0,
-      isMe:String(v.user_id)===String(userId)
+      isMe:String(v.id)===String(userId)
     })),
     history
   };
