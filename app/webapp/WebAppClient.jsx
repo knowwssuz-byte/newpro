@@ -489,9 +489,33 @@ export default function WebAppClient() {
   );
 
   useEffect(() => {
-    // Prime visible assets during Telegram startup.
+    // Decode the first 1-2 visible assets early but never delay auth on images.
     void prepareFirstView();
   }, []);
+
+  useEffect(() => {
+    // The code for advanced games is split from Home. Fetch once in idle time,
+    // AFTER the intro stage, so entry into PvP and Dice feels instant.
+    if (loading || showWelcomeTour || !initData) return;
+    const connection=window.navigator?.connection;
+    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType||'')) return;
+    let cancelled=false,idle=null;
+    const timer=window.setTimeout(()=>{
+      if (cancelled) return;
+      const warm=()=>{
+        if (cancelled) return;
+        void import('./PvpHub');
+        void import('./DiceGame');
+      };
+      if ('requestIdleCallback' in window) idle=window.requestIdleCallback(warm,{timeout:2400});
+      else warm();
+    },1700);
+    return()=>{
+      cancelled=true;
+      window.clearTimeout(timer);
+      if(idle!=null && 'cancelIdleCallback' in window) window.cancelIdleCallback(idle);
+    };
+  }, [loading, showWelcomeTour, initData]);
 
   useEffect(() => {
     // Large remote gift art must not compete with HTML, fonts and onboarding.
@@ -670,6 +694,10 @@ export default function WebAppClient() {
     extrasRequestRef.current = promise;
     return promise;
   }, [apiPost, applyBootstrapData]);
+
+  useEffect(() => {
+    if (['history','inventory','upgrade'].includes(tab) && extrasState==='idle') void loadExtras();
+  }, [tab,extrasState,loadExtras]);
 
   const loadApp = useCallback(
     async ({ silent = false } = {}) => {
@@ -1535,9 +1563,9 @@ export default function WebAppClient() {
               ) : null}
 
               {tab === 'history' ? extrasState !== 'ready' ?
-                <RouteSkeleton title="Tarix yuklanmoqda" /> : <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
+                <DeferredDataLoader title="Tarix yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
               {tab === 'upgrade' ? extrasState !== 'ready' ?
-                <RouteSkeleton title="Upgrade tayyorlanmoqda" /> : <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
+                <DeferredDataLoader title="Upgrade tayyorlanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
               {tab === 'pvp' ? <PvpHub onBack={closePvpHub} apiPost={apiPost}
   balance={profile?.balance}
   onBalanceChange={updateRocketBalance}
@@ -1579,7 +1607,7 @@ export default function WebAppClient() {
               ) : null}
 
               {tab === 'inventory' ? extrasState !== 'ready' ?
-                <RouteSkeleton title="Inventory yuklanmoqda" /> : (
+                <DeferredDataLoader title="Inventory yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : (
                 <InventoryView
                   history={history}
                   gifts={inventoryGifts}
@@ -1864,6 +1892,17 @@ function PromoImageCard({
       )}
     </button>
   );
+}
+
+function DeferredDataLoader({title,failed,onRetry}){
+  return <div>
+    <RouteSkeleton title={title}/>
+    {failed ? <button type="button" onClick={onRetry}
+      style={{display:'block',margin:'10px auto',padding:'11px 17px',
+        borderRadius:12,background:'#6850b8',color:'white'}}>
+      Qayta yuklash
+    </button> : null}
+  </div>;
 }
 
 function HomeGameBanner({
