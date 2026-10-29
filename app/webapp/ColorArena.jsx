@@ -161,6 +161,8 @@ function ArenaCanvas({room,clockOffset}) {
     <div className={styles.board} aria-label="Stavkalarga mos, egri chegarali rangli maydon">
       <canvas ref={canvas} className={styles.canvas}/>
       {shares.map((entry,i)=>{
+        // Tiny bands remain on Canvas but need no hidden DOM label.
+        if(entry.share<.065)return null;
         const [x,y]=labelPoint(shares,seed,i);
         return <div key={entry.seat} className={styles.areaTag}
           style={{left:(x*100)+'%',top:(y*100)+'%',borderColor:arenaColorForSeat(entry.seat),
