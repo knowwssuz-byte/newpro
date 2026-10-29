@@ -419,6 +419,7 @@ export default function WebAppClient() {
   const [withdrawals, setWithdrawals] = useState([]);
   const [upgradeRounds, setUpgradeRounds] = useState([]);
   const [upgradeCatalog, setUpgradeCatalog] = useState([]);
+  const [extrasState, setExtrasState] = useState('idle');
   const [featureSettings, setFeatureSettings] = useState({});
   const [adminUsers, setAdminUsers] = useState([]);
   const [adminWithdrawals, setAdminWithdrawals] = useState([]);
@@ -440,6 +441,7 @@ export default function WebAppClient() {
   const pvpReturnTabRef = useRef('home');
   const depositReturnTabRef = useRef('home');
   const hasBootstrappedRef = useRef(false);
+  const extrasRequestRef = useRef(null);
   const tourOpenedRef = useRef(false);
   const referralTrackedRef = useRef(false);
   const historyReturnTabRef = useRef('home');
@@ -486,12 +488,13 @@ export default function WebAppClient() {
   }, []);
 
   useEffect(() => {
-    // The two homepage banners use next/image's optimized URLs, so do not
-    // prefetch the original uncompressed images in parallel.
-    warmImageCacheFromData(
-      activeCases.slice(0, 3),
-      selectedCase ? (giftsByCase[selectedCase.id] || []).slice(0, 6) : []
-    );
+    // Large remote gift art must not compete with HTML, fonts and onboarding.
+    // Warm only the next likely image once the interactive UI has settled.
+    const candidates=selectedCase
+      ? (giftsByCase[selectedCase.id] || []).slice(0, 2)
+      : activeCases.slice(0, 1);
+    const timer=window.setTimeout(() => warmImageCacheFromData(candidates), 1100);
+    return () => window.clearTimeout(timer);
   }, [activeCases, giftsByCase, selectedCase]);
 
   // Welcome is chosen during bootstrap (before loader removal), preventing
@@ -563,7 +566,7 @@ export default function WebAppClient() {
 
 
   useEffect(() => {
-    if (!initData) return;
+    if (!initData || !profile?.id) return;
 
     let cancelled = false;
 
@@ -585,7 +588,7 @@ export default function WebAppClient() {
     return () => {
       cancelled = true;
     };
-  }, [apiPost, initData]);
+  }, [apiPost, initData, profile?.id]);
 
   const apiFormPost = useCallback(
     async (url, formData) => {
@@ -614,20 +617,20 @@ export default function WebAppClient() {
   const applyBootstrapData = useCallback((data) => {
     if (!data) return;
 
-    setProfile(data.user || null);
-    setTelegramUser(data.telegramUser || null);
-    setIsAdmin(Boolean(data.isAdmin));
+    if ('user' in data) setProfile(data.user || null);
+    if ('telegramUser' in data) setTelegramUser(data.telegramUser || null);
+    if ('isAdmin' in data) setIsAdmin(Boolean(data.isAdmin));
     // Old cached snapshots (or an unexpected server payload) may contain
     // incompatible field types; never crash the first React render.
-    const safeGifts = Array.isArray(data.gifts) ? data.gifts : [];
-    setCases(Array.isArray(data.cases) ? data.cases : []);
-    setGifts(safeGifts);
-    setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : safeGifts);
-    setHistory(Array.isArray(data.history) ? data.history : []);
-    setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
-    setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
-    setUpgradeCatalog(Array.isArray(data.upgradeCatalog) ? data.upgradeCatalog : []);
-    setFeatureSettings(data.featureSettings || {});
+    if ('cases' in data) setCases(Array.isArray(data.cases) ? data.cases : []);
+    if ('gifts' in data) setGifts(Array.isArray(data.gifts) ? data.gifts : []);
+    if ('inventoryGifts' in data) setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : []);
+    if ('history' in data) setHistory(Array.isArray(data.history) ? data.history : []);
+    if ('withdrawals' in data) setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
+    if ('upgradeRounds' in data) setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
+    if ('upgradeCatalog' in data) setUpgradeCatalog(Array.isArray(data.upgradeCatalog) ? data.upgradeCatalog : []);
+    if ('featureSettings' in data) setFeatureSettings(data.featureSettings || {});
+    if (data.phase === 'extras' || data.phase === 'full') setExtrasState('ready');
 
     if (Array.isArray(data.cases) && data.cases[0]?.id) {
       setGiftForm((current) => (
@@ -643,6 +646,25 @@ export default function WebAppClient() {
 
   }, []);
 
+  const loadExtras = useCallback(() => {
+    if (extrasRequestRef.current) return extrasRequestRef.current;
+    setExtrasState('loading');
+    const promise = apiPost('/api/bootstrap', { phase: 'extras' }, { timeoutMs: 15000 })
+      .then((data) => {
+        if (mountedRef.current) applyBootstrapData(data);
+        return true;
+      })
+      .catch((err) => {
+        if (mountedRef.current) setExtrasState('error');
+        // Inventory is optional at first paint; it must not hide the Home screen.
+        console.warn('[bootstrap extras]',err?.status||'transient');
+        return false;
+      })
+      .finally(() => { extrasRequestRef.current = null; });
+    extrasRequestRef.current = promise;
+    return promise;
+  }, [apiPost, applyBootstrapData]);
+
   const loadApp = useCallback(
     async ({ silent = false } = {}) => {
       if (!initData) return false;
@@ -654,12 +676,26 @@ export default function WebAppClient() {
       }
       setError('');
       try {
-        const data = await apiPost('/api/bootstrap', {}, { timeoutMs: 15000 });
+        // Initial authentication is essential-only; browsing history and
+        // inventory never blocks the first interactive screen.
+        const phase = !wasReady && !silent ? 'essential' : 'full';
+        let data;
+        try {
+          data = await apiPost('/api/bootstrap', { phase }, { timeoutMs: 15000 });
+        } catch (firstError) {
+          const retryable = !firstError?.status || firstError.status>=500;
+          if (!retryable) throw firstError;
+          // GET-like bootstrap is safe to retry; money actions are NEVER retried.
+          await new Promise((resolve) => window.setTimeout(resolve, 350));
+          data = await apiPost('/api/bootstrap', { phase }, { timeoutMs: 15000 });
+        }
         if (!mountedRef.current) return false;
         applyBootstrapData(data);
-        if (!silent && !wasReady) {
-          setBootStatus('visuals');
-          await prepareFirstView().catch(() => ({ ready: false, timedOut: true }));
+        if (phase === 'essential') {
+          // Image decoding already started in the first effect. Never await it.
+          // This removes the former 950ms post-authentication stall.
+          void prepareFirstView();
+          void loadExtras();
         }
         return true;
       } catch (err) {
@@ -680,7 +716,7 @@ export default function WebAppClient() {
         if (mountedRef.current) setLoading(false);
       }
     },
-    [apiPost, applyBootstrapData, initData]
+    [apiPost, applyBootstrapData, initData, loadExtras]
   );
 
   useEffect(() => {
@@ -769,7 +805,9 @@ export default function WebAppClient() {
 
 
   useEffect(() => {
-    if (!initData || referralTrackedRef.current) return;
+    // This independent request can be expensive on first login; start after
+    // the essential bootstrap has already rendered the user shell.
+    if (!initData || !profile?.id || referralTrackedRef.current) return;
 
     referralTrackedRef.current = true;
     const cleanStartParam = String(startParam || '').trim();
@@ -788,7 +826,7 @@ export default function WebAppClient() {
       .catch((err) => {
         console.warn('Referral device check failed:', err?.message || err);
       });
-  }, [apiPost, initData, showToast, startParam, tg]);
+  }, [apiPost, initData, profile?.id, showToast, startParam, tg]);
 
   async function runAction(callback, successText, { silent = false } = {}) {
     if (actionLockRef.current) return null;
@@ -1490,8 +1528,10 @@ export default function WebAppClient() {
                 />
               ) : null}
 
-              {tab === 'history' ? <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
-              {tab === 'upgrade' ? <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
+              {tab === 'history' ? extrasState !== 'ready' ?
+                <RouteSkeleton title="Tarix yuklanmoqda" /> : <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
+              {tab === 'upgrade' ? extrasState !== 'ready' ?
+                <RouteSkeleton title="Upgrade tayyorlanmoqda" /> : <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
               {tab === 'pvp' ? <PvpHub onBack={closePvpHub} apiPost={apiPost}
   balance={profile?.balance}
   onBalanceChange={updateRocketBalance}
@@ -1532,7 +1572,8 @@ export default function WebAppClient() {
                 />
               ) : null}
 
-              {tab === 'inventory' ? (
+              {tab === 'inventory' ? extrasState !== 'ready' ?
+                <RouteSkeleton title="Inventory yuklanmoqda" /> : (
                 <InventoryView
                   history={history}
                   gifts={inventoryGifts}
