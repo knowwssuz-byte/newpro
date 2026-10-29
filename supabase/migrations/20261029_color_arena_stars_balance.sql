@@ -60,7 +60,7 @@ end $legacy_reset$;
 -- which is also used by the existing NewPro header, X/O, deposit and games.
 create or replace function public.color_arena_join(
   p_room uuid,p_user bigint,p_stake integer,p_request uuid)
-returns numeric language plpgsql security invoker set search_path='' as $stars_join$
+returns bigint language plpgsql security invoker set search_path='' as $stars_join$
 declare v_room public.color_arena_rooms%rowtype;v_count integer;v_balance numeric;
 begin
   perform pg_advisory_xact_lock(p_user);
@@ -68,7 +68,7 @@ begin
     raise exception 'ARENA_INVALID_ENTRY'; end if;
   if exists(select 1 from public.color_arena_stars_ledger
     where user_id=p_user and request_id=p_request) then
-    return (select balance from public.users where id=p_user);
+    return (select floor(balance)::bigint from public.users where id=p_user);
   end if;
   select * into v_room from public.color_arena_rooms where id=p_room for update;
   if not found or not v_room.is_public then raise exception 'ARENA_NO_ROOM'; end if;
@@ -97,12 +97,12 @@ begin
   insert into public.color_arena_stars_ledger(user_id,room_id,round_id,request_id,kind,amount)
     values(p_user,p_room,v_room.round_id,p_request,'stake',-p_stake);
   insert into public.color_arena_events(room_id) values(p_room);
-  return v_balance;
+  return floor(v_balance)::bigint;
 end $stars_join$;
 
 create or replace function public.color_arena_raise(
   p_room uuid,p_user bigint,p_amount integer,p_request uuid)
-returns numeric language plpgsql security invoker set search_path='' as $stars_raise$
+returns bigint language plpgsql security invoker set search_path='' as $stars_raise$
 declare v_room public.color_arena_rooms%rowtype;v_balance numeric;
 begin
   perform pg_advisory_xact_lock(p_user);
@@ -110,7 +110,7 @@ begin
     raise exception 'ARENA_INVALID_ENTRY'; end if;
   if exists(select 1 from public.color_arena_stars_ledger
     where user_id=p_user and request_id=p_request) then
-    return (select balance from public.users where id=p_user);
+    return (select floor(balance)::bigint from public.users where id=p_user);
   end if;
   select * into v_room from public.color_arena_rooms where id=p_room for update;
   if not found or not v_room.is_public then raise exception 'ARENA_NO_ROOM'; end if;
@@ -132,7 +132,7 @@ begin
   insert into public.color_arena_stars_ledger(user_id,room_id,round_id,request_id,kind,amount)
     values(p_user,p_room,v_room.round_id,p_request,'stake',-p_amount);
   insert into public.color_arena_events(room_id) values(p_room);
-  return v_balance;
+  return floor(v_balance)::bigint;
 end $stars_raise$;
 
 -- Keep winner selection unchanged: the CSPRNG coordinate and the exact
@@ -207,9 +207,8 @@ begin
   return true;
 end $stars_leave$;
 
--- Existing functions were originally BIGINT returns for promotional TISH.
--- Switching to NUMERIC Stars requires removing the old return signatures.
--- Covered by the explicit safe drops in the migration runner below.
+-- Legacy RPCs return BIGINT. The HTTP API reads NUMERIC balance from users
+-- after each operation, so no PostgreSQL function-signature replacement is needed.
 revoke execute on function public.color_arena_join(uuid,bigint,integer,uuid),
   public.color_arena_raise(uuid,bigint,integer,uuid),
   public.color_arena_finish(uuid,uuid,numeric,numeric),
