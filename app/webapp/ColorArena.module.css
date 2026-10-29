@@ -131,7 +131,7 @@
 .soundButton[aria-pressed="true"]{border-color:rgba(115,240,220,.45);color:#95f8e6}
 .soundButton:focus-visible{outline:2px solid #b59bff;outline-offset:2px}
 .ring{
-  position:absolute;z-index:7;display:none;
+  position:absolute;left:0;top:0;z-index:7;display:none;
   width:clamp(22px,10%,42px);aspect-ratio:1;border-radius:50%;
   border:3px solid #f8fbff;box-sizing:border-box;
   background:rgba(11,20,38,.08);pointer-events:none;
@@ -139,7 +139,7 @@
     0 0 0 1px rgba(170,211,255,.8),0 0 9px rgba(181,228,255,.94),
     0 0 26px rgba(118,171,255,.66),0 5px 11px rgba(0,0,0,.48);
   filter:brightness(var(--ring-intensity,1));
-  will-change:left,top,transform;
+  will-change:transform;
 }
 .ring:before{
   content:"";position:absolute;inset:-3px;border-radius:50%;border:3px solid transparent;
