@@ -56,7 +56,7 @@ for(const width of [320,375,390,430,768,1024,1440]){
  await page.screenshot({path:`${output}/${width}-detail.png`,fullPage:false});
  const layout=await page.evaluate(()=>{
    const stage=document.querySelector('[aria-label="Case rasmi"]');
-   const artwork=stage?.querySelector('img');
+   const artwork=stage?.querySelector('img[class*="caseStageArt"]');
    const frame=stage?.getBoundingClientRect();
    const image=artwork?.getBoundingClientRect();
    const heading=document.querySelector('.case-page-top')?.getBoundingClientRect();
