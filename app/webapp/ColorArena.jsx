@@ -44,15 +44,30 @@ function ArenaCanvas({room,clockOffset}) {
     if(!canvas.current)return;
     let alive=true,frame=0,ctx=canvas.current.getContext('2d');
     if(!ctx)return;
+    const displayCtx=ctx,background=document.createElement('canvas');
+    const terrainCtx=background.getContext('2d');
+    if(!terrainCtx)return;
+    let lastTerrainTime=-Infinity,terrainPainted=false;
     const render=now=>{
       if(!alive)return;
       const el=canvas.current;
       if(!el)return;
       const width=el.clientWidth||320,dpr=Math.min(window.devicePixelRatio||1,2);
-      if(el.width!==Math.round(width*dpr)){el.width=Math.round(width*dpr);el.height=Math.round(width*dpr);}
-      ctx.setTransform(dpr,0,0,dpr,0,0);
-      const n=width;ctx.clearRect(0,0,n,n);
-      ctx.fillStyle='#0e1128';ctx.fillRect(0,0,n,n);
+      const size=Math.round(width*dpr);
+      if(el.width!==size){el.width=size;el.height=size;terrainPainted=false;}
+      if(background.width!==size){background.width=size;background.height=size;terrainPainted=false;}
+      // Freeze the expensive fluid tessellation between bet changes; the ball,
+      // impact particles and reflections render independently at display FPS.
+      const morphing=state.current.start && now-state.current.start<680;
+      const shouldPaint=!terrainPainted ||
+        (morphing && now-lastTerrainTime>(shares.length>300?75:32)) ||
+        (room?.status==='RESULT' && shares.length<80 && now-lastTerrainTime>55);
+      const n=width;
+      if(shouldPaint){
+        ctx=terrainCtx;
+        ctx.setTransform(dpr,0,0,dpr,0,0);
+        ctx.clearRect(0,0,n,n);
+        ctx.fillStyle='#0e1128';ctx.fillRect(0,0,n,n);
       // Fine grid behind the fluid shapes.
       ctx.strokeStyle='rgba(190,205,255,.055)';ctx.lineWidth=.5;
       for(let i=0;i<=12;i++){let p=i*n/12;ctx.beginPath();ctx.moveTo(p,0);ctx.lineTo(p,n);ctx.moveTo(0,p);ctx.lineTo(n,p);ctx.stroke();}
@@ -85,6 +100,13 @@ function ArenaCanvas({room,clockOffset}) {
           ctx.restore();
         });
       }
+      terrainPainted=true;
+      lastTerrainTime=now;
+      }
+      ctx=displayCtx;
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+      ctx.clearRect(0,0,n,n);
+      ctx.drawImage(background,0,0,n,n);
       const active=['LOCKED','ROLLING','RESULT'].includes(room?.status);
       const t=room?.status==='RESULT'?1:room?.status==='LOCKED'?0:clamp(
         (Date.now()+clockOffset-Date.parse(room?.rollingAt))/
