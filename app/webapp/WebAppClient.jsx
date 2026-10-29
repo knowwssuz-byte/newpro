@@ -2380,9 +2380,17 @@ function OneShotImageGift({ src, still, className, play = true }) {
   }, [src, still, play, loaded]);
   return (
     <span className={`${className} gift-once-media`}>
+      {/* Preserve the thumbnail while the animated WebP/GIF is decoding.
+          Otherwise quick route changes show a blank canvas for one frame. */}
+      {!loaded && !ended && (still ?
+        <img className="gift-once-img" src={still} alt="" draggable={false} aria-hidden="true" /> :
+        <span className="gift-pending-poster"><AppIcon name="gift" /></span>)}
       <img ref={imageRef} src={src} alt="" decoding="async" draggable={false}
         onLoad={() => setLoaded(true)}
-        className="gift-once-img" style={{ display: ended ? 'none' : undefined }} />
+        className="gift-once-img" style={{
+          display: ended ? 'none' : undefined,
+          visibility: loaded ? 'visible' : 'hidden',
+        }} />
       {ended && still ? <img className="gift-once-img" src={still} alt="" draggable={false}/> : null}
       <canvas ref={canvasRef} className="gift-once-img" style={{ display: ended && !still ? 'block' : 'none' }} aria-hidden="true" />
     </span>
