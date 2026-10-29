@@ -56,14 +56,16 @@ for(const scenario of scenarios) {
   if(scenario.delayScript)await sleep(scenario.delayScript);
   await route.fulfill({status:200,contentType:'application/javascript',body:source});
  });
- let count=0;
+ let count=0,essentialCount=0;
  await context.route('**/api/**',async(route)=>{
   const path=new URL(route.request().url()).pathname;
   if(path==='/api/bootstrap'){
    count++;
+   const phase=route.request().postDataJSON()?.phase||'full';
+   if(phase!=='extras')essentialCount++;
    if(scenario.status401)
     return route.fulfill({status:401,contentType:'application/json',body:JSON.stringify({ok:false,error:'Session expired'})});
-   if(scenario.failOnce&&count===1)
+   if(scenario.failOnce&&phase!=='extras'&&essentialCount===1)
     return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({ok:false,error:'Server temporarily unavailable'})});
    await sleep(110);
    return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(data)});
@@ -74,15 +76,16 @@ for(const scenario of scenarios) {
  const errors=[];
  page.on('pageerror',(err)=>errors.push(err.message));
  await page.goto(base+'/webapp',{waitUntil:'domcontentloaded',timeout:25000});
- if(scenario.noSession||scenario.failOnce||scenario.status401){
+ if(scenario.noSession||scenario.status401){
   await page.getByRole('button',{name:'Qayta urinish'}).waitFor({timeout:17000});
   assert.equal(await page.getByRole('main',{name:'MYST tanishtiruv'}).count(),0,
     'Session error must not reveal any stale cached profile');
-  if(scenario.failOnce){
-   await page.getByRole('button',{name:'Qayta urinish'}).click();
-   await page.getByRole('main',{name:'MYST tanishtiruv'}).waitFor({timeout:16000});
-   assert.ok(count===2,'Exactly one additional retry should occur');
-  }
+ }else if(scenario.failOnce){
+  // Retry only idempotent initial bootstrap automatically after a transient 503.
+  // No full-screen manual Retry prompt should interrupt a new player.
+  await page.getByRole('main',{name:'MYST tanishtiruv'}).waitFor({timeout:16000});
+  assert.equal(essentialCount,2,'Exactly one safe retry for the first boot');
+  assert.equal(await page.getByRole('button',{name:'Qayta urinish'}).count(),0);
  }else{
   if(scenario.delayScript){
    await page.getByRole('status',{name:/MYST yuklanmoqda/}).waitFor({timeout:3000});
