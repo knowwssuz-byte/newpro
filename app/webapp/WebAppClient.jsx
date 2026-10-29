@@ -20,7 +20,6 @@ import PvpHub, { PvpEntryCard } from './PvpHub';
 import StarIcon from './StarIcon';
 import LevelRing from './LevelRing';
 import SettingsPanel from './SettingsPanel';
-import settingsStyles from './SettingsPanel.module.css';
 import inventoryStyles from './Inventory.module.css';
 import { getInventoryRows } from '@/lib/inventory.mjs';
 import GiftHistory from './GiftHistory';
@@ -1669,35 +1668,48 @@ function GlobalBalanceBar({
 
         <div className="home-user-zone">
           <div className="home-avatar-wrap">
-            <LevelRing xp={profile?.level_xp || 0} compact>
-              <div className={`home-avatar ${avatarUrl ? 'has-photo' : ''}`}>
-              {avatarUrl ? (
-                <Image
-                  src={avatarUrl}
-                  alt=""
-                  width={40}
-                  height={40}
-                  loading="eager"
-                  fetchPriority="high"
-                  unoptimized
-                  draggable={false}
-                />
-              ) : (
-                telegramUser?.first_name?.[0] || 'U'
-              )}
-              </div>
-            </LevelRing>
+            <button
+              type="button"
+              className="myst-profile-settings-trigger"
+              onClick={onSettings}
+              aria-label="Profil va sozlamalarni ochish"
+              title="Profil va sozlamalar"
+            >
+              <LevelRing xp={profile?.level_xp || 0} compact>
+                <div className={`home-avatar ${avatarUrl ? 'has-photo' : ''}`}>
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt=""
+                      width={64}
+                      height={64}
+                      loading="eager"
+                      fetchPriority="high"
+                      unoptimized
+                      draggable={false}
+                    />
+                  ) : (
+                    telegramUser?.first_name?.[0] || 'U'
+                  )}
+                </div>
+              </LevelRing>
+            </button>
           </div>
 
-          <button type="button" className={settingsStyles.gear} onClick={onSettings} aria-label="Sozlamalarni ochish" title="Sozlamalar">
-            <AppIcon name="settings" />
-          </button>
-
-          <div className="home-balance-copy" aria-label="Balance">
-            <strong>
-              {coinIcon('gold')}
-              {formatPrice(profile?.balance)}
-            </strong>
+          <div className="myst-stars-wallet" aria-label={`Stars balansi: ${formatPrice(profile?.balance)}`}>
+            <div className="myst-stars-wallet-amount">
+              <span className="myst-stars-wallet-star" aria-hidden="true">{coinIcon('gold')}</span>
+              <strong>{formatPrice(profile?.balance)}</strong>
+            </div>
+            <button
+              type="button"
+              className="myst-stars-wallet-add"
+              onClick={onDeposit}
+              aria-label="Stars balansini to‘ldirish"
+              title="Stars qo‘shish"
+            >
+              <span aria-hidden="true">+</span>
+            </button>
           </div>
         </div>
 

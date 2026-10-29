@@ -13970,3 +13970,260 @@ body img,body svg,body video,body canvas,body picture{-webkit-user-select:none!i
 .myst-toast[data-tone="error"] .myst-toast-icon{color:#ffbac8;background:rgba(235,99,131,.12)}
 @keyframes mystToastEnter{from{opacity:0;transform:translate(-50%,-10px) scale(.97)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
 @media(prefers-reduced-motion:reduce){.toast.myst-toast{animation:none}}
+
+
+/* =========================================================
+   MYST HEADER / V7 — compact glossy wallet & clickable avatar
+   This block intentionally overrides legacy global toolbar CSS.
+   ========================================================= */
+.global-balance-bar.home-hero.premium-card {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  min-height: 76px !important;
+  height: 76px !important;
+  padding: 8px clamp(8px, 2.5vw, 14px) !important;
+  gap: clamp(7px, 1.9vw, 13px) !important;
+  overflow: visible !important;
+  border: 1px solid rgba(160,143,219,.35) !important;
+  border-radius: 20px !important;
+  background:
+    radial-gradient(ellipse at 8% -60%, rgba(175,135,255,.18), transparent 65%),
+    linear-gradient(112deg,#222843 0%,#1d233e 56%,#23203d 100%) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(94,76,176,.22), 0 9px 24px rgba(7,7,28,.22) !important;
+}
+.global-balance-bar .home-user-zone {
+  flex: 1 1 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  gap: clamp(8px, 2vw, 15px) !important;
+}
+.global-balance-bar .home-avatar-wrap {
+  flex: 0 0 57px !important;
+  width: 57px !important;
+  height: 60px !important;
+  min-width: 57px !important;
+  display: grid !important;
+  place-items: center !important;
+  overflow: visible !important;
+}
+.global-balance-bar .myst-profile-settings-trigger {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 57px;
+  height: 60px;
+  padding: 0;
+  border: 0;
+  background: none;
+  border-radius: 50%;
+  color: inherit;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.global-balance-bar .myst-profile-settings-trigger::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 2px 1px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(186,118,255,.24),transparent 70%);
+  filter: blur(4px);
+  pointer-events: none;
+}
+.global-balance-bar .myst-profile-settings-trigger:focus-visible {
+  outline: 2px solid #e7b8ff;
+  outline-offset: 3px;
+}
+.global-balance-bar .myst-profile-settings-trigger:active { transform: scale(.965); }
+.global-balance-bar .home-avatar-wrap .home-avatar {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+  border: 1px solid rgba(255,255,255,.2) !important;
+  overflow: hidden !important;
+  font-size: 17px !important;
+}
+.global-balance-bar .myst-stars-wallet {
+  min-width: 0;
+  max-width: 100%;
+  height: 47px;
+  flex: 0 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 5px 4px 8px;
+  border-radius: 26px;
+  border: 1.5px solid rgba(176,155,255,.81);
+  background:
+    radial-gradient(ellipse at 20% 0%,rgba(247,236,255,.14),transparent 53%),
+    linear-gradient(150deg,rgba(55,61,99,.97),rgba(23,30,61,.98) 62%,rgba(32,30,75,.98));
+  box-shadow: 0 0 0 1px rgba(122,98,251,.13),0 4px 17px rgba(22,13,61,.3),
+    inset 0 2px 1px rgba(255,255,255,.24),inset 0 -2px 0 rgba(108,78,228,.36);
+}
+.global-balance-bar .myst-stars-wallet-amount {
+  min-width: 0;
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: flex-start;
+  gap: clamp(2px,.8vw,6px);
+  overflow: hidden;
+}
+.global-balance-bar .myst-stars-wallet-star {
+  width: 29px;
+  height: 29px;
+  flex: 0 0 29px;
+  display: grid;
+  place-items: center;
+  overflow: visible;
+  filter: drop-shadow(0 0 5px rgba(255,191,69,.36));
+}
+.global-balance-bar .myst-stars-wallet-star .coin-icon,
+.global-balance-bar .myst-stars-wallet-star .coin-icon img {
+  width: 29px !important;
+  height: 29px !important;
+  min-width: 29px !important;
+  max-width: 29px !important;
+  margin: 0 !important;
+}
+.global-balance-bar .myst-stars-wallet-amount strong {
+  display: block;
+  min-width: 0;
+  flex: 0 1 auto;
+  font-size: clamp(13px,3.8vw,18px);
+  line-height: 1.15;
+  letter-spacing: -.05em;
+  font-weight: 870;
+  color: #fff !important;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 6px rgba(206,197,255,.15);
+}
+.global-balance-bar .myst-stars-wallet-add {
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  margin-left: auto;
+  border-radius: 50%;
+  border: 1px solid rgba(222,196,255,.85);
+  background:
+    radial-gradient(circle at 29% 15%,rgba(255,255,255,.31),transparent 48%),
+    linear-gradient(150deg,#a579ff 0%,#7746e2 50%,#5429b5 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.42),0 0 0 2px rgba(107,78,231,.16),
+    0 3px 11px rgba(97,49,212,.4);
+  color: #fff;
+  font-family: Inter,system-ui,sans-serif;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .16s ease,filter .16s ease;
+}
+.global-balance-bar .myst-stars-wallet-add span {
+  transform: translateY(-1px);
+  pointer-events: none;
+}
+.global-balance-bar .myst-stars-wallet-add:hover { filter: brightness(1.16); }
+.global-balance-bar .myst-stars-wallet-add:active { transform: scale(.92); }
+.global-balance-bar .myst-stars-wallet-add:focus-visible {outline:2px solid #f8d9ff;outline-offset:3px}
+.global-balance-bar .deposit-button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 43px !important;
+  min-height: 43px !important;
+  padding: 0 clamp(10px,2.6vw,17px) !important;
+  border-radius: 15px !important;
+  border: 1px solid rgba(220,194,255,.67) !important;
+  gap: 6px !important;
+  font-size: clamp(11px,3.2vw,15px) !important;
+  font-weight: 790 !important;
+  letter-spacing: -.025em;
+  color: white !important;
+  background:
+    radial-gradient(ellipse at 29% 0%,rgba(255,255,255,.36),transparent 52%),
+    linear-gradient(125deg,#ae88ff 0%,#8654e9 46%,#6840d4 100%) !important;
+  box-shadow: inset 0 1.5px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(67,32,168,.37),
+    0 5px 15px rgba(93,45,195,.38) !important;
+  white-space: nowrap;
+  touch-action: manipulation;
+  transition: transform .16s ease,filter .16s ease;
+}
+.global-balance-bar .deposit-button svg {
+  width: 17px !important;
+  height: 17px !important;
+  flex: 0 0 17px !important;
+}
+.global-balance-bar .deposit-button:hover {filter:brightness(1.1)}
+.global-balance-bar .deposit-button:active {transform:scale(.97)}
+.global-balance-bar .deposit-button:focus-visible {outline:2px solid #f9dfff;outline-offset:3px}
+@media (max-width: 390px) {
+  .global-balance-bar.home-hero.premium-card {
+    padding: 7px 7px !important;
+    gap: 6px !important;
+  }
+  .global-balance-bar .home-user-zone {gap: 5px !important}
+  .global-balance-bar .home-avatar-wrap {
+    width: 51px !important;
+    min-width: 51px !important;
+    flex-basis: 51px !important;
+  }
+  .global-balance-bar .myst-profile-settings-trigger {width:51px}
+  .global-balance-bar .myst-stars-wallet {
+    height: 42px;
+    padding: 3px 4px 3px 5px;
+    gap: 2px;
+  }
+  .global-balance-bar .myst-stars-wallet-star {
+    width: 23px;height: 23px;flex-basis: 23px;
+  }
+  .global-balance-bar .myst-stars-wallet-star .coin-icon,
+  .global-balance-bar .myst-stars-wallet-star .coin-icon img {
+    width: 23px !important;height:23px !important;min-width:23px !important;max-width:23px !important;
+  }
+  .global-balance-bar .myst-stars-wallet-amount strong {font-size:clamp(12px,3.6vw,15px)}
+  .global-balance-bar .myst-stars-wallet-add {width:29px;height:29px;min-width:29px;flex-basis:29px;font-size:22px}
+  .global-balance-bar .deposit-button {
+    height: 39px !important;
+    min-height: 39px !important;
+    padding: 0 8px !important;
+    gap: 4px !important;
+    font-size: 11px !important;
+  }
+  .global-balance-bar .deposit-button svg {width:14px !important;height:14px !important;flex-basis:14px !important}
+}
+@media (max-width: 340px) {
+  .global-balance-bar.home-hero.premium-card {gap: 4px !important;padding-inline:5px !important}
+  .global-balance-bar .home-user-zone {gap: 3px !important}
+  .global-balance-bar .home-avatar-wrap {width:48px !important;min-width:48px !important;flex-basis:48px !important}
+  .global-balance-bar .myst-profile-settings-trigger {width:48px}
+  .global-balance-bar .myst-stars-wallet {height:39px;padding:2px 3px;gap:1px}
+  .global-balance-bar .myst-stars-wallet-star {width:19px;height:19px;flex-basis:19px}
+  .global-balance-bar .myst-stars-wallet-star .coin-icon,
+  .global-balance-bar .myst-stars-wallet-star .coin-icon img {width:19px !important;height:19px !important;min-width:19px !important;max-width:19px !important}
+  .global-balance-bar .myst-stars-wallet-amount strong {font-size:12px}
+  .global-balance-bar .myst-stars-wallet-add {width:26px;height:26px;min-width:26px;flex-basis:26px;font-size:20px}
+  .global-balance-bar .deposit-button {height:36px !important;min-height:36px !important;padding-inline:6px !important;font-size:10.5px !important}
+  .global-balance-bar .deposit-button svg {width:12px !important;height:12px !important;flex-basis:12px !important}
+}
+@media (prefers-reduced-motion:reduce){
+  .global-balance-bar .myst-stars-wallet-add,
+  .global-balance-bar .deposit-button {transition:none}
+}
