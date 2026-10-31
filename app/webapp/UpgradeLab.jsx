@@ -62,7 +62,9 @@ function GiftPicker({mode,gifts,activeId,onChoose,onClose}) {
 }
 
 function ItemCard({item,label,subtitle,onClick,disabled=false,side}) {
-  return <button type="button" className={styles.itemCard} data-side={side} onClick={onClick} disabled={disabled} aria-label={label+' tanlash'}>
+  return <button type="button" className={styles.itemCard} data-side={side} onClick={onClick} disabled={disabled}
+    title={item?.title || undefined}
+    aria-label={[label, item?.title, item ? fmt(item.price) + ' Stars' : 'Sovg‘a tanlash'].filter(Boolean).join(', ')}>
     <div className={styles.itemTitle}><strong>{label}</strong><small>{subtitle}</small></div>
     <div className={styles.itemVisual}>
       <div className={styles.itemSpotlight} aria-hidden="true"/>
