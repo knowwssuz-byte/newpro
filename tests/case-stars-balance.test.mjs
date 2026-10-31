@@ -58,7 +58,7 @@ test('0% is never silently replaced with the display chance in old admin flows',
 test('server selection excludes real chance zero and does not fall back to insecure draw',()=>{
  const open=read('app/api/open-case/route.js');
  const migration=read('supabase/migrations/20261028_case_stars_actual_odds.sql');
- assert.match(open,/realChance\(gift\) > 0/);
+ assert.doesNotMatch(open,/openCaseFallback|decrementGiftStock|Math\\.random/);
  assert.match(open,/openCaseWithRpc\(supabase,/);
  assert.doesNotMatch(open,/return Response\.json\(await openCaseFallback/);
  assert.match(migration,/AND g\.real_chance > 0/);
