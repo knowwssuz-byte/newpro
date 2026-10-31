@@ -3,152 +3,177 @@
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import AppIcon from './AppIcon';
-import StarIcon from './StarIcon';
 import styles from './WelcomeTour.module.css';
 
 const SCREENS = [
   {
     step: '01',
-    eyebrow: 'XUSH KELIBSIZ',
-    title: 'Gift Myst olamiga',
-    emphasis: 'xush kelibsiz',
-    description: 'Caselarni ko‘ring, o‘yinlar bilan tanishing va shaxsiy inventaringizni boshqaring.',
-    image: '/onboarding/welcome-gift-v2.webp',
     label: 'Kirish',
-    badge: 'Gift kolleksiyasi',
-    badgeIcon: 'gift',
-    detail: 'Sizning yangi olamingiz',
-    points: [{ icon: 'games', text: 'Games va Caselar' }, { icon: 'gift', text: 'Inventardagi sovg‘alar' }, { icon: 'globe', text: 'Qulay mobil interfeys' }],
+    title: 'Gift Myst’ga',
+    emphasis: 'xush kelibsiz.',
+    description: 'Caselarni kashf eting, sovg‘alar to‘plang va inventaringizni boshqaring.',
+    image: '/onboarding/welcome-gift-v2.webp',
+    alt: 'Binafsha rang sovg‘a qutisi va kristallar',
   },
   {
     step: '02',
-    eyebrow: 'CASELAR',
-    title: 'Caselarni oching va',
-    emphasis: 'sovg‘alarni yuting',
-    description: 'Case kolleksiyasini kashf eting. Natijalar tasodifiy — yutuqlar kafolatlanmaydi.',
-    image: '/onboarding/welcome-case-v2.webp',
     label: 'Caselar',
-    badge: 'Case kolleksiyasi',
-    badgeIcon: 'cases',
-    detail: 'Har bir case — yangi taassurot',
-    points: [{ icon: 'cases', text: 'Turli xil case kolleksiyasi' }, { icon: 'gem', text: 'Gift va Stars yutuqlari' }, { icon: 'box', text: 'Chiroyli ochilish animatsiyasi' }],
+    title: 'Caselarni oching.',
+    emphasis: 'Omadingizni sinang.',
+    description: 'Turli caselar va tasodifiy sovg‘alar. Yutuqlar kafolatlanmaydi.',
+    image: '/onboarding/welcome-case-v2.webp',
+    alt: 'Ichida yorqin kristall bor ochiq sovg‘a case’i',
   },
   {
     step: '03',
-    eyebrow: 'INVENTAR',
-    title: 'Inventaringizni',
-    emphasis: 'boshqaring',
-    description: 'Qo‘lga kiritilgan giftlarni ko‘ring, soting yoki o‘tkazish uchun so‘rov yuboring.',
-    image: '/onboarding/welcome-inventory-v2.webp',
     label: 'Inventar',
-    badge: 'Shaxsiy kolleksiya',
-    badgeIcon: 'inventory',
-    detail: 'Barcha giftlar bir joyda',
-    points: [{ icon: 'inventory', text: 'Barcha giftlar bir joyda' }, { icon: 'send', text: 'Sotish va o‘tkazish so‘rovi' }, { icon: 'coin', text: 'Stars balansini kuzatish' }],
+    title: 'Sovg‘alaringiz',
+    emphasis: 'bir joyda.',
+    description: 'Giftlarni kuzating, soting yoki o‘tkazish uchun so‘rov yuboring.',
+    image: '/onboarding/welcome-inventory-v2.webp',
+    alt: 'Sovg‘alar tasvirlangan uchta kolleksiya kartasi',
   },
 ];
 
 export default function WelcomeTour({ onFinish }) {
   const [index, setIndex] = useState(0);
   const skipRef = useRef(null);
+  const touchStart = useRef(null);
   const slide = SCREENS[index];
   const isLast = index === SCREENS.length - 1;
 
   useEffect(() => {
-    // Prepare the next real WebP artwork before the visitor switches slides.
-    const nextArtwork = SCREENS[index + 1]?.image;
-    if (!nextArtwork) return;
-    const img = new window.Image();
-    img.loading = 'eager';
-    img.decoding = 'async';
-    img.fetchPriority = 'low';
-    img.src = nextArtwork;
-    img.decode?.().catch(() => {});
-  }, [index]);
+    skipRef.current?.focus({ preventScroll: true });
+  }, []);
 
   useEffect(() => {
-    skipRef.current?.focus({ preventScroll: true });
     const onKey = (event) => {
       if (event.key === 'Escape') onFinish?.();
-      if (event.key === 'ArrowRight') setIndex((n) => Math.min(SCREENS.length - 1, n + 1));
-      if (event.key === 'ArrowLeft') setIndex((n) => Math.max(0, n - 1));
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setIndex((n) => Math.min(SCREENS.length - 1, n + 1));
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setIndex((n) => Math.max(0, n - 1));
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [onFinish]);
 
+  useEffect(() => {
+    const nextArtwork = SCREENS[index + 1]?.image;
+    if (!nextArtwork) return;
+    const img = new window.Image();
+    img.decoding = 'async';
+    img.src = nextArtwork;
+    img.decode?.().catch(() => {});
+  }, [index]);
+
+  const onSwipeEnd = (event) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    const touch = event.changedTouches[0];
+    if (!start || !touch) return;
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    setIndex((n) => Math.max(0, Math.min(SCREENS.length - 1, n + (dx < 0 ? 1 : -1))));
+  };
+
   return (
     <main className={styles.page} aria-label="MYST tanishtiruv" data-myst-intro="true">
-      <div className={styles.atmosphere} aria-hidden="true" />
       <div className={styles.shell}>
         <header className={styles.topbar}>
           <span className={styles.brand}>
-            <span className={styles.brandMark}><AppIcon name="gift" /></span>
-            <span>GIFT MYST<small>GIFT COLLECTION</small></span>
+            <span className={styles.brandMark} aria-hidden="true"><AppIcon name="gift" /></span>
+            <span>GIFT MYST</span>
           </span>
-          <button type="button" className={styles.skip} ref={skipRef}
-            aria-label="Tanishtiruvni o‘tkazib yuborish" onClick={onFinish}>
-            Skip <AppIcon name="chevronRight" />
+          <button
+            type="button"
+            className={styles.skip}
+            ref={skipRef}
+            aria-label="Tanishtiruvni o‘tkazib yuborish"
+            onClick={() => onFinish?.()}
+          >
+            O‘tkazish <AppIcon name="chevronRight" />
           </button>
         </header>
 
-        <div className={styles.body}>
-          <div className={styles.hero} key={'hero-' + slide.step}>
-            <div className={styles.heroVisual}>
-              <span className={styles.heroGlow} aria-hidden="true" />
-              <span className={styles.heroOrbit} aria-hidden="true" />
-              <div className={styles.imageFrame}>
-                <Image src={slide.image} alt="" className={styles.heroImage} width={768} height={768}
-                  unoptimized loading="eager" fetchPriority={index === 0 ? 'high' : 'auto'} draggable={false} />
-              </div>
-            </div>
-            <div className={styles.heroMeta} aria-hidden="true">
-              <span className={styles.heroBadge}><AppIcon name={slide.badgeIcon} /> {slide.badge}</span>
-              <span className={styles.starsBadge}><StarIcon size={20} /> <span>Telegram<small>Stars</small></span></span>
-            </div>
-            <span className={styles.heroCaption} aria-hidden="true">{slide.detail}</span>
-          </div>
-
-          <section className={styles.copy} key={slide.step} aria-live="polite" aria-atomic="true"
-            aria-labelledby="giftmyst-welcome-title">
-            <span className={styles.eyebrow}>{slide.eyebrow} <span>·</span> {slide.step} / 03</span>
+        <div
+          className={styles.body}
+          onTouchStart={(event) => {
+            const touch = event.touches[0];
+            if (touch) touchStart.current = { x: touch.clientX, y: touch.clientY };
+          }}
+          onTouchEnd={onSwipeEnd}
+          onTouchCancel={() => { touchStart.current = null; }}
+        >
+          <section
+            className={styles.copy}
+            key={slide.step}
+            aria-live="polite"
+            aria-atomic="true"
+            aria-labelledby="giftmyst-welcome-title"
+          >
+            <span className={styles.eyebrow}>{slide.label} <span aria-hidden="true">/</span> {slide.step} / 03</span>
             <h1 id="giftmyst-welcome-title">
               <span className={styles.titleMain}>{slide.title}</span>
               <span className={styles.titleAccent}>{slide.emphasis}</span>
             </h1>
             <p>{slide.description}</p>
-            <ul className={styles.points}>
-              {slide.points.map((point) => (
-                <li key={point.text}>
-                  <span className={styles.pointIcon}><AppIcon name={point.icon} /></span>
-                  <span>{point.text}</span>
-                </li>
-              ))}
-            </ul>
           </section>
+
+          <div className={styles.artwork} key={slide.image}>
+            <div className={styles.artworkFrame}>
+              <span className={styles.artworkGlow} aria-hidden="true" />
+              <span className={styles.artworkRing} aria-hidden="true" />
+              <Image
+                src={slide.image}
+                alt={slide.alt}
+                className={styles.heroImage}
+                width={768}
+                height={768}
+                unoptimized
+                priority={index === 0}
+                draggable={false}
+              />
+            </div>
+          </div>
         </div>
 
         <footer className={styles.footer}>
-          <div className={styles.dots} aria-label="Tanishtiruv bosqichlari">
+          <nav className={styles.dots} aria-label="Tanishtiruv bosqichlari">
             {SCREENS.map((screen, i) => (
-              <button key={screen.step} type="button"
-                aria-label={i + 1 + '-bosqichga o‘tish'}
+              <button
+                key={screen.step}
+                type="button"
+                aria-label={screen.step + '-bosqich: ' + screen.label}
                 aria-current={i === index ? 'step' : undefined}
                 className={i === index ? styles.activeDot : ''}
-                onClick={() => setIndex(i)}>
-                <span className={styles.progressTrack} /><span>{screen.label}</span>
+                onClick={() => setIndex(i)}
+              >
+                <span className={styles.progressTrack} />
               </button>
             ))}
-          </div>
+          </nav>
           <div className={styles.actions}>
-            {index > 0 ? (
-              <button type="button" className={styles.back} aria-label="Oldingi bosqich"
-                onClick={() => setIndex((n) => Math.max(0, n - 1))}>
-                <AppIcon name="chevronLeft" />
-              </button>
-            ) : null}
-            <button type="button" className={styles.next}
-              onClick={() => isLast ? onFinish?.() : setIndex((n) => Math.min(SCREENS.length - 1, n + 1))}>
+            <button
+              type="button"
+              className={styles.back}
+              aria-label="Oldingi bosqich"
+              disabled={index === 0}
+              onClick={() => setIndex((n) => Math.max(0, n - 1))}
+            >
+              <AppIcon name="chevronLeft" />
+              <span>Orqaga</span>
+            </button>
+            <button
+              type="button"
+              className={styles.next}
+              onClick={() => isLast ? onFinish?.() : setIndex((n) => Math.min(SCREENS.length - 1, n + 1))}
+            >
               <span>{isLast ? 'Boshlash' : 'Keyingisi'}</span>
               <AppIcon name="chevronRight" />
             </button>
