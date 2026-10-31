@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
-import {sendCaseRewardNotice} from '@/lib/telegramBot';
+import {sendCaseRewardNotice, telegramApi} from '@/lib/telegramBot';
+import {getBonusTasks} from '@/lib/bonusTasks';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
@@ -94,6 +95,13 @@ function shouldFallbackRpc(error) {
 
 function mapRpcError(error) {
   const message = String(error?.message || 'Server xatosi');
+
+  if (message.includes('FREE_CASE_COOLDOWN_24H')) {
+    return { message: 'Free Case faqat har 24 soatda bir marta ochiladi.', status: 429 };
+  }
+  if (message.includes('FREE_CASE_TASK_REQUIRED')) {
+    return { message: 'Free Case uchun avval Telegram kanaliga a’zolik taskini bajaring.', status: 403 };
+  }
 
   if (message.includes('USER_BANNED')) {
     return { message: 'Siz bloklangansiz', status: 403 };
@@ -332,6 +340,46 @@ async function openCaseFallback(supabase, auth, dbUser, caseId) {
   });
 }
 
+async function verifyFreeCaseAccess(supabase, userId, caseId) {
+  const {data: caseItem, error: caseError} = await supabase
+    .from('cases').select('price,is_active,archived_at').eq('id',caseId).maybeSingle();
+  if (caseError) throw caseError;
+  if (!caseItem || !caseItem.is_active || caseItem.archived_at) return null;
+  if (Number(caseItem.price) !== 0) return null;
+
+  const tasks = (await getBonusTasks(supabase))
+    .filter(task => task.type === 'telegram_channel' && task.chatId);
+  if (!tasks.length) return jsonError('Free Case kanal taski sozlanmagan.', 503);
+
+  const {data: claims,error:claimError} = await supabase.from('bonus_claim_ledger')
+    .select('task_id').eq('user_id',userId).in('task_id',tasks.map(t=>t.id));
+  if (claimError) throw claimError;
+  const claimed = new Set((claims || []).map(c=>c.task_id));
+  const completedTasks = tasks.filter(task=>claimed.has(task.id));
+  if (!completedTasks.length) {
+    return jsonError('Avval Bonus bo‘limida Telegram kanaliga a’zolik taskini bajaring.',403,{reason:'FREE_CASE_TASK_REQUIRED'});
+  }
+
+  let verified = false;
+  for (const task of completedTasks) {
+    try {
+      const member = await telegramApi('getChatMember',
+        {chat_id:task.chatId,user_id:userId},{timeoutMs:6000});
+      if (['creator','administrator','member'].includes(member?.status) ||
+          (member?.status === 'restricted' && member?.is_member === true)) {
+        verified = true;
+        break;
+      }
+    } catch (error) {
+      console.warn('[free-case:membership]',String(error?.message||'unavailable').slice(0,120));
+    }
+  }
+  if (!verified) {
+    return jsonError('Free Case ochish uchun Telegram kanaliga a’zolikni tasdiqlang. Bot kanal admini bo‘lishi kerak.',403,{reason:'FREE_CASE_NOT_MEMBER'});
+  }
+  return null;
+}
+
 export async function POST(request) {
   try {
     const auth = await readTelegramRequest(request);
@@ -344,6 +392,9 @@ export async function POST(request) {
 
     if (!caseId) return jsonError('caseId kerak');
     if (dbUser.is_banned) return jsonError('Siz bloklangansiz', 403);
+
+    const freeCaseError = await verifyFreeCaseAccess(supabase, Number(auth.telegramUser.id), caseId);
+    if (freeCaseError) return freeCaseError;
 
     try {
       const won=await openCaseWithRpc(supabase, Number(auth.telegramUser.id), caseId);

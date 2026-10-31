@@ -242,6 +242,7 @@ function caseBadgeColor(caseItem) {
 }
 
 function caseBadgeText(caseItem, gifts = []) {
+  if (Number(caseItem?.price || 0) === 0) return 'UNLIMITED';
   if (caseItem?.badge_text) return String(caseItem.badge_text).toUpperCase();
   const readyGifts = gifts.filter(eligibleGift);
   if (!readyGifts.length) return '';
