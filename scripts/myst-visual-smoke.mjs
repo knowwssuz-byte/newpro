@@ -66,6 +66,7 @@ for (const viewport of [
       await route.continue();
     });
   }
+  let serverWelcomeAvailable = true;
   await context.route('**/api/**', async (route) => {
     const pathname = new URL(route.request().url()).pathname;
     if (pathname === '/api/bootstrap') await delay(190);
@@ -73,13 +74,13 @@ for (const viewport of [
     if (pathname === '/api/bootstrap') {
       const phase = route.request().postDataJSON()?.phase || 'full';
       value = phase === 'essential'
-        ? { ok:true, phase, showWelcomeTour: true, user:data.user, telegramUser:data.telegramUser,
+        ? { ok:true, phase, showWelcomeTour: serverWelcomeAvailable, user:data.user, telegramUser:data.telegramUser,
             isAdmin:data.isAdmin, cases:data.cases, gifts:data.gifts,
             featureSettings:data.featureSettings }
         : phase === 'extras'
           ? { ok:true, phase, history:data.history, inventoryGifts:data.inventoryGifts,
               withdrawals:data.withdrawals, upgradeRounds:data.upgradeRounds, upgradeCatalog:[] }
-          : { ...data, phase };
+          : { ...data, showWelcomeTour: serverWelcomeAvailable, phase };
     }
     await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(value) });
   });
@@ -109,6 +110,7 @@ for (const viewport of [
   } else {
     await page.getByRole('button', { name: /Tanishtiruvni o‘tkazib yuborish/ }).click();
   }
+  serverWelcomeAvailable = false; // Authenticated server has consumed the once-only Welcome claim.
   await page.getByRole('heading', { name: 'Play. Win. Repeat.' }).waitFor({ timeout: 9000 });
   const width = await page.evaluate(() => ({
     scroll: document.documentElement.scrollWidth, viewport: window.innerWidth,
@@ -209,9 +211,9 @@ for (const viewport of [
     await page.getByRole('button', { name: 'Orqaga' }).click();
     await page.getByRole('heading', { name: 'Play. Win. Repeat.' }).waitFor({ timeout: 8000 });
     await page.reload({ waitUntil: 'domcontentloaded' });
-      await page.getByRole('main', { name: 'MYST tanishtiruv' }).waitFor({ state: 'visible', timeout: 16000 });
-    await page.getByRole('button', { name: /Tanishtiruvni o‘tkazib yuborish/ }).click();
-    await page.getByRole('heading', { name: 'Play. Win. Repeat.' }).waitFor();
+    await page.getByRole('heading', { name: 'Play. Win. Repeat.' }).waitFor({ timeout: 16000 });
+    assert.equal(await page.getByRole('main', { name: 'MYST tanishtiruv' }).count(), 0,
+      'Welcome must never reopen after server recorded first visit');
   }
   await context.close();
 }
