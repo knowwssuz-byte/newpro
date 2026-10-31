@@ -17,7 +17,7 @@ for(let i=0;i<70;i++){
 const browser=await engine.launch({headless:true,args:engine===chromium?['--no-sandbox']:[]});
 const run=[];
 const data={
- ok:true,user:{id:24680,balance:150,is_banned:false},
+ ok:true,showWelcomeTour:true,user:{id:24680,balance:150,is_banned:false},
  telegramUser:{id:24680,first_name:'Test'},isAdmin:false,
  cases:[],gifts:[],inventoryGifts:[],history:[],withdrawals:[],upgradeRounds:[],featureSettings:{},
 };

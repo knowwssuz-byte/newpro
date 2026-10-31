@@ -16,7 +16,7 @@ for (let i = 0; i < 75; i++) {
 }
 
 const data = {
-  ok: true, user: { id: 24680, balance: 150, is_banned: false },
+  ok: true, showWelcomeTour: true, user: { id: 24680, balance: 150, is_banned: false },
   telegramUser: { id: 24680, first_name: 'Test', last_name: 'Account' },
   isAdmin: false,
   cases: [{ id: 'case-test', title: 'Demo case', description: 'Preview', price: 0, image_url: '/cases/starter.svg', is_active: true, sort_order: 0 }],
@@ -73,7 +73,7 @@ for (const viewport of [
     if (pathname === '/api/bootstrap') {
       const phase = route.request().postDataJSON()?.phase || 'full';
       value = phase === 'essential'
-        ? { ok:true, phase, user:data.user, telegramUser:data.telegramUser,
+        ? { ok:true, phase, showWelcomeTour: true, user:data.user, telegramUser:data.telegramUser,
             isAdmin:data.isAdmin, cases:data.cases, gifts:data.gifts,
             featureSettings:data.featureSettings }
         : phase === 'extras'

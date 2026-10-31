@@ -31,7 +31,7 @@ for(const width of [320,375,390,430,768,1024,1440]){
   const url=new URL(route.request().url());
   let value={ok:true};
   if(url.pathname==='/api/bootstrap'){
-   value={ok:true,user:{id:24680,balance:150,is_banned:false},telegramUser:{id:24680,first_name:'Test'},
+   value={ok:true,showWelcomeTour:true,user:{id:24680,balance:150,is_banned:false},telegramUser:{id:24680,first_name:'Test'},
      isAdmin:false,cases:[caseItem],gifts:[gift],inventoryGifts:[],history:firstHistory,
      withdrawals:[],upgradeRounds:[],featureSettings:{}};
   }else if(url.pathname==='/api/open-case'){
