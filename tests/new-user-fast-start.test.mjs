@@ -30,7 +30,9 @@ test('first-visit JavaScript excludes large games until route selection',()=>{
   assert.match(app,/dynamic\(\(\) => import\('\.\/DiceGame'\)/);
   assert.match(app,/dynamic\(\(\) => import\('\.\/PvpHub'\)/);
   assert.match(app,/import DiceLobbyCard from '\.\/DiceLobbyCard'/);
-  assert.match(app,/import PvpEntryCard from '\.\/PvpEntryCard'/);
+  // PvP lives only behind the Home Arena shortcut, never in the Games chunk.
+  assert.doesNotMatch(app,/import PvpEntryCard from '\.\/PvpEntryCard'/);
+  assert.match(app,/onClick=\{onOpenPvp\}/);
 });
 test('server and browser assets have safe separate cache policies and Tokyo data locality',()=>{
   const cfg=read('vercel.json');
