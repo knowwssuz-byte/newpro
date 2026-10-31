@@ -376,7 +376,7 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast})
    <button type="button" className={styles.storeItem}
      onClick={()=>setSelected('color')} aria-label="COLOR ARENA multiplayer o‘yinini ochish">
     <span className={styles.storeCover}>
-     <Image src="/pvp/color-arena-clean-logo.png" alt="" width={256} height={256}
+     <Image src="/pvp/color-arena-cover.png" alt="" width={256} height={256}
        sizes="(max-width: 600px) 46vw, 260px" unoptimized
        className={styles.storeCoverImage}/>
     </span>

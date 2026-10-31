@@ -396,7 +396,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
       <button type="button" className={styles.back} onClick={onBack} aria-label="PvP bo‘limiga qaytish">
         <ArrowLeft size={19}/></button>
       <span className={styles.headerLogo} aria-hidden="true">
-        <Image src="/pvp/color-arena-clean-logo.png" alt="" width={256} height={256}
+        <Image src="/pvp/color-arena-cover.png" alt="" width={256} height={256}
           className={styles.headerLogoImage} unoptimized/>
       </span>
       <strong className={styles.compactTitle}>COLOR ARENA</strong>
