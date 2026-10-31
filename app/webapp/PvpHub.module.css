@@ -611,3 +611,13 @@ animation:mystWinTile 1.8s ease-in-out infinite alternate}
 @keyframes mystWinTile{from{filter:brightness(1)}to{filter:brightness(1.25)}}
 @media(max-width:340px){.boardFrame{padding:8px!important}.board{gap:5px!important}.square .symbolArt{width:73%;height:73%}}
 @media(prefers-reduced-motion:reduce){.square .symbolArt,.square.winning{animation:none!important}}
+
+/* Sharp square Color Arena cover: true-resolution, no magnification blur. */
+.arenaCover {
+ background:#100d25;border:1px solid rgba(135,168,255,.36);
+ box-shadow:0 10px 29px rgba(0,0,0,.27),inset 0 1px rgba(255,255,255,.10);
+}
+.arenaCover .storeCoverImage {
+ display:block;width:100%;height:100%;object-fit:cover;object-position:center;
+ image-rendering:auto;filter:none;opacity:1;transform:none;
+}

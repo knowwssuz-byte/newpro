@@ -375,9 +375,9 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast})
   <div className={styles.storeGrid}>
    <button type="button" className={styles.storeItem}
      onClick={()=>setSelected('color')} aria-label="COLOR ARENA multiplayer o‘yinini ochish">
-    <span className={styles.storeCover}>
-     <Image src="/pvp/color-arena-cover.png" alt="" width={256} height={256}
-       sizes="(max-width: 600px) 46vw, 260px" unoptimized
+    <span className={`${styles.storeCover} ${styles.arenaCover}`}>
+     <Image src="/pvp/color-arena-cover-v2.png" alt="" width={512} height={512}
+       sizes="(max-width: 600px) 46vw, 300px" unoptimized priority
        className={styles.storeCoverImage}/>
     </span>
     <span className={styles.storeLabelRow}><strong>Color Arena</strong><ArrowUpRight size={17} aria-hidden="true"/></span>
