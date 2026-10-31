@@ -104,7 +104,7 @@ for (const viewport of [
     await page.getByRole('heading', { name: /Caselarni oching/ }).waitFor();
     await page.screenshot({ path: `${artifacts}/${viewport.name}-step2.png`, fullPage: true });
     await page.getByRole('button', { name: 'Keyingisi' }).click();
-    await page.getByRole('heading', { name: /Inventaringizni/ }).waitFor();
+    await page.getByRole('heading', { name: /Sovg‘alaringiz/ }).waitFor();
     await page.getByRole('button', { name: 'Boshlash' }).click();
   } else {
     await page.getByRole('button', { name: /Tanishtiruvni o‘tkazib yuborish/ }).click();
