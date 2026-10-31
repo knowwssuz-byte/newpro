@@ -367,7 +367,7 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast})
    <span className={styles.localTag}><span className={styles.onlineDot}/> LIVE</span>
   </header>
   <div className={styles.catalogHeading}>
-    <h1>O‘yinlar</h1>
+    <h1>Arena rejimlari</h1>
   </div>
   <div className={styles.storeGrid}>
    <button type="button" className={styles.storeItem}

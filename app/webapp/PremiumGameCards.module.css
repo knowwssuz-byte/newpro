@@ -449,6 +449,14 @@
   --action-surface-deep: 52, 33, 96;
 }
 
+/* Distinct Home route, independent of case-browser navigation. */
+.arena {
+  --action-accent: 211, 148, 255;
+  --action-secondary: 255, 183, 111;
+  --action-surface: 99, 59, 155;
+  --action-surface-deep: 37, 27, 86;
+}
+
 .upgrade {
   --action-accent: 72, 218, 255;
   --action-secondary: 118, 117, 255;

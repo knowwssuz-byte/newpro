@@ -29,6 +29,8 @@ test('Games is exclusive to Dice and PVP games appear only in the Arena route',(
   assert.doesNotMatch(pvp.slice(pvp.lastIndexOf('return <section className=')),/setSelected\('rps'\)/);
   assert.match(pvp,/setSelected\('color'\)/);
   assert.match(pvp,/setSelected\('xo'\)/);
+  assert.match(pvp,/Arena rejimlari/);
+  assert.match(read('app/webapp/PremiumGameCards.module.css'),/\.arena\s*\{/);
 });
 
 test('Only two Home shortcut cards receive rich 3D styles, with motion safety',()=>{
