@@ -48,3 +48,10 @@ test('admin gift removal preserves historical upgrade foreign keys',()=>{
  assert.match(block,/\.update\(\{is_active:false\}\)/);
  assert.doesNotMatch(block,/\.delete\(\)/);
 });
+
+test('Browser admin cannot be framed or cached by untrusted sites',()=>{
+ const headers=read('next.config.mjs');
+ assert.match(headers,/source:'\/admin\/:path\*'/);
+ assert.match(headers,/X-Frame-Options',value:'DENY'/);
+ assert.match(headers,/private, no-store, max-age=0/);
+});

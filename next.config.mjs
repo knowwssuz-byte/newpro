@@ -20,6 +20,11 @@ const nextConfig={
  },
  async headers(){return [
  {source:'/:path*',headers:securityHeaders},
+ {source:'/admin/:path*',headers:[
+  {key:'Cache-Control',value:'private, no-store, max-age=0'},
+  {key:'X-Frame-Options',value:'DENY'},
+  {key:'Content-Security-Policy',value:"object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests"}
+ ]},
  {source:'/api/:path*',headers:[{key:'Cache-Control',value:'no-store'}]},
  {source:'/feature/game-banners/:path*',headers:[{key:'Cache-Control',value:'public, max-age=86400, stale-while-revalidate=604800'}]},
  {source:'/onboarding/:path*',headers:[{key:'Cache-Control',value:'public, max-age=604800, stale-while-revalidate=2592000'}]},
