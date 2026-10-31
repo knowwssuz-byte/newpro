@@ -351,11 +351,32 @@ async function verifyFreeCaseAccess(supabase, userId, caseId) {
     .filter(task => task.type === 'telegram_channel' && task.chatId);
   if (!tasks.length) return jsonError('Free Case kanal taski sozlanmagan.', 503);
 
-  const {data: claims,error:claimError} = await supabase.from('bonus_claim_ledger')
-    .select('task_id').eq('user_id',userId).in('task_id',tasks.map(t=>t.id));
-  if (claimError) throw claimError;
-  const claimed = new Set((claims || []).map(c=>c.task_id));
-  const completedTasks = tasks.filter(task=>claimed.has(task.id));
+  // Older Bonus completions live in app_settings, while newer ones use
+  // bonus_claim_ledger. They are both server-written proofs; neither should
+  // award a second bonus. The live Telegram membership check below is mandatory.
+  const taskIds = tasks.map(task => task.id);
+  const completedKeys = tasks.flatMap(task => [
+    `bonus_progress_${userId}_${task.id}`,
+    `bonus_claim_${userId}_${task.id}`,
+  ]);
+  const [claimResult, legacyResult] = await Promise.all([
+    supabase.from('bonus_claim_ledger')
+      .select('task_id').eq('user_id',userId).in('task_id',taskIds),
+    supabase.from('app_settings')
+      .select('key,value').in('key',completedKeys),
+  ]);
+  if (claimResult.error) throw claimResult.error;
+  if (legacyResult.error) throw legacyResult.error;
+
+  const completed = new Set((claimResult.data || []).map(row => row.task_id));
+  for (const row of legacyResult.data || []) {
+    for (const task of tasks) {
+      if (row.key === `bonus_progress_${userId}_${task.id}` &&
+          row.value?.status === 'completed') completed.add(task.id);
+      if (row.key === `bonus_claim_${userId}_${task.id}`) completed.add(task.id);
+    }
+  }
+  const completedTasks = tasks.filter(task => completed.has(task.id));
   if (!completedTasks.length) {
     return jsonError('Avval Bonus bo‘limida Telegram kanaliga a’zolik taskini bajaring.',403,{reason:'FREE_CASE_TASK_REQUIRED'});
   }
