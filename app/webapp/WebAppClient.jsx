@@ -2229,7 +2229,9 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
             onOpen(caseItem);
           }}
         >
-          <AppIcon name="gift" />
+          <Image src="/currency/case-open-star-3d.png" width={20} height={20}
+            className={caseOpeningStyles.casePriceStar} alt="" aria-hidden="true"
+            unoptimized draggable={false} />
           <span>{buttonText}</span>
         </button>
       </div>

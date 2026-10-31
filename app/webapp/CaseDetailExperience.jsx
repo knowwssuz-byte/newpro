@@ -478,7 +478,9 @@ export default function CaseDetailPage({
         <button type="button" className={`${caseOpeningStyles.openButton} ${caseOpeningStyles.detailOpen}`}
           disabled={busy || isSpinning || openableGifts.length === 0}
           onClick={() => { cue('open'); onOpen(); }} aria-busy={isSpinning} aria-live="polite">
-          <AppIcon name="spark"/>
+          <Image src="/currency/case-open-star-3d.png" width={22} height={22}
+            className={caseOpeningStyles.casePriceStar} alt="" aria-hidden="true"
+            unoptimized draggable={false} />
           <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
         </button>
         {inlineOpening?.stage === 'rolling' && (
