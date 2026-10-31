@@ -70,10 +70,10 @@ function ItemCard({item,label,subtitle,onClick,disabled=false,side}) {
         <div className={styles.emptyArt}><ChevronMark/></div>}
     </div>
     <div className={styles.itemDetails}>
-      <strong>{item?.title||'Sovg‘a tanlang'}</strong>
+      <strong>{item?.title||'Tanlanmagan'}</strong>
       <span className={styles.itemPrice}>{item?<><StarIcon variant="gold" size={15}/>{fmt(item.price)}</>:'—'}</span>
     </div>
-    <span className={styles.changeItem}>{item?'Almashtirish':'Tanlash'} <ChevronDown size={14}/></span>
+    <span className={styles.changeItem}>{item?'O‘zgartirish':'Tanlash'} <ChevronDown size={14}/></span>
   </button>;
 }
 
@@ -146,7 +146,6 @@ export default function UpgradeLab({
   const goal=targets.find(item=>item.id===targetId&&item.available)||null;
   const estimatedChance=upgradeChance(source,goal);
   const chance=(phase==='rolling'||phase==='result')&&settledChance!==null?settledChance:estimatedChance;
-  const multiplier=source&&goal?goal.price/source.price:0;
   const blocked=phase==='checking'||phase==='rolling';
 
   useEffect(()=>{
@@ -255,7 +254,7 @@ export default function UpgradeLab({
     <div className={styles.header}>
       <button type="button" disabled={blocked} onClick={onBack} className={styles.back} aria-label="Orqaga"><ArrowLeft size={19}/></button>
       <img src="/feature/upgrade/art/pointer-gold.webp" className={styles.headerCrest} alt="" aria-hidden="true" />
-      <div className={styles.headerTitle}><strong>UPGRADE</strong><small>NEWPRO / LIVE</small></div>
+      <div className={styles.headerTitle}><strong>UPGRADE</strong><small>NEWPRO</small></div>
       <span className={styles.headerMode}><ShieldCheck size={13}/> LIVE</span>
       <button type="button" onClick={changeSound} className={styles.soundButton}
         aria-label={soundEnabled?'Ovozni o‘chirish':'Ovozni yoqish'} title={soundEnabled?'Ovozni o‘chirish':'Ovozni yoqish'}>
@@ -266,23 +265,21 @@ export default function UpgradeLab({
     <div className={styles.stage} data-phase={phase} data-win={phase==='result'&&won}>
       <canvas ref={confettiRef} className={styles.confetti} aria-hidden="true"/>
       <div className={styles.wheelSection}>
-        <div className={styles.wheelCaption}><span className={styles.microTitle}>UPGRADE WHEEL</span></div>
         <UpgradeWheel chance={chance} rotation={rotation} rolling={phase==='rolling'} reduceMotion={reduceMotion} onRest={finishSpin}/>
         <div className={styles.chanceLine} aria-live="polite">
-          <span>WIN CHANCE</span>
+          <span>YUTISH EHTIMOLI</span>
           <strong>{chanceText(chance)}%</strong>
-          <span>{source&&goal?multiplier.toFixed(2)+'× MULTIPLIER':'SOVG‘A TANLANG'}</span>
         </div>
         <div className={styles.chanceDetails}>
-          <span><i/> YUTISH ZONASI <b>{chanceText(chance)}%</b></span>
-          <span><i/> QOLGAN ZONA <b>{chanceText(100-chance)}%</b></span>
+          <span><i/> Yutish <b>{chanceText(chance)}%</b></span>
+          <span><i/> Qolgan <b>{chanceText(100-chance)}%</b></span>
         </div>
       </div>
 
       <div className={styles.cards}>
-        <ItemCard side="source" label="Beradigan sovg‘a" subtitle="Inventaringizdan" item={source}
+        <ItemCard side="source" label="Beriladigan" subtitle="Inventardan" item={source}
           disabled={blocked||!owned.length} onClick={()=>setPicker('source')}/>
-        <ItemCard side="target" label="Oladigan sovg‘a" subtitle="Yutishingiz mumkin" item={goal}
+        <ItemCard side="target" label="Olinadigan" subtitle="Yutuq" item={goal}
           disabled={blocked||!targets.length} onClick={()=>setPicker('target')}/>
       </div>
 
@@ -300,7 +297,7 @@ export default function UpgradeLab({
         </div>:null}
         {!owned.length&&phase!=='result'?<p className={styles.emptyHint}>Upgrade boshlash uchun inventaringizda sovg‘a bo‘lishi kerak.</p>:null}
         <div className={styles.footnote}><Info size={14}/>
-          <span>{multiplier?multiplier.toFixed(2)+'× · ':''}Yutqazsangiz, berilgan sovg‘a qaytarilmaydi.</span>
+          <span>Yutqazsangiz, berilgan sovg‘a qaytarilmaydi.</span>
         </div>
       </div>
     </div>

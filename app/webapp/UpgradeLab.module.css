@@ -720,3 +720,369 @@
   .controls{padding-top:3px;padding-bottom:6px}
   .chanceDetails{padding-bottom:1px}
 }
+
+
+/* ==========================================================================
+   UPGRADE 3.0 — premium violet/gold hierarchy, large readable wheel.
+   View-only changes: server-authoritative odds, pointer landing and source/
+   target ownership checks remain untouched. Final cascade layer.
+   ========================================================================== */
+.root {
+  width: min(100%, 1120px);
+  padding: 8px clamp(8px, 1.8vw, 20px) calc(94px + env(safe-area-inset-bottom, 0px));
+  color: #f4eef9;
+  font-family: Inter, "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 450;
+  letter-spacing: -.008em;
+}
+.header {
+  min-height: 54px;
+  gap: 10px;
+  padding: 0 3px 11px;
+  margin-bottom: 9px;
+  border-bottom: 1px solid rgba(198,146,222,.11);
+}
+.back, .soundButton {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 12px;
+  color: #e9e2f1;
+  background: linear-gradient(145deg, #2b2436, #17131e);
+  border: 1px solid rgba(214,179,231,.2);
+  box-shadow: inset 0 1px rgba(255,255,255,.07), 0 5px 17px rgba(0,0,0,.26);
+}
+.headerCrest {
+  width: 24px;
+  height: 34px;
+  filter: drop-shadow(0 0 10px rgba(243,179,58,.28));
+}
+.headerTitle { gap: 8px; }
+.headerTitle strong {
+  font-family: inherit;
+  font-size: clamp(19px, 3vw, 25px);
+  font-weight: 730;
+  letter-spacing: -.035em;
+  color: #faf4ff;
+}
+.headerTitle small {
+  color: #96899d;
+  font-size: 9.5px;
+  font-weight: 520;
+  letter-spacing: .075em;
+}
+.headerMode {
+  border-color: rgba(44,207,125,.35);
+  background: linear-gradient(130deg,rgba(8,79,47,.6),rgba(8,41,31,.85));
+  color: #78e9b2;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 640;
+  padding: 8px 10px;
+  letter-spacing: .055em;
+}
+.stage {
+  overflow: visible;
+  border-radius: 22px;
+  border: 1px solid rgba(163,97,197,.23);
+  background:
+    radial-gradient(ellipse 53% 35% at 50% 34%, rgba(128,58,185,.18), transparent 85%),
+    radial-gradient(ellipse 45% 28% at 55% 55%, rgba(205,134,50,.1), transparent 82%),
+    linear-gradient(148deg,#180e21 0%,#100d18 51%,#0c0c15 100%);
+  box-shadow: 0 18px 46px rgba(0,0,0,.31), inset 0 1px rgba(255,255,255,.055);
+}
+.confetti { border-radius: 22px; }
+.cards { gap: 11px; }
+.itemCard {
+  border-radius: 17px;
+  border: 1px solid rgba(224,182,89,.42);
+  background: linear-gradient(135deg,rgba(52,39,42,.88),rgba(22,18,26,.98) 68%);
+  box-shadow: inset 0 1px rgba(255,255,255,.055), 0 8px 25px rgba(4,2,10,.25);
+}
+.itemCard[data-side="target"] {
+  border-color: rgba(177,100,232,.47);
+  background: linear-gradient(138deg, rgba(49,29,66,.81),rgba(17,14,26,.98) 72%);
+}
+.itemCard:disabled { cursor: not-allowed; }
+.itemTitle strong {
+  font-family: inherit;
+  font-weight: 650;
+  color: #f4edf8;
+  letter-spacing: -.015em;
+}
+.itemTitle small {
+  font-weight: 460;
+  color: #a99fb3;
+  letter-spacing: .005em;
+}
+.itemDetails>strong {
+  font-family: inherit;
+  font-weight: 575;
+  color: #f5edf8;
+  letter-spacing: -.018em;
+}
+.itemPrice {
+  font-family: inherit;
+  font-weight: 650;
+  color: #f7d17a;
+  font-variant-numeric: tabular-nums;
+}
+.changeItem {
+  color: #c6b9cf;
+  font-weight: 565;
+  letter-spacing: 0;
+}
+.wheelSection { position: relative; min-width: 0; }
+.wheelSection::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 13%;
+  width: min(95%, 440px);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(163,81,222,.11) 0%,rgba(213,140,57,.06) 49%,transparent 72%);
+  filter: blur(17px);
+}
+.wheelFrame {
+  width: min(100%, 385px);
+  margin: 4px auto 20px;
+  filter: drop-shadow(0 0 16px rgba(171,92,229,.18)) drop-shadow(0 14px 22px rgba(0,0,0,.36));
+}
+.wheelHalo {
+  background: radial-gradient(circle,transparent 43%,rgba(236,166,57,.21) 66%,rgba(157,68,220,.15) 78%,transparent 100%);
+  filter: blur(15px);
+}
+.wheelAssetFrame {
+  filter: drop-shadow(0 0 10px rgba(245,171,54,.23)) drop-shadow(0 0 16px rgba(141,59,205,.21));
+}
+.hubBrand {
+  font-family: inherit;
+  font-weight: 630;
+  letter-spacing: .035em;
+  color: #ffe3a1;
+}
+.chanceLine {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 65px;
+  max-width: 460px;
+  gap: 2px;
+  padding: 10px 8px 0;
+  border-top: 1px solid rgba(223,173,101,.17);
+}
+.chanceLine span, .chanceLine span:first-child {
+  font-size: 10px;
+  color: #b9aebe;
+  font-weight: 560;
+  letter-spacing: .075em;
+}
+.chanceLine strong {
+  font-family: inherit;
+  color: #ffda77;
+  font-size: clamp(31px, 5vw, 44px);
+  font-weight: 710;
+  letter-spacing: -.045em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.chanceDetails {
+  max-width: 460px;
+  justify-content: space-evenly;
+  gap: 8px;
+  padding: 8px 10px 14px;
+  font-size: 10px;
+  font-weight: 480;
+  color: #b5a8be;
+}
+.chanceDetails span { gap: 5px; }
+.chanceDetails i {
+  width: 8px; height: 8px;
+  background: #ffca54;
+  box-shadow: 0 0 8px rgba(244,165,60,.28);
+}
+.chanceDetails span:last-child i { background: #9c55e1; }
+.chanceDetails b { font-weight: 690; color: #f0e4f4; }
+.controls {
+  gap: 9px;
+  padding: 10px 13px 17px;
+}
+.improve {
+  width: min(100%, 480px);
+  min-height: 54px;
+  border-radius: 15px;
+  border: 1px solid #fbe0a0;
+  background: linear-gradient(175deg,#ffe9ad 0%,#f2c66a 38%,#bf812b 100%);
+  color: #291b13;
+  box-shadow: inset 0 2px rgba(255,255,255,.36), 0 8px 26px rgba(233,157,48,.17);
+}
+.improve strong {
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 720;
+  letter-spacing: .04em;
+}
+.improve:disabled {
+  opacity: .83;
+  color: #918b98;
+  background: #302c34;
+  border-color: rgba(218,190,226,.13);
+  box-shadow: none;
+}
+.footnote {
+  max-width: 570px;
+  padding-top: 4px;
+  color: #a99bad;
+  font-size: 11px;
+  font-weight: 440;
+  line-height: 1.45;
+}
+.historyHead strong, .sheetHead h2, .pickText strong {
+  font-weight: 655;
+}
+
+/* Compact mobile and tablet: cards on top, dominant wheel, odds and CTA below. */
+@media (max-width: 900px) {
+  .root { padding: 5px 7px calc(90px + env(safe-area-inset-bottom, 0px)); }
+  .header { min-height: 47px; gap: 7px; padding: 0 2px 8px; margin-bottom: 7px; }
+  .headerTitle strong { font-size: clamp(17px, 4.7vw, 21px); }
+  .headerTitle small { font-size: 9px; }
+  .headerCrest { width: 21px; height: 30px; }
+  .back,.soundButton { width: 35px; height: 35px; flex: 0 0 35px; }
+  .headerMode { font-size: 9px; padding: 7px 8px; }
+  .stage {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border-radius: 18px;
+  }
+  .cards {
+    order: 1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 9px 9px 0;
+  }
+  .itemCard {
+    display: grid;
+    grid-template-columns: clamp(44px, 12vw, 72px) minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    column-gap: 7px;
+    align-items: center;
+    min-height: 113px;
+    height: auto;
+    padding: 9px 7px;
+    text-align: left;
+    border-radius: 15px;
+  }
+  .itemTitle {
+    grid-column: 2; grid-row: 1;
+    align-items: flex-start;
+    text-align: left;
+    gap: 2px;
+    min-height: 0;
+    min-width: 0;
+  }
+  .itemTitle strong { font-size: clamp(10px, 2.5vw, 12px); line-height: 1.18; }
+  .itemTitle small { font-size: clamp(9px, 2vw, 10px); line-height: 1.25; }
+  .itemVisual {
+    grid-column: 1;
+    grid-row: 1 / 4;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: visible;
+  }
+  .giftThumb { width: 100%; max-width: 72px; height: 80px; }
+  .emptyArt .mark { transform: scale(.78); }
+  .itemDetails {
+    grid-column: 2; grid-row: 2;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 0;
+    padding: 0;
+    gap: 3px;
+  }
+  .itemDetails>strong {
+    max-width: 100%;
+    font-size: clamp(10px, 2.5vw, 12px);
+    line-height: 1.25;
+  }
+  .itemPrice { font-size: 12px; }
+  .changeItem {
+    grid-column: 2; grid-row: 3;
+    justify-content: flex-start;
+    padding: 0;
+    font-size: 10px;
+    line-height: 1.3;
+  }
+  .wheelSection {
+    order: 2;
+    width: 100%;
+    padding: 7px 8px 1px;
+  }
+  .wheelFrame {
+    width: min(82vw, 340px, 50dvh);
+    margin: 3px auto 20px;
+  }
+  .chanceLine { max-width: 450px; min-height: 61px; padding: 9px 5px 0; gap: 2px; }
+  .chanceLine strong { font-size: clamp(31px, 8vw, 39px); }
+  .chanceLine span { font-size: 10px; }
+  .chanceDetails { max-width: 460px; padding: 8px 4px 10px; font-size: 10px; }
+  .controls { order: 3; gap: 6px; padding: 7px 10px 13px; }
+  .improve { width: 100%; min-height: 51px; }
+  .improve strong { font-size: 14px; }
+  .footnote { font-size: 10px; padding-top: 5px; }
+}
+@media (min-width: 901px) {
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 385px) minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 13px;
+    padding: 10px 14px 8px;
+  }
+  .cards { display: contents; }
+  .cards>.itemCard:first-child { grid-column: 1; grid-row: 1; }
+  .cards>.itemCard:last-child { grid-column: 3; grid-row: 1; }
+  .itemCard { height: 250px; min-height: 0; padding: 14px 11px; }
+  .itemVisual { min-height: 126px; }
+  .giftThumb { height: 124px; width: 132px; }
+  .wheelSection { grid-column: 2; grid-row: 1; padding: 10px 2px 0; }
+  .wheelFrame { width: min(100%, 380px); margin: 0 auto 26px; }
+  .controls { grid-column: 1 / -1; grid-row: 2; }
+}
+@media (max-width: 390px) {
+  .cards { gap: 6px; padding: 7px 6px 0; }
+  .itemCard {
+    grid-template-columns: 42px minmax(0,1fr);
+    gap: 4px;
+    min-height: 108px;
+    padding: 7px 5px;
+  }
+  .itemTitle strong { font-size: 10px; }
+  .itemTitle small { font-size: 9px; }
+  .itemDetails>strong { font-size: 10px; }
+  .giftThumb { height: 64px; }
+  .changeItem { font-size: 9px; }
+  .wheelFrame { width: min(80vw, 315px, 49dvh); }
+  .chanceDetails { font-size: 9px; }
+  .footnote { font-size: 9px; }
+}
+@media (max-width: 900px) and (max-height: 700px) {
+  .itemCard { min-height: 103px; }
+  .wheelFrame { width: min(78vw, 305px, 47dvh); margin-bottom: 14px; }
+  .wheelSection { padding-top: 3px; }
+  .chanceLine { min-height: 54px; }
+  .chanceDetails { padding: 6px 3px 9px; }
+  .controls { padding-top: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .itemCard, .improve { transition: none; }
+}
