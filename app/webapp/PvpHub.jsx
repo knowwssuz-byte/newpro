@@ -358,9 +358,6 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast})
   <TicTacToe onBack={()=>setSelected('list')} apiPost={apiPost} balance={balance}
    onBalanceChange={onBalanceChange} onToast={onToast}/>
  </div>;
- if(selected==='rps')return <div className={styles.root}>
-  <RockPaperScissors onBack={()=>setSelected('list')}/>
- </div>;
  return <section className={`${styles.root} ${styles.catalogRoot}`}>
   <header className={styles.topbar}>
    <button type="button" className={styles.back} aria-label="Orqaga qaytish" onClick={onBack}>
@@ -391,21 +388,6 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast})
     </span>
     <span className={styles.storeLabelRow}>
       <strong>X/O Duel</strong>
-      <ArrowUpRight size={17} aria-hidden="true"/>
-    </span>
-   </button>
-   <button type="button" className={styles.storeItem}
-     onClick={()=>setSelected('rps')} aria-label="Tosh, Qog‘oz, Qaychi o‘yinini ochish">
-    <span className={`${styles.storeCover} ${styles.rpsCover}`}>
-      <span className={styles.rpsOrbit} aria-hidden="true"/>
-      <span className={styles.rpsSymbolBack} aria-hidden="true"><Scissors size={64} strokeWidth={2.2}/></span>
-      <span className={styles.rpsTokenOne} aria-hidden="true">✊</span>
-      <span className={styles.rpsTokenTwo} aria-hidden="true">✋</span>
-      <span className={styles.rpsTokenThree} aria-hidden="true">✌️</span>
-      <span className={styles.rpsLight} aria-hidden="true"/>
-    </span>
-    <span className={styles.storeLabelRow}>
-      <strong>Tosh · Qog‘oz · Qaychi</strong>
       <ArrowUpRight size={17} aria-hidden="true"/>
     </span>
    </button>

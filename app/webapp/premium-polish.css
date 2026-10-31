@@ -1210,3 +1210,136 @@ select:focus-visible, textarea:focus-visible, [role="button"]:focus-visible {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* HOME SHORTCUTS V7 — dimensional Arena and Upgrade entrances.
+   Overrules the older generic two-card surface without affecting all other
+   buttons, Cases inventory, Games navigation, or reduced motion preferences. */
+.premium-home > div:nth-child(2) > button[data-quick-action] {
+  isolation: isolate;
+  min-height: 90px !important;
+  border-radius: 19px !important;
+  padding: 12px 11px !important;
+  border: 1px solid rgba(255,255,255,.26) !important;
+  transition: transform .2s ease, filter .2s ease, box-shadow .2s ease !important;
+  transform: translateZ(0);
+}
+.premium-home > div:nth-child(2) > button[data-quick-action="arena"] {
+  background:
+    radial-gradient(ellipse 90% 120% at 4% -18%, rgba(255,176,106,.29), transparent 63%),
+    radial-gradient(ellipse 70% 110% at 108% 110%, rgba(177,74,244,.35), transparent 74%),
+    linear-gradient(145deg,#64419b 0%,#30246e 47%,#191833 100%) !important;
+  border-color: rgba(211,157,255,.51) !important;
+  box-shadow:
+    0 10px 20px rgba(43,24,96,.31),
+    0 4px 0 rgba(39,21,70,.6),
+    inset 0 1px 0 rgba(255,255,255,.37),
+    inset 0 -4px 9px rgba(19,8,47,.25) !important;
+}
+.premium-home > div:nth-child(2) > button[data-quick-action="upgrade"] {
+  background:
+    radial-gradient(ellipse 90% 130% at 0% -18%, rgba(138,252,255,.29), transparent 67%),
+    radial-gradient(ellipse 80% 90% at 105% 120%, rgba(94,117,255,.35), transparent 72%),
+    linear-gradient(145deg,#286b89 0%,#23507f 42%,#1c264b 100%) !important;
+  border-color: rgba(123,227,255,.49) !important;
+  box-shadow:
+    0 10px 20px rgba(11,58,107,.28),
+    0 4px 0 rgba(11,38,67,.62),
+    inset 0 1px 0 rgba(255,255,255,.35),
+    inset 0 -4px 9px rgba(10,19,61,.24) !important;
+}
+.premium-home > div:nth-child(2) > button[data-quick-action]::before {
+  z-index: 0;
+  background:
+    linear-gradient(128deg, rgba(255,255,255,.15), transparent 34%, rgba(0,0,0,.06) 68%, rgba(255,255,255,.065)) !important;
+}
+.premium-home > div:nth-child(2) > button[data-quick-action]::after {
+  content:"";
+  position:absolute;
+  z-index:0;
+  pointer-events:none;
+  inset:1px;
+  border-radius:18px;
+  border: 1px solid rgba(255,255,255,.065);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
+}
+.premium-home > div:nth-child(2) > button[data-quick-action] > span:first-child {
+  position:relative;
+  z-index:1;
+  width:40px !important;
+  height:40px !important;
+  border-radius:13px !important;
+  border:1px solid rgba(255,255,255,.29) !important;
+  background:
+    radial-gradient(circle at 26% 16%,rgba(255,255,255,.43),transparent 47%),
+    linear-gradient(155deg,rgba(255,255,255,.18),rgba(12,15,52,.26)) !important;
+  box-shadow: 0 5px 11px rgba(9,9,32,.29), inset 0 1px 1px rgba(255,255,255,.23),
+    inset 0 -3px 5px rgba(4,3,25,.2) !important;
+  color:#fff !important;
+  filter:drop-shadow(0 3px 6px rgba(10,12,39,.17));
+}
+.premium-home > div:nth-child(2) > button[data-quick-action="arena"] > span:first-child svg {
+  color:#ffe5b2 !important;
+  filter:drop-shadow(0 1px 3px rgba(255,180,75,.33));
+}
+.premium-home > div:nth-child(2) > button[data-quick-action="upgrade"] > span:first-child svg {
+  color:#dbfcff !important;
+  filter:drop-shadow(0 1px 4px rgba(125,240,255,.37));
+}
+.premium-home > div:nth-child(2) > button[data-quick-action] > span:nth-child(2) strong {
+  font-family: Inter,"SF Pro Display",system-ui,sans-serif;
+  color:#ffffff !important;
+  font-size:clamp(12px,3.4vw,15px) !important;
+  font-weight:750 !important;
+  letter-spacing:-.028em !important;
+}
+.premium-home > div:nth-child(2) > button[data-quick-action] > span:nth-child(2) small {
+  color:rgba(244,246,255,.81) !important;
+  font-size:clamp(9px,2.4vw,10.5px) !important;
+  font-weight:500 !important;
+}
+.premium-home > div:nth-child(2) > button[data-quick-action] > span:last-child {
+  display:grid !important;
+  place-items:center !important;
+  width:22px !important;
+  height:22px !important;
+  border-radius:50% !important;
+  border:1px solid rgba(255,255,255,.24) !important;
+  background:rgba(255,255,255,.075) !important;
+  color:#fff !important;
+  box-shadow:inset 0 1px rgba(255,255,255,.1) !important;
+}
+.premium-home > div:nth-child(2) > button[data-quick-action] > span:last-child svg {
+  width:13px;
+  height:13px;
+}
+@media (hover:hover) {
+  .premium-home > div:nth-child(2) > button[data-quick-action]:hover {
+    filter:brightness(1.09);
+    transform:translateY(-2px);
+    box-shadow:0 15px 27px rgba(11,14,42,.36),inset 0 1px rgba(255,255,255,.34) !important;
+  }
+}
+.premium-home > div:nth-child(2) > button[data-quick-action]:active {
+  transform:translateY(3px) scale(.985) !important;
+  filter:brightness(.98) !important;
+}
+@media (max-width:380px) {
+  .premium-home > div:nth-child(2) > button[data-quick-action] {
+    grid-template-columns:34px minmax(0,1fr) 17px !important;
+    padding:10px 8px !important;
+    gap:7px !important;
+    min-height:80px !important;
+  }
+  .premium-home > div:nth-child(2) > button[data-quick-action] > span:first-child {
+    width:34px !important;height:34px !important;border-radius:11px !important;
+  }
+  .premium-home > div:nth-child(2) > button[data-quick-action] > span:last-child {
+    width:18px !important;height:18px !important;
+  }
+}
+@media (prefers-reduced-motion:reduce) {
+  .premium-home > div:nth-child(2) > button[data-quick-action] {
+    transition:none !important;transform:none !important;
+  }
+}

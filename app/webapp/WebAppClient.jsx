@@ -16,7 +16,6 @@ import gameCardStyles from './PremiumGameCards.module.css';
 import RouteSkeleton from './RouteSkeleton';
 import { prepareFirstView, warmNearViewport, preloadDecodedImage } from '@/lib/mystAssetReadiness.mjs';
 import DiceLobbyCard from './DiceLobbyCard';
-import PvpEntryCard from './PvpEntryCard';
 import StarIcon from './StarIcon';
 import LevelRing from './LevelRing';
 import SettingsPanel from './SettingsPanel';
@@ -1603,7 +1602,6 @@ export default function WebAppClient() {
                   profile={profile}
                   cases={activeCases}
                   giftsByCase={giftsByCase}
-                  onGoCases={() => document.getElementById('case-collection')?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' })}
                   onGoInventory={() => setTab('inventory')}
                   onGoUpgrade={openUpgradeLab}
                   onOpenCase={openCase}
@@ -1627,7 +1625,6 @@ export default function WebAppClient() {
                   onGoHome={() => setTab('home')}
                   onOpenRocket={() => openRocketGame('games')}
                   onOpenDice={() => openDiceGame('games')}
-                  onOpenPvp={() => openPvpHub('games')}
                   featureSettings={featureSettings}
                 />
               ) : null}
@@ -2046,7 +2043,6 @@ function HomeView({
   profile,
   cases,
   giftsByCase,
-  onGoCases,
   onGoInventory,
   onGoUpgrade,
   onOpenCase,
@@ -2097,18 +2093,20 @@ function HomeView({
       </section>
 
       <div className={gameCardStyles.actionsGrid}>
-        <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.contracts}`} onClick={onGoCases}>
+        <button type="button" data-quick-action="arena" aria-label="PVP Arena bo‘limini ochish"
+          className={`${gameCardStyles.actionCard} ${gameCardStyles.arena}`} onClick={onOpenPvp}>
           <span className={gameCardStyles.actionIcon}>
-            <AppIcon name="cases" />
+            <AppIcon name="swords" />
           </span>
           <span className={gameCardStyles.actionCopy}>
-            <strong>Cases</strong>
-            <small>Browse &amp; open</small>
+            <strong>Arena</strong>
+            <small>PvP battles</small>
           </span>
           <span className={gameCardStyles.actionChevron}><AppIcon name="chevronRight" /></span>
         </button>
 
-        <button type="button" className={`${gameCardStyles.actionCard} ${gameCardStyles.upgrade}`} onClick={onGoUpgrade}>
+        <button type="button" data-quick-action="upgrade" aria-label="Upgrade bo‘limini ochish"
+          className={`${gameCardStyles.actionCard} ${gameCardStyles.upgrade}`} onClick={onGoUpgrade}>
           <span className={gameCardStyles.actionIcon}>
             <AppIcon name="spark" />
           </span>
@@ -2156,7 +2154,7 @@ function HomeView({
   );
 }
 
-function CasesView({ onGoHome, onOpenDice, onOpenPvp }) {
+function CasesView({ onGoHome, onOpenDice }) {
   return (
     <section className="screen-stack">
       <div className="page-header premium-card games-page-header">
@@ -2168,7 +2166,6 @@ function CasesView({ onGoHome, onOpenDice, onOpenPvp }) {
 
       <div className={`${gameCardStyles.stack} ${gameCardStyles.gamesStack}`}>
         <DiceLobbyCard onClick={onOpenDice} />
-        <PvpEntryCard onClick={onOpenPvp} />
       </div>
     </section>
   );

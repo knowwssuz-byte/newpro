@@ -15,7 +15,7 @@ test('Home PvP leads to game list and X/O image card, then live room flow',()=>{
  assert.match(jsx,/src="\/feature\/pvp-xo-card-hd\.webp"/);
  assert.match(jsx,/const \[selected,setSelected\]=useState\('list'\)/);
  assert.match(jsx,/setSelected\('xo'\)/);
- assert.match(jsx,/setSelected\('rps'\)/);
+ assert.doesNotMatch(jsx,/setSelected\('rps'\)/);
  assert.match(jsx,/onBack=\{\(\)=>setSelected\('list'\)\}/);
  assert.match(jsx,/Yaratilgan o‘yinlar/);
  assert.match(css,/\.xoPosterImage\{/);
@@ -29,7 +29,7 @@ test('PvP gallery uses two large square app icons and minimal labels',()=>{
  assert.match(catalog,/className=\{styles\.storeGrid\}/);
  assert.match(catalog,/className=\{styles\.storeCover\}/);
  assert.match(catalog,/className=\{styles\.storeCoverImage\}/);
- assert.match(catalog,/styles\.rpsCover/);
+ assert.doesNotMatch(catalog,/styles\.rpsCover/);
  assert.match(catalog,/<strong>X\/O Duel<\/strong>/);
  assert.doesNotMatch(catalog,/Haqiqiy raqib · 5–50 Stars/);
  assert.doesNotMatch(catalog,/O‘YNASH MUMKIN/);
