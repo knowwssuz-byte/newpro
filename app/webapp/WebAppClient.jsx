@@ -721,9 +721,11 @@ export default function WebAppClient() {
     }
 
     hasBootstrappedRef.current = true;
-    if (!tourOpenedRef.current && (data.telegramUser?.id || data.user?.id)) {
+    // Only the server's one-time, authenticated claim may open Welcome.
+    // Extra data responses never decide whether the introduction appears.
+    if (!tourOpenedRef.current && typeof data.showWelcomeTour === 'boolean') {
       tourOpenedRef.current = true;
-      setShowWelcomeTour(true);
+      setShowWelcomeTour(data.showWelcomeTour);
     }
 
   }, []);

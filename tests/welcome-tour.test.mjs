@@ -23,12 +23,19 @@ test('welcome has three local WebP illustrations and concise Uzbek copy',()=>{
   assert.match(component, /disabled=\{index === 0\}/);
 });
 
-test('welcome shows for every fresh app entry without persisted dismissal',()=>{
+test('welcome appears only when initial server bootstrap grants a one-time claim',()=>{
   const app=read('app/webapp/WebAppClient.jsx');
+  const boot=read('app/api/bootstrap/route.js');
+  const migration=read('supabase/migrations/20261031_first_welcome_once.sql');
   assert.match(app,/tourOpenedRef\.current = true/);
-  assert.match(app,/setShowWelcomeTour\(true\)/);
+  assert.match(app,/setShowWelcomeTour\(data\.showWelcomeTour\)/);
+  assert.match(app,/typeof data\.showWelcomeTour === 'boolean'/);
+  assert.doesNotMatch(app,/setShowWelcomeTour\(true\)/);
   assert.doesNotMatch(app,/gift_myst_welcome_/);
-  assert.doesNotMatch(app,/WELCOME_VERSION/);
+  assert.match(boot,/claimFirstWelcome\(supabase, dbUser\)/);
+  assert.match(boot,/showWelcomeTour,/);
+  assert.match(migration,/first_welcome_shown_at/);
+  assert.match(migration,/COALESCE\(first_welcome_shown_at, created_at\)/);
   assert.match(read('app/webapp/WelcomeTour.module.css'), /min-height: 100dvh/);
   assert.match(app, /if \(showWelcomeTour\) return <WelcomeTour/);
   assert.doesNotMatch(app, /\{showWelcomeTour \? <WelcomeTour/);

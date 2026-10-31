@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 import { FREE_CASE_COOLDOWN_MS, nextFreeCaseAt } from '@/lib/freeCaseCooldown.mjs';
+import { claimFirstWelcome } from '@/lib/firstWelcome.mjs';
 
 export const runtime = 'nodejs';
 // Function deployment region is configured for all APIs in vercel.json.
@@ -158,11 +159,19 @@ export async function POST(request) {
       ? {}
       : Object.fromEntries((featureResult.data || []).map((item) => [item.key, item.value || {}]));
 
+    // Consume the introduction only for an authenticated first essential load.
+    // Extras, refetches, multiple devices and retries cannot re-open it.
+    // Claim after all data reads have succeeded to avoid consuming failed loads.
+    const showWelcomeTour = wantsEssential
+      ? await claimFirstWelcome(supabase, dbUser)
+      : false;
+
     return Response.json({
       ok: true,
       phase,
       ...(wantsEssential ? {
         user: dbUser,
+        showWelcomeTour,
         telegramUser: auth.telegramUser,
         isAdmin: auth.isAdmin,
         cases,
