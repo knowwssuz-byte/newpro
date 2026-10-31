@@ -22,6 +22,8 @@ import LevelRing from './LevelRing';
 import SettingsPanel from './SettingsPanel';
 import inventoryStyles from './Inventory.module.css';
 import { getInventoryRows } from '@/lib/inventory.mjs';
+import { nextFreeCaseAt, freeCaseSecondsLeft, formatFreeCaseCountdown } from '@/lib/freeCaseCooldown.mjs';
+import useFreeCaseCountdown from './useFreeCaseCountdown';
 import GiftHistory from './GiftHistory';
 
 
@@ -450,6 +452,8 @@ export default function WebAppClient() {
   const [gifts, setGifts] = useState([]);
   const [inventoryGifts, setInventoryGifts] = useState([]);
   const [history, setHistory] = useState([]);
+  const [freeCaseNextAt, setFreeCaseNextAt] = useState(null);
+  const [freeCaseClockOffsetMs, setFreeCaseClockOffsetMs] = useState(0);
   const [escrowedGiftIds,setEscrowedGiftIds] = useState([]);
   const [inventoryVisited, setInventoryVisited] = useState(false);
   const [inventoryReplay, setInventoryReplay] = useState(0);
@@ -687,6 +691,22 @@ export default function WebAppClient() {
     if ('gifts' in data) setGifts(Array.isArray(data.gifts) ? data.gifts : []);
     if ('inventoryGifts' in data) setInventoryGifts(Array.isArray(data.inventoryGifts) ? data.inventoryGifts : []);
     if ('history' in data) setHistory(Array.isArray(data.history) ? data.history : []);
+    if ('freeCaseServerNow' in data) {
+      const serverMs = Date.parse(data.freeCaseServerNow || '');
+      if (Number.isFinite(serverMs)) setFreeCaseClockOffsetMs(serverMs - Date.now());
+    }
+    if ('freeCaseNextAt' in data) {
+      setFreeCaseNextAt(current => {
+        // An older in-flight bootstrap must not erase a newly won free cooldown.
+        const currentMs = Date.parse(current || '');
+        const incomingMs = Date.parse(data.freeCaseNextAt || '');
+        const latest = Math.max(
+          Number.isFinite(currentMs) ? currentMs : 0,
+          Number.isFinite(incomingMs) ? incomingMs : 0
+        );
+        return latest > Date.now() ? new Date(latest).toISOString() : null;
+      });
+    }
     if ('escrowedGiftIds' in data) setEscrowedGiftIds(Array.isArray(data.escrowedGiftIds) ? data.escrowedGiftIds : []);
     if ('withdrawals' in data) setWithdrawals(Array.isArray(data.withdrawals) ? data.withdrawals : []);
     if ('upgradeRounds' in data) setUpgradeRounds(Array.isArray(data.upgradeRounds) ? data.upgradeRounds : []);
@@ -983,6 +1003,8 @@ export default function WebAppClient() {
 
   async function openCase(caseItem) {
     if (!caseItem || openingLockRef.current) return;
+    if (Number(caseItem.price || 0) === 0 &&
+        freeCaseSecondsLeft(freeCaseNextAt, Date.now() + freeCaseClockOffsetMs) > 0) return;
 
     const caseGifts = giftsByCase[caseItem.id] || [];
     const activeGiftPool = caseGifts.filter(openableGift);
@@ -1029,6 +1051,10 @@ export default function WebAppClient() {
 
       if (!result?.gift) {
         throw new Error('Server natija qaytarmadi. Qayta urinib ko‘ring.');
+      }
+      if (Number(caseItem.price || 0) === 0) {
+        const nextAt = nextFreeCaseAt(result.history?.created_at || result.opening?.openedAt);
+        if (nextAt) setFreeCaseNextAt(nextAt);
       }
 
       const latestGiftPool =
@@ -1552,6 +1578,8 @@ export default function WebAppClient() {
                   : null
               }
               busy={busy}
+              freeCaseNextAt={freeCaseNextAt}
+              freeCaseClockOffsetMs={freeCaseClockOffsetMs}
               onBack={() => {
                 setOpening(null);
                 setSelectedCase(null);
@@ -1586,6 +1614,8 @@ export default function WebAppClient() {
                   onOpenRocket={() => openRocketGame('home')}
                   onOpenPvp={() => openPvpHub('home')}
                   busy={busy}
+                  freeCaseNextAt={freeCaseNextAt}
+                  freeCaseClockOffsetMs={freeCaseClockOffsetMs}
                   featureSettings={featureSettings}
                 />
               ) : null}
@@ -2022,6 +2052,8 @@ function HomeView({
   onOpenRocket,
   onOpenPvp,
   busy,
+  freeCaseNextAt,
+  freeCaseClockOffsetMs,
 }) {
   const featuredCases = cases || [];
 
@@ -2109,6 +2141,8 @@ function HomeView({
                 caseItem={caseItem}
                 gifts={giftsByCase[caseItem.id] || []}
                 busy={busy}
+                freeCaseNextAt={freeCaseNextAt}
+                freeCaseClockOffsetMs={freeCaseClockOffsetMs}
                 onOpen={onOpenCase}
                 onDetails={onSelectCase}
               />
@@ -2138,7 +2172,7 @@ function CasesView({ onGoHome, onOpenDice, onOpenPvp }) {
   );
 }
 
-function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
+function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, freeCaseNextAt, freeCaseClockOffsetMs, eager = false }) {
   const [imageReady, setImageReady] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [imageAttempt, setImageAttempt] = useState(0);
@@ -2151,9 +2185,12 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
   const badge = caseBadgeText(caseItem, gifts);
   const badgeColor = caseBadgeColor(caseItem);
   const readyCount = gifts.filter(eligibleGift).length;
-  const disabled = busy || readyCount === 0;
   const isFree = Number(caseItem.price || 0) === 0;
-  const buttonText = isFree ? 'FREE' : formatPrice(caseItem.price);
+  const secondsLeft = useFreeCaseCountdown(isFree ? freeCaseNextAt : null, freeCaseClockOffsetMs);
+  const onCooldown = isFree && secondsLeft > 0;
+  const disabled = busy || readyCount === 0 || onCooldown;
+  const buttonText = onCooldown ? formatFreeCaseCountdown(secondsLeft)
+    : isFree ? 'FREE' : formatPrice(caseItem.price);
 
   return (
     <article
@@ -2223,17 +2260,19 @@ function CaseCard({ caseItem, gifts, busy, onOpen, onDetails, eager = false }) {
 
         <button
           type="button"
-          className={caseOpeningStyles.caseTileOpen}
+          className={`${caseOpeningStyles.caseTileOpen} ${onCooldown ? caseOpeningStyles.caseCooldownButton : ''}`}
           disabled={disabled}
+          aria-label={onCooldown ? `Free Case keyingi ochilishi: ${buttonText}` : undefined}
           onClick={(event) => {
             event.stopPropagation();
             onOpen(caseItem);
           }}
         >
-          <Image src="/currency/case-open-star-3d.png" width={20} height={20}
-            className={caseOpeningStyles.casePriceStar} alt="" aria-hidden="true"
-            unoptimized draggable={false} />
-          <span>{buttonText}</span>
+          {onCooldown ? <AppIcon name="clock" /> :
+            <Image src="/currency/case-open-star-3d.png" width={20} height={20}
+              className={caseOpeningStyles.casePriceStar} alt="" aria-hidden="true"
+              unoptimized draggable={false} />}
+          <span className={onCooldown ? caseOpeningStyles.cooldownDigits : undefined}>{buttonText}</span>
         </button>
       </div>
     </article>

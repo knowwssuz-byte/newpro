@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { ensureUser, jsonError, readTelegramRequest } from '@/lib/telegramAuth';
+import { FREE_CASE_COOLDOWN_MS, nextFreeCaseAt } from '@/lib/freeCaseCooldown.mjs';
 
 export const runtime = 'nodejs';
 // Function deployment region is configured for all APIs in vercel.json.
@@ -136,6 +137,23 @@ export async function POST(request) {
         price,buy_price:price,sell_price:price,floor_price:price,
         image_url:lib.image_url||lib.png_url||lib.webp_url||'',animation_url:lib.animation_url||''};
     }).filter((item)=>item.price>0);
+    // Read all free-case openings (including archived cases) so the timer
+    // mirrors the atomic SQL 24-hour cooldown after a page refresh.
+    let freeCaseNextAt = null;
+    if (wantsEssential) {
+      const { data: lastFreeOpen, error: freeOpenError } = await supabase
+        .from('open_history')
+        .select('created_at,cases!inner(price)')
+        .eq('user_id', auth.telegramUser.id)
+        .eq('cases.price', 0)
+        .gte('created_at', new Date(Date.now() - FREE_CASE_COOLDOWN_MS).toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (freeOpenError) throw freeOpenError;
+      freeCaseNextAt = nextFreeCaseAt(lastFreeOpen?.created_at);
+    }
+
     const featureSettings = featureResult.error
       ? {}
       : Object.fromEntries((featureResult.data || []).map((item) => [item.key, item.value || {}]));
@@ -148,6 +166,8 @@ export async function POST(request) {
         telegramUser: auth.telegramUser,
         isAdmin: auth.isAdmin,
         cases,
+        freeCaseNextAt,
+        freeCaseServerNow: new Date().toISOString(),
         gifts: auth.isAdmin
           ? (giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog')
           : giftsWithActualOdds((giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog')),

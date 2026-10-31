@@ -1671,3 +1671,40 @@
     flex-basis: 18px;
   }
 }
+
+/* Readable, non-interactive free case countdown; CSS cannot override the SQL lock. */
+.caseTileOpen.caseCooldownButton:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  background: linear-gradient(145deg, #413b2e, #302c29);
+  border-color: rgba(235, 202, 125, .25);
+  color: #f0daaf;
+  box-shadow: inset 0 1px rgba(255,255,255,.045);
+  filter: none;
+}
+.caseTileOpen.caseCooldownButton svg {
+  color: #f2d18a;
+}
+.cooldownDigits {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .055em;
+  white-space: nowrap;
+  font-weight: 850;
+}
+.detailPage .detailOpen.caseCooldownButton:disabled {
+  opacity: 1 !important;
+  cursor: not-allowed;
+  background: linear-gradient(115deg, #514437, #3b3540) !important;
+  border-color: rgba(226,191,127,.3) !important;
+  color: #f5e1b8 !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.05) !important;
+  filter: none !important;
+}
+.winPrimary:disabled {
+  opacity: .86;
+  cursor: not-allowed;
+  color: #edd6aa;
+  background: linear-gradient(112deg, #54483c, #373140);
+  box-shadow: none;
+}
+.winPrimary:disabled svg { width: 16px; height: 16px; flex: 0 0 16px; }

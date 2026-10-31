@@ -8,6 +8,8 @@ import Image from 'next/image';
 import AppIcon from './AppIcon';
 import StarIcon from './StarIcon';
 import caseOpeningStyles from './CaseOpening.module.css';
+import useFreeCaseCountdown from './useFreeCaseCountdown';
+import { formatFreeCaseCountdown } from '@/lib/freeCaseCooldown.mjs';
 import {caseImageStyle} from '@/lib/caseImageLayout.mjs';
 import {buildIdlePreviewStrip} from '@/lib/caseReelPresentation.mjs';
 import {sortCasePrizesHighToLow} from '@/lib/casePrizeOrder.mjs';
@@ -283,7 +285,7 @@ function InlineRaffleRoller({ opening, idleGifts, targetIndex = 0, onRollComplet
   );
 }
 
-function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers }) {
+function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, cooldownSeconds = 0, helpers }) {
   const { GiftMedia, isBalanceReward, rewardSubtitle, sellButtonText } = helpers;
   const modalRef = useRef(null);
   const gift = opening?.gift;
@@ -371,8 +373,9 @@ function CaseWinResult({ opening, onClose, onSell, onInventory, onAgain, helpers
 
         <div className={caseOpeningStyles.winActions}>
           <button type="button" className={caseOpeningStyles.winPrimary}
-            onClick={onAgain}>Yana ochish
-            <span aria-hidden="true">↗</span>
+            disabled={cooldownSeconds > 0} onClick={onAgain}>
+            {cooldownSeconds > 0 ? <><AppIcon name="clock" /> <span className={caseOpeningStyles.cooldownDigits}>{formatFreeCaseCountdown(cooldownSeconds)}</span></> :
+              <>Yana ochish <span aria-hidden="true">↗</span></>}
           </button>
           {!isStars && !isXp && (
             <button type="button" className={caseOpeningStyles.winSell}
@@ -403,6 +406,8 @@ export default function CaseDetailPage({
   onRollComplete,
   onInventory,
   onAgain,
+  freeCaseNextAt,
+  freeCaseClockOffsetMs,
   soundEnabled,
   helpers,
 }) {
@@ -412,6 +417,8 @@ export default function CaseDetailPage({
   const readyGifts = gifts.filter(eligibleGift);
   const openableGifts = readyGifts.filter(openableGift);
   const isFree = Number(caseItem.price || 0) === 0;
+  const cooldownSeconds = useFreeCaseCountdown(isFree ? freeCaseNextAt : null, freeCaseClockOffsetMs);
+  const onCooldown = isFree && cooldownSeconds > 0;
   const openText = isFree ? 'OPEN' : `OPEN ${formatPrice(caseItem.price)}`;
   const previewGifts = readyGifts.length ? readyGifts : gifts;
   const orderedPrizes = sortCasePrizesHighToLow(previewGifts);
@@ -475,13 +482,19 @@ export default function CaseDetailPage({
           </div>
         </details> : null}
 
-        <button type="button" className={`${caseOpeningStyles.openButton} ${caseOpeningStyles.detailOpen}`}
-          disabled={busy || isSpinning || openableGifts.length === 0}
-          onClick={() => { cue('open'); onOpen(); }} aria-busy={isSpinning} aria-live="polite">
-          <Image src="/currency/case-open-star-3d.png" width={22} height={22}
-            className={caseOpeningStyles.casePriceStar} alt="" aria-hidden="true"
-            unoptimized draggable={false} />
-          <span>{isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING') : openText}</span>
+        <button type="button"
+          className={`${caseOpeningStyles.openButton} ${caseOpeningStyles.detailOpen} ${onCooldown ? caseOpeningStyles.caseCooldownButton : ''}`}
+          disabled={busy || isSpinning || onCooldown || openableGifts.length === 0}
+          aria-label={onCooldown ? `Free Case keyingi ochilishi: ${formatFreeCaseCountdown(cooldownSeconds)}` : undefined}
+          onClick={() => { cue('open'); onOpen(); }} aria-busy={isSpinning}>
+          {onCooldown && !isSpinning ? <AppIcon name="clock" /> :
+            <Image src="/currency/case-open-star-3d.png" width={22} height={22}
+              className={caseOpeningStyles.casePriceStar} alt="" aria-hidden="true"
+              unoptimized draggable={false} />}
+          <span className={onCooldown && !isSpinning ? caseOpeningStyles.cooldownDigits : undefined}>
+            {isSpinning ? (inlineOpening.stage === 'preparing' ? 'OPENING' : 'ROLLING')
+              : onCooldown ? formatFreeCaseCountdown(cooldownSeconds) : openText}
+          </span>
         </button>
         {inlineOpening?.stage === 'rolling' && (
           <button type="button" className={caseOpeningStyles.skipAnimation}
@@ -496,6 +509,7 @@ export default function CaseDetailPage({
           onSell={onSellResult}
           onInventory={onInventory}
           onAgain={onAgain}
+          cooldownSeconds={cooldownSeconds}
           helpers={helpers}
         />
       ) : null}
