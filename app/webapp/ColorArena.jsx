@@ -2,7 +2,7 @@
 
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import Image from 'next/image';
-import {ArrowLeft,Plus,Users,Timer,RefreshCw,Eye,Crown,Volume2,VolumeX,Gift,ShieldCheck,Check,ChevronRight,Sparkles,X} from 'lucide-react';
+import {ArrowLeft,LayoutGrid,Plus,Users,Timer,RefreshCw,Eye,Crown,Volume2,VolumeX,Gift,ShieldCheck,Check,ChevronRight,Sparkles,X} from 'lucide-react';
 import {createClient} from '@supabase/supabase-js';
 import {createPortal} from 'react-dom';
 import {orderedShares,renderBands,labelPoint,orientPoint,boundaryAt,arenaColorForSeat} from '@/lib/colorArenaGeometry.mjs';
@@ -237,7 +237,7 @@ function ArenaCanvas({room,clockOffset,audioController}) {
     <div className={styles.boardFooter}><span><i/> FAIR AREA SYSTEM</span><span>100% TAQSIMLANGAN</span></div>
   </div>;
 }
-export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChange}) {
+export default function ColorArena({onBack,onOpenModes,apiPost,onToast,balance,onBalanceChange}) {
   const [room,setRoom]=useState(null);
   const [soundOn,setSoundOn]=useState(false);
   const audio=useRef(null),playedVictory=useRef(null);
@@ -400,6 +400,9 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
           className={styles.headerLogoImage} unoptimized/>
       </span>
       <strong className={styles.compactTitle}>COLOR ARENA</strong>
+      {onOpenModes?<button type="button" className={styles.modesButton}
+        onClick={onOpenModes} aria-label="Boshqa PvP o‘yinlarini ko‘rish"
+        title="Arena rejimlari"><LayoutGrid size={16}/></button>:null}
       <button type="button" className={styles.soundButton} onClick={toggleSound}
         aria-label={soundOn?'Arena ovozini o‘chirish':'Arena ovozini yoqish'}
         aria-pressed={soundOn} title={soundOn?'Ovozni o‘chirish':'Ovozni yoqish'}>

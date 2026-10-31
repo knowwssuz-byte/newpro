@@ -25,15 +25,6 @@ function realChance(gift) {
   );
 }
 
-function normalizeGift(gift) {
-  return {
-    ...gift,
-    chance: visibleChance(gift),
-    real_chance: realChance(gift),
-    stock: toNumber(gift.stock),
-  };
-}
-
 function rewardType(gift) {
   const type=String(gift?.type||'').toLowerCase();return type==='balance'||type==='xp'?type:'gift';
 }
@@ -59,26 +50,6 @@ function publicGift(gift) {
     rarity: gift.rarity || null,
     created_at: gift.created_at,
   };
-}
-
-function pickWeightedGift(gifts) {
-  const pool = gifts
-    .map(normalizeGift)
-    .filter((gift) => gift.is_active !== false && gift.stock > 0 && realChance(gift) > 0);
-
-  const totalChance = pool.reduce((sum, gift) => sum + realChance(gift), 0);
-
-  if (pool.length === 0 || totalChance <= 0) return null;
-
-  let random = Math.random() * totalChance;
-
-  for (const gift of pool) {
-    random -= realChance(gift);
-
-    if (random <= 0) return gift;
-  }
-
-  return pool[pool.length - 1] || null;
 }
 
 function shouldFallbackRpc(error) {
@@ -198,146 +169,6 @@ async function openCaseWithRpc(supabase, userId, caseId) {
 
   if (currentUser?.level_xp != null) response.userXp=Number(currentUser.level_xp);
   return response;
-}
-
-async function decrementGiftStock(supabase, gift) {
-  const currentStock = toNumber(gift.stock);
-  const nextStock = currentStock - 1;
-
-  if (currentStock <= 0) {
-    return { ok: false, reason: 'STOCK_EMPTY' };
-  }
-
-  const { data, error } = await supabase
-    .from('gifts')
-    .update({ stock: nextStock })
-    .eq('id', gift.id)
-    .eq('stock', currentStock)
-    .gt('stock', 0)
-    .select('*')
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  if (!data) return { ok: false, reason: 'STOCK_CHANGED' };
-
-  return { ok: true, gift: data };
-}
-
-async function openCaseFallback(supabase, auth, dbUser, caseId) {
-  const { data: caseItem, error: caseError } = await supabase
-    .from('cases')
-    .select('*')
-    .eq('id', caseId)
-    .eq('is_active', true)
-    .single();
-
-  if (caseError || !caseItem) {
-    return jsonError('Case topilmadi yoki aktiv emas', 404);
-  }
-
-  const userBalance = toNumber(dbUser.balance);
-  const casePrice = Math.max(toNumber(caseItem.price), 0);
-
-  if (userBalance < casePrice) {
-    return jsonError('Balans yetarli emas', 400, {
-      balance: userBalance,
-      price: casePrice,
-    });
-  }
-
-  const { data: giftRows, error: giftsError } = await supabase
-    .from('gifts')
-    .select('*')
-    .eq('case_id', caseId)
-    .eq('is_active', true)
-    .gt('stock', 0);
-
-  if (giftsError) throw new Error(giftsError.message);
-
-  const gifts = (giftRows || []).map(normalizeGift);
-
-  if (gifts.length === 0) {
-    return jsonError(
-      'Bu case ichida ochiladigan sovg‘a yo‘q. Admin panelda sovg‘a active=true, real_chance > 0 va stock > 0 ekanini tekshiring.',
-      400,
-      { reason: 'NO_READY_GIFTS' }
-    );
-  }
-
-  const totalChance = gifts.reduce((sum, gift) => sum + realChance(gift), 0);
-
-  if (totalChance <= 0) {
-    return jsonError('Bu case uchun haqiqiy chance sozlanmagan');
-  }
-
-  let selectedGift = null;
-  let updatedGift = null;
-
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    selectedGift = pickWeightedGift(gifts);
-
-    if (!selectedGift) break;
-
-    const stockResult = await decrementGiftStock(supabase, selectedGift);
-
-    if (stockResult.ok) {
-      updatedGift = stockResult.gift;
-      break;
-    }
-  }
-
-  if (!updatedGift) {
-    return jsonError(
-      'Sovg‘a stocki boshqa ochishda tugab qoldi. Stockni ko‘paytiring yoki qayta urinib ko‘ring.',
-      409,
-      { reason: 'STOCK_CHANGED' }
-    );
-  }
-
-  if(rewardType(updatedGift)==='xp') return jsonError('XP mukofoti atomik ochish orqali beriladi',503);
-  const rewardAmount = rewardType(updatedGift) === 'balance' ? Math.max(0, toNumber(updatedGift.value)) : 0;
-  const newBalance = userBalance - casePrice + rewardAmount;
-
-  const { data: updatedUser, error: balanceError } = await supabase
-    .from('users')
-    .update({ balance: newBalance })
-    .eq('id', auth.telegramUser.id)
-    .select('*')
-    .single();
-
-  if (balanceError) throw new Error(balanceError.message);
-
-  const { data: history, error: historyError } = await supabase
-    .from('open_history')
-    .insert({
-      user_id: auth.telegramUser.id,
-      case_id: caseId,
-      gift_id: updatedGift.id,
-    })
-    .select('id, created_at, user_id, case_id, gift_id')
-    .single();
-
-  if (historyError) throw new Error(historyError.message);
-
-  return Response.json({
-    ok: true,
-    case: caseItem,
-    gift: publicGift(updatedGift),
-    balance: toNumber(updatedUser.balance),
-    balanceBefore: userBalance,
-    balanceAfter: toNumber(updatedUser.balance),
-    price: casePrice,
-    rewardAmount,
-    history,
-    reelPool: gifts.map(publicGift),
-    opening: {
-      totalChance,
-      poolSize: gifts.length,
-      openedAt: history.created_at,
-      rewardType: rewardType(updatedGift),
-      rewardAmount,
-    },
-  });
 }
 
 async function verifyFreeCaseAccess(supabase, userId, caseId) {

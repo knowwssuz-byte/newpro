@@ -352,7 +352,7 @@ export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast,i
  // Home Arena shortcut opens Color Arena immediately, without the game gallery.
  const [selected,setSelected]=useState(()=>initialGame==='color'?'color':'list');
  if(selected==='color')return <div className={styles.root}>
-  <ColorArena onBack={initialGame==='color'?onBack:()=>setSelected('list')} apiPost={apiPost} balance={balance}
+  <ColorArena onBack={initialGame==='color'?onBack:()=>setSelected('list')} onOpenModes={()=>setSelected('list')} apiPost={apiPost} balance={balance}
     onBalanceChange={onBalanceChange} onToast={onToast}/>
  </div>;
  if(selected==='xo')return <div className={styles.root}>

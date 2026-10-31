@@ -676,6 +676,11 @@ async function handleFormAction(request, formData, supabase) {
 
 export async function POST(request) {
   try {
+    // Reject malformed/unauthorized requests before allocating a parsed upload.
+    assertAdmin(request, {adminKey:''});
+    const contentLength=Number(request.headers.get('content-length')||0);
+    if(Number.isFinite(contentLength)&&contentLength>12*1024*1024)
+      return json({ok:false,error:'Upload hajmi 12 MB dan oshmasin'},413);
     const supabase = getSupabaseAdmin();
     const contentType = request.headers.get('content-type') || '';
 

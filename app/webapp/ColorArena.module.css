@@ -531,3 +531,8 @@
 /* Crisp in-game icon uses the same Color Arena PNG as the PvP game selector. */
 .headerLogo {border-color:rgba(127,170,255,.32);background:#120d2a;}
 .headerLogoImage {width:100%;height:100%;object-fit:cover;image-rendering:auto;filter:none;}
+
+/* Arena opens Color directly; a compact control keeps additional PvP modes accessible. */
+.modesButton {display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;border:1px solid rgba(177,166,225,.27);border-radius:10px;background:rgba(112,88,158,.12);color:#e7d7ff;cursor:pointer}
+.modesButton:focus-visible {outline:2px solid #dbbaff;outline-offset:2px}
+@media(max-width:350px){.modesButton{flex-basis:28px;width:28px;height:28px}.header{gap:6px}}

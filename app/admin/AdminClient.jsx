@@ -830,7 +830,6 @@ export default function AdminClient() {
 
     const formData = new FormData();
     formData.append('action', 'case_create_upload');
-    formData.append('adminKey', adminKey);
     formData.append('title', caseForm.title);
     formData.append('description', caseForm.description);
     formData.append('price', caseForm.price);
