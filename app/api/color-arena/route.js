@@ -5,7 +5,7 @@ import {ensureUser,readTelegramRequest,jsonError} from '@/lib/telegramAuth';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const ACTIONS=new Set(['state','join','raise','leave','inventory','gift']);
+const ACTIONS=new Set(['state','join','raise','leave','inventory','gift','gift_batch']);
 const json=(value)=>Response.json({ok:true,...value},{headers:{'Cache-Control':'no-store'}});
 function parseIntStrict(value,min,max) {
   const n=Number(value);
@@ -123,7 +123,7 @@ export async function POST(request){
     const db=getSupabaseAdmin(),id=Number(auth.telegramUser.id);
     const input=auth.body||{},action=String(input.action||'state');
     if(!ACTIONS.has(action))return jsonError('Noto‘g‘ri amal',400);
-    if(['join','raise','gift'].includes(action)&&!UUID.test(String(input.requestId||'')))
+    if(['join','raise','gift','gift_batch'].includes(action)&&!UUID.test(String(input.requestId||'')))
       return jsonError('So‘rov ID noto‘g‘ri',400);
     // One authoritative public room; caller cannot choose wager destination.
     const publicRoom=dbThrow(await db.from('color_arena_rooms')
@@ -171,7 +171,17 @@ export async function POST(request){
       }).filter(Boolean);
       return json({inventory,serverNow:Date.now()});
     }
-    if(action==='gift'){
+    if(action==='gift_batch'){
+      const ids=input.historyIds;
+      if(!Array.isArray(ids) || ids.length<1 || ids.length>10 ||
+        ids.some(giftId=>!UUID.test(String(giftId))) ||
+        new Set(ids.map(String)).size!==ids.length)
+        return jsonError('1–10 ta takrorlanmagan gift tanlang',400);
+      // One PostgreSQL transaction: either ALL selected gifts are escrowed or none.
+      dbThrow(await db.rpc('color_arena_stake_gifts',{
+        p_room:roomId,p_user:id,p_histories:ids,p_request:input.requestId
+      }));
+    }else if(action==='gift'){
       if(!UUID.test(String(input.historyId||'')))return jsonError('Gift ID noto‘g‘ri',400);
       dbThrow(await db.rpc('color_arena_stake_gift',{p_room:roomId,p_user:id,
         p_history:input.historyId,p_request:input.requestId}));

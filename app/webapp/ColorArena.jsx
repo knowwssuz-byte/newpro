@@ -119,7 +119,7 @@ function ArenaCanvas({room,clockOffset,audioController}) {
       ctx.setTransform(dpr,0,0,dpr,0,0);
       ctx.clearRect(0,0,n,n);
       ctx.drawImage(background,0,0,n,n);
-      const active=['LOCKED','ROLLING','RESULT'].includes(room?.status);
+      const active=(room?.players?.length||0)>=2 && ['LOCKED','ROLLING','RESULT'].includes(room?.status);
       const t=room?.status==='RESULT'?1:room?.status==='LOCKED'?0:clamp(
         (Date.now()+offsetRef.current-Date.parse(room?.rollingAt))/
         Math.max(1,Date.parse(room?.rollEndsAt)-Date.parse(room?.rollingAt)),0,1);
@@ -141,6 +141,23 @@ function ArenaCanvas({room,clockOffset,audioController}) {
           const alpha=(12-i)/12*.16*intensity;
           ctx.beginPath();ctx.arc(pp[0]*n,pp[1]*n,(4+(12-i)*.45)*Math.min(1,n/360),0,Math.PI*2);
           ctx.fillStyle='rgba(196,223,255,'+alpha+')';ctx.fill();
+        }
+        // A translucent moving light field follows the server-timed projectile.
+        // This is visual only: trajectory and server winner are unchanged.
+        if(!reducedMotion){
+          const glowRadius=(18+19*(1-t))*Math.min(1,n/330);
+          const gx=point[0]*n,gy=point[1]*n;
+          const glow=ctx.createRadialGradient(gx,gy,0,gx,gy,glowRadius);
+          glow.addColorStop(0,'rgba(244,242,255,'+(.29*(1-t)) +')');
+          glow.addColorStop(.42,'rgba(134,184,255,'+(.16*(1-t)) +')');
+          glow.addColorStop(1,'rgba(122,100,255,0)');
+          ctx.beginPath();ctx.fillStyle=glow;
+          ctx.arc(gx,gy,glowRadius,0,Math.PI*2);ctx.fill();
+          const back=trajectory.position(Math.max(0,t-.008));
+          ctx.beginPath();ctx.moveTo(back[0]*n,back[1]*n);ctx.lineTo(gx,gy);
+          ctx.strokeStyle='rgba(225,240,255,'+(Math.max(0,.52-t*.39))+')';
+          ctx.lineWidth=Math.max(1,n/240);ctx.shadowBlur=13;ctx.shadowColor='#94b8ff';
+          ctx.stroke();ctx.shadowBlur=0;
         }
         for(const impact of trajectory.impacts){
           const age=t-impact.t;
@@ -187,7 +204,8 @@ function ArenaCanvas({room,clockOffset,audioController}) {
       cancelAnimationFrame(frame);
     };
   },[room?.roundId,room?.status,room?.winnerId,room?.target?.x,room?.target?.y,key,seed,trajectory]);
-  return <div className={styles.boardShell}>
+  return <div className={styles.boardShell} data-status={room?.status||'WAITING'}
+    data-player-count={room?.players?.length||0}>
     <div className={styles.board} aria-label="Stavkalarga mos, egri chegarali rangli maydon">
       <canvas ref={canvas} className={styles.canvas}/>
       {shares.map((entry,i)=>{
@@ -205,6 +223,8 @@ function ArenaCanvas({room,clockOffset,audioController}) {
       <span ref={orb} className={styles.ring} aria-hidden="true">
         <span className={styles.ringCross}><i className={styles.ringDot}/></span>
       </span>
+      {(room?.players?.length||0)<2&&['WAITING','BETTING'].includes(room?.status)?
+        <span className={styles.boardWaiting}><Users size={15}/> Ikkinchi o‘yinchi kutilmoqda</span>:null}
     </div>
       {room?.status==='RESULT' ? <div className={styles.winStrip}>
         <div className={styles.victoryParticles} aria-hidden="true">
@@ -253,8 +273,10 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
   const [loading,setLoading]=useState(true),[busy,setBusy]=useState(''),[error,setError]=useState('');
   const [stake,setStake]=useState(10),[raise,setRaise]=useState(10);
   const [wagerMode,setWagerMode]=useState('stars'),[giftInventory,setGiftInventory]=useState([]);
-  const [giftLoading,setGiftLoading]=useState(false),[chosenGift,setChosenGift]=useState(null);
+  const [giftLoading,setGiftLoading]=useState(false),[chosenGifts,setChosenGifts]=useState([]);
   const [confirmGift,setConfirmGift]=useState(false);
+  const selectedCount=chosenGifts.length;
+  const MAX_GIFTS=10;
   const [clock,setClock]=useState(Date.now()),[offset,setOffset]=useState(0);
   const syncBusy=useRef(false),pending=useRef(new Map());
   const call=useCallback((action,payload={})=>
@@ -312,16 +334,20 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
     }catch(e){setError(e?.message||'Giftlar yuklanmadi');}
     finally{setGiftLoading(false);}
   },[call]);
-  useEffect(()=>{if(wagerMode==='gift'&&room?.status==='WAITING'||wagerMode==='gift'&&room?.status==='BETTING')
-    void loadGiftInventory();
+  useEffect(()=>{
+    if(wagerMode==='gift' && ['WAITING','BETTING'].includes(room?.status)) void loadGiftInventory();
   },[wagerMode,room?.roundId,loadGiftInventory]);
+  useEffect(()=>{
+    setChosenGifts([]);
+    setConfirmGift(false);
+  },[room?.roundId]);
 
   async function act(action,payload={}){
     if(busy)return;
     setBusy(action);setError('');
     const nonceKey=action+':'+JSON.stringify(payload);
     try{
-      if(action==='join'||action==='raise'||action==='gift'){
+      if(['join','raise','gift','gift_batch'].includes(action)){
         const requestId=pending.current.get(nonceKey)||makeId();
         pending.current.set(nonceKey,requestId);
         payload={...payload,requestId};
@@ -329,14 +355,17 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
       const result=await call(action,payload);
       apply(result);
       pending.current.delete(nonceKey);
-      if(action==='gift'){
+      if(action==='gift'||action==='gift_batch'){
+        const accepted=action==='gift_batch'?payload.historyIds:[payload.historyId];
+        const acceptedIds=new Set(accepted);
         setConfirmGift(false);
-        setGiftInventory(current=>current.filter(g=>g.historyId!==payload.historyId));
-        setChosenGift(null);
+        setGiftInventory(current=>current.filter(g=>!acceptedIds.has(g.historyId)));
+        setChosenGifts([]);
+        void loadGiftInventory();
         if(typeof window!=='undefined')window.dispatchEvent(new Event('myst:inventory-change'));
       }
       onToast?.(action==='raise'?'Stavka oshirildi':
-        action==='gift'?'Gift arenaga tikildi':action==='join'?'Stavka qabul qilindi':'Stavka qaytarildi');
+        action==='gift'||action==='gift_batch'?'Giftlar arenaga tikildi':action==='join'?'Stavka qabul qilindi':'Stavka qaytarildi');
     }catch(e){
       setError(e?.message||'So‘rov bajarilmadi. Qayta urinib ko‘ring.');
       // The same request ID is retained so retry cannot double-debit.
@@ -345,10 +374,17 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
   }
   const seconds=end=>end?Math.max(0,Math.ceil((Date.parse(end)-clock-offset)/1000)):null;
   const myBet=room?.players?.find(p=>p.isMe);
-  const selectedGift=giftInventory.find(g=>g.historyId===chosenGift)||null;
-  const projectedShare=selectedGift&&room
-    ? (Number(myBet?.stake||0)+selectedGift.value)/(Number(room.pot||0)+selectedGift.value)*100
+  const selectedGifts=giftInventory.filter(g=>chosenGifts.includes(g.historyId));
+  const selectedValue=selectedGifts.reduce((sum,g)=>sum+Number(g.value||0),0);
+  const projectedShare=selectedValue>0&&room
+    ? (Number(myBet?.stake||0)+selectedValue)/(Number(room.pot||0)+selectedValue)*100
     : 0;
+  const chooseGift=id=>{
+    setConfirmGift(false);
+    setChosenGifts(current=>current.includes(id)
+      ?current.filter(x=>x!==id)
+      :current.length<MAX_GIFTS?[...current,id]:current);
+  };
   const canBet=room&&['WAITING','BETTING'].includes(room.status)
     &&(room.status==='WAITING'||seconds(room.bettingEndsAt)>0);
   const leaders=room?.players
@@ -370,7 +406,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
     {room?<div className={styles.inRoom}>
       <div className={styles.stats}>
         <div><small>UMUMIY FOND</small><strong>{fmt(room.pot)} <b>{STARS}</b></strong></div>
-        <div><small>O‘YINCHILAR</small><strong><Users size={15}/>{fmt(room.players.length)} <b>∞</b></strong></div>
+        <div><small>O‘YINCHILAR</small><strong><Users size={15}/>{fmt(room.players.length)} <b>/ 2+</b></strong></div>
         <div><small>{room.status==='BETTING'?'STAVKA VAQTI':'BOSQICH'}</small>
           <strong><Timer size={15}/>{room.status==='BETTING'?seconds(room.bettingEndsAt)+'s':
             room.status==='ROLLING'?seconds(room.rollEndsAt)+'s':
@@ -425,16 +461,15 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
         <div className={styles.giftHero}>
           <div className={styles.giftHeroIcon}><Gift size={22} strokeWidth={1.6}/></div>
           <div className={styles.giftHeroCopy}>
-            <span className={styles.giftEyebrow}>COLLECTIBLE WAGER</span>
-            <h3>Gift bilan ishtirok eting</h3>
-            <p>O‘zingizga tegishli Telegram giftni tanlang</p>
+            <h3>Gift tanlash</h3>
+            <p>Bir raundda 10 tagacha gift</p>
           </div>
           <button type="button" className={styles.giftReload} aria-label="Giftlarni yangilash"
             disabled={giftLoading} onClick={()=>void loadGiftInventory()}>
             <RefreshCw size={17}/>
           </button>
         </div>
-        {giftLoading?<div className={styles.giftLoadingGrid} aria-label="Giftlar yuklanmoqda">
+        {giftLoading&&!giftInventory.length?<div className={styles.giftLoadingGrid} aria-label="Giftlar yuklanmoqda">
           {[1,2,3,4].map(i=><div key={i} className={styles.giftSkeleton}/>)}
         </div>:!giftInventory.length?
           <div className={styles.giftEmpty}>
@@ -445,54 +480,53 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
           </div>:
           <div className={styles.giftGallery}>
             {giftInventory.map(g=><button key={g.historyId} type="button"
-              className={styles.giftChoice} aria-pressed={chosenGift===g.historyId}
-              onClick={()=>{setChosenGift(g.historyId);setConfirmGift(false);}}>
-              <span className={styles.giftCorner}>{chosenGift===g.historyId?
+              className={styles.giftChoice} aria-pressed={chosenGifts.includes(g.historyId)}
+              disabled={!!busy || (!chosenGifts.includes(g.historyId) && selectedCount>=MAX_GIFTS)}
+              onClick={()=>chooseGift(g.historyId)}>
+              <span className={styles.giftCorner}>{chosenGifts.includes(g.historyId)?
                 <Check size={13}/>:<Sparkles size={13}/>}</span>
-              <ArenaGiftArtwork gift={g} selected={chosenGift===g.historyId}/>
+              <ArenaGiftArtwork gift={g} selected={chosenGifts.includes(g.historyId)}/>
               <span className={styles.giftChoiceName} title={g.title}>{g.title}</span>
               <span className={styles.giftChoiceValue}><span>★</span>{fmt(g.value)}</span>
-              <span className={styles.giftChoiceLabel}>STARS QIYMATI</span>
+ 
             </button>)}
           </div>}
-        {selectedGift?<div className={styles.giftSelectedPane}>
+        <div className={styles.giftSelectedPane}>
           <div className={styles.giftSelectedTop}>
-            <div><span className={styles.giftEyebrow}>TANLANGAN GIFT</span>
-              <strong>{selectedGift.title}</strong></div>
-            <span className={styles.giftSelectedPrice}>★ {fmt(selectedGift.value)}</span>
+            <div><span className={styles.giftEyebrow}>TANLANGAN</span>
+              <strong>{selectedGifts.length} / {MAX_GIFTS} gift</strong></div>
+            <span className={styles.giftSelectedPrice}>★ {fmt(selectedValue)}</span>
           </div>
-          <div className={styles.giftProbability}>
-            <span>Stavkadan keyingi maydon ulushingiz</span>
+          {selectedGifts.length>0?<div className={styles.giftProbability}>
+            <span>Taxminiy hududingiz</span>
             <b>{projectedShare.toFixed(2)}%</b>
-          </div>
-          <div className={styles.giftProbabilityBar}>
-            <i style={{width:Math.min(100,Math.max(0,projectedShare))+'%'}}/>
-          </div>
+          </div>:null}
           <button type="button" className={styles.giftAction}
-            disabled={!!busy} onClick={()=>setConfirmGift(true)}>
-            <Gift size={18}/> Giftni tikish <ChevronRight size={18}/>
+            disabled={!!busy||selectedGifts.length===0} onClick={()=>setConfirmGift(true)}>
+            <Gift size={17}/> {selectedGifts.length} ta giftni tikish <ChevronRight size={17}/>
           </button>
-        </div>:null}
-        <div className={styles.giftSafety}>
-          <ShieldCheck size={16}/>
-          <span>Gift raund davomida bloklanadi. G‘olib tikilgan giftlarning haqiqiy egasiga aylanadi.</span>
         </div>
-        {confirmGift&&selectedGift&&typeof document!=='undefined'?createPortal(<div className={styles.giftConfirmBackdrop}
+        <div className={styles.giftSafety}>
+          <ShieldCheck size={15}/>
+          <span>2 o‘yinchi bo‘lmaguncha o‘yin boshlanmaydi. Giftlar raund davomida bloklanadi.</span>
+        </div>
+        {confirmGift&&selectedGifts.length>0&&typeof document!=='undefined'?createPortal(<div className={styles.giftConfirmBackdrop}
           role="presentation" onClick={()=>setConfirmGift(false)}>
           <div className={styles.giftConfirm} role="dialog" aria-modal="true"
             aria-label="Gift stavkasini tasdiqlash" onClick={e=>e.stopPropagation()}>
             <button type="button" className={styles.giftConfirmClose}
               aria-label="Yopish" onClick={()=>setConfirmGift(false)}><X size={19}/></button>
-            <span className={styles.giftConfirmArt}>
-              <ArenaGiftArtwork gift={selectedGift} selected/>
-            </span>
-            <span className={styles.giftEyebrow}>STAVKANI TASDIQLASH</span>
-            <h3>{selectedGift.title}</h3>
-            <strong>★ {fmt(selectedGift.value)}</strong>
-            <p>Ushbu gift arenaga tikiladi. Yutqazsangiz, gift g‘olibga o‘tadi. Raund boshlanmasa, qaytariladi.</p>
+            <div className={styles.giftConfirmThumbs}>
+              {selectedGifts.slice(0,4).map(g=><span key={g.historyId}>
+                <ArenaGiftArtwork gift={g} selected/>
+              </span>)}
+            </div>
+            <h3>{selectedGifts.length} ta gift</h3>
+            <strong>★ {fmt(selectedValue)}</strong>
+            <p>Yutqazsangiz giftlar g‘olibga o‘tadi. Raqib kelmasa, qaytariladi.</p>
             <button type="button" className={styles.giftAction} disabled={!!busy}
-              onClick={()=>{setConfirmGift(false);void act('gift',{historyId:selectedGift.historyId});}}>
-              <ShieldCheck size={17}/> Tasdiqlash va tikish
+              onClick={()=>{setConfirmGift(false);void act('gift_batch',{historyIds:selectedGifts.map(g=>g.historyId)});}}>
+              <ShieldCheck size={17}/> Hammasini tasdiqlash
             </button>
             <button type="button" className={styles.giftCancel}
               onClick={()=>setConfirmGift(false)}>Bekor qilish</button>
@@ -512,7 +546,7 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
           <b style={{color:arenaColorForSeat(p.seat)}}>{p.percentage.toFixed(2)}%</b>
         </div>):<p className={styles.notice}>Birinchi stavkani qo‘ying, hududingiz paydo bo‘ladi.</p>}
       </div>
-      {room.status==='WAITING'?<p className={styles.hint}>Ikkinchi o‘yinchi kutilmoqda</p>:null}
+      {room.status==='WAITING'&&room.players.length===1?<p className={styles.hint}>Stavkani oshirish raqib o‘rnini bosmaydi — ikkinchi o‘yinchi kerak.</p>:null}
       {room.status==='WAITING'&&myBet&&room.players.length===1?
         <button type="button" className={styles.cancel} disabled={!!busy}
           onClick={()=>act('leave')}>O‘yin boshlanmasidan stavkani qaytarish</button>:null}
