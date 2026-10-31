@@ -1,6 +1,7 @@
 'use client';
 
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import Image from 'next/image';
 import {ArrowLeft,Plus,Users,Timer,RefreshCw,Eye,Crown,Volume2,VolumeX,Gift,ShieldCheck,Check,ChevronRight,Sparkles,X} from 'lucide-react';
 import {createClient} from '@supabase/supabase-js';
 import {createPortal} from 'react-dom';
@@ -394,6 +395,10 @@ export default function ColorArena({onBack,apiPost,onToast,balance,onBalanceChan
     <header className={styles.header}>
       <button type="button" className={styles.back} onClick={onBack} aria-label="PvP bo‘limiga qaytish">
         <ArrowLeft size={19}/></button>
+      <span className={styles.headerLogo} aria-hidden="true">
+        <Image src="/pvp/color-arena-clean-logo.png" alt="" width={256} height={256}
+          className={styles.headerLogoImage} unoptimized/>
+      </span>
       <strong className={styles.compactTitle}>COLOR ARENA</strong>
       <button type="button" className={styles.soundButton} onClick={toggleSound}
         aria-label={soundOn?'Arena ovozini o‘chirish':'Arena ovozini yoqish'}

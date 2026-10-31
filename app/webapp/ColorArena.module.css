@@ -522,3 +522,8 @@
 @media (prefers-reduced-motion:reduce) {
   .boardShell[data-status="ROLLING"] .ring:after { animation:none; }
 }
+
+/* Color Arena's own square-field emblem, reused in the PvP game selector. */
+.headerLogo { display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;overflow:hidden;border-radius:10px;border:1px solid rgba(167,191,232,.20);background:#111728; }
+.headerLogoImage { display:block;width:100%;height:100%;object-fit:cover; }
+@media(max-width:375px){ .headerLogo { width:30px;height:30px;flex-basis:30px;border-radius:9px; } .header { gap:7px; } }
