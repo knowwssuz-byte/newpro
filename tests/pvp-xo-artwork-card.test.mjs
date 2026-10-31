@@ -13,10 +13,10 @@ test('Home PvP leads to game list and X/O image card, then live room flow',()=>{
  const jsx=get('app/webapp/PvpHub.jsx');
  const css=get('app/webapp/PvpHub.module.css');
  assert.match(jsx,/src="\/feature\/pvp-xo-card-hd\.webp"/);
- assert.match(jsx,/const \[selected,setSelected\]=useState\('list'\)/);
+ assert.match(jsx,/const \[selected,setSelected\]=useState\(\(\)=>initialGame==='color'\?'color':'list'\)/);
  assert.match(jsx,/setSelected\('xo'\)/);
  assert.doesNotMatch(jsx,/setSelected\('rps'\)/);
- assert.match(jsx,/onBack=\{\(\)=>setSelected\('list'\)\}/);
+ assert.match(jsx,/onBack=\{initialGame==='color'\?onBack:\(\)=>setSelected\('list'\)\}/);
  assert.match(jsx,/Yaratilgan o‘yinlar/);
  assert.match(css,/\.xoPosterImage\{/);
  assert.match(css,/object-fit:contain/);

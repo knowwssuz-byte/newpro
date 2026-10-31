@@ -348,10 +348,11 @@ function RockPaperScissors({ onBack }) {
     </section>
   );
 }
-export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast}) {
- const [selected,setSelected]=useState('list');
+export default function PvpHub({onBack,apiPost,balance,onBalanceChange,onToast,initialGame='list'}) {
+ // Home Arena shortcut opens Color Arena immediately, without the game gallery.
+ const [selected,setSelected]=useState(()=>initialGame==='color'?'color':'list');
  if(selected==='color')return <div className={styles.root}>
-  <ColorArena onBack={()=>setSelected('list')} apiPost={apiPost} balance={balance}
+  <ColorArena onBack={initialGame==='color'?onBack:()=>setSelected('list')} apiPost={apiPost} balance={balance}
     onBalanceChange={onBalanceChange} onToast={onToast}/>
  </div>;
  if(selected==='xo')return <div className={styles.root}>

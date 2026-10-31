@@ -1633,7 +1633,7 @@ export default function WebAppClient() {
                 <DeferredDataLoader title="Tarix yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
               {tab === 'upgrade' ? extrasState !== 'ready' ?
                 <DeferredDataLoader title="Upgrade tayyorlanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
-              {tab === 'pvp' ? <PvpHub onBack={closePvpHub} apiPost={apiPost}
+              {tab === 'pvp' ? <PvpHub initialGame="color" onBack={closePvpHub} apiPost={apiPost}
   balance={profile?.balance}
   onBalanceChange={updateRocketBalance}
   onToast={showToast} /> : null}

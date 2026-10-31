@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
+const pvpCode=()=>read('app/webapp/PvpHub.jsx');
 
 test('Home Arena and Upgrade are distinct working PVP and Upgrade navigation entries',()=>{
   const app=read('app/webapp/WebAppClient.jsx');
@@ -13,7 +14,9 @@ test('Home Arena and Upgrade are distinct working PVP and Upgrade navigation ent
   assert.match(home,/onClick=\{onGoUpgrade\}/);
   assert.match(home,/<strong>Upgrade<\/strong>/);
   assert.match(app,/onOpenPvp=\{\(\) => openPvpHub\('home'\)\}/);
-  assert.match(app,/tab === 'pvp' \? <PvpHub/);
+  assert.match(app,/tab === 'pvp' \? <PvpHub initialGame="color"/);
+  assert.match(pvpCode(),/initialGame==='color'\?'color':'list'/);
+  assert.match(pvpCode(),/initialGame==='color'\?onBack:/);
   assert.match(app,/tab === 'upgrade' \?/);
   assert.doesNotMatch(home,/onClick=\{onGoCases\}/);
   assert.match(home,/id="case-collection"/);
