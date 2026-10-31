@@ -38,3 +38,13 @@ test('Visual smoke runs on PR and main pushes',()=>{
  assert.match(workflow,/on:\s+push:/);
  assert.match(workflow,/pull_request:/);
 });
+
+test('admin gift removal preserves historical upgrade foreign keys',()=>{
+ const admin=read('app/api/browser-admin/route.js');
+ const start=admin.indexOf("if (action === 'gift_delete')");
+ const end=admin.indexOf("if (action === 'user_add_balance')",start);
+ assert.ok(start>=0&&end>start);
+ const block=admin.slice(start,end);
+ assert.match(block,/\.update\(\{is_active:false\}\)/);
+ assert.doesNotMatch(block,/\.delete\(\)/);
+});

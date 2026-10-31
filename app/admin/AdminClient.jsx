@@ -1111,9 +1111,9 @@ export default function AdminClient() {
   }
 
   async function deleteGift(giftId) {
-    if (!window.confirm('Gift case ichidan o‘chirilsinmi?')) return;
+    if (!window.confirm('Gift case ichidan olib tashlansinmi? Tarix saqlanadi.')) return;
 
-    await run(() => callAdmin('gift_delete', { giftId }), 'Gift o‘chirildi');
+    await run(() => callAdmin('gift_delete', { giftId }), 'Gift arxivlandi ✅');
     await bootstrap();
   }
 

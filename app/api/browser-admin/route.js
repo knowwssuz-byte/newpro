@@ -1297,11 +1297,14 @@ export async function POST(request) {
     }
 
     if (action === 'gift_delete') {
-      const { error } = await supabase.from('gifts').delete().eq('id', body.giftId);
-
-      if (error) throw error;
-
-      return json({ ok: true });
+      // Referenced gifts must remain in historical upgrades, wins and settlements.
+      // Soft-archive instead of hard deleting a row referenced by foreign keys.
+      const {data,error}=await supabase.from('gifts')
+        .update({is_active:false}).eq('id',body.giftId)
+        .select('id,is_active').maybeSingle();
+      if(error)throw error;
+      if(!data)return json({ok:false,error:'Gift topilmadi'},404);
+      return json({ok:true,archived:true,gift:data});
     }
 
     if (action === 'user_add_balance') {
