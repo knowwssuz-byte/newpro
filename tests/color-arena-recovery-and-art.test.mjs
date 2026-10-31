@@ -49,7 +49,8 @@ test('Gift stake requires separate explicit confirmation and winner ownership is
  const escrow=read('supabase/migrations/20261029_color_arena_gift_escrow_fee.sql');
  assert.match(ui,/aria-label="Gift stavkasini tasdiqlash"/);
  assert.match(ui,/createPortal/);
- assert.match(ui,/act\('gift',\{historyId:selectedGift\.historyId\}\)/);
+ assert.match(ui,/act\('gift_batch',\{historyIds:selectedGifts\.map\(g=>g\.historyId\)\}\)/);
+ assert.match(ui,/setConfirmGift\(false\);void act\('gift_batch'/);
  assert.match(escrow,/update public\.open_history h set user_id=v_winner/);
  assert.match(escrow,/status='settled'/);
  assert.match(escrow,/unique\(owner_id,request_id\)/);

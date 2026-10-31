@@ -20,9 +20,11 @@ test('case card and detail CTA use the same real transparent 3D Stars artwork', 
 test('case opening prices, click handlers and loading state stay dynamic', () => {
   const card = read('app/webapp/WebAppClient.jsx');
   const detail = read('app/webapp/CaseDetailExperience.jsx');
-  assert.match(card, /const buttonText = isFree \? 'FREE' : formatPrice\(caseItem\.price\)/);
+  assert.match(card, /const buttonText = onCooldown \? formatFreeCaseCountdown\(secondsLeft\)/);
+  assert.match(card, /: isFree \? 'FREE' : formatPrice\(caseItem\.price\)/);
+  assert.match(card, /disabled = busy \|\| readyCount === 0 \|\| onCooldown/);
   assert.match(card, /onOpen\(caseItem\);/);
   assert.match(detail, /const openText = isFree \? 'OPEN' : `OPEN \$\{formatPrice\(caseItem\.price\)\}`/);
-  assert.match(detail, /disabled=\{busy \|\| isSpinning \|\| openableGifts\.length === 0\}/);
+  assert.match(detail, /disabled=\{busy \|\| isSpinning \|\| onCooldown \|\| openableGifts\.length === 0\}/);
   assert.match(detail, /onOpen\(\)/);
 });
