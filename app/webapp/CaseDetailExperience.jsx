@@ -467,21 +467,6 @@ export default function CaseDetailPage({
             targetIndex={targetIndex} onRollComplete={onRollComplete} helpers={helpers}/>
         </div>
 
-        {!isFree ? <details className={caseOpeningStyles.detailOdds}>
-          <summary>Yutish ehtimollarini ko‘rish <span aria-hidden="true">⌄</span></summary>
-          <div className={caseOpeningStyles.detailOddsContent}>
-            <p>Reel — animatsiya. Sovg‘aning yutilish ehtimoli quyidagicha:</p>
-            <ul>
-              {previewGifts.map((gift) => (
-                <li key={gift.id}>
-                  <span>{gift.title}</span>
-                  <strong>{visibleChance(gift)}%</strong>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </details> : null}
-
         <button type="button"
           className={`${caseOpeningStyles.openButton} ${caseOpeningStyles.detailOpen} ${onCooldown ? caseOpeningStyles.caseCooldownButton : ''}`}
           disabled={busy || isSpinning || onCooldown || openableGifts.length === 0}
