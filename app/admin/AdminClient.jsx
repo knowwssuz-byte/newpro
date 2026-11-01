@@ -367,6 +367,20 @@ function AdminLottie({ src, className }) {
   return <span ref={ref} className={`${className} admin-lottie-media`} aria-hidden="true" />;
 }
 
+function AnimatedRegularGift({ gift }) {
+  const animation = String(gift?.animation_url || '');
+  const hasLottie = /\.tgs(?:[?#]|$)/i.test(animation);
+  const hasVideo = /\.(?:webm|mp4)(?:[?#]|$)/i.test(animation);
+  return (
+    <span className="admin-regular-art">
+      {gift?.image_url ? <img src={gift.image_url} alt="" loading="lazy" draggable="false" /> : null}
+      {hasLottie ? <AdminLottie src={animation} className="admin-regular-lottie" /> : null}
+      {hasVideo ? <video src={animation} muted autoPlay playsInline loop preload="metadata" aria-hidden="true" /> : null}
+      {!gift?.image_url && !animation ? <span className="admin-regular-empty">Gift</span> : null}
+    </span>
+  );
+}
+
 function FeaturePreviewCard({ slot, setting, onLayoutChange, onSave, busy }) {
   const layout = featureLayout(slot, setting);
   const isPvp = slot === 'pvp';
@@ -416,6 +430,8 @@ export default function AdminClient() {
   const [cases, setCases] = useState([]);
   const [gifts, setGifts] = useState([]);
   const [giftLibrary, setGiftLibrary] = useState([]);
+  const [telegramCatalog, setTelegramCatalog] = useState([]);
+  const [regularImportResult, setRegularImportResult] = useState(null);
   const [giftLibrarySearch, setGiftLibrarySearch] = useState('');
   const [giftLibraryLimit, setGiftLibraryLimit] = useState(48);
   const [caseGiftSearch, setCaseGiftSearch] = useState('');
@@ -530,6 +546,7 @@ export default function AdminClient() {
     setUsers(data.users || []);
     setWithdrawals(data.withdrawals || []);
     setGiftLibrary(data.giftLibrary || []);
+    setTelegramCatalog(data.telegramCatalog || []);
     setUpgradeGifts(data.upgradeGifts || []);
     setUpgradeStockDrafts((previous) => Object.fromEntries((data.giftLibrary || []).map((gift) => [gift.id, previous[gift.id] ?? String((data.upgradeGifts || []).find((row) => row.library_gift_id === gift.id)?.stock ?? 0)])));
     setFeatureSettings(data.featureSettings || {});
@@ -809,6 +826,7 @@ export default function AdminClient() {
     setUsers([]);
     setWithdrawals([]);
     setGiftLibrary([]);
+    setTelegramCatalog([]);
     setRocketControl(null);
     setRocketConnection('idle');
     setDeposits([]);
@@ -936,6 +954,28 @@ export default function AdminClient() {
     if (!result) return;
     setGiftSyncResult(result.sync || null);
     applyBootstrap(result);
+  }
+
+  async function importRegularGifts(telegramGiftId = '') {
+    const result = await run(
+      () => callAdmin('gift_regular_import', telegramGiftId ? { telegramGiftId } : {}),
+      'Oddiy Telegram giftlar bazaga qo‘shildi'
+    );
+    if (!result) return;
+    setRegularImportResult({
+      imported: Number(result.imported || 0),
+      refreshed: Number(result.refreshed || 0),
+      total: Number(result.available || 0),
+    });
+    applyBootstrap(result);
+  }
+
+  async function syncRegularCatalog() {
+    const result = await run(
+      () => callAdmin('gift_regular_sync'),
+      'Telegram giftlar katalogi yangilandi'
+    );
+    if (result) applyBootstrap(result);
   }
 
   async function createLibraryGift(event) {
@@ -1961,6 +2001,42 @@ export default function AdminClient() {
 
         {tab === 'library' ? (
           <section className="browser-admin-grid manual-library-layout">
+            <section className="admin-regular-section">
+              <div className="admin-regular-section-head">
+                <div>
+                  <span className="admin-regular-kicker">TELEGRAM · STANDARD GIFTS</span>
+                  <h2>Oddiy Telegram Giftlar</h2>
+                  <p>Telegram katalogidagi oddiy sovg‘alarni haqiqiy rasm va TGS animatsiyalari bilan Gift bazaga qo‘shing. Bu faqat katalogni to‘ldiradi — hech qanday sovg‘a yoki Stars jo‘natilmaydi.</p>
+                </div>
+                <div className="admin-regular-actions">
+                  <button type="button" className="admin-regular-sync" onClick={syncRegularCatalog} disabled={busy}>Katalogni yangilash</button>
+                  <button type="button" className="admin-regular-import" onClick={() => importRegularGifts()} disabled={busy || !telegramCatalog.length}>
+                    {busy ? 'Yuklanmoqda…' : 'Barchasini Gift bazaga qo‘shish'}
+                  </button>
+                </div>
+              </div>
+              {regularImportResult ? (
+                <p className="admin-regular-result" role="status">
+                  {regularImportResult.imported} ta yangi gift qo‘shildi · {regularImportResult.refreshed} ta media yangilandi · {regularImportResult.total} ta gift tekshirildi
+                </p>
+              ) : null}
+              <div className="admin-regular-grid">
+                {telegramCatalog.map((gift) => {
+                  const imported = giftLibrary.some((row) => row.slug === `regular-${gift.telegram_gift_id}`);
+                  return (
+                    <article className="admin-regular-card" key={gift.telegram_gift_id}>
+                      <AnimatedRegularGift gift={gift} />
+                      <strong>{String(gift.title || 'Telegram Gift').replace(/^🎁\s*/, '')}</strong>
+                      <span className="admin-regular-price">★ {money(gift.star_count)}</span>
+                      <button type="button" disabled={busy || imported} onClick={() => importRegularGifts(gift.telegram_gift_id)}>
+                        {imported ? 'Bazaga qo‘shilgan' : 'Bazaga qo‘shish'}
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+              {!telegramCatalog.length ? <p className="admin-regular-result">Katalog hali bo‘sh. «Katalogni yangilash» tugmasini bosing.</p> : null}
+            </section>
             <div className="browser-admin-form" style={{gridColumn:'1 / -1',display:'grid',gap:12}}>
               <div className="admin-form-heading">
                 <span>TELEGRAM ACCOUNT SYNC</span>
