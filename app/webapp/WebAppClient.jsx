@@ -1398,18 +1398,19 @@ export default function WebAppClient() {
     }
   }
 
-  async function updateWithdrawal(requestId, status) {
-    await runAction(
-      () =>
-        apiPost('/api/admin/withdrawals', {
-          action: 'update',
-          requestId,
-          status,
-        }),
-      "So'rov yangilandi ✅"
+  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false) {
+    if (status === 'approved' && !window.confirm('Giftni Telegram orqali haqiqatan yubordingizmi? Tasdiqlashdan oldin tekshiring.')) return;
+    const result = await runAction(
+      () => apiPost('/api/admin/withdrawals', {
+        action: 'update',
+        requestId,
+        status,
+        admin_note: adminNote,
+        deliveryConfirmed,
+      }),
+      status === 'approved' ? 'Yuborilgan gift tasdiqlandi ✅' : 'So‘rov rad etildi'
     );
-
-    await loadAdminWithdrawals();
+    if (result) await loadAdminWithdrawals();
   }
 
   useEffect(() => {
@@ -3507,6 +3508,8 @@ function AdminPanel({
   updateWithdrawal,
   busy,
 }) {
+  const [withdrawalNotes, setWithdrawalNotes] = useState({});
+  const [withdrawalConfirmed, setWithdrawalConfirmed] = useState({});
   return (
     <div className="admin-panel premium-card">
       <div className="admin-tabs">
@@ -3673,17 +3676,50 @@ function AdminPanel({
 
       {adminTab === 'withdrawals' ? (
         <div className="admin-section">
-          <AdminList title="Withdraw requests">
-            {adminWithdrawals.map((request) => (
-              <div className="admin-item" key={request.id}>
-                <div className="admin-item-main">
-                  <strong>{request.gifts?.title || 'Gift request'}</strong>
-                  <span>User: {request.user_id} · {request.status}</span>
-                </div>
-                <button type="button" disabled={request.status !== 'pending'} onClick={() => updateWithdrawal(request.id, 'approved')}>Approve</button>
-                <button type="button" disabled={request.status !== 'pending'} className="danger-btn" onClick={() => updateWithdrawal(request.id, 'rejected')}>Reject</button>
-              </div>
-            ))}
+          <AdminList title={`Yechish so‘rovlari · ${adminWithdrawals.filter((row) => row.status === 'pending').length} ta kutilmoqda`}>
+            {[...adminWithdrawals].sort((a, b) => Number(b.status === 'pending') - Number(a.status === 'pending')).map((request) => {
+              const note = withdrawalNotes[request.id] || '';
+              const isPending = request.status === 'pending';
+              const canReview = isPending && note.trim().length >= 8 && !busy;
+              const username = /^[a-zA-Z0-9_]{5,32}$/.test(request.users?.username || '') ? request.users.username : '';
+              return (
+                <article className="admin-item" key={request.id} style={{display:'grid',gap:12,padding:14}}>
+                  <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
+                    <GiftMedia gift={request.gifts || {}} compact preferStatic />
+                    <div className="admin-item-main">
+                      <strong>{request.gifts?.title || 'Gift request'}</strong>
+                      <span>{request.users?.first_name || 'Telegram user'} {username ? `· @${username}` : ''}</span>
+                      <span>User ID: {request.user_id} · {request.status}</span>
+                      <span>{request.created_at ? new Date(request.created_at).toLocaleString('uz-UZ') : ''}</span>
+                    </div>
+                  </div>
+                  <small style={{overflowWrap:'anywhere'}}>So‘rov: {request.id} · Gift history: {request.history_id || '—'}</small>
+                  {username ? <a href={`https://t.me/${username}`} target="_blank" rel="noopener noreferrer">Telegram foydalanuvchisini ochish</a> : null}
+                  {isPending ? (
+                    <div style={{display:'grid',gap:9}}>
+                      <label htmlFor={`mini-withdraw-note-${request.id}`}>Gift yuborilgan dalili yoki rad etish sababi</label>
+                      <textarea id={`mini-withdraw-note-${request.id}`} rows={3} maxLength={500}
+                        style={{width:'100%',minHeight:75,borderRadius:12,padding:10}}
+                        value={note} onChange={(event) => setWithdrawalNotes((current) => ({...current,[request.id]:event.target.value}))}
+                        placeholder="Telegram tranzaksiya ID, gift havolasi yoki rad etish sababi (kamida 8 belgi)" />
+                      <label style={{display:'flex',gap:8,alignItems:'center'}}>
+                        <input type="checkbox" checked={withdrawalConfirmed[request.id] === true}
+                          onChange={(event) => setWithdrawalConfirmed((current) => ({...current,[request.id]:event.target.checked}))} />
+                        <span>Giftni Telegram orqali yubordim</span>
+                      </label>
+                      <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                        <button type="button" disabled={!canReview || withdrawalConfirmed[request.id] !== true}
+                          onClick={() => updateWithdrawal(request.id, 'approved', note.trim(), true)}>Yuborildi — tasdiqlash</button>
+                        <button type="button" disabled={!canReview} className="danger-btn"
+                          onClick={() => updateWithdrawal(request.id, 'rejected', note.trim(), false)}>Rad etish</button>
+                      </div>
+                      <small>Tasdiqlash giftni avtomatik yubormaydi — avval Telegramdan jo‘nating.</small>
+                    </div>
+                  ) : <div style={{overflowWrap:'anywhere'}}>Izoh: {request.admin_note || 'Eski so‘rovda izoh saqlanmagan'}</div>}
+                </article>
+              );
+            })}
+            {!adminWithdrawals.length ? <p>Hozircha so‘rov yo‘q.</p> : null}
           </AdminList>
         </div>
       ) : null}
