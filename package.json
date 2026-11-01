@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/generate-giveaway-banner.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
     "telegram:session": "node scripts/get-telegram-session.js",
