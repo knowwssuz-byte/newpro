@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { UpgradeGiftThumb } from '../webapp/UpgradeGiftThumb';
+import GiveawayAdmin from './GiveawayAdmin';
 import { prepareCaseArtwork } from '@/lib/caseImageAutoFitBrowser.mjs';
 import { caseImageValues,caseImageStyle } from '@/lib/caseImageLayout.mjs';
 import './admin-catalog.css';
@@ -1537,6 +1538,7 @@ export default function AdminClient() {
           {[
             ['cases', 'Cases'],
             ['library', 'Gift baza'],
+            ['giveaway', '🎁 Giveaways'],
             ['gifts', 'Casega gift'],
             ['upgrade-gifts', 'Upgrade giftlari'],
             ['features', 'PVP / Rocket'],
@@ -1557,6 +1559,8 @@ export default function AdminClient() {
             </button>
           ))}
         </nav>
+
+        {tab === 'giveaway' ? <GiveawayAdmin adminKey={adminKey} giftLibrary={giftLibrary} /> : null}
 
         {tab === 'cases' ? (
           <section className="browser-admin-grid">
