@@ -11,7 +11,14 @@ await mkdir(directory,{recursive:true});
 try {
   const {default:sharp}=await import('sharp');
   const input=await readFile(src);
-  const art=await sharp(input).extract({left:350,top:30,width:300,height:260})
+  const sourceMeta=await sharp(input).metadata();
+  const left=Math.floor(sourceMeta.width*.54);
+  const top=Math.floor(sourceMeta.height*.09);
+  const extractWidth=sourceMeta.width-left;
+  const extractHeight=Math.min(sourceMeta.height-top,Math.floor(sourceMeta.height*.81));
+  if(extractWidth<10||extractHeight<10)throw new Error('Gift image too small');
+  const art=await sharp(input).extract({left,top,width:extractWidth,height:extractHeight})
+    .resize(300,260,{fit:'fill'})
     .ensureAlpha().composite([{input:Buffer.from(
       '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="260"><defs><linearGradient id="fade"><stop offset="0" stop-color="white" stop-opacity="0"/><stop offset=".2" stop-color="white" stop-opacity="1"/><stop offset="1" stop-color="white" stop-opacity="1"/></linearGradient></defs><rect width="300" height="260" fill="url(#fade)"/></svg>'
     ),blend:'dest-in'}]).png().toBuffer();
