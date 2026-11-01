@@ -2156,7 +2156,7 @@ export default function AdminClient() {
                 giftLibrary.filter((g) => (g.title+' '+(g.slug||'')).toLocaleLowerCase().includes(giftLibrarySearch.toLocaleLowerCase())).slice(0,giftLibraryLimit).map((gift) => (
                 <div className="manual-library-card image-only-library-card" key={gift.id} style={{ '--manual-card-bg': gift.background_value || 'linear-gradient(135deg,#7c3aed,#111827)' }}>
                   <div className="manual-library-media">
-                    <GiftImage gift={gift} />
+                    {String(gift.slug || '').startsWith('regular-') ? <AnimatedRegularGift gift={gift} /> : <GiftImage gift={gift} />}
                   </div>
                   <div>
                     <strong>{gift.title}</strong>
