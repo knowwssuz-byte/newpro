@@ -1251,6 +1251,19 @@ export default function AdminClient() {
     await bootstrap();
   }
 
+  async function openOnlinesDashboard() {
+    const data = await run(async () => {
+      const response = await fetch('/api/onlines/auth', {
+        method:'POST', headers:{'Content-Type':'application/json'}, cache:'no-store',
+        body:JSON.stringify({ action:'login',key:adminKey.trim() }),
+      });
+      const payload = await response.json().catch(()=>null);
+      if(!response.ok || !payload?.ok)throw new Error(payload?.error||'Online admin sessiyasi ochilmadi');
+      return payload;
+    });
+    if(data) window.location.assign('/onlines');
+  }
+
   async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false) {
     if (status === 'approved' && !window.confirm('Telegram gift HAQIQATAN foydalanuvchiga yuborildimi? Bu amal qaytarilmaydi.')) return;
     const result = await run(
@@ -1512,6 +1525,7 @@ export default function AdminClient() {
             <h1>Gift Myst Admin</h1>
           </div>
           <div className="browser-admin-header-actions">
+            <button type="button" onClick={openOnlinesDashboard} disabled={busy} style={{background:'#6e54b7',color:'#fff'}}>● Live Onlines</button>
             <button type="button" onClick={() => bootstrap()} disabled={busy}>Refresh</button>
             <button type="button" className="admin-danger" onClick={logout}>Logout</button>
           </div>
