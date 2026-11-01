@@ -381,6 +381,66 @@ function AnimatedRegularGift({ gift }) {
   );
 }
 
+function WithdrawalReviewCard({ request, user, busy, onDecision }) {
+  const [adminNote, setAdminNote] = useState('');
+  const [delivered, setDelivered] = useState(false);
+  const pending = request.status === 'pending';
+  const goodUsername = /^[a-zA-Z0-9_]{5,32}$/.test(user?.username || '') ? user.username : '';
+  const createdAt = request.created_at ? new Date(request.created_at).toLocaleString('uz-UZ') : '—';
+  const updatedAt = request.updated_at ? new Date(request.updated_at).toLocaleString('uz-UZ') : null;
+  const validNote = adminNote.trim().length >= 8;
+  return (
+    <article className={`admin-withdraw-card is-${request.status || 'pending'}`}>
+      <div className="admin-withdraw-card-head">
+        <span className={`admin-withdraw-status is-${request.status}`}>
+          {request.status === 'approved' ? 'YUBORILDI' : request.status === 'rejected' ? 'RAD ETILDI' : 'KO‘RIB CHIQILMOQDA'}
+        </span>
+        <time dateTime={request.created_at || ''}>{createdAt}</time>
+      </div>
+      <div className="admin-withdraw-main">
+        <div className="admin-withdraw-art"><GiftImage gift={request.gifts || {}} /></div>
+        <div className="admin-withdraw-details">
+          <strong>{request.gifts?.title || 'Gift so‘rovi'}</strong>
+          <span>{user?.first_name || 'Telegram foydalanuvchisi'} {goodUsername ? `· @${goodUsername}` : ''}</span>
+          <small>{Number(request.gifts?.value) > 0 ? `${money(request.gifts.value)} ★ · ` : ''}User ID: {request.user_id}</small>
+          <div className="admin-withdraw-links">
+            {goodUsername ? <a href={`https://t.me/${goodUsername}`} target="_blank" rel="noopener noreferrer">Telegram profil</a> : null}
+            <button type="button" onClick={() => navigator.clipboard?.writeText(String(request.user_id))}>User ID nusxalash</button>
+            <button type="button" onClick={() => navigator.clipboard?.writeText(String(request.id))}>So‘rov ID nusxalash</button>
+          </div>
+        </div>
+      </div>
+      <div className="admin-withdraw-meta">
+        <span>So‘rov: <code>{smallId(request.id)}</code></span>
+        <span>Gift tarixi: <code>{request.history_id ? smallId(request.history_id) : '—'}</code></span>
+        {updatedAt && request.status !== 'pending' ? <span>Ko‘rib chiqilgan: {updatedAt}</span> : null}
+      </div>
+      {pending ? (
+        <div className="admin-withdraw-review">
+          <label htmlFor={`withdraw-note-${request.id}`}>Yuborish dalili yoki rad etish sababi</label>
+          <textarea id={`withdraw-note-${request.id}`} value={adminNote}
+            onChange={(event) => setAdminNote(event.target.value.slice(0, 500))}
+            maxLength={500} rows={2} placeholder="Telegram xabar/tranzaksiya ID, yuborilgan gift havolasi yoki rad etish sababi (kamida 8 belgi)" />
+          <label className="admin-withdraw-confirm">
+            <input type="checkbox" checked={delivered} onChange={(event) => setDelivered(event.target.checked)} />
+            <span>Giftni Telegram orqali haqiqatan yubordim va tekshirdim</span>
+          </label>
+          <div className="admin-withdraw-review-actions">
+            <button type="button" className="admin-withdraw-approve" disabled={busy || !validNote || !delivered}
+              onClick={() => onDecision(request.id, 'approved', adminNote.trim(), true)}>Yuborildi — tasdiqlash</button>
+            <button type="button" className="admin-withdraw-reject" disabled={busy || !validNote}
+              onClick={() => onDecision(request.id, 'rejected', adminNote.trim(), false)}>Sabab bilan rad etish</button>
+          </div>
+          <small>Bu tasdiq giftni avtomatik jo‘natmaydi. Avval Telegramda yuboring, so‘ng dalilni yozing.</small>
+        </div>
+      ) : <div className="admin-withdraw-completed">
+        <b>{request.status === 'approved' ? 'Yetkazish dalili' : 'Rad etish sababi'}</b>
+        <p>{request.admin_note || 'Eski so‘rov: izoh saqlanmagan'}</p>
+      </div>}
+    </article>
+  );
+}
+
 function FeaturePreviewCard({ slot, setting, onLayoutChange, onSave, busy }) {
   const layout = featureLayout(slot, setting);
   const isPvp = slot === 'pvp';
@@ -443,6 +503,8 @@ export default function AdminClient() {
   const [giftSyncUserId, setGiftSyncUserId] = useState('');
   const [users, setUsers] = useState([]);
   const [withdrawals, setWithdrawals] = useState([]);
+  const [withdrawalFilter, setWithdrawalFilter] = useState('pending');
+  const [withdrawalSearch, setWithdrawalSearch] = useState('');
   const [featureSettings, setFeatureSettings] = useState({});
   const [featureForm, setFeatureForm] = useState(emptyFeatureForm);
   const [rocketControl, setRocketControl] = useState(null);
@@ -1186,9 +1248,13 @@ export default function AdminClient() {
     await bootstrap();
   }
 
-  async function updateWithdrawal(requestId, status) {
-    await run(() => callAdmin('withdraw_update', { requestId, status }), 'Withdraw yangilandi ✅');
-    await bootstrap();
+  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false) {
+    if (status === 'approved' && !window.confirm('Telegram gift HAQIQATAN foydalanuvchiga yuborildimi? Bu amal qaytarilmaydi.')) return;
+    const result = await run(
+      () => callAdmin('withdraw_update', { requestId, status, adminNote, deliveryConfirmed }),
+      status === 'approved' ? 'Yuborilgan gift tasdiqlandi ✅' : 'So‘rov sabab bilan rad etildi'
+    );
+    if (result) await bootstrap();
   }
 
   async function saveDepositSettings(event) {
@@ -1467,7 +1533,7 @@ export default function AdminClient() {
                 : 'Deposits',
             ],
             ['users', 'Users'],
-            ['withdrawals', 'Withdrawals'],
+            ['withdrawals', `Withdrawals${withdrawals.filter((row) => row.status === 'pending').length ? ` (${withdrawals.filter((row) => row.status === 'pending').length})` : ''}`],
           ].map(([id, label]) => (
             <button key={id} type="button" className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
               {label}
@@ -2923,19 +2989,50 @@ export default function AdminClient() {
         ) : null}
 
         {tab === 'withdrawals' ? (
-          <section className="browser-admin-list">
-            <h2>Withdrawals</h2>
-            {withdrawals.map((request) => (
-              <div className="browser-admin-item" key={request.id}>
-                <GiftImage gift={request.gifts || {}} />
-                <div>
-                  <strong>{request.gifts?.title || request.gift_title || 'Gift'}</strong>
-                  <p>User: {request.user_id} · Status: {request.status} · ID: {smallId(request.id)}</p>
-                </div>
-                <button type="button" disabled={request.status !== 'pending'} onClick={() => updateWithdrawal(request.id, 'approved')}>Approve</button>
-                <button type="button" disabled={request.status !== 'pending'} className="admin-danger-light" onClick={() => updateWithdrawal(request.id, 'rejected')}>Reject</button>
+          <section className="admin-withdraw-section">
+            <div className="admin-withdraw-heading">
+              <div><span>GIFT DELIVERY · ADMIN</span><h2>Yechish so‘rovlari</h2>
+                <p>Faqat Telegramda yetkazilgan sovg‘ani tasdiqlang. Barcha qarorlar izoh bilan saqlanadi.</p></div>
+              <button type="button" disabled={busy} onClick={() => bootstrap()}>Yangilash</button>
+            </div>
+            <div className="admin-withdraw-stats">
+              <div><span>Jami</span><strong>{withdrawals.length}</strong></div>
+              <div><span>Kutilmoqda</span><strong>{withdrawals.filter((row) => row.status === 'pending').length}</strong></div>
+              <div><span>Tasdiqlangan</span><strong>{withdrawals.filter((row) => row.status === 'approved').length}</strong></div>
+              <div><span>Rad etilgan</span><strong>{withdrawals.filter((row) => row.status === 'rejected').length}</strong></div>
+            </div>
+            <div className="admin-withdraw-filters">
+              <div className="admin-withdraw-filter-tabs">
+                {[['pending','Kutilmoqda'],['all','Barchasi'],['approved','Tasdiqlangan'],['rejected','Rad etilgan']].map(([value,label]) => (
+                  <button type="button" key={value} className={withdrawalFilter === value ? 'active' : ''}
+                    onClick={() => setWithdrawalFilter(value)}>{label}</button>
+                ))}
               </div>
-            ))}
+              <input type="search" value={withdrawalSearch} onChange={(event) => setWithdrawalSearch(event.target.value)}
+                placeholder="User ID, username, gift yoki so‘rov ID bo‘yicha qidirish" />
+            </div>
+            <div className="admin-withdraw-list">
+              {withdrawals.filter((request) => {
+                if (withdrawalFilter !== 'all' && request.status !== withdrawalFilter) return false;
+                const user = users.find((item) => String(item.id) === String(request.user_id));
+                return [request.id,request.history_id,request.user_id,request.gifts?.title,user?.username,user?.first_name]
+                  .some((value) => String(value || '').toLowerCase().includes(withdrawalSearch.trim().toLowerCase()));
+              }).sort((a,b) => {
+                if (a.status === 'pending' && b.status !== 'pending') return -1;
+                if (b.status === 'pending' && a.status !== 'pending') return 1;
+                return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+              }).map((request) => (
+                <WithdrawalReviewCard key={request.id} request={request}
+                  user={users.find((item) => String(item.id) === String(request.user_id))}
+                  busy={busy} onDecision={updateWithdrawal} />
+              ))}
+              {!withdrawals.some((request) => {
+                if (withdrawalFilter !== 'all' && request.status !== withdrawalFilter) return false;
+                const user = users.find((item) => String(item.id) === String(request.user_id));
+                return [request.id,request.history_id,request.user_id,request.gifts?.title,user?.username,user?.first_name]
+                  .some((value) => String(value || '').toLowerCase().includes(withdrawalSearch.trim().toLowerCase()));
+              }) ? <div className="admin-withdraw-empty">Bu filtr bo‘yicha so‘rov topilmadi.</div> : null}
+            </div>
           </section>
         ) : null}
       </section>
