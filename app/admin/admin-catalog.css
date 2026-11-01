@@ -245,3 +245,56 @@
 .admin-regular-result{padding:11px 14px;border:1px solid #514568;border-radius:12px}
 @media(max-width:480px){.admin-regular-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.admin-regular-card{padding:8px 5px;gap:6px;border-radius:13px}.admin-regular-art{height:90px}.admin-regular-card>strong{font-size:10px}.admin-regular-card>button{font-size:10px;min-height:34px}.admin-regular-section{padding:12px}.admin-regular-actions{width:100%}.admin-regular-actions button{flex:1;min-width:0;font-size:11px}}
 @media(prefers-reduced-motion:reduce){.admin-regular-card{transition:none}}
+
+/* Withdrawal review queue: high-clarity controls and explicit delivery safety. */
+.admin-withdraw-section{display:grid;gap:20px;min-width:0}
+.admin-withdraw-heading{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:14px}
+.admin-withdraw-heading>div>span{font-size:11px;font-weight:800;letter-spacing:.12em;color:#b7a5ed}
+.admin-withdraw-heading h2{font-size:clamp(23px,3vw,30px);margin:5px 0;color:#fff}
+.admin-withdraw-heading p{font-size:13px;color:#bdb6ce;line-height:1.5}
+.admin-withdraw-heading>button{background:#382c52;border:1px solid #78689e;color:#fff;border-radius:11px;padding:10px 18px}
+.admin-withdraw-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.admin-withdraw-stats>div{display:grid;gap:5px;border-radius:17px;padding:18px;background:linear-gradient(145deg,#292039,#1d1a2c);border:1px solid #4d4166}
+.admin-withdraw-stats span{color:#afa8be;font-size:12px}
+.admin-withdraw-stats strong{font-size:clamp(24px,3vw,34px);font-weight:850;color:#fff;font-variant-numeric:tabular-nums}
+.admin-withdraw-filters{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.admin-withdraw-filter-tabs{display:flex;align-items:center;gap:4px;flex-wrap:wrap;padding:4px;border:1px solid #4f4564;border-radius:13px;background:#1d1a2a}
+.admin-withdraw-filter-tabs button{color:#c6bed3;border:0;background:transparent;border-radius:9px;padding:9px 12px;font-size:12px;font-weight:700;min-height:38px}
+.admin-withdraw-filter-tabs button.active{background:#604a89;color:#fff}
+.admin-withdraw-filters>input{flex:1;min-width:190px;max-width:440px;min-height:45px;border-radius:12px;background:#211a33;border:1px solid #594a75;color:#fff;padding:10px 14px}
+.admin-withdraw-list{display:grid;gap:14px}
+.admin-withdraw-card{background:#211c30;border-radius:19px;border:1px solid #524765;padding:clamp(14px,2.5vw,21px);display:grid;gap:15px;min-width:0}
+.admin-withdraw-card.is-pending{border-color:#80649d}
+.admin-withdraw-card-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.admin-withdraw-card-head time{color:#9d94ac;font-size:12px}
+.admin-withdraw-status{font-size:10px;font-weight:800;letter-spacing:.09em;border-radius:8px;padding:7px 9px;background:#564020;color:#f6d692}
+.admin-withdraw-status.is-approved{background:#153d36;color:#8ae3c1}
+.admin-withdraw-status.is-rejected{background:#4a252f;color:#ffb2bb}
+.admin-withdraw-main{display:flex;align-items:center;gap:16px}
+.admin-withdraw-art{flex:none;width:95px;height:95px;display:grid;place-items:center;border-radius:17px;background:#342843;overflow:hidden}
+.admin-withdraw-art img,.admin-withdraw-art .admin-gift-media{width:100%;height:100%;object-fit:contain}
+.admin-withdraw-details{display:grid;gap:6px;min-width:0}
+.admin-withdraw-details>strong{color:#fff;font-size:18px;line-height:1.3;overflow-wrap:anywhere}
+.admin-withdraw-details>span{color:#e5dff0;font-size:13px}
+.admin-withdraw-details>small{font-size:12px;color:#aaa1ba}
+.admin-withdraw-links{display:flex;flex-wrap:wrap;gap:9px;margin-top:4px}
+.admin-withdraw-links a,.admin-withdraw-links button{display:inline-flex;align-items:center;justify-content:center;font-size:11px;padding:7px 9px;border-radius:8px;background:#393049;border:1px solid #635473;color:#e9dffd;text-decoration:none}
+.admin-withdraw-meta{display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:#a7a0b4;border-top:1px solid #443a56;padding-top:12px}
+.admin-withdraw-meta code{color:#ddd4ee;font-family:ui-monospace,Consolas,monospace}
+.admin-withdraw-review{display:grid;gap:11px}
+.admin-withdraw-review>label:first-child{color:#eee8fa;font-size:13px;font-weight:700}
+.admin-withdraw-review textarea{width:100%;min-height:76px;resize:vertical;color:#fff;background:#161321;border:1px solid #665478;border-radius:12px;padding:12px;font-size:13px;font:inherit;line-height:1.45}
+.admin-withdraw-review textarea:focus{outline:2px solid #ad8be7;outline-offset:2px}
+.admin-withdraw-confirm{display:flex;align-items:center;gap:10px;color:#e9e2f4;font-size:13px;line-height:1.5;cursor:pointer}
+.admin-withdraw-confirm input{width:18px;height:18px;accent-color:#9d78e2;flex:none}
+.admin-withdraw-review-actions{display:flex;flex-wrap:wrap;gap:10px}
+.admin-withdraw-review-actions button{min-height:43px;padding:10px 15px;border-radius:11px;border:0;font-size:13px;font-weight:800}
+.admin-withdraw-approve{background:#b9f4d6;color:#134936}
+.admin-withdraw-reject{background:#5b3441;color:#ffd4dd}
+.admin-withdraw-review-actions button:disabled{opacity:.35;cursor:not-allowed}
+.admin-withdraw-review>small{font-size:11px;color:#ad9ebc}
+.admin-withdraw-completed{padding:12px 15px;border-radius:12px;background:#171321;border:1px solid #42394e}
+.admin-withdraw-completed b{font-size:12px;color:#cbc4db}
+.admin-withdraw-completed p{font-size:13px;color:#f2ecfb;white-space:pre-wrap;overflow-wrap:anywhere;margin:7px 0 0}
+.admin-withdraw-empty{text-align:center;padding:38px;border:1px dashed #645377;border-radius:14px;color:#aea5be}
+@media(max-width:700px){.admin-withdraw-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-withdraw-filters>input{max-width:none;width:100%}.admin-withdraw-main{align-items:flex-start}.admin-withdraw-art{width:78px;height:78px}.admin-withdraw-review-actions button{flex:1}.admin-withdraw-filter-tabs{width:100%;justify-content:space-between}.admin-withdraw-filter-tabs button{padding:8px;font-size:11px}}
