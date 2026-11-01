@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 const SECTIONS = new Set([
   'home','games','case','inventory','bonus','referral','profile',
-  'history','upgrade','pvp','color','xo','rocket','dice','deposit','other'
+  'history','upgrade','pvp','color','xo','rocket','dice','deposit','giveaway','other'
 ]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
