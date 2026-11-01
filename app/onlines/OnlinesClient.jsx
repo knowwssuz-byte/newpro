@@ -13,7 +13,7 @@ import './onlines.css';
 const SECTIONS = [
   ['color','Color Arena',Swords],['xo','X/O Duel',Gamepad2],
   ['rocket','Rocket',Rocket],['dice','Dice',Dice5],
-  ['upgrade','Upgrade',TrendingUp],['case','Case',Gift],
+  ['upgrade','Upgrade',TrendingUp],['case','Case',Gift],['giveaway','Giveaway',Gift],
   ['pvp','PvP Lobby',Layers3],['games','Games',Gamepad2],
   ['home','Home',Layers3],['inventory','Inventory',Wallet],
   ['bonus','Bonus',Sparkles],['deposit','Deposit',ArrowDownRight],
