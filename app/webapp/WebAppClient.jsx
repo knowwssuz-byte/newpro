@@ -2057,6 +2057,22 @@ function HomeGameBanner({
   onClick,
 }) {
   const isPvp = variant === 'pvp';
+  const [giveawayImageFailed, setGiveawayImageFailed] = useState(false);
+
+  if (variant === 'giveaway') {
+    return <button type="button"
+      className={`${gameCardStyles.gameBanner} ${gameCardStyles.giveawayBanner}`}
+      aria-label="GIVEAWAY — sovg‘alar tanloviga qatnashish" onClick={onClick}>
+      {!giveawayImageFailed ? <Image src={image} alt="" width={1774} height={887}
+        className={gameCardStyles.giveawayImage} sizes="(max-width: 590px) 100vw, 560px"
+        loading="lazy" unoptimized draggable={false}
+        onError={() => setGiveawayImageFailed(true)}/> :
+        <span className={gameCardStyles.giveawayFallback}>
+          <span><small>🎁 FREE!</small><strong>GIVEAWAY</strong><em>Join now ›</em></span>
+          <AppIcon name="gift"/>
+        </span>}
+    </button>;
+  }
 
   return (
     <button
