@@ -178,6 +178,7 @@ async function bootstrap(supabase) {
     users,
     withdrawals,
     giftLibrary,
+    telegramCatalog,
     upgradeGifts,
     featureRows,
     deposits,
@@ -206,6 +207,7 @@ async function bootstrap(supabase) {
       'gift_library',
       supabase.from('gift_library').select('*').order('created_at', { ascending: false })
     ),
+    safeSelect(supabase, 'telegram_gift_catalog', supabase.from('telegram_gift_catalog').select('telegram_gift_id,title,star_count,image_url,animation_url,availability_remains,availability_total,status').order('star_count', { ascending: true })),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').eq('source','upgrade_catalog')),
     safeSelect(supabase, 'app_settings', supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp'])),
     safeSelect(
@@ -246,6 +248,7 @@ async function bootstrap(supabase) {
     users,
     withdrawals,
     giftLibrary,
+    telegramCatalog,
     upgradeGifts,
     featureSettings: Object.fromEntries((featureRows || []).map((item) => [item.key, item.value || {}])),
     deposits,
@@ -695,6 +698,79 @@ export async function POST(request) {
     assertAdmin(request, body);
 
     const action = body.action;
+
+    // Import standard (non-NFT) Telegram gifts from the existing, media-backed
+    // Telegram catalog. Importing a design never creates owned stock or sends a gift.
+    if (action === 'gift_regular_import') {
+      const telegramGiftId = clean(body.telegramGiftId);
+      if (telegramGiftId && !/^\\d{5,25}$/.test(telegramGiftId)) {
+        return json({ ok: false, error: 'Telegram gift ID noto‘g‘ri.' }, 400);
+      }
+      let catalogQuery = supabase.from('telegram_gift_catalog')
+        .select('telegram_gift_id,title,star_count,image_url,animation_url,status');
+      if (telegramGiftId) catalogQuery = catalogQuery.eq('telegram_gift_id', telegramGiftId);
+      const { data: catalog, error: catalogError } = await catalogQuery.limit(100);
+      if (catalogError) throw catalogError;
+      const candidates = (catalog || []).filter((gift) =>
+        /^\\d{5,25}$/.test(String(gift.telegram_gift_id)) &&
+        Number.isFinite(Number(gift.star_count)) && Number(gift.star_count) > 0
+      );
+      if (!candidates.length) return json({
+        ok: false, error: 'Telegram katalogida gift topilmadi. Avval katalogni yangilang.'
+      }, 404);
+      const slugs = candidates.map((gift) => `regular-${gift.telegram_gift_id}`);
+      const { data: existing, error: existingError } = await supabase
+        .from('gift_library').select('id,slug,image_url,animation_url')
+        .in('slug', slugs);
+      if (existingError) throw existingError;
+      const bySlug = new Map((existing || []).map((row) => [row.slug, row]));
+      const missing = candidates.filter((gift) => !bySlug.has(`regular-${gift.telegram_gift_id}`));
+      if (missing.length) {
+        const rows = missing.map((gift) => {
+          const stars = Math.floor(Number(gift.star_count));
+          return {
+            slug: `regular-${gift.telegram_gift_id}`,
+            title: clean(gift.title) || `Telegram Gift · ${stars} Stars`,
+            source_url: `telegram:catalog:${gift.telegram_gift_id}`,
+            price: stars, buy_price: stars,
+            image_url: clean(gift.image_url),
+            animation_url: clean(gift.animation_url),
+            image_type: 'png',
+            background_value: 'linear-gradient(135deg,#fff9e8,#f1e9ff)',
+            is_active: true,
+            model_name: 'Telegram standard gift',
+          };
+        });
+        const { error: insertError } = await supabase.from('gift_library').insert(rows);
+        if (insertError) throw insertError;
+      }
+      let refreshed = 0;
+      for (const gift of candidates) {
+        const previous = bySlug.get(`regular-${gift.telegram_gift_id}`);
+        if (!previous) continue;
+        const change = {};
+        if ((!previous.image_url || previous.image_url === '/gifts/telegram-collectible.svg') && gift.image_url) {
+          change.image_url = clean(gift.image_url);
+        }
+        if (!previous.animation_url && gift.animation_url) {
+          change.animation_url = clean(gift.animation_url);
+        }
+        if (Object.keys(change).length) {
+          const { error } = await supabase.from('gift_library').update(change).eq('id', previous.id);
+          if (error) throw error;
+          refreshed += 1;
+        }
+      }
+      return json({
+        ok: true, imported: missing.length, refreshed, available: candidates.length,
+        ...(await bootstrap(supabase)),
+      });
+    }
+
+    if (action === 'gift_regular_sync') {
+      const result = await syncAvailableTelegramGifts();
+      return json({ ok: true, catalogSync: result, ...(await bootstrap(supabase)) });
+    }
 
     if (action === 'gift_owned_sync') {
       const allowedIds = String(process.env.ADMIN_IDS || '').split(',')
