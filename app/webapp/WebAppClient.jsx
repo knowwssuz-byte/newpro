@@ -2057,21 +2057,38 @@ function HomeGameBanner({
   onClick,
 }) {
   const isPvp = variant === 'pvp';
-  const [giveawayImageFailed, setGiveawayImageFailed] = useState(false);
-
   if (variant === 'giveaway') {
-    return <button type="button"
-      className={`${gameCardStyles.gameBanner} ${gameCardStyles.giveawayBanner}`}
-      aria-label="GIVEAWAY — sovg‘alar tanloviga qatnashish" onClick={onClick}>
-      {!giveawayImageFailed ? <Image src={image} alt="" width={1774} height={887}
-        className={gameCardStyles.giveawayImage} sizes="(max-width: 590px) 100vw, 560px"
-        loading="lazy" unoptimized draggable={false}
-        onError={() => setGiveawayImageFailed(true)}/> :
-        <span className={gameCardStyles.giveawayFallback}>
-          <span><small>🎁 FREE!</small><strong>GIVEAWAY</strong><em>Join now ›</em></span>
-          <AppIcon name="gift"/>
-        </span>}
-    </button>;
+    return (
+      <button
+        type="button"
+        className={`${gameCardStyles.gameBanner} ${gameCardStyles.giveawayBanner}`}
+        aria-label="GIVEAWAY bo‘limini ochish"
+        onClick={onClick}
+      >
+        <span aria-hidden="true" className={gameCardStyles.giveawayLight} />
+        <Image
+          src={image}
+          alt=""
+          width={360}
+          height={360}
+          className={gameCardStyles.giveawayArt}
+          sizes="(max-width: 590px) 210px, 290px"
+          quality={100}
+          unoptimized
+          draggable={false}
+        />
+        <span className={gameCardStyles.giveawayContent}>
+          <span className={gameCardStyles.giveawayBadge}>
+            <AppIcon name="gift" /> EVENT
+          </span>
+          <strong className={gameCardStyles.giveawayHeading}>GIVE<span>AWAY</span></strong>
+          <span className={gameCardStyles.giveawaySubtitle}>Win exclusive Telegram gifts</span>
+          <span className={gameCardStyles.giveawayCta}>
+            Qatnashish <AppIcon name="chevronRight" />
+          </span>
+        </span>
+      </button>
+    );
   }
 
   return (
@@ -2174,7 +2191,7 @@ function HomeView({
             title="GIVEAWAY"
             description="Free prizes. Join now."
             actionText="Join now"
-            image="/feature/game-banners/giveaway-v1.webp"
+            image="/feature/game-banners/giveaway-art-v2.png"
             onClick={onOpenGiveaway}
           />
         </div>
