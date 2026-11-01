@@ -492,6 +492,7 @@ export default function AdminClient() {
   const [giftLibrary, setGiftLibrary] = useState([]);
   const [telegramCatalog, setTelegramCatalog] = useState([]);
   const [regularImportResult, setRegularImportResult] = useState(null);
+  const [regularSyncResult, setRegularSyncResult] = useState(null);
   const [giftLibrarySearch, setGiftLibrarySearch] = useState('');
   const [giftLibraryLimit, setGiftLibraryLimit] = useState(48);
   const [caseGiftSearch, setCaseGiftSearch] = useState('');
@@ -1035,9 +1036,11 @@ export default function AdminClient() {
   async function syncRegularCatalog() {
     const result = await run(
       () => callAdmin('gift_regular_sync'),
-      'Telegram giftlar katalogi yangilandi'
+      'Telegram: faqat cheksiz, upgrade qilinmaydigan giftlar tekshirildi'
     );
-    if (result) applyBootstrap(result);
+    if (!result) return;
+    setRegularSyncResult(result.catalogSync || null);
+    applyBootstrap(result);
   }
 
   async function createLibraryGift(event) {
@@ -2071,16 +2074,21 @@ export default function AdminClient() {
               <div className="admin-regular-section-head">
                 <div>
                   <span className="admin-regular-kicker">TELEGRAM · STANDARD GIFTS</span>
-                  <h2>Oddiy Telegram Giftlar</h2>
-                  <p>Telegram katalogidagi oddiy sovg‘alarni haqiqiy rasm va TGS animatsiyalari bilan Gift bazaga qo‘shing. Bu faqat katalogni to‘ldiradi — hech qanday sovg‘a yoki Stars jo‘natilmaydi.</p>
+                  <h2>Cheksiz Telegram Giftlar</h2>
+                  <p>Faqat <strong>Unlimited + Non-upgradable</strong> turidagi giftlar. Telegram Bot API orqali limit va NFT upgrade maydonlari tekshiriladi. Cheklangan yoki keyinchalik NFT bo‘ladigan giftlar bu katalogga kirmaydi.</p>
                 </div>
                 <div className="admin-regular-actions">
-                  <button type="button" className="admin-regular-sync" onClick={syncRegularCatalog} disabled={busy}>Katalogni yangilash</button>
+                  <button type="button" className="admin-regular-sync" onClick={syncRegularCatalog} disabled={busy}>Telegramdan tekshirish va rasmlarni olish</button>
                   <button type="button" className="admin-regular-import" onClick={() => importRegularGifts()} disabled={busy || !telegramCatalog.length}>
                     {busy ? 'Yuklanmoqda…' : 'Barchasini Gift bazaga qo‘shish'}
                   </button>
                 </div>
               </div>
+              {regularSyncResult ? (
+                <p className="admin-regular-result" role="status">
+                  Telegramdan {regularSyncResult.scanned} ta gift tekshirildi · {regularSyncResult.verifiedUnlimited} ta cheksiz, upgrade bo‘lmaydigan gift tasdiqlandi · {regularSyncResult.excludedLimitedOrUpgrade} ta boshqa tur chiqarildi. Rasmlar yuklanmagan bo‘lsa, sinxronlashni yana bosing.
+                </p>
+              ) : null}
               {regularImportResult ? (
                 <p className="admin-regular-result" role="status">
                   {regularImportResult.imported} ta yangi gift qo‘shildi · {regularImportResult.refreshed} ta media yangilandi · {regularImportResult.total} ta gift tekshirildi
@@ -2089,13 +2097,14 @@ export default function AdminClient() {
               <div className="admin-regular-grid">
                 {telegramCatalog.map((gift) => {
                   const imported = giftLibrary.some((row) => row.slug === `regular-${gift.telegram_gift_id}`);
+                  const hasMedia = /^https:\/\//i.test(gift.image_url || '') || /^https:\/\//i.test(gift.animation_url || '');
                   return (
                     <article className="admin-regular-card" key={gift.telegram_gift_id}>
                       <AnimatedRegularGift gift={gift} />
                       <strong>{String(gift.title || 'Telegram Gift').replace(/^🎁\s*/, '')}</strong>
                       <span className="admin-regular-price">★ {money(gift.star_count)}</span>
-                      <button type="button" disabled={busy || imported} onClick={() => importRegularGifts(gift.telegram_gift_id)}>
-                        {imported ? 'Bazaga qo‘shilgan' : 'Bazaga qo‘shish'}
+                      <button type="button" disabled={busy || imported || !hasMedia} onClick={() => importRegularGifts(gift.telegram_gift_id)}>
+                        {imported ? 'Bazaga qo‘shilgan' : !hasMedia ? 'Media yuklanmoqda' : 'Bazaga qo‘shish'}
                       </button>
                     </article>
                   );
@@ -2156,7 +2165,8 @@ export default function AdminClient() {
                 giftLibrary.filter((g) => (g.title+' '+(g.slug||'')).toLocaleLowerCase().includes(giftLibrarySearch.toLocaleLowerCase())).slice(0,giftLibraryLimit).map((gift) => (
                 <div className="manual-library-card image-only-library-card" key={gift.id} style={{ '--manual-card-bg': gift.background_value || 'linear-gradient(135deg,#7c3aed,#111827)' }}>
                   <div className="manual-library-media">
-                    {String(gift.slug || '').startsWith('regular-') ? <AnimatedRegularGift gift={gift} /> : <GiftImage gift={gift} />}
+                    {telegramCatalog.some((item) => gift.slug === `regular-${item.telegram_gift_id}`)
+                      ? <AnimatedRegularGift gift={gift} /> : <GiftImage gift={gift} />}
                   </div>
                   <div>
                     <strong>{gift.title}</strong>
