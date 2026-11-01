@@ -701,6 +701,68 @@ export async function POST(request) {
 
     const action = body.action;
 
+
+    // Giveaway commands are ADMIN_PANEL_KEY-only. Paid random prize contests are
+    // feature-flagged off in production until regulatory/platform approval.
+    if (action === 'giveaway_list') {
+      const {data,error}=await supabase.rpc('newpro_giveaway_admin_list');
+      if(error)throw error;
+      return json({ok:true,giveaways:data||[],paidEnabled:process.env.GIVEAWAY_PAID_ENABLED==='true'});
+    }
+    if (action === 'giveaway_create') {
+      const title=clean(body.title).slice(0,90);
+      const description=clean(body.description).slice(0,700);
+      const mode=clean(body.mode);
+      const price=Number(body.entryPrice);
+      const endsAt=new Date(body.endsAt);
+      const prizes=Array.isArray(body.prizeIds)?body.prizeIds:[];
+      if(title.length<4||!['equal','weighted'].includes(mode)||!Number.isInteger(price)||
+         price<0||price>10000||prizes.length<1||prizes.length>10||
+         !prizes.every(v=>/^[0-9a-f-]{36}$/i.test(v))||!Number.isFinite(endsAt.getTime())||
+         endsAt.getTime()<Date.now()+5*60*1000||endsAt.getTime()>Date.now()+90*86400000)
+        return json({ok:false,error:'Giveaway sozlamalari yoki muddati noto‘g‘ri'},400);
+      if(mode==='weighted'&&price<1)return json({ok:false,error:'Vaznli rejimda minimal Stars kamida 1 bo‘lsin'},400);
+      const {data,error}=await supabase.rpc('newpro_giveaway_create',{
+        p_title:title,p_description:description,p_mode:mode,p_entry_price:price,
+        p_ends_at:endsAt.toISOString(),p_prize_ids:prizes
+      });
+      if(error)throw error;
+      return json({ok:true,id:data});
+    }
+    if (action === 'giveaway_publish') {
+      const id=clean(body.id);
+      if(!/^[0-9a-f-]{36}$/i.test(id))return json({ok:false,error:'ID noto‘g‘ri'},400);
+      const {data:existing,error:lookupError}=await supabase.from('giveaways')
+        .select('id,entry_price,mode,status,ends_at').eq('id',id).maybeSingle();
+      if(lookupError)throw lookupError;
+      if(!existing||existing.status!=='draft')return json({ok:false,error:'Faqat draft e’lon qilinadi'},409);
+      if((existing.entry_price>0||existing.mode==='weighted')&&process.env.GIVEAWAY_PAID_ENABLED!=='true')
+        return json({ok:false,error:'Pullik/vaznli giveaway vaqtincha yopiq. Platforma qoidalari va qonuniy ruxsatlarni tekshiring.'},403);
+      const {data,error}=await supabase.from('giveaways').update({status:'live',updated_at:new Date().toISOString()})
+        .eq('id',id).eq('status','draft').gt('ends_at',new Date().toISOString())
+        .select('id').maybeSingle();
+      if(error)throw error;
+      if(!data)return json({ok:false,error:'Giveaway muddati tugagan yoki allaqachon e’lon qilingan'},409);
+      return json({ok:true,id});
+    }
+    if (action === 'giveaway_cancel') {
+      const {data,error}=await supabase.rpc('newpro_giveaway_cancel',{p_giveaway:body.id});
+      if(error)throw error;
+      return json({ok:true,result:data});
+    }
+    if (action === 'giveaway_draw') {
+      const {data,error}=await supabase.rpc('newpro_giveaway_draw',{p_giveaway:body.id});
+      if(error)throw error;
+      return json({ok:true,result:data});
+    }
+    if (action === 'giveaway_deliver') {
+      const note=clean(body.note).slice(0,500);
+      if(note.length<8)return json({ok:false,error:'Yetkazish dalili kamida 8 belgi bo‘lsin'},400);
+      const {data,error}=await supabase.rpc('newpro_giveaway_delivery',{p_prize:body.prizeId,p_note:note});
+      if(error)throw error;
+      return json({ok:true,result:data});
+    }
+
     // Import standard (non-NFT) Telegram gifts from the existing, media-backed
     // Telegram catalog. Importing a design never creates owned stock or sends a gift.
     if (action === 'gift_regular_import') {
