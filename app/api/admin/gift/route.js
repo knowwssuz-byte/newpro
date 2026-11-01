@@ -167,7 +167,7 @@ export async function POST(request) {
           real_chance: numericRealChance,
           stock: numericStock,
           image_url: rewardType === 'gift' ? cleanImage : rewardType === 'xp' ? '/rewards/xp-orb.svg' : (sharedImage || cleanImage || null),
-          animation_url: null,
+          animation_url: rewardType === 'gift' ? (cleanAnimation || null) : null,
           background_value: finalBackground,
           rarity: finalRarity,
           floor_price: salePrice,
@@ -224,7 +224,7 @@ export async function POST(request) {
         updates.image_url = currentGift.type === 'xp' ? '/rewards/xp-orb.svg' : currentGift.type === 'balance' ? (commonImage || submittedImage || null)
           : (submittedImage || null);
       }
-      if (animation_url !== undefined) updates.animation_url = null;
+      if (animation_url !== undefined) updates.animation_url = cleanText(animation_url) || null;
       if (background_value !== undefined) updates.background_value = cleanText(background_value) || currentGift.background_value;
       if (rarity !== undefined) updates.rarity = normalizeRarity(rarity, updates.chance ?? currentGift.chance);
       if (is_active !== undefined) updates.is_active = Boolean(is_active);
