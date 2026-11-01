@@ -1413,20 +1413,46 @@ export async function POST(request) {
     }
 
     if (action === 'withdraw_update') {
-      const status = String(body.status || '');
-
-      if (!['pending', 'approved', 'rejected'].includes(status)) {
-        return json({ ok: false, error: 'Status noto‘g‘ri.' }, 400);
+      const status = clean(body.status);
+      const adminNote = clean(body.adminNote).slice(0, 500);
+      const requestId = clean(body.requestId);
+      if (!/^[a-f0-9-]{36}$/i.test(requestId)) return json({ ok: false, error: 'So‘rov ID noto‘g‘ri.' }, 400);
+      if (!['approved', 'rejected'].includes(status)) {
+        return json({ ok: false, error: 'Faqat tasdiqlash yoki rad etish mumkin.' }, 400);
       }
-
+      if (adminNote.length < 8) return json({
+        ok: false, error: status === 'approved'
+          ? 'Yetkazish dalili yoki Telegram tranzaksiya ID sini kiriting (kamida 8 belgi).'
+          : 'Rad etish sababini kiriting (kamida 8 belgi).',
+      }, 400);
+      if (status === 'approved' && body.deliveryConfirmed !== true) {
+        return json({ ok: false, error: 'Gift foydalanuvchiga yuborilganini tasdiqlang.' }, 400);
+      }
+      const { data: pending, error: findError } = await supabase
+        .from('withdraw_requests').select('id,user_id,gift_id,history_id,status')
+        .eq('id', requestId).maybeSingle();
+      if (findError) throw findError;
+      if (!pending || pending.status !== 'pending') {
+        return json({ ok: false, error: 'So‘rov allaqachon ko‘rib chiqilgan yoki topilmadi.' }, 409);
+      }
+      if (status === 'approved' && pending.history_id) {
+        const { data: history, error: historyError } = await supabase
+          .from('open_history').select('id,user_id,gift_id,sold_at,upgraded_at')
+          .eq('id', pending.history_id).maybeSingle();
+        if (historyError) throw historyError;
+        if (!history || String(history.user_id) !== String(pending.user_id) ||
+            String(history.gift_id) !== String(pending.gift_id) ||
+            history.sold_at || history.upgraded_at) {
+          return json({ ok: false, error: 'Gift egasi yoki tarixi mos kelmadi. Tasdiqlash to‘xtatildi.' }, 409);
+        }
+      }
       const { data, error } = await supabase
         .from('withdraw_requests')
-        .update({ status })
-        .eq('id', body.requestId)
+        .update({ status, admin_note: adminNote })
+        .eq('id', requestId)
         .eq('status', 'pending')
         .select('*')
         .maybeSingle();
-
       if (error) throw error;
       if (!data) return json({ ok: false, error: 'So‘rov allaqachon ko‘rib chiqilgan.' }, 409);
       return json({ ok: true, withdrawal: data });
