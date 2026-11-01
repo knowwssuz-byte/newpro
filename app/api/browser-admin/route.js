@@ -710,6 +710,7 @@ export async function POST(request) {
       return json({ok:true,giveaways:data||[],paidEnabled:process.env.GIVEAWAY_PAID_ENABLED==='true'});
     }
     if (action === 'giveaway_create') {
+      if(body.inventoryConfirmed!==true)return json({ok:false,error:'Sovrinlar real zaxirada ekanligini tasdiqlang'},400);
       const title=clean(body.title).slice(0,90);
       const description=clean(body.description).slice(0,700);
       const mode=clean(body.mode);
