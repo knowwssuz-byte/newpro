@@ -2057,27 +2057,7 @@ function HomeGameBanner({
   onClick,
 }) {
   const isPvp = variant === 'pvp';
-  if (variant === 'giveaway') {
-    return (
-      <button
-        type="button"
-        className={`${gameCardStyles.gameBanner} ${gameCardStyles.giveawayBanner}`}
-        aria-label="GIVEAWAY bo‘limini ochish"
-        onClick={onClick}
-      >
-        <span className={gameCardStyles.giveawayTextShade} aria-hidden="true" />
-        <span className={gameCardStyles.giveawayContent}>
-          <span className={gameCardStyles.giveawayBadge}>
-            <AppIcon name="gift" /> FREE!
-          </span>
-          <strong className={gameCardStyles.giveawayHeading}>GIVEAWAY</strong>
-          <span className={gameCardStyles.giveawayCta}>
-            Join now <AppIcon name="chevronRight" />
-          </span>
-        </span>
-      </button>
-    );
-  }
+  const isGiveaway = variant === 'giveaway';
 
   return (
     <button
@@ -2090,12 +2070,12 @@ function HomeGameBanner({
         src={image}
         alt=""
         className={gameCardStyles.bannerImage}
-        width={1600}
-        height={800}
+        width={isGiveaway ? 960 : 1600}
+        height={isGiveaway ? 320 : 800}
         sizes="(max-width: 590px) 100vw, 560px"
-        priority={!isPvp}
-        loading="eager"
-        fetchPriority={isPvp ? 'auto' : 'high'}
+        priority={!isPvp && !isGiveaway}
+        loading={isGiveaway ? 'lazy' : 'eager'}
+        fetchPriority={isPvp || isGiveaway ? 'auto' : 'high'}
         unoptimized
         draggable={false}
       />
@@ -2104,7 +2084,7 @@ function HomeGameBanner({
 
       <span className={gameCardStyles.bannerCopy}>
         <span className={gameCardStyles.bannerBadge}>
-          <AppIcon name={isPvp ? 'swords' : 'rocket'} />
+          <AppIcon name={isGiveaway ? 'gift' : isPvp ? 'swords' : 'rocket'} />
           {badge}
         </span>
         <span className={gameCardStyles.bannerTitle}>
@@ -2179,7 +2159,7 @@ function HomeView({
             title="GIVEAWAY"
             description="Free prizes. Join now."
             actionText="Join now"
-            image="/feature/game-banners/giveaway-clean.png"
+            image="/feature/game-banners/giveaway-premium-v7.png"
             onClick={onOpenGiveaway}
           />
         </div>
