@@ -1923,71 +1923,66 @@
 .bannerCopy>small{font-size:clamp(10px,2.65vw,11.5px);line-height:1.35}
 @media(max-width:350px){.actionCopy strong{font-size:10.5px}.actionCopy small{font-size:9.5px}}
 
-/* NewPro Giveaway: native typography + real button surface; PNG is art only. */
+/* Giveaway: real PNG backdrop + crisp native lettering, matching the prize-banner reference. */
 .giveawayBanner{
-  position:relative; isolation:isolate; overflow:hidden;
-  background:
-    radial-gradient(ellipse at 81% 45%,rgba(255,65,207,.66),transparent 60%),
-    radial-gradient(ellipse at 38% 110%,rgba(174,43,240,.7),transparent 72%),
-    linear-gradient(110deg,#4e0c99 0%,#610dae 52%,#9a24d4 100%);
-  border:1px solid rgba(225,158,255,.82);
-  box-shadow:0 12px 28px rgba(92,29,168,.26),inset 0 1px 0 rgba(255,255,255,.5);
-  text-align:left;
+  position:relative;isolation:isolate;overflow:hidden;display:block;
+  text-align:left;background:#59119f;
+  border:1px solid rgba(230,169,255,.8);
+  box-shadow:0 12px 30px rgba(97,21,178,.27),inset 0 1px 0 rgba(255,255,255,.45);
 }
-.giveawayBanner::after{
-  content:"";position:absolute;inset:0;z-index:4;
-  border-radius:inherit;pointer-events:none;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.15),inset 0 -13px 25px rgba(37,7,78,.18);
+.giveawayBackdrop{
+  position:absolute;z-index:0;inset:0;width:100%!important;height:100%!important;
+  object-fit:cover;object-position:center;
+  pointer-events:none;user-select:none;image-rendering:auto;
+  transition:transform .5s cubic-bezier(.2,.7,.25,1);
 }
-.giveawayLight{
-  position:absolute;inset:0;pointer-events:none;z-index:0;
-  background:repeating-conic-gradient(from 10deg at 88% 50%,transparent 0deg 15deg,rgba(255,233,255,.055) 18deg 23deg,transparent 28deg 48deg);
+.giveawayTextShade{
+  position:absolute;z-index:1;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,rgba(59,6,121,.17) 0%,rgba(63,7,121,.09) 52%,transparent 72%);
 }
-.giveawayArt{
-  position:absolute;z-index:1;right:-2%;bottom:-22%;
-  width:50%!important;height:150%!important;object-fit:contain;
-  object-position:right bottom;pointer-events:none;user-select:none;
-  filter:drop-shadow(0 5px 10px rgba(43,0,78,.25));
-  transition:transform .5s cubic-bezier(.2,.75,.25,1);
+.giveawayBanner:after{
+  content:"";position:absolute;z-index:5;inset:0;pointer-events:none;border-radius:inherit;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.13),inset 0 -8px 20px rgba(43,0,74,.2);
 }
-.giveawayBanner:hover .giveawayArt{transform:translateY(-3px) scale(1.04)}
+.giveawayBanner:hover .giveawayBackdrop{transform:scale(1.028)}
 .giveawayContent{
-  position:relative;z-index:3;width:67%;height:100%;
-  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
-  padding:clamp(10px,3.4vw,20px) clamp(11px,4vw,23px);
+  position:relative;z-index:3;height:100%;width:68%;
+  padding:clamp(10px,3.2vw,17px) clamp(12px,3.8vw,23px);
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;
 }
 .giveawayBadge{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:5px 9px;border-radius:8px;
-  background:#fff4fd;color:#7b25c2;
-  box-shadow:0 2px 8px rgba(53,0,105,.14);
-  font-size:clamp(9px,2.6vw,11px);line-height:1;font-weight:900;
-  letter-spacing:.025em;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:6px 11px;border-radius:10px;
+  background:linear-gradient(145deg,#fff,#f6e5ff);
+  border:1px solid rgba(255,255,255,.85);
+  color:#6921c4;box-shadow:0 3px 12px rgba(49,5,108,.16);
+  font-family:var(--font-display,system-ui),sans-serif;
+  font-size:clamp(10px,2.8vw,13px);line-height:1.1;font-weight:900;letter-spacing:-.02em;
 }
-.giveawayBadge svg{width:13px;height:13px}
+.giveawayBadge svg{width:clamp(13px,3.6vw,17px);height:clamp(13px,3.6vw,17px)}
 .giveawayHeading{
-  display:block;color:#fff;font-size:clamp(25px,6.8vw,42px);
-  line-height:1.05;letter-spacing:-.065em;font-weight:1000;
-  text-shadow:0 2px 9px rgba(39,5,70,.3);
-  white-space:nowrap;margin-top:8px;
+  display:block;color:#fff;
+  font-family:var(--font-display,system-ui),system-ui,sans-serif;
+  font-size:clamp(29px,8.1vw,48px);
+  font-weight:1000;line-height:.98;letter-spacing:-.066em;
+  white-space:nowrap;text-transform:uppercase;
+  text-shadow:0 3px 12px rgba(29,0,64,.28);
 }
-.giveawayHeading span{color:#ffe4a4}
-.giveawaySubtitle{font-size:clamp(9px,2.6vw,12px);line-height:1.2;color:#f0d9ff;margin-top:3px;white-space:nowrap}
 .giveawayCta{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  min-height:29px;padding:6px 11px;margin-top:10px;
-  border:1px solid rgba(255,255,255,.7);border-radius:999px;
-  background:linear-gradient(105deg,rgba(255,255,255,.26),rgba(255,255,255,.1));
-  color:#fff;font-size:clamp(10px,2.7vw,12px);font-weight:850;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.23),0 3px 10px rgba(44,0,96,.13);
+  display:inline-flex;align-items:center;justify-content:center;gap:15px;
+  min-height:32px;padding:7px 14px;border-radius:999px;
+  border:1.5px solid rgba(235,206,255,.78);
+  background:linear-gradient(135deg,rgba(105,36,176,.74),rgba(91,22,161,.55));
+  color:#fff;font-family:var(--font-display,system-ui),sans-serif;
+  font-size:clamp(11px,3vw,15px);font-weight:900;line-height:1;
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.24),0 3px 10px rgba(40,0,91,.14);
+  text-shadow:0 1px 5px rgba(27,0,56,.22);
 }
-.giveawayCta svg{width:14px;height:14px}
-.giveawayBanner:focus-visible{outline:3px solid #fff2bf;outline-offset:3px}
-@media(max-width:380px){
-  .giveawayArt{width:51%!important;right:-4%;bottom:-21%}
-  .giveawayContent{width:69%;padding-left:12px}
-  .giveawayHeading{font-size:clamp(24px,7vw,30px)}
-  .giveawaySubtitle{font-size:9px}
-  .giveawayCta{margin-top:7px;padding:5px 10px;min-height:27px}
+.giveawayCta svg{width:clamp(13px,3.7vw,17px);height:clamp(13px,3.7vw,17px)}
+.giveawayBanner:focus-visible{outline:3px solid #ffe5a2;outline-offset:3px}
+@media(max-width:410px){
+  .giveawayContent{width:69%;padding:12px 13px}
+  .giveawayHeading{font-size:clamp(27px,8.3vw,36px)}
+  .giveawayCta{min-height:29px;padding:6px 12px;gap:9px}
 }
-@media(prefers-reduced-motion:reduce){.giveawayArt{transition:none}}
+@media(prefers-reduced-motion:reduce){.giveawayBackdrop{transition:none}}
