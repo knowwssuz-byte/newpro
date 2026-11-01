@@ -421,6 +421,7 @@ export default function WebAppClient() {
   const [initData, setInitData] = useState('');
   const [startParam, setStartParam] = useState('');
   const [tab, setTab] = useState('home');
+  const [pvpInitialGame, setPvpInitialGame] = useState('list');
   const [settingsOpen, setSettingsOpen] = useState(false);
   useEffect(() => {
     if (tab === 'inventory') {
@@ -1453,8 +1454,9 @@ export default function WebAppClient() {
 
   const openUpgradeLab = useCallback(() => { setError(''); setOpening(null); setSelectedCase(null); setTab('upgrade'); window.scrollTo({top:0,behavior:'auto'}); }, []);
 
-  const openPvpHub = useCallback((returnTab = 'home') => {
+  const openPvpHub = useCallback((returnTab = 'home', initialGame = 'list') => {
     pvpReturnTabRef.current = returnTab === 'games' ? 'games' : 'home';
+    setPvpInitialGame(initialGame === 'color' ? 'color' : 'list');
     setError('');
     setOpening(null);
     setSelectedCase(null);
@@ -1613,7 +1615,8 @@ export default function WebAppClient() {
                     document.body.scrollTop = 0;
                   }}
                   onOpenRocket={() => openRocketGame('home')}
-                  onOpenPvp={() => openPvpHub('home')}
+                  onOpenPvp={() => openPvpHub('home', 'list')}
+                  onOpenArena={() => openPvpHub('home', 'color')}
                   busy={busy}
                   freeCaseNextAt={freeCaseNextAt}
                   freeCaseClockOffsetMs={freeCaseClockOffsetMs}
@@ -1634,7 +1637,7 @@ export default function WebAppClient() {
                 <DeferredDataLoader title="Tarix yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
               {tab === 'upgrade' ? extrasState !== 'ready' ?
                 <DeferredDataLoader title="Upgrade tayyorlanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
-              {tab === 'pvp' ? <PvpHub initialGame="list" onBack={closePvpHub} apiPost={apiPost}
+              {tab === 'pvp' ? <PvpHub initialGame={pvpInitialGame} onBack={closePvpHub} apiPost={apiPost}
   balance={profile?.balance}
   onBalanceChange={updateRocketBalance}
   onToast={showToast} /> : null}
@@ -2050,6 +2053,7 @@ function HomeView({
   onSelectCase,
   onOpenRocket,
   onOpenPvp,
+  onOpenArena,
   busy,
   freeCaseNextAt,
   freeCaseClockOffsetMs,
@@ -2094,8 +2098,8 @@ function HomeView({
       </section>
 
       <div className={gameCardStyles.actionsGrid}>
-        <button type="button" data-quick-action="arena" aria-label="PVP Arena bo‘limini ochish"
-          className={`${gameCardStyles.actionCard} ${gameCardStyles.arena}`} onClick={onOpenPvp}>
+        <button type="button" data-quick-action="arena" aria-label="Color Arena o‘yinini ochish"
+          className={`${gameCardStyles.actionCard} ${gameCardStyles.arena}`} onClick={onOpenArena}>
           <span className={gameCardStyles.actionIcon}>
             <AppIcon name="swords" />
           </span>
