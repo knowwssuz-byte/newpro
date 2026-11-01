@@ -29,6 +29,9 @@ import GiftHistory from './GiftHistory';
 const DiceGame = dynamic(() => import('./DiceGame'), {
   ssr: false, loading: () => <RouteSkeleton title="Dice ochilmoqda" />,
 });
+const GiveawayHub = dynamic(() => import('./GiveawayHub'), {
+  ssr:false, loading:()=> <RouteSkeleton title="Giveaway yuklanmoqda" />,
+});
 const PvpHub = dynamic(() => import('./PvpHub'), {
   ssr: false, loading: () => <RouteSkeleton title="PvP ochilmoqda" />,
 });
@@ -649,7 +652,7 @@ export default function WebAppClient() {
   // Active Telegram Mini App users are counted per visible tab, not by profile updates.
   const presenceSection = selectedCase ? 'case'
     : tab === 'pvp' ? (pvpActiveMode === 'color' ? 'color' : pvpActiveMode === 'xo' ? 'xo' : 'pvp')
-    : (['home','games','inventory','bonus','referral','profile','history','upgrade','rocket','dice','deposit'].includes(tab) ? tab : 'other');
+    : (['home','games','inventory','bonus','referral','profile','history','upgrade','rocket','dice','deposit','giveaway'].includes(tab) ? tab : 'other');
   useEffect(() => { presenceCurrentSectionRef.current = presenceSection; }, [presenceSection]);
   const sendPresence = useCallback((action = 'ping', section = presenceCurrentSectionRef.current) => {
     if (!initData || !presenceSessionRef.current) return;
@@ -1667,6 +1670,7 @@ export default function WebAppClient() {
                   onOpenRocket={() => openRocketGame('home')}
                   onOpenPvp={() => openPvpHub('home', 'list')}
                   onOpenArena={() => openPvpHub('home', 'color')}
+                  onOpenGiveaway={() => { setSelectedCase(null); setOpening(null); setTab('giveaway'); window.scrollTo({top:0,behavior:'auto'}); }}
                   busy={busy}
                   freeCaseNextAt={freeCaseNextAt}
                   freeCaseClockOffsetMs={freeCaseClockOffsetMs}
@@ -1687,6 +1691,9 @@ export default function WebAppClient() {
                 <DeferredDataLoader title="Tarix yuklanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <GiftHistory history={history} gifts={inventoryGifts} withdrawals={withdrawals} onBack={() => setTab(historyReturnTabRef.current || 'home')} onRefresh={() => loadApp({silent:true})}/> : null}
               {tab === 'upgrade' ? extrasState !== 'ready' ?
                 <DeferredDataLoader title="Upgrade tayyorlanmoqda" failed={extrasState==='error'} onRetry={loadExtras}/> : <UpgradeLab history={history} inventoryGifts={inventoryGifts} catalogGifts={upgradeCatalog} cases={cases} withdrawals={withdrawals} upgradeRounds={upgradeRounds} apiPost={apiPost} onRefresh={() => loadApp({silent:true})} onToast={showToast} tg={tg} onBack={() => setTab('home')}/> : null}
+              {tab === 'giveaway' ? <GiveawayHub apiPost={apiPost}
+                 onBack={() => setTab('home')}
+                 onBalanceChange={updateRocketBalance} onToast={showToast}/> : null}
               {tab === 'pvp' ? <PvpHub initialGame={pvpInitialGame} onBack={closePvpHub} apiPost={apiPost}
   balance={profile?.balance}
   onBalanceChange={updateRocketBalance}
@@ -2104,6 +2111,7 @@ function HomeView({
   onOpenRocket,
   onOpenPvp,
   onOpenArena,
+  onOpenGiveaway,
   busy,
   freeCaseNextAt,
   freeCaseClockOffsetMs,
@@ -2143,6 +2151,15 @@ function HomeView({
             actionText="Arena ochiq"
             image="/feature/game-banners/pvp-v41.webp"
             onClick={onOpenPvp}
+          />
+          <HomeGameBanner
+            variant="giveaway"
+            badge="FREE!"
+            title="GIVEAWAY"
+            description="Free prizes. Join now."
+            actionText="Join now"
+            image="/feature/game-banners/giveaway-v1.webp"
+            onClick={onOpenGiveaway}
           />
         </div>
       </section>
