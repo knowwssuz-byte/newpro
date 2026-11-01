@@ -2189,7 +2189,7 @@ function HomeView({
             title="GIVEAWAY"
             description="Free prizes. Join now."
             actionText="Join now"
-            image="/api/giveaway-artwork.png"
+            image="/feature/game-banners/giveaway-clean.png"
             onClick={onOpenGiveaway}
           />
         </div>
