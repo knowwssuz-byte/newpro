@@ -703,7 +703,7 @@ export async function POST(request) {
     // Telegram catalog. Importing a design never creates owned stock or sends a gift.
     if (action === 'gift_regular_import') {
       const telegramGiftId = clean(body.telegramGiftId);
-      if (telegramGiftId && !/^\\d{5,25}$/.test(telegramGiftId)) {
+      if (telegramGiftId && !/^\d{5,25}$/.test(telegramGiftId)) {
         return json({ ok: false, error: 'Telegram gift ID noto‘g‘ri.' }, 400);
       }
       let catalogQuery = supabase.from('telegram_gift_catalog')
@@ -712,7 +712,7 @@ export async function POST(request) {
       const { data: catalog, error: catalogError } = await catalogQuery.limit(100);
       if (catalogError) throw catalogError;
       const candidates = (catalog || []).filter((gift) =>
-        /^\\d{5,25}$/.test(String(gift.telegram_gift_id)) &&
+        /^\d{5,25}$/.test(String(gift.telegram_gift_id)) &&
         Number.isFinite(Number(gift.star_count)) && Number(gift.star_count) > 0
       );
       if (!candidates.length) return json({
