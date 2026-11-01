@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import {getSharedStarsArtworkUrl,setSharedStarsArtworkUrl} from '@/lib/caseStarsArtwork.mjs';
 import { syncOwnedTelegramGifts, syncAvailableTelegramGifts } from '@/lib/telegramGiftSync';
+import { isVerifiedUnlimitedCatalogGift } from '@/lib/telegramRegularGift.mjs';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
@@ -207,7 +208,7 @@ async function bootstrap(supabase) {
       'gift_library',
       supabase.from('gift_library').select('*').order('created_at', { ascending: false })
     ),
-    safeSelect(supabase, 'telegram_gift_catalog', supabase.from('telegram_gift_catalog').select('telegram_gift_id,title,star_count,image_url,animation_url,availability_remains,availability_total,status').order('star_count', { ascending: true })),
+    safeSelect(supabase, 'telegram_gift_catalog', supabase.from('telegram_gift_catalog').select('telegram_gift_id,title,star_count,image_url,animation_url,availability_remains,availability_total,status,raw').order('star_count', { ascending: true })),
     safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').eq('source','upgrade_catalog')),
     safeSelect(supabase, 'app_settings', supabase.from('app_settings').select('key,value').in('key', ['feature_rocket', 'feature_pvp'])),
     safeSelect(
@@ -248,7 +249,8 @@ async function bootstrap(supabase) {
     users,
     withdrawals,
     giftLibrary,
-    telegramCatalog,
+    telegramCatalog: (telegramCatalog || []).filter(isVerifiedUnlimitedCatalogGift)
+      .map(({ raw, ...gift }) => gift),
     upgradeGifts,
     featureSettings: Object.fromEntries((featureRows || []).map((item) => [item.key, item.value || {}])),
     deposits,
@@ -707,16 +709,16 @@ export async function POST(request) {
         return json({ ok: false, error: 'Telegram gift ID noto‘g‘ri.' }, 400);
       }
       let catalogQuery = supabase.from('telegram_gift_catalog')
-        .select('telegram_gift_id,title,star_count,image_url,animation_url,status');
+        .select('telegram_gift_id,title,star_count,image_url,animation_url,status,raw');
       if (telegramGiftId) catalogQuery = catalogQuery.eq('telegram_gift_id', telegramGiftId);
       const { data: catalog, error: catalogError } = await catalogQuery.limit(100);
       if (catalogError) throw catalogError;
       const candidates = (catalog || []).filter((gift) =>
-        /^\d{5,25}$/.test(String(gift.telegram_gift_id)) &&
-        Number.isFinite(Number(gift.star_count)) && Number(gift.star_count) > 0
+        isVerifiedUnlimitedCatalogGift(gift) &&
+        ( /^https:\/\//i.test(gift.image_url || '') || /^https:\/\//i.test(gift.animation_url || '') )
       );
       if (!candidates.length) return json({
-        ok: false, error: 'Telegram katalogida gift topilmadi. Avval katalogni yangilang.'
+        ok: false, error: 'Cheksiz, upgrade bo‘lmaydigan, rasmi/animatsiyasi tasdiqlangan gift topilmadi. Telegram katalogini yangilang.'
       }, 404);
       const slugs = candidates.map((gift) => `regular-${gift.telegram_gift_id}`);
       const { data: existing, error: existingError } = await supabase
@@ -738,7 +740,7 @@ export async function POST(request) {
             image_type: 'png',
             background_value: 'linear-gradient(135deg,#fff9e8,#f1e9ff)',
             is_active: true,
-            model_name: 'Telegram standard gift',
+            model_name: 'Unlimited · Non-upgradable',
           };
         });
         const { error: insertError } = await supabase.from('gift_library').insert(rows);
