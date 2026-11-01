@@ -1923,151 +1923,51 @@
 .bannerCopy>small{font-size:clamp(10px,2.65vw,11.5px);line-height:1.35}
 @media(max-width:350px){.actionCopy strong{font-size:10.5px}.actionCopy small{font-size:9.5px}}
 
-/* GIVEAWAY · one full-bleed artwork, with crisp HTML/CSS UI at the left.
-   No image element, object-fit, fixed-width icon, or thumbnail fallback. */
+/* V7 — GIVEAWAY shares the exact V41 Rocket/PvP banner geometry.
+   All artwork is generated from its dedicated text-free full-width source. */
 .giveawayBanner {
-  --banner-accent: 159, 60, 248;
-  position: relative;
-  isolation: isolate;
-  display: block;
-  overflow: hidden;
-  text-align: left;
-  border: 1px solid rgba(226, 176, 255, .83);
-  border-radius: 24px;
-  background-color: #6113b4;
-  background-image: url('/feature/game-banners/giveaway-premium-v4.png');
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center center;
+  --banner-accent: 189, 77, 255;
+  --banner-accent-2: 119, 41, 226;
+  background: #6515c8;
+  border-color: rgba(249, 208, 255, .68);
   box-shadow:
-    0 12px 30px rgba(78, 19, 139, .29),
-    inset 0 1px 0 rgba(255, 255, 255, .46);
+    0 16px 34px rgba(105, 24, 188, .25),
+    0 3px 10px rgba(68, 11, 130, .12),
+    inset 0 1px 0 rgba(255, 255, 255, .59);
 }
-.giveawayBanner::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 4;
-  pointer-events: none;
-  border-radius: inherit;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,.15),
-              inset 0 -5px 18px rgba(48, 0, 90, .17);
+.giveawayBanner .bannerImage {
+  object-position: center center;
+  filter: saturate(1.05) contrast(1.02);
 }
-.giveawayTextShade {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(90deg,
-    rgba(66, 10, 136, .24) 0%,
-    rgba(81, 17, 155, .12) 39%,
-    rgba(81, 17, 155, 0) 69%);
+.giveawayBanner .bannerShade {
+  background:
+    linear-gradient(90deg, rgba(87, 13, 169, .65) 0%, rgba(104, 17, 183, .35) 32%, rgba(99, 13, 179, .06) 58%, transparent 78%),
+    linear-gradient(180deg, rgba(255, 255, 255, .08), transparent 38%);
 }
-.giveawayContent {
-  position: relative;
-  z-index: 2;
-  width: min(58%, 310px);
-  height: 100%;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: clamp(12px, 3.3vw, 19px) clamp(12px, 3.55vw, 22px);
-  pointer-events: none;
+.giveawayBanner .bannerBadge {
+  color: #7b2ad9;
+  background: #fff;
+  box-shadow: 0 5px 14px rgba(60, 0, 114, .16);
 }
-.giveawayBadge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 27px;
-  padding: 6px 12px;
-  border: 1px solid rgba(255, 255, 255, .85);
-  border-radius: 10px;
-  background: linear-gradient(135deg, #fff, #f7ebff);
-  color: #6722bd;
-  box-shadow: 0 3px 11px rgba(39, 1, 92, .18);
+.giveawayBanner .bannerTitle {
+  text-shadow: 0 5px 14px rgba(48, 0, 92, .22);
+}
+.giveawayBanner .bannerTitle strong {
+  font-size: clamp(25px, 7.2vw, 37px);
+  letter-spacing: -.065em;
   white-space: nowrap;
-  font-family: var(--font-outfit), Outfit, system-ui, sans-serif;
-  font-weight: 900;
-  font-size: clamp(11px, 2.8vw, 13px);
-  line-height: 1;
-  letter-spacing: -.015em;
 }
-.giveawayBadge svg { width: 15px; height: 15px; flex: none; }
-.giveawayHeading {
-  display: block;
-  flex: none;
-  max-width: 100%;
-  margin: 0;
-  color: #fff;
-  font-family: var(--font-outfit), Outfit, system-ui, sans-serif;
-  font-size: clamp(27px, 7.9vw, 44px);
-  font-weight: 900;
-  letter-spacing: -.067em;
-  line-height: 1;
-  text-transform: uppercase;
-  white-space: nowrap;
-  text-shadow: 0 3px 10px rgba(27, 0, 56, .24);
+.giveawayBanner .bannerAction {
+  background: rgba(91, 18, 167, .27);
+  border-color: rgba(255, 255, 255, .55);
 }
-.giveawayCta {
-  display: inline-flex;
-  flex: none;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  min-height: 33px;
-  padding: 7px 14px;
-  border: 1.5px solid rgba(238, 211, 255, .82);
-  border-radius: 999px;
-  color: #fff;
-  background: rgba(91, 26, 159, .45);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .19),
-              0 3px 10px rgba(39, 0, 77, .12);
-  font-family: var(--font-outfit), Outfit, system-ui, sans-serif;
-  font-size: clamp(11px, 3.1vw, 14px);
-  font-weight: 800;
-  line-height: 1;
-  white-space: nowrap;
-  transition: background .2s ease, border-color .2s ease;
-}
-.giveawayCta svg { height: 16px; width: 16px; flex: none; }
-@media (hover:hover) and (pointer:fine) {
-  .giveawayBanner:hover .giveawayCta {
-    background: rgba(114, 41, 186, .68);
-    border-color: #fff;
+@media (max-width: 430px) {
+  .giveawayBanner .bannerTitle strong {
+    font-size: clamp(25px, 7.1vw, 31px);
   }
-}
-.giveawayBanner:focus-visible {
-  outline: 3px solid #fff1b6;
-  outline-offset: 3px;
-}
-@media (max-width: 410px) {
-  .giveawayBanner { border-radius: 21px; }
-  .giveawayContent {
-    width: 59%;
-    padding: 12px 13px;
-  }
-  .giveawayBadge {
-    min-height: 26px;
-    padding: 6px 10px;
-    font-size: 11px;
-  }
-  .giveawayHeading { font-size: clamp(26px, 8vw, 34px); }
-  .giveawayCta {
-    min-height: 30px;
-    padding: 6px 12px;
-    gap: 10px;
-    font-size: 12px;
-  }
+  .giveawayBanner .bannerImage { object-position: center center; }
 }
 @media (max-width: 350px) {
-  .giveawayContent { width: 62%; padding: 10px 11px; }
-  .giveawayHeading { font-size: 26px; }
-  .giveawayBadge { font-size: 10px; min-height: 24px; }
-  .giveawayCta { min-height: 28px; font-size: 11px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .giveawayCta { transition: none; }
+  .giveawayBanner .bannerCopy { width: 53%; }
+  .giveawayBanner .bannerTitle strong { font-size: 24px; }
 }
