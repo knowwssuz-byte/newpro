@@ -422,6 +422,7 @@ export default function WebAppClient() {
   const [startParam, setStartParam] = useState('');
   const [tab, setTab] = useState('home');
   const [pvpInitialGame, setPvpInitialGame] = useState('list');
+  const [pvpActiveMode, setPvpActiveMode] = useState('list');
   const [settingsOpen, setSettingsOpen] = useState(false);
   useEffect(() => {
     if (tab === 'inventory') {
@@ -487,6 +488,8 @@ export default function WebAppClient() {
   const referralTrackedRef = useRef(false);
   const historyReturnTabRef = useRef('home');
   const mountedRef = useRef(false);
+  const presenceSessionRef = useRef('');
+  const presenceCurrentSectionRef = useRef('home');
 
   useEffect(() => {
     try {
@@ -630,6 +633,39 @@ export default function WebAppClient() {
   );
 
 
+  // Active Telegram Mini App users are counted per visible tab, not by profile updates.
+  const presenceSection = selectedCase ? 'case'
+    : tab === 'pvp' ? (pvpActiveMode === 'color' ? 'color' : pvpActiveMode === 'xo' ? 'xo' : 'pvp')
+    : (['home','games','inventory','bonus','referral','profile','history','upgrade','rocket','dice','deposit'].includes(tab) ? tab : 'other');
+  useEffect(() => { presenceCurrentSectionRef.current = presenceSection; }, [presenceSection]);
+  const sendPresence = useCallback((action = 'ping', section = presenceCurrentSectionRef.current) => {
+    if (!initData || !presenceSessionRef.current) return;
+    void fetch('/api/presence', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({initData, action, section, sessionId:presenceSessionRef.current}),
+      cache:'no-store', keepalive:action==='away'
+    }).catch(() => {});
+  }, [initData]);
+  useEffect(() => {
+    if (!initData || !profile?.id || loading) return undefined;
+    if (!presenceSessionRef.current) presenceSessionRef.current = crypto.randomUUID();
+    const pulse = () => sendPresence(document.visibilityState === 'visible' ? 'ping' : 'away');
+    pulse();
+    const timer = window.setInterval(pulse, 20000);
+    const onHide = () => sendPresence('away');
+    document.addEventListener('visibilitychange',pulse);
+    window.addEventListener('pagehide',onHide);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange',pulse);
+      window.removeEventListener('pagehide',onHide);
+      onHide();
+    };
+  }, [initData, profile?.id, loading, sendPresence]);
+  useEffect(() => {
+    if (profile?.id && !loading && document.visibilityState === 'visible') sendPresence('ping', presenceSection);
+  }, [presenceSection, profile?.id, loading, sendPresence]);
+  
   useEffect(() => {
     if (!initData || !profile?.id) return;
 
@@ -1457,6 +1493,7 @@ export default function WebAppClient() {
   const openPvpHub = useCallback((returnTab = 'home', initialGame = 'list') => {
     pvpReturnTabRef.current = returnTab === 'games' ? 'games' : 'home';
     setPvpInitialGame(initialGame === 'color' ? 'color' : 'list');
+    setPvpActiveMode(initialGame === 'color' ? 'color' : 'list');
     setError('');
     setOpening(null);
     setSelectedCase(null);
@@ -1640,7 +1677,7 @@ export default function WebAppClient() {
               {tab === 'pvp' ? <PvpHub initialGame={pvpInitialGame} onBack={closePvpHub} apiPost={apiPost}
   balance={profile?.balance}
   onBalanceChange={updateRocketBalance}
-  onToast={showToast} /> : null}
+  onToast={showToast} onModeChange={setPvpActiveMode} /> : null}
 
               {tab === 'rocket' ? (
                 <RocketGame
