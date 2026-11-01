@@ -33,6 +33,16 @@ async function activityForUser(db,id) {
   if(xoError)throw new Error('pvp_xo_matches: '+xoError.code);
   const parts=Object.fromEntries(result);
   parts.xo=xo||[];
+  const caseIds=[...new Set(parts.cases.map(x=>x.case_id).filter(Boolean))];
+  const giftIds=[...new Set([...parts.cases.map(x=>x.gift_id),...parts.withdrawals.map(x=>x.gift_id)].filter(Boolean))];
+  const [caseNames,giftNames]=await Promise.all([
+    caseIds.length?db.from('cases').select('id,title').in('id',caseIds):Promise.resolve({data:[],error:null}),
+    giftIds.length?db.from('gifts').select('id,title').in('id',giftIds):Promise.resolve({data:[],error:null})
+  ]);
+  if(caseNames.error)throw caseNames.error;
+  if(giftNames.error)throw giftNames.error;
+  const caseById=new Map((caseNames.data||[]).map(x=>[x.id,x.title]));
+  const giftById=new Map((giftNames.data||[]).map(x=>[x.id,x.title]));
   const titles = {
     deposits:'Deposit', withdrawals:'Gift yechish',cases:'Case',dice:'Dice',rocket:'Rocket',
     color:'Color Arena',colorLedger:'Color Arena balans',xoLedger:'X/O balans',
@@ -42,8 +52,8 @@ async function activityForUser(db,id) {
     id:key+':'+row.id, kind:key, title:titles[key], createdAt:row.created_at,
     info:key==='deposits'
       ? (row.method||'deposit')+' · '+row.status+' · '+Number(row.credit_amount||0)+' Stars'
-      :key==='withdrawals' ? row.status+(row.admin_note?' · '+String(row.admin_note).slice(0,130):'')
-      :key==='cases' ? (row.sold_at?'Sotildi · '+Number(row.sale_price||0)+' Stars':'Case ochildi')
+      :key==='withdrawals' ? (giftById.get(row.gift_id)||'Gift')+' · '+row.status+(row.admin_note?' · '+String(row.admin_note).slice(0,130):'')
+      :key==='cases' ? (caseById.get(row.case_id)||'Case')+' · '+(giftById.get(row.gift_id)||'Gift')+' · '+(row.sold_at?'Sotildi '+Number(row.sale_price||0)+' Stars':'Ochildi')
       :key==='dice' ? Number(row.bet||0)+' bet · '+Number(row.payout||0)+' payout · '+(row.won?'Win':'Loss')
       :key==='rocket' ? Number(row.bet||0)+' bet · '+Number(row.payout||0)+' payout · '+row.status
       :key==='color' ? Number(row.stake||0)+' Stars tikildi'
