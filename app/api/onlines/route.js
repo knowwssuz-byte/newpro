@@ -21,8 +21,9 @@ async function activityForUser(db,id) {
     ['errors','user_client_errors','id,section,message,created_at'],
   ];
   const result = await Promise.all(selections.map(async ([key,table,columns])=>{
-    const {data,error}=await db.from(table).select(columns).eq('user_id',id)
-      .order('created_at',{ascending:false}).limit(40);
+    let query=db.from(table).select(columns).eq('user_id',id);
+    if (key === 'cases') query=query.not('case_id','is',null);
+    const {data,error}=await query.order('created_at',{ascending:false}).limit(40);
     if (error) throw new Error(table+': '+error.code);
     return [key,data||[]];
   }));
