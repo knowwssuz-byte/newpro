@@ -38,14 +38,15 @@ export async function POST(request) {
     if (!UUID.test(session)) return jsonError('Session ID noto‘g‘ri.',400);
     if (action === 'away') {
       const { error } = await db.from('user_presence_sessions')
-        .delete().eq('user_id',userId).eq('session_id',session);
+        .update({ active:false, last_seen_at:new Date().toISOString() })
+        .eq('user_id',userId).eq('session_id',session);
       if (error) throw error;
       return Response.json({ ok:true }, {headers: {'Cache-Control':'no-store'}});
     }
     if (action !== 'ping') return jsonError('Amal noto‘g‘ri.',400);
     const section = SECTIONS.has(body.section) ? body.section : 'other';
     const { error } = await db.from('user_presence_sessions').upsert({
-      user_id:userId, session_id:session, section, last_seen_at:new Date().toISOString()
+      user_id:userId, session_id:session, section, active:true, last_seen_at:new Date().toISOString()
     }, {onConflict:'user_id,session_id'});
     if (error) throw error;
     return Response.json({ok:true}, {headers:{'Cache-Control':'no-store'}});
