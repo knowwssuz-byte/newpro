@@ -620,6 +620,19 @@ export default function WebAppClient() {
 
         return data;
       } catch (error) {
+        // Privacy-safe troubleshooting: only endpoint and status are recorded,
+        // never Telegram initData, input values, payment details or tokens.
+        if (initData && url !== '/api/presence') {
+          const statusText = error?.name === 'AbortError' ? 'timeout'
+            : error?.status ? 'HTTP ' + error.status : 'network_error';
+          void fetch('/api/presence', {
+            method:'POST', headers:{'content-type':'application/json'},
+            body:JSON.stringify({
+              initData, action:'error',section:presenceCurrentSectionRef.current,
+              message:String(url).split('?')[0].slice(0,80) + ' · ' + statusText
+            }), cache:'no-store'
+          }).catch(()=>{});
+        }
         if (error?.name === 'AbortError') {
           throw new Error('Server javobi kechikdi. Qayta ulanmoqda...');
         }
