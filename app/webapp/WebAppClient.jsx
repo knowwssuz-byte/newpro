@@ -2065,16 +2065,6 @@ function HomeGameBanner({
         aria-label="GIVEAWAY bo‘limini ochish"
         onClick={onClick}
       >
-        <Image
-          src={image}
-          alt=""
-          width={1300}
-          height={520}
-          className={gameCardStyles.giveawayBackdrop}
-          sizes="(max-width: 590px) 100vw, 560px"
-          unoptimized
-          draggable={false}
-        />
         <span className={gameCardStyles.giveawayTextShade} aria-hidden="true" />
         <span className={gameCardStyles.giveawayContent}>
           <span className={gameCardStyles.giveawayBadge}>
