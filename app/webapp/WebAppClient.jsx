@@ -2065,26 +2065,24 @@ function HomeGameBanner({
         aria-label="GIVEAWAY bo‘limini ochish"
         onClick={onClick}
       >
-        <span aria-hidden="true" className={gameCardStyles.giveawayLight} />
         <Image
           src={image}
           alt=""
-          width={360}
-          height={360}
-          className={gameCardStyles.giveawayArt}
-          sizes="(max-width: 590px) 210px, 290px"
-          quality={100}
+          width={1300}
+          height={520}
+          className={gameCardStyles.giveawayBackdrop}
+          sizes="(max-width: 590px) 100vw, 560px"
           unoptimized
           draggable={false}
         />
+        <span className={gameCardStyles.giveawayTextShade} aria-hidden="true" />
         <span className={gameCardStyles.giveawayContent}>
           <span className={gameCardStyles.giveawayBadge}>
-            <AppIcon name="gift" /> EVENT
+            <AppIcon name="gift" /> FREE!
           </span>
-          <strong className={gameCardStyles.giveawayHeading}>GIVE<span>AWAY</span></strong>
-          <span className={gameCardStyles.giveawaySubtitle}>Win exclusive Telegram gifts</span>
+          <strong className={gameCardStyles.giveawayHeading}>GIVEAWAY</strong>
           <span className={gameCardStyles.giveawayCta}>
-            Qatnashish <AppIcon name="chevronRight" />
+            Join now <AppIcon name="chevronRight" />
           </span>
         </span>
       </button>
@@ -2191,7 +2189,7 @@ function HomeView({
             title="GIVEAWAY"
             description="Free prizes. Join now."
             actionText="Join now"
-            image="/feature/game-banners/giveaway-art-v2.png"
+            image="/api/giveaway-artwork.png"
             onClick={onOpenGiveaway}
           />
         </div>
