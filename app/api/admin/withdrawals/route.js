@@ -9,7 +9,7 @@ export async function POST(request) {
     if (!auth.isAdmin) return jsonError('Admin ruxsati yo‘q', 403);
 
     const supabase = getSupabaseAdmin();
-    const { action, requestId, status, admin_note } = auth.body || {};
+    const { action, requestId, status, admin_note, deliveryConfirmed } = auth.body || {};
 
     if (action === 'list') {
       const { data: requests, error } = await supabase
@@ -49,11 +49,26 @@ export async function POST(request) {
 
     if (action === 'update') {
       if (!requestId) return jsonError('requestId kerak');
-      if (!['pending', 'approved', 'rejected'].includes(status)) return jsonError('status noto‘g‘ri');
-
+      if (!['approved', 'rejected'].includes(status)) return jsonError('Status noto‘g‘ri');
+      const note = String(admin_note || '').trim().slice(0, 500);
+      if (note.length < 8) return jsonError('Yetkazish dalili yoki rad etish sababi kamida 8 belgi bo‘lsin');
+      if (status === 'approved' && deliveryConfirmed !== true) return jsonError('Gift Telegramda yuborilganini tasdiqlang');
+      const { data: pending, error: findError } = await supabase.from('withdraw_requests')
+        .select('id,user_id,gift_id,history_id,status').eq('id', requestId).maybeSingle();
+      if (findError) throw findError;
+      if (!pending || pending.status !== 'pending') return jsonError('So‘rov ko‘rib chiqilgan yoki topilmadi', 409);
+      if (status === 'approved' && pending.history_id) {
+        const { data: history, error: historyError } = await supabase.from('open_history')
+          .select('user_id,gift_id,sold_at,upgraded_at').eq('id', pending.history_id).maybeSingle();
+        if (historyError) throw historyError;
+        if (!history || String(history.user_id) !== String(pending.user_id) ||
+          String(history.gift_id) !== String(pending.gift_id) || history.sold_at || history.upgraded_at) {
+          return jsonError('Gift tarixi yoki egasi mos kelmadi', 409);
+        }
+      }
       const { data, error } = await supabase
         .from('withdraw_requests')
-        .update({ status, admin_note: admin_note || null })
+        .update({ status, admin_note: note })
         .eq('id', requestId)
         .eq('status', 'pending')
         .select('*')
