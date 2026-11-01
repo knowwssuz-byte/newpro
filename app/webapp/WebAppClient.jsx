@@ -3620,7 +3620,7 @@ function AdminPanel({
             </label>
             <label className="field">
               <span>Upload animation</span>
-              <input type="file" accept="video/*,image/gif" onChange={(event) => setGiftAnimationFile(event.target.files?.[0] || null)} />
+              <input type="file" accept="video/webm,video/mp4" onChange={(event) => setGiftAnimationFile(event.target.files?.[0] || null)} />
             </label>
             <button className="primary-btn" type="submit" disabled={busy}>Create gift</button>
           </form>
