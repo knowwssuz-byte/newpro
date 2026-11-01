@@ -218,3 +218,30 @@
 .admin-stars-edit-image:focus-within{outline:2px solid #e3bb84;outline-offset:2px}
 .admin-stars-edit-image:has(input:disabled){opacity:.48;cursor:not-allowed}
 @media(max-width:390px){.admin-case-stars-image{max-width:132px;margin:auto}.admin-case-stars-reward{gap:10px}}
+
+/* Telegram regular gifts — real sticker artwork, not substitute emoji tiles. */
+.admin-regular-section{grid-column:1/-1;min-width:0;padding:clamp(16px,3vw,28px);border:1px solid #4e4269;border-radius:22px;background:linear-gradient(140deg,#181627,#262037);display:grid;gap:20px}
+.admin-regular-section-head{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:18px}
+.admin-regular-section-head>div:first-child{max-width:590px}
+.admin-regular-kicker{color:#bfb1ef;font-size:11px;font-weight:800;letter-spacing:.12em}
+.admin-regular-section h2{font-size:clamp(20px,2.5vw,28px);color:#fff;margin:6px 0}
+.admin-regular-section p{color:#cfc7e2;font-size:13px;line-height:1.6;margin:0}
+.admin-regular-actions{display:flex;flex-wrap:wrap;gap:10px}
+.admin-regular-actions button{border-radius:12px;padding:12px 16px;font-size:13px;font-weight:750;min-height:44px}
+.admin-regular-actions .admin-regular-sync{background:#38324d;border:1px solid #716491;color:#fff}
+.admin-regular-actions .admin-regular-import{background:#d7bcff;color:#221137;border:1px solid #e4d3ff}
+.admin-regular-actions button:disabled{opacity:.55;cursor:not-allowed}
+.admin-regular-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(138px,1fr));gap:12px}
+.admin-regular-card{background:#fff;border:1px solid #dedde2;border-radius:18px;box-shadow:0 4px 10px #0002;padding:12px 10px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;color:#222;min-width:0}
+.admin-regular-art{position:relative;width:100%;height:116px;display:grid;place-items:center;overflow:hidden;isolation:isolate}
+.admin-regular-art>img,.admin-regular-art>video,.admin-regular-art>.admin-regular-lottie{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:block}
+.admin-regular-art>img{z-index:0}
+.admin-regular-art>.admin-regular-lottie,.admin-regular-art>video{z-index:1}
+.admin-regular-art svg{width:100%!important;height:100%!important;max-width:100%;max-height:100%}
+.admin-regular-card>strong{font-size:12px;font-weight:800;line-height:1.3;min-height:30px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#352e41}
+.admin-regular-price{display:inline-flex;align-items:center;gap:5px;border-radius:24px;background:#fff4d8;color:#ad7013;font-size:14px;font-weight:800;padding:5px 10px}
+.admin-regular-card>button{width:100%;background:#30254a;color:#fff;border:0;border-radius:10px;min-height:38px;padding:6px;font-size:12px;font-weight:700}
+.admin-regular-card>button:disabled{background:#f1f1f4;color:#706f78;cursor:default}
+.admin-regular-result{padding:11px 14px;border:1px solid #514568;border-radius:12px}
+@media(max-width:480px){.admin-regular-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.admin-regular-card{padding:8px 5px;gap:6px;border-radius:13px}.admin-regular-art{height:90px}.admin-regular-card>strong{font-size:10px}.admin-regular-card>button{font-size:10px;min-height:34px}.admin-regular-section{padding:12px}.admin-regular-actions{width:100%}.admin-regular-actions button{flex:1;min-width:0;font-size:11px}}
+@media(prefers-reduced-motion:reduce){.admin-regular-card{transition:none}}
