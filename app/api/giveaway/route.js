@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { readTelegramRequest, jsonError } from '@/lib/telegramAuth';
+import { joinedBalance, publicBoard } from '@/lib/giveawayServer.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -14,6 +15,9 @@ export async function POST(request) {
   const body=auth.body||{};
   const action=String(body.action||'list');
   try {
+    const user=await db.from('users').select('balance,is_banned').eq('id',userId).maybeSingle();
+    if(user.error)throw user.error;
+    if(!user.data||user.data.is_banned)return jsonError('Hisobingizga kirishga ruxsat yo‘q.',403);
     if(action==='list') {
       const {data:expired,error:expError}=await db.from('giveaways').select('id')
         .eq('status','live').lte('ends_at',new Date().toISOString()).limit(3);
@@ -22,46 +26,23 @@ export async function POST(request) {
         const {error:drawError}=await db.rpc('newpro_giveaway_draw',{p_giveaway:g.id});
         if(drawError)console.error('[giveaway:draw]',drawError.code||'draw_failed');
       }
-      const [feed,user]=await Promise.all([
-        db.rpc('newpro_giveaway_public_list',{p_user_id:userId}),
-        db.from('users').select('balance,is_banned').eq('id',userId).maybeSingle()
-      ]);
+      const feed=await db.rpc('newpro_giveaway_public_list',{p_user_id:userId});
       if(feed.error)throw feed.error;
-      if(user.error)throw user.error;
-      if(!user.data||user.data.is_banned)return jsonError('Hisobingizga kirishga ruxsat yo‘q.',403);
-      const rows=Array.isArray(feed.data)?feed.data:[];
-      let giveaways=rows;
-      if(rows.length){
-        const {data:flags,error:flagsError}=await db.from('giveaways')
-          .select('id,is_featured').in('id',rows.map(item=>item.id));
-        if(flagsError)throw flagsError;
-        const featuredIds=new Set((flags||[]).filter(item=>item.is_featured).map(item=>item.id));
-        giveaways=rows.map(item=>({...item,isFeatured:featuredIds.has(item.id)}));
-      }
-      return response({ok:true,giveaways,balance:Number(user.data.balance||0),
+      return response({ok:true,giveaways:Array.isArray(feed.data)?feed.data:[],balance:joinedBalance(user),
         serverTime:new Date().toISOString()});
     }
     if(action==='leaderboard') {
       const giveawayId=String(body.giveawayId||'');
       const offset=Number(body.offset||0);
-      if(!UUID.test(giveawayId)||!Number.isSafeInteger(offset)||offset<0||offset>100000)
-        return jsonError('So‘rov noto‘g‘ri.',400);
-      const {data:board,error:boardError}=await db.rpc('newpro_giveaway_leaderboard',{
-        p_giveaway:giveawayId,p_limit:30,p_offset:offset
+      const revision=body.revision==null?null:String(body.revision);
+      if(!UUID.test(giveawayId)||!Number.isSafeInteger(offset)||offset<0||offset>2147483600||
+        (revision!==null&&!/^\d+:\d+$/.test(revision)))return jsonError('So‘rov noto‘g‘ri.',400);
+      const {data:board,error}=await db.rpc('newpro_giveaway_leaderboard_v2',{
+        p_giveaway:giveawayId,p_user:userId,p_limit:30,p_offset:offset,p_revision:revision
       });
-      if(boardError)throw boardError;
+      if(error)throw error;
       if(!board)return jsonError('Giveaway mavjud emas.',404);
-      const totalWeight=Number(board.totalWeight)||0;
-      const rows=(Array.isArray(board.rows)?board.rows:[]).map(row=>({
-        name:String(row.name||'Ishtirokchi').slice(0,60),
-        username:String(row.username||'').slice(0,40),
-        weight:Number(row.weight)||0,
-        stars:Number(row.stars)||0,
-        chance:totalWeight>0?Math.max(0,Math.min(100,100*(Number(row.weight)||0)/totalWeight)):0,
-        isMe:String(row.userId)===String(userId)
-      }));
-      return response({ok:true,rows,total:Number(board.total)||0,totalWeight,
-        nextOffset:offset+rows.length<Number(board.total||0)?offset+rows.length:null});
+      return response({ok:true,...publicBoard(board),serverTime:new Date().toISOString()});
     }
     if(action==='join') {
       const giveawayId=String(body.giveawayId||'');
@@ -69,18 +50,8 @@ export async function POST(request) {
       const stars=Number(body.stars);
       if(!UUID.test(giveawayId)||!UUID.test(requestId)||!Number.isSafeInteger(stars)||
         stars<0||stars>10000)return jsonError('Giveaway yoki Stars miqdori noto‘g‘ri.',400);
-      const [giveaway,user]=await Promise.all([
-        db.from('giveaways').select('mode,entry_price,status').eq('id',giveawayId).maybeSingle(),
-        db.from('users').select('id,is_banned').eq('id',userId).maybeSingle()
-      ]);
-      if(giveaway.error)throw giveaway.error;
-      if(user.error)throw user.error;
-      if(!user.data||user.data.is_banned)return jsonError('Foydalanuvchi uchun ruxsat yo‘q.',403);
-      if(!giveaway.data)return jsonError('Giveaway topilmadi.',404);
-      if(giveaway.data.mode==='equal'&&stars!==giveaway.data.entry_price)
-        return jsonError('Kirish narxi mos kelmadi.',400);
-      if(giveaway.data.mode==='weighted'&&stars<giveaway.data.entry_price)
-        return jsonError('Minimum Stars yetarli emas.',400);
+      // The RPC validates price, deadline and balance under a row lock. Retried
+      // request IDs are resolved before the deadline check inside the transaction.
       const {data,error}=await db.rpc('newpro_giveaway_join',{
         p_giveaway:giveawayId,p_user:userId,p_amount:stars,p_request:requestId
       });
@@ -90,18 +61,26 @@ export async function POST(request) {
           ALREADY_JOINED:'Siz bu Giveaway’da allaqachon qatnashyapsiz.',
           INSUFFICIENT_BALANCE:'Balansda Stars yetarli emas.',
           GIVEAWAY_NOT_OPEN:'Giveaway hozir qatnashish uchun ochiq emas.',
+          GIVEAWAY_CANCELLED:'Giveaway bekor qilingan. Stars qaytarilgan.',
           GIVEAWAY_NOT_FOUND:'Giveaway topilmadi.',
+          INVALID_PRICE:'Kirish narxi o‘zgardi. Sahifani yangilang.',
           INVALID_STAKE:'Stars miqdori shartlarga mos emas.',
+          MAX_STAKE_REACHED:'Jami Stars limitingizga yetdingiz.',
+          REQUEST_CONFLICT:'Bu so‘rov boshqa miqdor uchun ishlatilgan.',
           USER_NOT_ALLOWED:'Hisobingizga qatnashishga ruxsat berilmagan.'
         };
-        return jsonError(messages[Object.keys(messages).find(k=>msg.includes(k))]||'Qatnashishda xatolik.',409);
+        const key=Object.keys(messages).find(k=>msg.includes(k));
+        if(key)return jsonError(messages[key],409);
+        throw error;
       }
       const userAfter=await db.from('users').select('balance').eq('id',userId).single();
-      return response({ok:true,entry:data,balance:Number(userAfter.data?.balance||0)});
+      const balance=joinedBalance(userAfter);
+      if(balance===null)console.error('[giveaway:balance]',userAfter.error?.code||'balance_unavailable');
+      return response({ok:true,entry:data,balance,balanceUnavailable:balance===null});
     }
     return jsonError('Noto‘g‘ri amal.',400);
   } catch(error) {
     console.error('[giveaway]',error.code||'server_error');
-    return jsonError('Giveaway ma’lumotlarini yuklashda xatolik.',500);
+    return jsonError('Giveaway ma’lumotlarini yuklashda xatolik. Qayta urinib ko‘ring.',500);
   }
 }

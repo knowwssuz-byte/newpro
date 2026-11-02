@@ -1,0 +1,67 @@
+.frame {
+  display: block;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  aspect-ratio: 1;
+  flex: none;
+  overflow: hidden;
+}
+.frame > img,
+.frame > video,
+.lottie {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.lottie {
+  opacity: 0;
+}
+.lottie[data-ready] {
+  opacity: 1;
+}
+.lottie svg {
+  width: 100% !important;
+  height: 100% !important;
+}
+.skeleton {
+  position: absolute;
+  inset: 12%;
+  border-radius: 28%;
+  background: linear-gradient(
+    110deg,
+    #ffffff05 20%,
+    #ffffff0d 42%,
+    #ffffff05 64%
+  );
+  background-size: 250% 100%;
+  animation: shimmer 1.8s linear infinite;
+  z-index: -1;
+}
+.unavailable {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #c4b6d2;
+  text-align: center;
+}
+.unavailable small {
+  font-size: 12px;
+}
+@keyframes shimmer {
+  to {
+    background-position: -250% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

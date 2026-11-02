@@ -1,0 +1,99 @@
+.dialog {
+  box-sizing: border-box;
+  width: min(520px, calc(100% - 24px));
+  max-height: calc(100dvh - 24px);
+  padding: 0;
+  margin: auto;
+  border: 1px solid #665079;
+  border-radius: 24px;
+  background: #20182d;
+  color: #f6f1ff;
+  font: inherit;
+  box-shadow: 0 28px 90px #0009;
+  overscroll-behavior: contain;
+}
+.dialog[data-wide] {
+  width: min(740px, calc(100% - 24px));
+}
+.dialog::backdrop {
+  background: #080610b8;
+  backdrop-filter: blur(8px);
+}
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: #20182df5;
+  border-bottom: 1px solid #41334e;
+  padding: 16px 20px;
+}
+.header h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+.header button {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid #554461;
+  border-radius: 13px;
+  color: inherit;
+  background: #30243e;
+  cursor: pointer;
+}
+.body {
+  padding: 20px;
+  padding-bottom: max(20px, env(safe-area-inset-bottom));
+  font-size: 14px;
+  line-height: 1.6;
+}
+.dialog button,
+.dialog input {
+  font: inherit;
+}
+.dialog button:focus-visible,
+.dialog input:focus-visible {
+  outline: 2px solid #cfb4ff;
+  outline-offset: 3px;
+}
+.dialog button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+@media (max-width: 560px) {
+  .dialog {
+    margin: auto auto max(12px, env(safe-area-inset-bottom));
+    border-radius: 24px;
+    max-height: calc(100dvh - 24px);
+  }
+  .header {
+    padding: 12px 16px;
+  }
+  .body {
+    padding: 16px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .dialog[open] {
+    animation: appear 0.18s ease-out;
+  }
+  @keyframes appear {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
