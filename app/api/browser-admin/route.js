@@ -707,7 +707,27 @@ export async function POST(request) {
     if (action === 'giveaway_list') {
       const {data,error}=await supabase.rpc('newpro_giveaway_admin_list');
       if(error)throw error;
-      return json({ok:true,giveaways:data||[]});
+      const rows=Array.isArray(data)?data:[];
+      if(!rows.length)return json({ok:true,giveaways:[]});
+      const {data:featured,error:featuredError}=await supabase.from('giveaways')
+        .select('id,is_featured').in('id',rows.map(row=>row.id));
+      if(featuredError)throw featuredError;
+      const featuredIds=new Set((featured||[]).filter(row=>row.is_featured).map(row=>row.id));
+      return json({ok:true,giveaways:rows.map(row=>({...row,isFeatured:featuredIds.has(row.id)}))});
+    }
+    if (action === 'giveaway_feature') {
+      const id=clean(body.id);
+      if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))
+        return json({ok:false,error:'Giveaway ID noto‘g‘ri'},400);
+      const {error}=await supabase.rpc('newpro_giveaway_set_featured',{
+        p_giveaway:id,p_featured:body.featured===true
+      });
+      if(error){
+        if(String(error.message||'').includes('GIVEAWAY_NOT_FEATUREABLE'))
+          return json({ok:false,error:'Faqat draft yoki faol Giveaway asosiy qilinadi.'},409);
+        throw error;
+      }
+      return json({ok:true,id,isFeatured:body.featured===true});
     }
     if (action === 'giveaway_create') {
       const title=clean(body.title).slice(0,90);
