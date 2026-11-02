@@ -100,3 +100,8 @@
 .ga-modal-actions .ga-modal-submit{background:#bdeccc;color:#173b2a;border-color:#daffe5}
 .ga-modal button:focus-visible,.ga-event-actions button:focus-visible{outline:2px solid #d1aaff;outline-offset:3px}
 @media(max-width:480px){.ga-modal-backdrop{padding:10px}.ga-modal{padding:22px 15px;max-height:calc(100dvh - 20px);border-radius:17px}.ga-modal h3{font-size:21px}.ga-modal-actions{display:grid;grid-template-columns:1fr}.ga-modal-actions .ga-modal-submit{grid-row:1}}
+
+.ga-featured-badge{display:inline-flex;align-items:center;gap:5px;border-radius:999px;background:#4f3b1d;border:1px solid #b08c4b;color:#ffe6a6;font-size:10px;font-weight:900;letter-spacing:.05em;padding:6px 9px}
+.ga-event-actions>.ga-featured-button{display:inline-flex;align-items:center;gap:7px;background:#3d304a;border-color:#9276ad;color:#e9d8ff}
+.ga-event-actions>.ga-featured-button.ga-is-featured{background:#4a3425;border-color:#c59b57;color:#ffe0a0}
+.ga-event-actions>.ga-featured-button:focus-visible{outline:2px solid #f8d39a;outline-offset:2px}
