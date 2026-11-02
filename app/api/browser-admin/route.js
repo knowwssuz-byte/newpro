@@ -5,6 +5,7 @@ import { isVerifiedUnlimitedCatalogGift } from '@/lib/telegramRegularGift.mjs';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { giveawayPublishState } from '@/lib/giveawayPublish.mjs';
 import { fetchUniqueTelegramGift } from '@/lib/telegramGiftsImporter';
 import {
   depositSettingsForClient,
@@ -730,21 +731,41 @@ export async function POST(request) {
       if(error)throw error;
       return json({ok:true,id:data});
     }
-    if (action === 'giveaway_publish') {
+    if (action === 'giveaway_publish' || action === 'giveaway_publish_free') {
       const id=clean(body.id);
-      if(!/^[0-9a-f-]{36}$/i.test(id))return json({ok:false,error:'ID noto‘g‘ri'},400);
+      const convertToFree=action==='giveaway_publish_free';
+      if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))
+        return json({ok:false,error:'Giveaway ID noto‘g‘ri'},400);
       const {data:existing,error:lookupError}=await supabase.from('giveaways')
         .select('id,entry_price,mode,status,ends_at').eq('id',id).maybeSingle();
       if(lookupError)throw lookupError;
-      if(!existing||existing.status!=='draft')return json({ok:false,error:'Faqat draft e’lon qilinadi'},409);
-      if((existing.entry_price>0||existing.mode==='weighted')&&process.env.GIVEAWAY_PAID_ENABLED!=='true')
-        return json({ok:false,error:'Pullik/vaznli giveaway vaqtincha yopiq. Platforma qoidalari va qonuniy ruxsatlarni tekshiring.'},403);
-      const {data,error}=await supabase.from('giveaways').update({status:'live',updated_at:new Date().toISOString()})
-        .eq('id',id).eq('status','draft').gt('ends_at',new Date().toISOString())
+      const now=new Date();
+      const state=giveawayPublishState(existing,{
+        paidEnabled:process.env.GIVEAWAY_PAID_ENABLED==='true',
+        now:now.getTime()
+      });
+      if(state==='not_draft')return json({ok:false,error:'Faqat draft holatidagi Giveaway e’lon qilinadi.'},409);
+      if(state==='expired')return json({ok:false,error:'Giveaway muddati tugagan. Yangi muddat bilan draft yarating.'},409);
+      if(state==='paid_blocked'&&!convertToFree)
+        return json({ok:false,error:'Pullik/vaznli Giveaway uchun server ruxsati yo‘q. Bepul formatga o‘tkazib e’lon qiling yoki ruxsatni kuting.'},403);
+      if(convertToFree){
+        // Only untouched drafts may be converted: never rewrite the terms of an entry.
+        const {count,error:entriesError}=await supabase.from('giveaway_entries')
+          .select('giveaway_id',{count:'exact',head:true}).eq('giveaway_id',id);
+        if(entriesError)throw entriesError;
+        if(count>0)return json({ok:false,error:'Qatnashchilari bor Giveaway shartlarini o‘zgartirish mumkin emas.'},409);
+      }
+      const updates={
+        status:'live',
+        updated_at:now.toISOString(),
+        ...(convertToFree?{mode:'equal',entry_price:0}:{})
+      };
+      const {data,error}=await supabase.from('giveaways').update(updates)
+        .eq('id',id).eq('status','draft').gt('ends_at',now.toISOString())
         .select('id').maybeSingle();
       if(error)throw error;
-      if(!data)return json({ok:false,error:'Giveaway muddati tugagan yoki allaqachon e’lon qilingan'},409);
-      return json({ok:true,id});
+      if(!data)return json({ok:false,error:'Giveaway muddati tugagan yoki allaqachon e’lon qilingan.'},409);
+      return json({ok:true,id,convertedToFree:convertToFree});
     }
     if (action === 'giveaway_cancel') {
       const {data,error}=await supabase.rpc('newpro_giveaway_cancel',{p_giveaway:body.id});
