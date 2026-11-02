@@ -251,11 +251,12 @@ try {
       const fallbackHero = page.locator('[class*="heroPrize"]').first();
       await expect(fallbackHero.locator("img")).toBeVisible();
       await expect(fallbackHero).toHaveAttribute("data-playing", "false");
-      assert.ok(
-        await fallbackHero
-          .locator("img")
-          .evaluate((img) => img.naturalWidth > 0),
-      );
+      await expect
+        .poll(
+          () => fallbackHero.locator("img").evaluate((img) => img.naturalWidth),
+          { timeout: 15000 },
+        )
+        .toBeGreaterThan(0);
       await page.screenshot({ path: `${out}/gift-fallback-430.png` });
       const beforeFallback = await fallbackHero.boundingBox();
       await db.query(
