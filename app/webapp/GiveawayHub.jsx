@@ -1,6 +1,6 @@
 'use client';
 import {useCallback,useEffect,useMemo,useRef,useState} from 'react';
-import {ArrowLeft,ArrowRight,Check,CheckCircle2,Clock3,Crown,Gift,LoaderCircle,LockKeyhole,RefreshCcw,ShieldCheck,Sparkles,Star,Ticket,Users,Wallet} from 'lucide-react';
+import {ArrowLeft,ArrowRight,Check,CheckCircle2,Clock3,Crown,Gift,LoaderCircle,RefreshCcw,ShieldCheck,Sparkles,Star,Ticket,Users,Wallet} from 'lucide-react';
 import styles from './GiveawayHub.module.css';
 
 const fmt=n=>new Intl.NumberFormat('uz-UZ',{maximumFractionDigits:2}).format(Number(n||0));
@@ -17,7 +17,7 @@ function PrizeArt({prize}) {
   {prize?.imageUrl&&!failed?<img src={prize.imageUrl} alt={prize.title||'Gift'} loading="lazy" onError={()=>setFailed(true)}/>:<Gift size={35}/>}
  </span>;
 }
-function DrawCard({item,submit,joining,paidEnabled}) {
+function DrawCard({item,submit,joining}) {
  const [stars,setStars]=useState(String(item.price||0));
  const [now,setNow]=useState(Date.now());
  useEffect(()=>setStars(String(item.price||0)),[item.id,item.price]);
@@ -29,8 +29,6 @@ function DrawCard({item,submit,joining,paidEnabled}) {
  const participating=Number(item.myWeight||0)>0;
  const totalWeight=Number(item.totalWeight||0);
  const meWeight=Number(item.myWeight||0);
- const paid=(item.price||0)>0||weighted;
- const permitted=!paid||paidEnabled;
  const amount=Number(stars);
  const valid=Number.isSafeInteger(amount)&&amount>=Number(item.price||0)&&amount<=10000&&
   (weighted?amount>0:amount===Number(item.price||0));
@@ -68,7 +66,7 @@ function DrawCard({item,submit,joining,paidEnabled}) {
    {participating?<div className={styles.joined}><CheckCircle2 size={17}/>
     <span>Qatnashyapsiz{weighted?' · Jami tikilgan: '+fmt(item.myStars)+' ★ · Vazningiz: '+fmt(item.myWeight):''}</span>
    </div>:null}
-   {active&&permitted? <div className={styles.joinBox}>
+   {active? <div className={styles.joinBox}>
     {weighted?<label className={styles.stakeLabel}>Necha Stars tikmoqchisiz?
       <div className={styles.stakeInput}><Star size={16}/><input type="number" min={item.price} max={10000} step="1"
          inputMode="numeric" value={stars} onChange={e=>setStars(e.target.value)}/><span>★</span></div>
@@ -82,14 +80,12 @@ function DrawCard({item,submit,joining,paidEnabled}) {
       <ArrowRight size={17}/>
     </button>
    </div>:null}
-   {active&&!permitted?<div className={styles.unavailable}><LockKeyhole size={17}/>
-     Pullik giveaway qatnashuvi hozircha vaqtincha yopiq.</div>:null}
    {completed&&item.prizes?.some(p=>p.myWin&&p.deliveryStatus==='pending')?<div className={styles.joined}>
      <Gift size={17}/> Yutuq aniqlandi! Admin sovg‘ani Telegram orqali yetkazadi.</div>:null}
   </article>;
 }
 export default function GiveawayHub({apiPost,onBack,onBalanceChange,onToast}){
- const [data,setData]=useState({giveaways:[],paidEnabled:false});
+ const [data,setData]=useState({giveaways:[]});
  const [loading,setLoading]=useState(true);
  const [error,setError]=useState('');
  const [filter,setFilter]=useState('live');
@@ -143,8 +139,7 @@ export default function GiveawayHub({apiPost,onBack,onBalanceChange,onToast}){
   </section>
   {error?<div className={styles.error} role="alert">{error}<button type="button" onClick={()=>refresh()}>Qayta yuklash</button></div>:null}
   {loading?<div className={styles.loading}><LoaderCircle className={styles.spinner} size={23}/> Giveawaylar yuklanmoqda...</div>:
-   filtered.length?<div className={styles.grid}>{filtered.map(g=><DrawCard key={g.id} item={g} submit={submit} joining={joining===g.id}
-    paidEnabled={data.paidEnabled}/>)}</div>:
+   filtered.length?<div className={styles.grid}>{filtered.map(g=><DrawCard key={g.id} item={g} submit={submit} joining={joining===g.id}/>)}</div>:
    <div className={styles.empty}><span><Gift size={32}/></span><h3>Hozircha {filter==='live'?'faol ':''}Giveaway yo‘q</h3>
      <p>Admin sovg‘alar va o‘rinlarni tanlab yangi Giveaway e’lon qilganda, shu yerda ko‘rinadi.</p></div>}
   <footer className={styles.foot}><ShieldCheck size={15}/> Sovrinlar g‘oliblarga admin tomonidan Telegram orqali yetkaziladi. Natijalar va tasodifiy tanlovga oid ma’lumotlar saqlanadi.</footer>
