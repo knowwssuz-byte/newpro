@@ -2,6 +2,7 @@
 import {useCallback,useEffect,useMemo,useState} from 'react';
 import {CalendarClock,Check,ChevronDown,CircleAlert,Crown,Gift,Plus,RefreshCcw,ShieldCheck,Sparkles,Trash2,Users,Wallet, X} from 'lucide-react';
 import './giveaway-admin.css';
+import { giveawayPublishState } from '@/lib/giveawayPublish.mjs';
 
 const fmt=n=>new Intl.NumberFormat('uz-UZ',{maximumFractionDigits:2}).format(Number(n||0));
 const when=s=>s?new Date(s).toLocaleString('uz-UZ'):'—';
@@ -17,6 +18,8 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
  const [notice,setNotice]=useState('');
  const [proofs,setProofs]=useState({});
  const [loaded,setLoaded]=useState(false);
+ const [publishTarget,setPublishTarget]=useState(null);
+ const selectedPublishState=publishTarget?giveawayPublishState(publishTarget,{paidEnabled}):null;
  const validGifts=useMemo(()=>giftLibrary.filter(g=>g.is_active!==false),[giftLibrary]);
  const call=useCallback(async(action,params={})=>{
   const response=await fetch('/api/browser-admin',{
@@ -33,7 +36,13 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
   setPaidEnabled(response.paidEnabled===true);
   setLoaded(true);
  },[call]);
- useEffect(()=>{load().catch(e=>setError(e.message))},[load]);
+ useEffect(()=>{load().catch(e=>{setError(e.message);setLoaded(true);})},[load]);
+ useEffect(()=>{
+  if(!publishTarget)return undefined;
+  const closeOnEscape=event=>{if(event.key==='Escape'&&!busy)setPublishTarget(null);};
+  window.addEventListener('keydown',closeOnEscape);
+  return ()=>window.removeEventListener('keydown',closeOnEscape);
+ },[publishTarget,busy]);
  const act=async(fn,message)=>{
   if(busy)return;
   setBusy(true);setError('');setNotice('');
@@ -53,6 +62,14 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
    });
    setForm(initial());
   },'Giveaway draft yaratildi. Tekshirib, alohida E’lon qilish tugmasini bosing.');
+ };
+ const publish=async(convertToFree=false)=>{
+  const target=publishTarget;
+  if(!target||busy)return;
+  await act(async()=>{
+   await call(convertToFree?'giveaway_publish_free':'giveaway_publish',{id:target.id});
+   setPublishTarget(null);
+  },convertToFree?'Giveaway bepul formatda e’lon qilindi!':'Giveaway muvaffaqiyatli e’lon qilindi!');
  };
  const updatePrize=(index,value)=>setForm(f=>({...f,prizeIds:f.prizeIds.map((g,i)=>i===index?value:g)}));
  const action=(name,id,question,success)=>{
@@ -107,6 +124,8 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
     <div className="ga-compliance"><ShieldCheck size={18}/><span>Pullik yoki Stars vaznli tanlovlar qonunchilik va Telegram qoidalari tekshirilmaguncha faol emas. {paidEnabled?'Pullik rejim uchun server ruxsati yoqilgan.':'Serverda pullik rejim bloklangan.'}</span></div>
     <button type="submit" className="ga-primary" disabled={busy||!form.inventoryConfirmed||!validGifts.length}>
       <Plus size={17}/>{busy?'Saqlanmoqda…':'Draft yaratish'}</button>
+    {(form.mode==='weighted'||Number(form.entryPrice)>0)&&!paidEnabled?
+      <p className="ga-form-hint" role="note">Pullik yoki Stars-vaznli draftni yaratish mumkin, lekin hozircha e’lon qilib bo‘lmaydi. Bepul Giveaway uchun kirish narxini 0 qilib, “Teng imkoniyat”ni tanlang.</p>:null}
    </form>
    <div className="ga-existing">
     <div className="ga-section-title"><span className="ga-section-icon"><Crown size={19}/></span><div><h3>Giveawaylar</h3><small>{giveaways.length} ta tadbir · holat va yetkazish nazorati</small></div></div>
@@ -132,8 +151,14 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
         </div>:null}
        </div>)}</div>
       <div className="ga-event-actions">
-       {g.status==='draft'?<button disabled={busy||((g.entry_price>0||g.mode==='weighted')&&!paidEnabled)}
-          type="button" className="ga-publish" onClick={()=>action('publish',g.id,'Giveawayni hammaga e’lon qilasizmi?','Giveaway e’lon qilindi!')}>E’lon qilish</button>:null}
+       {g.status==='draft'?<>
+        <button disabled={busy} type="button" className="ga-publish"
+          onClick={()=>{setError('');setPublishTarget(g);}}>E’lon qilish</button>
+        {giveawayPublishState(g,{paidEnabled})==='paid_blocked'?
+          <span className="ga-publish-hint"><CircleAlert size={13}/> Pullik rejim yopiq · bepulga o‘tkazish mumkin</span>:null}
+        {giveawayPublishState(g,{paidEnabled})==='expired'?
+          <span className="ga-publish-hint"><CalendarClock size={13}/> Muddat tugagan</span>:null}
+       </>:null}
        {g.status==='live'?<button disabled={busy||new Date(g.ends_at)>new Date()} type="button"
           onClick={()=>action('draw',g.id,'Muddat tugagan Giveaway g‘oliblarini aniqlaysizmi?','G‘oliblar aniqlanib saqlandi.')}>G‘oliblarni aniqlash</button>:null}
        {['draft','live'].includes(g.status)?<button type="button" disabled={busy} className="ga-danger"
@@ -143,5 +168,37 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
      </article>)}</div>
    </div>
   </div>
+  {publishTarget?<div className="ga-modal-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget&&!busy)setPublishTarget(null);}}>
+   <div className="ga-modal" role="dialog" aria-modal="true" aria-labelledby="ga-modal-title" aria-describedby="ga-modal-description">
+    <button type="button" className="ga-modal-close" autoFocus disabled={busy} aria-label="Yopish"
+      onClick={()=>setPublishTarget(null)}><X size={19}/></button>
+    <span className="ga-eyebrow">NEWPRO / YAKUNIY TASDIQLASH</span>
+    <h3 id="ga-modal-title">Giveaway e’lon qilish</h3>
+    <p id="ga-modal-description">E’lon qilingach, foydalanuvchilar Giveaway’da qatnasha oladi. Sovrin va shartlarni tekshiring.</p>
+    <div className="ga-modal-summary">
+     <strong>{publishTarget.title}</strong>
+     <span><CalendarClock size={15}/> Tugash: {when(publishTarget.ends_at)}</span>
+     <span><Gift size={15}/> {publishTarget.prizes?.length||0} ta sovrinli o‘rin</span>
+     <span><Users size={15}/> {publishTarget.mode==='weighted'?'Stars-vaznli':'Teng imkoniyat'} · {Number(publishTarget.entry_price)>0?fmt(publishTarget.entry_price)+' ★':'Bepul'}</span>
+    </div>
+    {selectedPublishState==='paid_blocked'?<div className="ga-modal-warning" role="note">
+     <CircleAlert size={21}/><div><strong>Nega hozir e’lon qilib bo‘lmaydi?</strong>
+      <p>Pullik va Stars-vaznli Giveaway uchun server ruxsati o‘chiq. Pastdagi tugma ushbu draftni aniq tasdig‘ingiz bilan <b>0 Stars, teng imkoniyat</b> formatiga o‘tkazadi va e’lon qiladi. Sovrinlar va muddat o‘zgarmaydi.</p>
+     </div></div>:null}
+    {selectedPublishState==='expired'?<div className="ga-modal-warning" role="alert">
+     <CalendarClock size={21}/><div><strong>Giveaway muddati tugagan.</strong>
+      <p>Bu draftni e’lon qilish uchun kelajakdagi muddat bilan yangi Giveaway yarating.</p>
+     </div></div>:null}
+    {selectedPublishState==='ready'?<div className="ga-modal-ready"><ShieldCheck size={18}/> Giveaway e’lon qilishga tayyor.</div>:null}
+    {error?<div className="ga-alert" role="alert"><CircleAlert size={17}/>{error}</div>:null}
+    <div className="ga-modal-actions">
+     <button type="button" className="ga-modal-back" disabled={busy} onClick={()=>setPublishTarget(null)}>Bekor qilish</button>
+     {selectedPublishState==='ready'?<button type="button" className="ga-modal-submit" disabled={busy}
+       onClick={()=>void publish(false)}>{busy?'E’lon qilinmoqda…':'Tasdiqlash va e’lon qilish'}</button>:null}
+     {selectedPublishState==='paid_blocked'?<button type="button" className="ga-modal-submit" disabled={busy}
+       onClick={()=>void publish(true)}>{busy?'E’lon qilinmoqda…':'Bepulga o‘tkazib e’lon qilish'}</button>:null}
+    </div>
+   </div>
+  </div>:null}
  </section>;
 }
