@@ -30,7 +30,7 @@ export async function POST(request) {
       if(user.error)throw user.error;
       if(!user.data)return jsonError('Avval Telegram botdan ro‘yxatdan o‘ting.',403);
       return response({ok:true,giveaways:feed.data||[],balance:Number(user.data.balance||0),
-        paidEnabled:process.env.GIVEAWAY_PAID_ENABLED==='true',serverTime:new Date().toISOString()});
+        serverTime:new Date().toISOString()});
     }
     if(action==='join') {
       const giveawayId=String(body.giveawayId||'');
@@ -46,9 +46,6 @@ export async function POST(request) {
       if(user.error)throw user.error;
       if(!user.data||user.data.is_banned)return jsonError('Foydalanuvchi uchun ruxsat yo‘q.',403);
       if(!giveaway.data)return jsonError('Giveaway topilmadi.',404);
-      if((giveaway.data.entry_price>0||giveaway.data.mode==='weighted') &&
-        process.env.GIVEAWAY_PAID_ENABLED!=='true')
-        return jsonError('Pullik Giveaway hozircha faol emas.',403);
       if(giveaway.data.mode==='equal'&&stars!==giveaway.data.entry_price)
         return jsonError('Kirish narxi mos kelmadi.',400);
       if(giveaway.data.mode==='weighted'&&stars<giveaway.data.entry_price)
