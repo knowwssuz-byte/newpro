@@ -1,6 +1,6 @@
 'use client';
 import {useCallback,useEffect,useMemo,useState} from 'react';
-import {CalendarClock,Check,ChevronDown,CircleAlert,Crown,Gift,Plus,RefreshCcw,ShieldCheck,Sparkles,Trash2,Users,Wallet, X} from 'lucide-react';
+import {CalendarClock,Check,ChevronDown,CircleAlert,Crown,Gift,Star,Plus,RefreshCcw,ShieldCheck,Sparkles,Trash2,Users,Wallet, X} from 'lucide-react';
 import './giveaway-admin.css';
 import { giveawayPublishState } from '@/lib/giveawayPublish.mjs';
 
@@ -68,6 +68,11 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
    setPublishTarget(null);
   },'Giveaway muvaffaqiyatli e’lon qilindi!');
  };
+ const toggleFeatured=(giveaway)=>{
+  void act(()=>call('giveaway_feature',{
+    id:giveaway.id,featured:!giveaway.isFeatured
+  }),giveaway.isFeatured?'Asosiy belgisi olib tashlandi.':'Giveaway asosiy qilib belgilandi.');
+ };
  const updatePrize=(index,value)=>setForm(f=>({...f,prizeIds:f.prizeIds.map((g,i)=>i===index?value:g)}));
  const action=(name,id,question,success)=>{
   if(!window.confirm(question))return;
@@ -124,6 +129,7 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
     {loaded&&!giveaways.length?<p className="ga-empty">Hali Giveaway yaratilmagan.</p>:null}
     <div className="ga-list">{giveaways.map(g=><article className="ga-event" key={g.id}>
       <div className="ga-event-top"><span className={'ga-status '+g.status}>{g.status.toUpperCase()}</span>
+       {g.isFeatured?<span className="ga-featured-badge"><Star size={12} fill="currentColor"/> ASOSIY</span>:null}
        <span className="ga-mode">{g.mode==='weighted'?'Vaznli':'Teng'} · {g.entry_price?fmt(g.entry_price)+' ★':'Bepul'}</span></div>
       <h4>{g.title}</h4><p>{g.description}</p>
       <div className="ga-details"><span><Users size={14}/> {fmt(g.members)} qatnashchi</span>
@@ -142,6 +148,10 @@ export default function GiveawayAdmin({adminKey,giftLibrary=[]}){
         </div>:null}
        </div>)}</div>
       <div className="ga-event-actions">
+       {['draft','live'].includes(g.status)?<button type="button" disabled={busy}
+          className={g.isFeatured?'ga-featured-button ga-is-featured':'ga-featured-button'}
+          onClick={()=>toggleFeatured(g)}><Star size={15} fill={g.isFeatured?'currentColor':'none'}/>
+            {g.isFeatured?'Asosiydan olish':'Asosiy qilish'}</button>:null}
        {g.status==='draft'?<>
         <button disabled={busy} type="button" className="ga-publish"
           onClick={()=>{setError('');setPublishTarget(g);}}>E’lon qilish</button>
