@@ -28,9 +28,40 @@ export async function POST(request) {
       ]);
       if(feed.error)throw feed.error;
       if(user.error)throw user.error;
-      if(!user.data)return jsonError('Avval Telegram botdan ro‘yxatdan o‘ting.',403);
-      return response({ok:true,giveaways:feed.data||[],balance:Number(user.data.balance||0),
+      if(!user.data||user.data.is_banned)return jsonError('Hisobingizga kirishga ruxsat yo‘q.',403);
+      const rows=Array.isArray(feed.data)?feed.data:[];
+      let giveaways=rows;
+      if(rows.length){
+        const {data:flags,error:flagsError}=await db.from('giveaways')
+          .select('id,is_featured').in('id',rows.map(item=>item.id));
+        if(flagsError)throw flagsError;
+        const featuredIds=new Set((flags||[]).filter(item=>item.is_featured).map(item=>item.id));
+        giveaways=rows.map(item=>({...item,isFeatured:featuredIds.has(item.id)}));
+      }
+      return response({ok:true,giveaways,balance:Number(user.data.balance||0),
         serverTime:new Date().toISOString()});
+    }
+    if(action==='leaderboard') {
+      const giveawayId=String(body.giveawayId||'');
+      const offset=Number(body.offset||0);
+      if(!UUID.test(giveawayId)||!Number.isSafeInteger(offset)||offset<0||offset>100000)
+        return jsonError('So‘rov noto‘g‘ri.',400);
+      const {data:board,error:boardError}=await db.rpc('newpro_giveaway_leaderboard',{
+        p_giveaway:giveawayId,p_limit:30,p_offset:offset
+      });
+      if(boardError)throw boardError;
+      if(!board)return jsonError('Giveaway mavjud emas.',404);
+      const totalWeight=Number(board.totalWeight)||0;
+      const rows=(Array.isArray(board.rows)?board.rows:[]).map(row=>({
+        name:String(row.name||'Ishtirokchi').slice(0,60),
+        username:String(row.username||'').slice(0,40),
+        weight:Number(row.weight)||0,
+        stars:Number(row.stars)||0,
+        chance:totalWeight>0?Math.max(0,Math.min(100,100*(Number(row.weight)||0)/totalWeight)):0,
+        isMe:String(row.userId)===String(userId)
+      }));
+      return response({ok:true,rows,total:Number(board.total)||0,totalWeight,
+        nextOffset:offset+rows.length<Number(board.total||0)?offset+rows.length:null});
     }
     if(action==='join') {
       const giveawayId=String(body.giveawayId||'');
