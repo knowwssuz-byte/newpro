@@ -1,0 +1,38 @@
+name: Verify Giveaway
+on:
+  pull_request:
+    paths:
+      - 'app/webapp/Giveaway*'
+      - 'app/admin/GiveawayAdmin.jsx'
+      - 'app/admin/giveaway-admin.css'
+      - 'app/api/giveaway/**'
+      - 'app/api/browser-admin/route.js'
+      - 'lib/giveaway*'
+      - 'supabase/**giveaway*'
+      - 'supabase/**/*giveaway*'
+      - 'tests/giveaway*'
+      - 'tests/fixtures/giveaway*/**'
+      - 'tests/fixtures/giveaway*.mjs'
+      - 'scripts/giveaway-smoke.mjs'
+      - 'package*.json'
+      - '.github/workflows/giveaway.yml'
+permissions:
+  contents: read
+jobs:
+  giveaway:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run test:giveaway
+      - run: npx eslint app/webapp/Giveaway*.jsx app/admin/GiveawayAdmin.jsx app/api/giveaway/route.js lib/giveaway*.mjs
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:giveaway:browser

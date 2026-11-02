@@ -5,7 +5,6 @@ import { isVerifiedUnlimitedCatalogGift } from '@/lib/telegramRegularGift.mjs';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
-import { giveawayPublishState } from '@/lib/giveawayPublish.mjs';
 import { fetchUniqueTelegramGift } from '@/lib/telegramGiftsImporter';
 import {
   depositSettingsForClient,
@@ -707,13 +706,7 @@ export async function POST(request) {
     if (action === 'giveaway_list') {
       const {data,error}=await supabase.rpc('newpro_giveaway_admin_list');
       if(error)throw error;
-      const rows=Array.isArray(data)?data:[];
-      if(!rows.length)return json({ok:true,giveaways:[]});
-      const {data:featured,error:featuredError}=await supabase.from('giveaways')
-        .select('id,is_featured').in('id',rows.map(row=>row.id));
-      if(featuredError)throw featuredError;
-      const featuredIds=new Set((featured||[]).filter(row=>row.is_featured).map(row=>row.id));
-      return json({ok:true,giveaways:rows.map(row=>({...row,isFeatured:featuredIds.has(row.id)}))});
+      return json({ok:true,giveaways:Array.isArray(data)?data:[],serverTime:new Date().toISOString()});
     }
     if (action === 'giveaway_feature') {
       const id=clean(body.id);
@@ -724,12 +717,12 @@ export async function POST(request) {
       });
       if(error){
         if(String(error.message||'').includes('GIVEAWAY_NOT_FEATUREABLE'))
-          return json({ok:false,error:'Faqat draft yoki faol Giveaway asosiy qilinadi.'},409);
+          return json({ok:false,error:'Faqat draft yoki muddati tugamagan faol Giveaway belgilanadi.'},409);
         throw error;
       }
       return json({ok:true,id,isFeatured:body.featured===true});
     }
-    if (action === 'giveaway_create') {
+    if (action === 'giveaway_create' || action === 'giveaway_update') {
       const title=clean(body.title).slice(0,90);
       const description=clean(body.description).slice(0,700);
       const mode=clean(body.mode);
@@ -742,30 +735,32 @@ export async function POST(request) {
          endsAt.getTime()<Date.now()+5*60*1000||endsAt.getTime()>Date.now()+90*86400000)
         return json({ok:false,error:'Giveaway sozlamalari yoki muddati noto‘g‘ri'},400);
       if(mode==='weighted'&&price<1)return json({ok:false,error:'Vaznli rejimda minimal Stars kamida 1 bo‘lsin'},400);
-      const {data,error}=await supabase.rpc('newpro_giveaway_create',{
+      const editing=action==='giveaway_update';
+      if(editing&&(!/^[0-9a-f-]{36}$/i.test(String(body.id||''))||!Number.isFinite(Date.parse(body.updatedAt))))
+        return json({ok:false,error:'Draft versiyasi noto‘g‘ri. Yangilang.'},400);
+      const {data,error}=await supabase.rpc(editing?'newpro_giveaway_update_draft':'newpro_giveaway_create',{
+        ...(editing?{p_giveaway:body.id,p_expected_updated_at:body.updatedAt}:{}),
         p_title:title,p_description:description,p_mode:mode,p_entry_price:price,
         p_ends_at:endsAt.toISOString(),p_prize_ids:prizes
       });
-      if(error)throw error;
+      if(error){
+        if(/DRAFT_CHANGED|NOT_DRAFT/.test(error.message||''))return json({ok:false,error:'Draft boshqa oynada o‘zgargan. Ro‘yxatni yangilang va qayta oching.'},409);
+        if(/GIFT_NOT_ACTIVE/.test(error.message||''))return json({ok:false,error:'Tanlangan sovg‘a katalogda faol emas.'},409);
+        throw error;
+      }
       return json({ok:true,id:data});
     }
     if (action === 'giveaway_publish') {
       const id=clean(body.id);
       if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))
         return json({ok:false,error:'Giveaway ID noto‘g‘ri'},400);
-      const {data:existing,error:lookupError}=await supabase.from('giveaways')
-        .select('id,status,ends_at').eq('id',id).maybeSingle();
-      if(lookupError)throw lookupError;
-      const now=new Date();
-      const state=giveawayPublishState(existing,{now:now.getTime()});
-      if(state==='not_draft')return json({ok:false,error:'Faqat draft holatidagi Giveaway e’lon qilinadi.'},409);
-      if(state==='expired')return json({ok:false,error:'Giveaway muddati tugagan. Yangi muddat bilan draft yarating.'},409);
-      const {data,error}=await supabase.from('giveaways').update({
-        status:'live',updated_at:now.toISOString()
-      }).eq('id',id).eq('status','draft').gt('ends_at',now.toISOString())
-        .select('id').maybeSingle();
-      if(error)throw error;
-      if(!data)return json({ok:false,error:'Giveaway muddati tugagan yoki allaqachon e’lon qilingan.'},409);
+      if(!Number.isFinite(Date.parse(body.updatedAt)))return json({ok:false,error:'Draftni yangilang.'},400);
+      const {error}=await supabase.rpc('newpro_giveaway_publish',{p_giveaway:id,p_expected_updated_at:body.updatedAt});
+      if(error){
+        if(/DRAFT_CHANGED|NOT_DRAFT/.test(error.message||''))return json({ok:false,error:'Draft o‘zgargan yoki e’lon qilingan. Ro‘yxatni yangilang.'},409);
+        if(/INVALID_END_DATE/.test(error.message||''))return json({ok:false,error:'Muddat tugagan. Draftni tahrirlab, yangi vaqt kiriting.'},409);
+        throw error;
+      }
       return json({ok:true,id});
     }
     if (action === 'giveaway_cancel') {

@@ -12,3 +12,8 @@ telegram.session.txt
 *.session
 *.session.txt
 *.session.json
+
+# Generated build and isolated QA output
+artifacts/
+supabase/.temp/
+public/feature/game-banners/giveaway-premium-v7.png
