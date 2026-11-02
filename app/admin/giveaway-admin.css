@@ -74,3 +74,29 @@
 .ga-commit{font-family:ui-monospace,monospace;color:#aaa0b9;font-size:9px;word-break:break-all}
 @media(max-width:1020px){.ga-columns{grid-template-columns:1fr}}
 @media(max-width:480px){.ga-root{gap:12px}.ga-columns{gap:10px}.ga-creator,.ga-existing{padding:13px;border-radius:17px}.ga-form-row{grid-template-columns:1fr}.ga-mode-picker button{padding:10px}.ga-mode-picker button small{font-size:9px}}
+
+
+/* Publish is always clickable: blocked paid drafts explain the alternative in a dialog. */
+.ga-form-hint{margin:0;border:1px solid #765b3d;border-radius:11px;padding:11px 12px;background:#372818;color:#f5d6a5;font-size:11px;line-height:1.6}
+.ga-publish-hint{display:inline-flex;align-items:center;gap:5px;color:#ecc992;font-size:11px;line-height:1.5}
+.ga-publish-hint svg{flex:none}
+.ga-modal-backdrop{position:fixed;inset:0;z-index:11000;display:flex;align-items:center;justify-content:center;overflow-y:auto;padding:20px 14px;background:rgba(9,7,17,.78);backdrop-filter:blur(7px)}
+.ga-modal{position:relative;width:min(100%,500px);max-height:calc(100dvh - 40px);overflow:auto;border:1px solid #8269a4;border-radius:22px;padding:27px;background:linear-gradient(155deg,#302344 0%,#171320 80%);box-shadow:0 25px 80px #000b;display:grid;gap:15px;color:#f9f4ff}
+.ga-modal h3{font-size:24px;font-weight:900;line-height:1.15;letter-spacing:-.045em;margin:0;padding-right:28px}
+.ga-modal>p{margin:0;color:#c7bdd4;font-size:12px;line-height:1.65}
+.ga-modal-close{position:absolute;top:15px;right:15px;display:grid;place-items:center;width:36px;height:36px;border:1px solid #6e5b80;border-radius:10px;background:#382949;color:#f9efff}
+.ga-modal-summary{display:grid;gap:9px;border:1px solid #534361;background:#1d172b;border-radius:13px;padding:15px}
+.ga-modal-summary strong{font-size:16px;overflow-wrap:anywhere}
+.ga-modal-summary span{display:flex;align-items:center;gap:8px;color:#c6b7d7;font-size:12px}
+.ga-modal-summary svg{flex:none;color:#bfa0f9}
+.ga-modal-warning{display:flex;gap:11px;align-items:flex-start;padding:14px;border:1px solid #a17a42;border-radius:13px;background:#3d2b1c;color:#ffdea9}
+.ga-modal-warning>svg{flex:none}
+.ga-modal-warning strong{font-size:13px}
+.ga-modal-warning p{margin:6px 0 0;color:#f1d6b7;font-size:12px;line-height:1.65}
+.ga-modal-ready{display:flex;align-items:center;gap:8px;border-radius:12px;padding:12px;background:#17392c;color:#a5f4ce;font-size:12px}
+.ga-modal-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}
+.ga-modal-actions button{border-radius:12px;padding:12px 15px;border:1px solid transparent;font-size:12px;font-weight:850;min-height:44px}
+.ga-modal-actions .ga-modal-back{background:#31283d;border-color:#665674;color:#e5d8f0}
+.ga-modal-actions .ga-modal-submit{background:#bdeccc;color:#173b2a;border-color:#daffe5}
+.ga-modal button:focus-visible,.ga-event-actions button:focus-visible{outline:2px solid #d1aaff;outline-offset:3px}
+@media(max-width:480px){.ga-modal-backdrop{padding:10px}.ga-modal{padding:22px 15px;max-height:calc(100dvh - 20px);border-radius:17px}.ga-modal h3{font-size:21px}.ga-modal-actions{display:grid;grid-template-columns:1fr}.ga-modal-actions .ga-modal-submit{grid-row:1}}
