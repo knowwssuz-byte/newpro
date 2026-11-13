@@ -168,7 +168,7 @@ async function bootstrap(supabase) {
     referralSettingsResult,
   ] = await Promise.all([
     fetchCasesForAdmin(supabase),
-    safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').order('created_at', { ascending: false })),
+    safeSelect(supabase, 'gifts', supabase.from('gifts').select('*').or('source.is.null,source.neq.gift_shop_purchase').order('created_at', { ascending: false })),
     safeSelect(supabase, 'users', supabase.from('users').select('*').order('created_at', { ascending: false }).limit(250)),
     safeSelect(
       supabase,

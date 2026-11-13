@@ -178,8 +178,8 @@ export async function POST(request) {
         freeCaseNextAt,
         freeCaseServerNow: new Date().toISOString(),
         gifts: auth.isAdmin
-          ? (giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog')
-          : giftsWithActualOdds((giftsResult.data || []).filter((g)=>g.source!=='upgrade_catalog')),
+          ? (giftsResult.data || []).filter((g)=>!['upgrade_catalog','gift_shop_purchase'].includes(g.source))
+          : giftsWithActualOdds((giftsResult.data || []).filter((g)=>!['upgrade_catalog','gift_shop_purchase'].includes(g.source))),
         featureSettings,
       } : {}),
       ...(wantsExtra ? {
