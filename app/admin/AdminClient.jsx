@@ -7,6 +7,7 @@ import { prepareCaseArtwork } from '@/lib/caseImageAutoFitBrowser.mjs';
 import { caseImageValues,caseImageStyle } from '@/lib/caseImageLayout.mjs';
 import './admin-catalog.css';
 import GiftShopAdmin from './GiftShopAdmin';
+import { normalizeTelegramUsername } from '@/lib/withdrawRecipient.mjs';
 
 const emptyCaseForm = {
   title: '',
@@ -386,8 +387,13 @@ function AnimatedRegularGift({ gift }) {
 function WithdrawalReviewCard({ request, user, busy, onDecision }) {
   const [adminNote, setAdminNote] = useState('');
   const [delivered, setDelivered] = useState(false);
+  const [legacyUsername, setLegacyUsername] = useState('');
   const pending = request.status === 'pending';
-  const goodUsername = /^[a-zA-Z0-9_]{5,32}$/.test(user?.username || '') ? user.username : '';
+  const requester = request.users || user;
+  const goodUsername = normalizeTelegramUsername(request.requester_username || requester?.username);
+  const recipientUsername = normalizeTelegramUsername(request.recipient_username);
+  const destination = recipientUsername || normalizeTelegramUsername(legacyUsername);
+  const isOther = request.recipient_mode === 'other';
   const createdAt = request.created_at ? new Date(request.created_at).toLocaleString('uz-UZ') : '—';
   const updatedAt = request.updated_at ? new Date(request.updated_at).toLocaleString('uz-UZ') : null;
   const validNote = adminNote.trim().length >= 8;
@@ -403,7 +409,7 @@ function WithdrawalReviewCard({ request, user, busy, onDecision }) {
         <div className="admin-withdraw-art"><GiftImage gift={request.gifts || {}} /></div>
         <div className="admin-withdraw-details">
           <strong>{request.gifts?.title || 'Gift so‘rovi'}</strong>
-          <span>{user?.first_name || 'Telegram foydalanuvchisi'} {goodUsername ? `· @${goodUsername}` : ''}</span>
+          <span>{requester?.first_name || 'Telegram foydalanuvchisi'} {goodUsername ? `· @${goodUsername}` : ''}</span>
           <small>{Number(request.gifts?.value) > 0 ? `${money(request.gifts.value)} ★ · ` : ''}User ID: {request.user_id}</small>
           <div className="admin-withdraw-links">
             {goodUsername ? <a href={`https://t.me/${goodUsername}`} target="_blank" rel="noopener noreferrer">Telegram profil</a> : null}
@@ -411,6 +417,18 @@ function WithdrawalReviewCard({ request, user, busy, onDecision }) {
             <button type="button" onClick={() => navigator.clipboard?.writeText(String(request.id))}>So‘rov ID nusxalash</button>
           </div>
         </div>
+      </div>
+      <div className="admin-withdraw-destination">
+        <span className="admin-withdraw-destination-icon">{isOther ? 'BOSHQA AKKAUNTGA' : request.recipient_mode === 'self' ? 'O‘ZIGA' : 'ESKI SO‘ROV'}</span>
+        <strong>Qabul qiluvchi: {destination ? '@' + destination : 'Ko‘rsatilmagan'}</strong>
+        {destination ? <div className="admin-withdraw-links">
+          <a href={'https://t.me/' + destination} target="_blank" rel="noopener noreferrer">Qabul qiluvchini Telegramda ochish</a>
+          <button type="button" onClick={() => navigator.clipboard?.writeText('@' + destination)}>@username nusxalash</button>
+        </div> : null}
+        {request.recipient_source === 'entered' ? <small>Username foydalanuvchi tomonidan kiritilgan. Jo‘natishdan oldin tekshiring.</small> : null}
+        {pending && !recipientUsername ? <label className="admin-withdraw-legacy-label">Eski so‘rov: yuborishdan oldin qabul qiluvchi @username kiriting
+          <input type="text" value={legacyUsername} onChange={(event)=>setLegacyUsername(event.target.value)} placeholder="@username" maxLength={33}/>
+        </label> : null}
       </div>
       <div className="admin-withdraw-meta">
         <span>So‘rov: <code>{smallId(request.id)}</code></span>
@@ -428,8 +446,8 @@ function WithdrawalReviewCard({ request, user, busy, onDecision }) {
             <span>Giftni Telegram orqali haqiqatan yubordim va tekshirdim</span>
           </label>
           <div className="admin-withdraw-review-actions">
-            <button type="button" className="admin-withdraw-approve" disabled={busy || !validNote || !delivered}
-              onClick={() => onDecision(request.id, 'approved', adminNote.trim(), true)}>Yuborildi — tasdiqlash</button>
+            <button type="button" className="admin-withdraw-approve" disabled={busy || !validNote || !delivered || !destination}
+              onClick={() => onDecision(request.id, 'approved', adminNote.trim(), true, destination)}>Yuborildi — tasdiqlash</button>
             <button type="button" className="admin-withdraw-reject" disabled={busy || !validNote}
               onClick={() => onDecision(request.id, 'rejected', adminNote.trim(), false)}>Sabab bilan rad etish</button>
           </div>
@@ -1263,10 +1281,10 @@ export default function AdminClient() {
     window.location.assign('/onlines');
   }
 
-  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false) {
+  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false, recipientUsername = '') {
     if (status === 'approved' && !window.confirm('Telegram gift HAQIQATAN foydalanuvchiga yuborildimi? Bu amal qaytarilmaydi.')) return;
     const result = await run(
-      () => callAdmin('withdraw_update', { requestId, status, adminNote, deliveryConfirmed }),
+      () => callAdmin('withdraw_update', { requestId, status, adminNote, deliveryConfirmed, recipientUsername }),
       status === 'approved' ? 'Yuborilgan gift tasdiqlandi ✅' : 'So‘rov sabab bilan rad etildi'
     );
     if (result) await bootstrap();
@@ -3043,7 +3061,7 @@ export default function AdminClient() {
               {withdrawals.filter((request) => {
                 if (withdrawalFilter !== 'all' && request.status !== withdrawalFilter) return false;
                 const user = users.find((item) => String(item.id) === String(request.user_id));
-                return [request.id,request.history_id,request.user_id,request.gifts?.title,user?.username,user?.first_name]
+                return [request.id,request.history_id,request.user_id,request.gifts?.title,request.recipient_username,request.requester_username,request.users?.username,request.users?.first_name,user?.username,user?.first_name]
                   .some((value) => String(value || '').toLowerCase().includes(withdrawalSearch.trim().toLowerCase()));
               }).sort((a,b) => {
                 if (a.status === 'pending' && b.status !== 'pending') return -1;
@@ -3051,13 +3069,13 @@ export default function AdminClient() {
                 return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
               }).map((request) => (
                 <WithdrawalReviewCard key={request.id} request={request}
-                  user={users.find((item) => String(item.id) === String(request.user_id))}
+                  user={request.users || users.find((item) => String(item.id) === String(request.user_id))}
                   busy={busy} onDecision={updateWithdrawal} />
               ))}
               {!withdrawals.some((request) => {
                 if (withdrawalFilter !== 'all' && request.status !== withdrawalFilter) return false;
                 const user = users.find((item) => String(item.id) === String(request.user_id));
-                return [request.id,request.history_id,request.user_id,request.gifts?.title,user?.username,user?.first_name]
+                return [request.id,request.history_id,request.user_id,request.gifts?.title,request.recipient_username,request.requester_username,request.users?.username,request.users?.first_name,user?.username,user?.first_name]
                   .some((value) => String(value || '').toLowerCase().includes(withdrawalSearch.trim().toLowerCase()));
               }) ? <div className="admin-withdraw-empty">Bu filtr bo‘yicha so‘rov topilmadi.</div> : null}
             </div>
