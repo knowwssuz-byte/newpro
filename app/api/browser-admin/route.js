@@ -1482,9 +1482,13 @@ export async function POST(request) {
         return json({ ok: false, error: 'Gift foydalanuvchiga yuborilganini tasdiqlang.' }, 400);
       }
       const { data: pending, error: findError } = await supabase
-        .from('withdraw_requests').select('id,user_id,gift_id,history_id,status,recipient_username,recipient_mode')
+        .from('withdraw_requests').select('id,user_id,gift_id,history_id,status,recipient_username,recipient_mode,request_version')
         .eq('id', requestId).maybeSingle();
       if (findError) throw findError;
+      const expectedVersion = Number(body.requestVersion);
+      if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1 || pending?.request_version !== expectedVersion) {
+        return json({ ok: false, error: 'So‘rov yangilangan. Yangi versiyasini ochib, qabul qiluvchini qayta tekshiring.' }, 409);
+      }
       if (!pending || pending.status !== 'pending') {
         return json({ ok: false, error: 'So‘rov allaqachon ko‘rib chiqilgan yoki topilmadi.' }, 409);
       }
@@ -1518,6 +1522,7 @@ export async function POST(request) {
         .update(updatedFields)
         .eq('id', requestId)
         .eq('status', 'pending')
+        .eq('request_version', expectedVersion)
         .select('*')
         .maybeSingle();
       if (error) throw error;
