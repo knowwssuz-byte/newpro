@@ -9,6 +9,12 @@ test('Production dependencies are pinned to resolved lockfile versions',()=>{
  for(const section of ['dependencies','devDependencies']){
   for(const [name,version] of Object.entries(packageJson[section])){
    assert.equal(lock.packages[''][section][name],version);
+   if (name === 'deepmerge') {
+     assert.equal(version, 'file:vendor/deepmerge');
+     assert.equal(lock.packages['node_modules/deepmerge'].resolved, 'vendor/deepmerge');
+     assert.equal(lock.packages['vendor/deepmerge'].version, '4.3.1-newpro.1');
+     continue;
+   }
    assert.equal(lock.packages['node_modules/'+name].version,version);
    assert.match(version,/^\d+\.\d+\.\d+/);
   }

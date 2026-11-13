@@ -24,7 +24,8 @@
     "react": "19.2.7",
     "react-dom": "19.2.7",
     "sharp": "0.35.5",
-    "telegram": "2.26.22"
+    "telegram": "2.26.22",
+    "deepmerge": "file:vendor/deepmerge"
   },
   "devDependencies": {
     "@electric-sql/pglite": "0.3.14",
@@ -33,7 +34,7 @@
     "eslint-config-next": "16.4.6"
   },
   "overrides": {
-    "deepmerge": "file:vendor/deepmerge",
+    "deepmerge": "$deepmerge",
     "@typescript-eslint/typescript-estree": {
       "minimatch": "11.0.1"
     }
