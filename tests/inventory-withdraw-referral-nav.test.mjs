@@ -25,7 +25,9 @@ test('inventory removes redundant INVENTORY ribbon and confirms Yechish request'
  assert.match(slice,/Ishonchingiz komilmi\?/);
  assert.match(slice,/Ha, yechish/);
  assert.match(slice,/requested \? 'Pending' : 'Yechish'/);
- assert.match(slice,/onWithdraw\(dialog\.item\.id\)/);
+ assert.match(slice,/onWithdraw\\(dialog\\.item\\.id, recipient\\)/);
+ assert.match(slice,/WithdrawalRecipientFields/);
+ assert.match(slice,/recipientIsValid/);
  assert.match(slice,/onClick=\{onPending\}/);
  assert.match(slice,/Pending/);
 });
@@ -38,7 +40,9 @@ test('real withdrawal API uses authenticated atomic server request',()=>{
  assert.match(admin,/tab === 'withdrawals'/);
  assert.match(admin,/onDecision=\{updateWithdrawal\}/);
  assert.match(admin,/deliveryConfirmed = false/);
- assert.match(admin,/callAdmin\('withdraw_update', \{ requestId, status, adminNote, deliveryConfirmed \}\)/);
+ assert.match(admin,/callAdmin\\('withdraw_update', \\{ requestId, status, adminNote, deliveryConfirmed, recipientUsername, requestVersion \\}\\)/);
+ assert.match(route,/p_recipient_mode: validated\\.mode/);
+ assert.match(route,/p_requested_username: validated\\.username/);
 });
 test('Referral NEW badge stays visible permanently, including after a visit',()=>{
  const view=read('app/webapp/WebAppClient.jsx');
