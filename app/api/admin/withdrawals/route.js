@@ -1,5 +1,6 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { jsonError, readTelegramRequest } from '@/lib/telegramAuth';
+import { normalizeTelegramUsername } from '@/lib/withdrawRecipient.mjs';
 
 export async function POST(request) {
   try {
@@ -9,7 +10,7 @@ export async function POST(request) {
     if (!auth.isAdmin) return jsonError('Admin ruxsati yo‘q', 403);
 
     const supabase = getSupabaseAdmin();
-    const { action, requestId, status, admin_note, deliveryConfirmed } = auth.body || {};
+    const { action, requestId, status, admin_note, deliveryConfirmed, recipientUsername } = auth.body || {};
 
     if (action === 'list') {
       const { data: requests, error } = await supabase
@@ -54,7 +55,7 @@ export async function POST(request) {
       if (note.length < 8) return jsonError('Yetkazish dalili yoki rad etish sababi kamida 8 belgi bo‘lsin');
       if (status === 'approved' && deliveryConfirmed !== true) return jsonError('Gift Telegramda yuborilganini tasdiqlang');
       const { data: pending, error: findError } = await supabase.from('withdraw_requests')
-        .select('id,user_id,gift_id,history_id,status').eq('id', requestId).maybeSingle();
+        .select('id,user_id,gift_id,history_id,status,recipient_username').eq('id', requestId).maybeSingle();
       if (findError) throw findError;
       if (!pending || pending.status !== 'pending') return jsonError('So‘rov ko‘rib chiqilgan yoki topilmadi', 409);
       if (status === 'approved' && pending.history_id) {
@@ -66,9 +67,17 @@ export async function POST(request) {
           return jsonError('Gift tarixi yoki egasi mos kelmadi', 409);
         }
       }
+      const destination = normalizeTelegramUsername(pending.recipient_username || recipientUsername);
+      if (status === 'approved' && !destination) return jsonError('Qabul qiluvchi @username belgilanmagan.', 400);
+      const changes = {
+        status, admin_note: note,
+        ...(!pending.recipient_username && destination ? {
+          recipient_mode: 'self', recipient_username: destination, recipient_source: 'admin_legacy',
+        } : {}),
+      };
       const { data, error } = await supabase
         .from('withdraw_requests')
-        .update({ status, admin_note: note })
+        .update(changes)
         .eq('id', requestId)
         .eq('status', 'pending')
         .select('*')
