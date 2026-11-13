@@ -709,13 +709,22 @@ try {
     assert.deepEqual(nativeDialogs, []);
     assert.deepEqual(pageErrors, []);
     assert.deepEqual(await page.evaluate(() => window.__cspViolations || []), []);
-    const policy = await page.evaluate(() => {
-      const script = document.createElement('script');
-      script.textContent = 'window.__untrustedScriptRan = true';
-      document.body.appendChild(script);
-      return window.__untrustedScriptRan;
+    // Inject into the document response, not a DevTools evaluation: browser
+    // automation has privileged script execution and is not an XSS source.
+    const probe = await context.newPage();
+    await probe.route('**/admin?csp-probe=1', async (route) => {
+      const response = await route.fetch();
+      assert.match(response.headers()['content-security-policy'], /script-src .*'nonce-/);
+      const body = (await response.text()).replace('<head>',
+        '<head><script>window.__untrustedScriptRan = true</script>');
+      await route.fulfill({ response, body });
     });
-    assert.equal(policy, undefined, 'CSP blocks injected script without a nonce');
+    await probe.goto(base + '/admin?csp-probe=1', { waitUntil: 'load' });
+    assert.equal(await probe.evaluate(() => window.__untrustedScriptRan), undefined,
+      'CSP blocks parser-injected script without a nonce');
+    await expect.poll(() => probe.evaluate(() => window.__cspViolations.some(
+      event => event.directive === 'script-src-elem' && event.blocked === 'inline'))).toBe(true);
+    await probe.close();
     results.push(
       `${width}px user, compact list, admin list and editor: no giveaway overflow or runtime errors`,
     );
