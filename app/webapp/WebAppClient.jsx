@@ -1460,7 +1460,7 @@ export default function WebAppClient() {
     }
   }
 
-  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false, recipientUsername = '') {
+  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false, recipientUsername = '', requestVersion = 1) {
     if (status === 'approved' && !window.confirm('Giftni Telegram orqali haqiqatan yubordingizmi? Tasdiqlashdan oldin tekshiring.')) return;
     const result = await runAction(
       () => apiPost('/api/admin/withdrawals', {
@@ -1470,6 +1470,7 @@ export default function WebAppClient() {
         admin_note: adminNote,
         deliveryConfirmed,
         recipientUsername,
+        requestVersion,
       }),
       status === 'approved' ? 'Yuborilgan gift tasdiqlandi ✅' : 'So‘rov rad etildi'
     );
@@ -3829,9 +3830,9 @@ function AdminPanel({
                       </label>
                       <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
                         <button type="button" disabled={!canReview || !destination || withdrawalConfirmed[request.id] !== true}
-                          onClick={() => updateWithdrawal(request.id, 'approved', note.trim(), true, destination)}>Yuborildi — tasdiqlash</button>
+                          onClick={() => updateWithdrawal(request.id, 'approved', note.trim(), true, destination, request.request_version || 1)}>Yuborildi — tasdiqlash</button>
                         <button type="button" disabled={!canReview} className="danger-btn"
-                          onClick={() => updateWithdrawal(request.id, 'rejected', note.trim(), false)}>Rad etish</button>
+                          onClick={() => updateWithdrawal(request.id, 'rejected', note.trim(), false, '', request.request_version || 1)}>Rad etish</button>
                       </div>
                       <small>Tasdiqlash giftni avtomatik yubormaydi — avval Telegramdan jo‘nating.</small>
                     </div>
