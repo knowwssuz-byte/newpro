@@ -24,6 +24,8 @@ import { getInventoryRows } from '@/lib/inventory.mjs';
 import { nextFreeCaseAt, freeCaseSecondsLeft, formatFreeCaseCountdown } from '@/lib/freeCaseCooldown.mjs';
 import useFreeCaseCountdown from './useFreeCaseCountdown';
 import GiftHistory from './GiftHistory';
+import WithdrawalRecipientFields from './WithdrawalRecipientFields';
+import { validateWithdrawalRecipient } from '@/lib/withdrawRecipient.mjs';
 import GiftShop from './GiftShop';
 
 
@@ -1179,9 +1181,9 @@ export default function WebAppClient() {
     }
   }
 
-  async function createWithdraw(historyId) {
+  async function createWithdraw(historyId, recipient) {
     const result = await runAction(
-      () => apiPost('/api/withdraw', { historyId }),
+      () => apiPost('/api/withdraw', { historyId, recipientMode: recipient.mode, recipientUsername: recipient.username }),
       'Yechish so‘rovi adminga yuborildi. Pending’da kuzatishingiz mumkin ✅'
     );
     if (!result) return null;
@@ -1458,7 +1460,7 @@ export default function WebAppClient() {
     }
   }
 
-  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false) {
+  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false, recipientUsername = '', requestVersion = 1) {
     if (status === 'approved' && !window.confirm('Giftni Telegram orqali haqiqatan yubordingizmi? Tasdiqlashdan oldin tekshiring.')) return;
     const result = await runAction(
       () => apiPost('/api/admin/withdrawals', {
@@ -1467,6 +1469,8 @@ export default function WebAppClient() {
         status,
         admin_note: adminNote,
         deliveryConfirmed,
+        recipientUsername,
+        requestVersion,
       }),
       status === 'approved' ? 'Yuborilgan gift tasdiqlandi ✅' : 'So‘rov rad etildi'
     );
@@ -1786,6 +1790,7 @@ export default function WebAppClient() {
                   busy={busy}
                   onSell={sellInventoryReward}
                   onWithdraw={createWithdraw}
+                  telegramUsername={telegramUser?.username || ''}
                   apiPost={apiPost}
                   balance={profile?.balance ?? 0}
                   onBought={handleShopBought}
@@ -2662,9 +2667,10 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   );
 }
 
-function InventoryView({ active = true, replayToken = 0, history, escrowedGiftIds = [], gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending, apiPost, balance, onBought }) {
+function InventoryView({ active = true, replayToken = 0, history, escrowedGiftIds = [], gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending, apiPost, balance, onBought, telegramUsername = '' }) {
   const [shopOpen, setShopOpen] = useState(false);
   const [dialog, setDialog] = useState(null);
+  const [recipient, setRecipient] = useState({ mode: 'self', username: '' });
   const [visibleCount, setVisibleCount] = useState(24);
   useEffect(() => { if (!active) setDialog(null); }, [active]);
   const rows = useMemo(
@@ -2685,11 +2691,15 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [dialog, busy]);
 
+  const recipientIsValid = validateWithdrawalRecipient({
+    mode: recipient.mode, username: recipient.username, verifiedUsername: telegramUsername,
+  }).ok;
+
   async function confirmAction() {
-    if (!dialog || busy) return;
+    if (!dialog || busy || (dialog.kind === 'withdraw' && !recipientIsValid)) return;
     const result = dialog.kind === 'sell'
       ? await onSell(dialog.item.id)
-      : await onWithdraw(dialog.item.id);
+      : await onWithdraw(dialog.item.id, recipient);
     if (result) setDialog(null);
   }
 
@@ -2765,7 +2775,7 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
                     className={inventoryStyles.action + ' ' + inventoryStyles.transfer}
                     disabled={busy || requested}
                     title={requested ? 'Yechish so‘rovi ko‘rib chiqilmoqda' : 'Giftni admin orqali yechish'}
-                    onClick={() => setDialog({ kind: 'withdraw', item, gift, price })}
+                    onClick={() => { setRecipient({ mode: 'self', username: '' }); setDialog({ kind: 'withdraw', item, gift, price }); }}
                   >
                     <AppIcon name="withdraw" /> {requested ? 'Pending' : 'Yechish'}
                   </button>
@@ -2801,6 +2811,13 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
                 ? ' sotiladi va tasdiqlangach inventardan olib tashlanadi. Stars balansingizga qo‘shiladi.'
                 : ' uchun yechish so‘rovi admin paneliga yuboriladi. Sovg‘a Inventory’dan olinib, Pending bo‘limida ko‘rinadi.'}
             </p>
+            {dialog.kind === 'withdraw' ? (
+              <WithdrawalRecipientFields mode={recipient.mode}
+                onMode={(mode) => setRecipient((current) => ({ ...current, mode }))}
+                username={recipient.username}
+                onUsername={(username) => setRecipient((current) => ({ ...current, username }))}
+                telegramUsername={telegramUsername} apiPost={apiPost} busy={busy}/>
+            ) : null}
             {dialog.kind === 'sell' ? (
               <div className={inventoryStyles.dialogAmount}>
                 <StarIcon variant="royal" size={22} />
@@ -2810,11 +2827,11 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
             <small className={inventoryStyles.dialogNote}>
               {dialog.kind === 'sell'
                 ? 'Yakuniy sotish narxini server tekshiradi. Sotish amalga oshgach uni qaytarib bo‘lmaydi.'
-                : 'Bu Telegram’ga avtomatik sovg‘a yuborish emas. Admin tekshiradi va tasdiqlaydi yoki rad etadi. Rad etilsa sovg‘a Inventory’ga qaytadi.'}
+                : 'Qabul qiluvchini diqqat bilan tekshiring. Gift avtomatik jo‘natilmaydi: admin tanlangan @username ga yuboradi va dalil bilan tasdiqlaydi. Rad etilsa gift Inventory’ga qaytadi.'}
             </small>
             <div className={inventoryStyles.dialogActions}>
               <button type="button" className={inventoryStyles.cancel} disabled={busy} onClick={() => setDialog(null)}>Bekor qilish</button>
-              <button type="button" className={inventoryStyles.confirm} disabled={busy} onClick={confirmAction}>
+              <button type="button" className={inventoryStyles.confirm} disabled={busy || (dialog.kind === 'withdraw' && !recipientIsValid)} onClick={confirmAction}>
                 {busy ? 'Bajarilmoqda...' : dialog.kind === 'sell' ? 'Ha, sotish' : 'Ha, yechish'}
               </button>
             </div>
@@ -3601,6 +3618,7 @@ function AdminPanel({
   busy,
 }) {
   const [withdrawalNotes, setWithdrawalNotes] = useState({});
+  const [withdrawalRecipientDrafts, setWithdrawalRecipientDrafts] = useState({});
   const [withdrawalConfirmed, setWithdrawalConfirmed] = useState({});
   return (
     <div className="admin-panel premium-card">
@@ -3773,7 +3791,9 @@ function AdminPanel({
               const note = withdrawalNotes[request.id] || '';
               const isPending = request.status === 'pending';
               const canReview = isPending && note.trim().length >= 8 && !busy;
-              const username = /^[a-zA-Z0-9_]{5,32}$/.test(request.users?.username || '') ? request.users.username : '';
+              const username = normalizeTelegramUsername(request.requester_username || request.users?.username);
+              const destination = normalizeTelegramUsername(request.recipient_username || withdrawalRecipientDrafts[request.id]);
+              const isLegacy = !normalizeTelegramUsername(request.recipient_username);
               return (
                 <article className="admin-item" key={request.id} style={{display:'grid',gap:12,padding:14}}>
                   <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
@@ -3786,7 +3806,16 @@ function AdminPanel({
                     </div>
                   </div>
                   <small style={{overflowWrap:'anywhere'}}>So‘rov: {request.id} · Gift history: {request.history_id || '—'}</small>
-                  {username ? <a href={`https://t.me/${username}`} target="_blank" rel="noopener noreferrer">Telegram foydalanuvchisini ochish</a> : null}
+                  {username ? <a href={`https://t.me/${username}`} target="_blank" rel="noopener noreferrer">So‘rov yuboruvchi profili</a> : null}
+                  <div style={{border:'1px solid #765695',background:'#322443',borderRadius:12,padding:12,display:'grid',gap:7}}>
+                    <small>{request.recipient_mode === 'other' ? 'BOSHQA AKKAUNTGA' : request.recipient_mode === 'self' ? 'O‘ZIGA' : 'ESKI SO‘ROV'}</small>
+                    <strong>Qabul qiluvchi: {destination ? '@' + destination : 'Ko‘rsatilmagan'}</strong>
+                    {destination ? <a href={`https://t.me/${destination}`} target="_blank" rel="noopener noreferrer">Qabul qiluvchini Telegramda ochish</a> : null}
+                    {isLegacy && isPending ? <label style={{display:'grid',gap:5}}>Eski so‘rov uchun @username
+                      <input type="text" maxLength={33} placeholder="@username" value={withdrawalRecipientDrafts[request.id] || ''}
+                        onChange={(event)=>setWithdrawalRecipientDrafts((current)=>({...current,[request.id]:event.target.value}))}/>
+                    </label> : null}
+                  </div>
                   {isPending ? (
                     <div style={{display:'grid',gap:9}}>
                       <label htmlFor={`mini-withdraw-note-${request.id}`}>Gift yuborilgan dalili yoki rad etish sababi</label>
@@ -3800,10 +3829,10 @@ function AdminPanel({
                         <span>Giftni Telegram orqali yubordim</span>
                       </label>
                       <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                        <button type="button" disabled={!canReview || withdrawalConfirmed[request.id] !== true}
-                          onClick={() => updateWithdrawal(request.id, 'approved', note.trim(), true)}>Yuborildi — tasdiqlash</button>
+                        <button type="button" disabled={!canReview || !destination || withdrawalConfirmed[request.id] !== true}
+                          onClick={() => updateWithdrawal(request.id, 'approved', note.trim(), true, destination, request.request_version || 1)}>Yuborildi — tasdiqlash</button>
                         <button type="button" disabled={!canReview} className="danger-btn"
-                          onClick={() => updateWithdrawal(request.id, 'rejected', note.trim(), false)}>Rad etish</button>
+                          onClick={() => updateWithdrawal(request.id, 'rejected', note.trim(), false, '', request.request_version || 1)}>Rad etish</button>
                       </div>
                       <small>Tasdiqlash giftni avtomatik yubormaydi — avval Telegramdan jo‘nating.</small>
                     </div>

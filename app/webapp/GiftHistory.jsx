@@ -58,6 +58,7 @@ export default function GiftHistory({ history = [], gifts = [], withdrawals = []
                   <strong title={row.gift?.title || ''}>{row.gift?.title || 'Gift'}</strong>
                   <span>{row.kind === 'upgrade' ? 'Upgrade urinishida sarflangan' : row.kind === 'sale' ? 'Sotuv' : 'Yechish so‘rovi'}</span>
                   <small>{timeText(row.date)}</small>
+                  {row.kind === 'withdrawal' && row.recipientUsername ? <small>Qabul qiluvchi: @{row.recipientUsername} · {row.recipientMode === 'other' ? 'Boshqaga' : 'O‘zimga'}</small> : null}
                   {row.note ? <p>{row.note}</p> : null}
                 </div>
                 <div className={styles.trailing}>

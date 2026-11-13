@@ -9,6 +9,8 @@ import { isVerifiedUnlimitedCatalogGift } from '@/lib/telegramRegularGift.mjs';
 import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
+import { normalizeTelegramUsername } from '@/lib/withdrawRecipient.mjs';
+import { notifyWithdrawalDecision } from '@/lib/withdrawNotice';
 import { fetchUniqueTelegramGift } from '@/lib/telegramGiftsImporter';
 import {
   depositSettingsForClient,
@@ -175,7 +177,7 @@ async function bootstrap(supabase) {
       'withdraw_requests',
       supabase
         .from('withdraw_requests')
-        .select('*, gifts(id,title,type,value,image_url,animation_url,background_value)')
+        .select('*, gifts(id,title,type,value,image_url,animation_url,background_value), users(id,first_name,username)')
         .order('created_at', { ascending: false })
         .limit(250)
     ),
@@ -1481,9 +1483,13 @@ export async function POST(request) {
         return json({ ok: false, error: 'Gift foydalanuvchiga yuborilganini tasdiqlang.' }, 400);
       }
       const { data: pending, error: findError } = await supabase
-        .from('withdraw_requests').select('id,user_id,gift_id,history_id,status')
+        .from('withdraw_requests').select('id,user_id,gift_id,history_id,status,recipient_username,recipient_mode,request_version')
         .eq('id', requestId).maybeSingle();
       if (findError) throw findError;
+      const expectedVersion = Number(body.requestVersion);
+      if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 1 || pending?.request_version !== expectedVersion) {
+        return json({ ok: false, error: 'So‘rov yangilangan. Yangi versiyasini ochib, qabul qiluvchini qayta tekshiring.' }, 409);
+      }
       if (!pending || pending.status !== 'pending') {
         return json({ ok: false, error: 'So‘rov allaqachon ko‘rib chiqilgan yoki topilmadi.' }, 409);
       }
@@ -1498,15 +1504,31 @@ export async function POST(request) {
           return json({ ok: false, error: 'Gift egasi yoki tarixi mos kelmadi. Tasdiqlash to‘xtatildi.' }, 409);
         }
       }
+      const destination = normalizeTelegramUsername(pending.recipient_username || body.recipientUsername);
+      if (status === 'approved' && !destination) {
+        return json({ ok: false, error: 'Qabul qiluvchi @username ko‘rsatilmagan. Eski so‘rov uchun username kiriting.' }, 400);
+      }
+      // Only legacy rows may receive a destination from the admin. A user's
+      // explicit recipient is immutable once submitted.
+      const updatedFields = {
+        status, admin_note: adminNote,
+        ...(!pending.recipient_username && destination ? {
+          recipient_mode: 'self',
+          recipient_username: destination,
+          recipient_source: 'admin_legacy',
+        } : {}),
+      };
       const { data, error } = await supabase
         .from('withdraw_requests')
-        .update({ status, admin_note: adminNote })
+        .update(updatedFields)
         .eq('id', requestId)
         .eq('status', 'pending')
+        .eq('request_version', expectedVersion)
         .select('*')
         .maybeSingle();
       if (error) throw error;
       if (!data) return json({ ok: false, error: 'So‘rov allaqachon ko‘rib chiqilgan.' }, 409);
+      await notifyWithdrawalDecision(data);
       return json({ ok: true, withdrawal: data });
     }
 
