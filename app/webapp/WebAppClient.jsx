@@ -2390,7 +2390,7 @@ function loadTgsData(src) {
 async function createTgsPreview(src) {
   if (!tgsPreviewCache.has(src)) {
     tgsPreviewCache.set(src, (async () => {
-      const [{ default: lottie }, animationData] = await Promise.all([import('lottie-web'), loadTgsData(src)]);
+      const [{ default: lottie }, animationData] = await Promise.all([import('lottie-web/build/player/lottie_light'), loadTgsData(src)]);
       const host = document.createElement('div');
       Object.assign(host.style, { position: 'fixed', left: '-9999px', top: '-9999px', width: '180px', height: '180px', opacity: '0', pointerEvents: 'none' });
       document.body.appendChild(host);
@@ -2431,7 +2431,7 @@ function TelegramTgsAnimation({ src, className, animate = false, fallbackUrl = '
           if (!cancelled) setPreviewUrl(url);
           return;
         }
-        const [{ default: lottie }, animationData] = await Promise.all([import('lottie-web'), loadTgsData(src)]);
+        const [{ default: lottie }, animationData] = await Promise.all([import('lottie-web/build/player/lottie_light'), loadTgsData(src)]);
 
         if (cancelled || !containerRef.current) return;
 

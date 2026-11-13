@@ -5,12 +5,11 @@ import {prepareCaseArtwork} from '../lib/caseImageAutoFitBrowser.mjs';
 
 const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
 
-test('Vercel admin route never imports sharp native binaries', () => {
+test('admin verifies upload bytes before storing and preserves browser artwork sizing', () => {
   const route = read('app/api/browser-admin/route.js');
-  assert.doesNotMatch(route, /import\s+.*normalizeCaseArtwork/);
-  assert.doesNotMatch(route, /from ['"]sharp['"]/);
-  assert.match(route, /const buffer = Buffer\.from\(await file\.arrayBuffer\(\)\)/);
-  assert.match(route, /contentType: contentTypeFromExt\(ext\)/);
+  assert.match(route, /await validateImage/);
+  assert.match(route, /contentType: checked.contentType/);
+  assert.match(route, /ext: checked.ext/);
 });
 
 test('case upload and replacement both auto-normalize in browser', () => {

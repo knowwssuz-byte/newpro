@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8');
 
-test('free case has no odds panel, paid case keeps transparent odds',()=>{
- const c=read('app/webapp/CaseDetailExperience.jsx');
- assert.match(c,/!isFree \? <details className=\{caseOpeningStyles\.detailOdds\}>/);
- assert.match(c,/Yutish ehtimollarini ko‘rish/);
+test('server sends actual normalized prize odds for paid case rewards',()=>{
+ const c=read('app/api/bootstrap/route.js');
+ assert.match(c,/weight \/ total \* 10000/);
+ assert.match(c,/real_chance: percent/);
+ assert.match(c,/gift.is_active === false \|\| Number\(gift.stock\) <= 0/);
 });
 test('admin creates stars with upload in same authenticated multipart action',()=>{
  const admin=read('app/admin/AdminClient.jsx'),api=read('app/api/browser-admin/route.js');

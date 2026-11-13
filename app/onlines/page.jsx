@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import OnlinesClient from './OnlinesClient';
-import { isOnlineAdmin, ONLINE_ADMIN_COOKIE } from '@/lib/onlinesAuth';
+import { validSession, ADMIN_COOKIE } from '@/lib/security/adminSession';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -10,6 +10,6 @@ export const metadata = {
 };
 export default async function OnlinesPage() {
   const store = await cookies();
-  const authorized = isOnlineAdmin(store.get(ONLINE_ADMIN_COOKIE)?.value);
+  const authorized = await validSession(store.get(ADMIN_COOKIE)?.value).catch(() => false);
   return <OnlinesClient initiallyAuthorized={authorized} />;
 }

@@ -1,0 +1,33 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { PGlite } from '@electric-sql/pglite';
+import { readFile } from 'node:fs/promises';
+
+test('security migration enforces atomic limits and backend-only privileges',async(t)=>{
+  const db=new PGlite();t.after(()=>db.close());
+  await db.exec(`create role anon; create role authenticated; create role service_role bypassrls;
+    create table public.color_arena_events(id int); create table public.users(id int);
+    alter table public.color_arena_events enable row level security;
+    create policy public_events on public.color_arena_events for select to anon,authenticated using(true);
+    grant all on public.users to anon,authenticated;
+    create function public.test_privileged() returns integer language sql security definer as $$select 1$$;`);
+  await db.exec(await readFile(new URL('../supabase/migrations/20261113164556_security_sessions_and_rate_limits.sql',import.meta.url),'utf8'));
+  const scalar=async(q,args=[])=>Object.values((await db.query(q,args)).rows[0])[0];
+  assert.equal(await scalar("select has_table_privilege('anon','public.users','SELECT')"),false);
+  assert.equal(await scalar("select has_table_privilege('authenticated','public.users','TRUNCATE')"),false);
+  assert.equal(await scalar("select has_table_privilege('anon','public.color_arena_events','SELECT')"),true);
+  assert.equal(await scalar("select has_function_privilege('anon','public.test_privileged()','EXECUTE')"),false);
+  await db.exec('create function public.future_private() returns integer language sql as $$select 2$$;');
+  assert.equal(await scalar("select has_function_privilege('anon','public.future_private()','EXECUTE')"),false);
+  await db.exec('set role service_role');
+  const key='a'.repeat(64);
+  const responses=await Promise.all(Array.from({length:30},()=>scalar('select public.newpro_consume_rate_limit($1,10,60)',[key])));
+  assert.equal(responses.filter(r=>r.allowed).length,10);
+  assert.ok(responses.every(r=>r.retry_after>0));
+  await db.query("update public.security_rate_limits set expires_at=now()-interval '1 second' where key=$1",[key]);
+  assert.equal((await scalar('select public.newpro_consume_rate_limit($1,10,60)',[key])).allowed,true);
+  await assert.rejects(scalar('select public.newpro_consume_rate_limit($1,10,60)',['bad']),/INVALID_RATE_LIMIT/);
+  await db.exec('reset role; set role anon');
+  await assert.rejects(scalar('select public.newpro_consume_rate_limit($1,10,60)',[key]),/permission denied/);
+  await assert.rejects(db.query('select * from public.admin_sessions'),/permission denied/);
+});

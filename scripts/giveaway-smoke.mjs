@@ -140,9 +140,7 @@ try {
       isMobile: width < 600,
       hasTouch: width < 600,
     });
-    await context.addInitScript(() => {
-      sessionStorage.setItem("gift_myst_admin_key", "isolated-qa-admin");
-    });
+    await context.addCookies([{name:'newpro_admin',value:'isolated-qa-session',url:base,httpOnly:true,sameSite:'Strict'}]);
     const telegram = `window.Telegram={WebApp:{initData:'isolated-qa-session',initDataUnsafe:{user:{id:1,first_name:'Test'}},ready(){},expand(){},MainButton:{hide(){}},BackButton:{hide(){},show(){},onClick(){},offClick(){}},HapticFeedback:{notificationOccurred(){},impactOccurred(){}},platform:'android',version:'8.0'}};`;
     await context.route(
       "https://telegram.org/js/telegram-web-app.js",
@@ -164,6 +162,7 @@ try {
       const req = route.request(),
         path = new URL(req.url()).pathname,
         body = req.postDataJSON() || {};
+      if (path === "/api/admin/session") return route.fulfill({json:{ok:true,authenticated:true}});
       if (path === "/api/gift-animation")
         return route.fulfill({
           status: animationFails ? 502 : 200,
@@ -214,6 +213,12 @@ try {
           upgradeRounds: [],
           featureSettings: {},
         },
+      });
+    });
+    await context.addInitScript(() => {
+      window.__cspViolations = [];
+      document.addEventListener('securitypolicyviolation', event => {
+        window.__cspViolations.push({ directive: event.effectiveDirective, blocked: event.blockedURI });
       });
     });
     const page = await context.newPage();
@@ -703,6 +708,23 @@ try {
     }
     assert.deepEqual(nativeDialogs, []);
     assert.deepEqual(pageErrors, []);
+    assert.deepEqual(await page.evaluate(() => window.__cspViolations || []), []);
+    // Inject into the document response, not a DevTools evaluation: browser
+    // automation has privileged script execution and is not an XSS source.
+    const probe = await context.newPage();
+    await probe.route('**/admin?csp-probe=1', async (route) => {
+      const response = await route.fetch();
+      assert.match(response.headers()['content-security-policy'], /script-src .*'nonce-/);
+      const body = (await response.text()).replace('<head>',
+        '<head><script>window.__untrustedScriptRan = true</script>');
+      await route.fulfill({ response, body });
+    });
+    await probe.goto(base + '/admin?csp-probe=1', { waitUntil: 'load' });
+    assert.equal(await probe.evaluate(() => window.__untrustedScriptRan), undefined,
+      'CSP blocks parser-injected script without a nonce');
+    await expect.poll(() => probe.evaluate(() => window.__cspViolations.some(
+      event => event.directive === 'script-src-elem' && event.blocked === 'inline'))).toBe(true);
+    await probe.close();
     results.push(
       `${width}px user, compact list, admin list and editor: no giveaway overflow or runtime errors`,
     );

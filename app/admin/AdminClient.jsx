@@ -353,7 +353,7 @@ function AdminLottie({ src, className }) {
     let cancelled = false;
     (async () => {
       try {
-        const { default: lottie } = await import('lottie-web');
+        const { default: lottie } = await import('lottie-web/build/player/lottie_light');
         const response = await fetch(`/api/gift-animation?url=${encodeURIComponent(src)}`, { cache: 'force-cache' });
         if (!response.ok) throw new Error(`Animation download failed: ${response.status}`);
         const payload = await response.json();
@@ -573,12 +573,13 @@ export default function AdminClient() {
 
   useEffect(() => {
     window.localStorage.removeItem('gift_myst_admin_key');
-    const key = window.sessionStorage.getItem('gift_myst_admin_key') || '';
-    if (key) {
-      setAdminKey(key);
-      setSaved(true);
-      bootstrap(key);
-    }
+    window.sessionStorage.removeItem('gift_myst_admin_key');
+    let active = true;
+    fetch('/api/admin/session', { cache: 'no-store' })
+      .then(response => response.json())
+      .then(data => { if (active && data.authenticated) { setSaved(true); bootstrap(); } })
+      .catch(() => {});
+    return () => { active = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -657,18 +658,12 @@ export default function AdminClient() {
     }));
   }
 
-  async function callAdmin(action, payload = {}, keyOverride = '') {
-    const key = keyOverride || adminKey;
-
-    if (!key) {
-      throw new Error('Admin kalit kiriting.');
-    }
+  async function callAdmin(action, payload = {}) {
 
     const response = await fetch('/api/browser-admin', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${key}`,
       },
       body: JSON.stringify({ action, ...payload }),
     });
@@ -676,23 +671,18 @@ export default function AdminClient() {
     const data = await response.json().catch(() => null);
 
     if (!response.ok || !data?.ok) {
+      if (response.status === 401) setSaved(false);
       throw new Error(data?.error || `Server xatosi (${response.status})`);
     }
 
     return data;
   }
 
-  async function callAdminForm(formData, keyOverride = '') {
-    const key = keyOverride || adminKey;
-
-    if (!key) {
-      throw new Error('Admin kalit kiriting.');
-    }
+  async function callAdminForm(formData) {
 
     const response = await fetch('/api/browser-admin', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${key}`,
       },
       body: formData,
     });
@@ -700,14 +690,15 @@ export default function AdminClient() {
     const data = await response.json().catch(() => null);
 
     if (!response.ok || !data?.ok) {
+      if (response.status === 401) setSaved(false);
       throw new Error(data?.error || `Server xatosi (${response.status})`);
     }
 
     return data;
   }
 
-  async function bootstrap(keyOverride = '') {
-    const data = await run(() => callAdmin('bootstrap', {}, keyOverride));
+  async function bootstrap() {
+    const data = await run(() => callAdmin('bootstrap'));
     if (!data) return;
 
     applyBootstrap(data);
@@ -730,7 +721,7 @@ export default function AdminClient() {
   }
 
   useEffect(() => {
-    if (!saved || tab !== 'rocket' || !adminKey) return undefined;
+    if (!saved || tab !== 'rocket') return undefined;
 
     let cancelled = false;
     let timer = null;
@@ -777,9 +768,9 @@ export default function AdminClient() {
       if (timer) window.clearTimeout(timer);
       document.removeEventListener('visibilitychange', wake);
     };
-    // callAdmin/applyRocketControl intentionally use the current admin key.
+    // Poll only while the authenticated panel is visible.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adminKey, saved, tab]);
+  }, [saved, tab]);
 
   async function runRocketAction(action, payload, successText) {
     if (rocketActionBusy) return null;
@@ -871,16 +862,31 @@ export default function AdminClient() {
   async function login(event) {
     event.preventDefault();
 
-    const cleanKey = adminKey.trim();
-    const data = await run(() => callAdmin('bootstrap', {}, cleanKey), 'Admin panel ochildi ✅');
+    const data = await run(async () => {
+      const response = await fetch('/api/admin/session', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', key: adminKey.trim() }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.ok) throw new Error(result.error || 'Admin kirishi amalga oshmadi.');
+      setAdminKey('');
+      return callAdmin('bootstrap');
+    }, 'Admin panel ochildi ✅');
     if (!data) return;
-
-    window.sessionStorage.setItem('gift_myst_admin_key', cleanKey);
     setSaved(true);
     applyBootstrap(data);
   }
 
-  function logout() {
+  async function logout() {
+    const result = await run(async () => {
+      const response = await fetch('/api/admin/session', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'logout' }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.ok) throw new Error(data.error || 'Sessiyani yopib bo‘lmadi.');
+      return data;
+    });
+    if (!result) return;
     window.sessionStorage.removeItem('gift_myst_admin_key');
     window.localStorage.removeItem('gift_myst_admin_key');
     setSaved(false);
@@ -1253,16 +1259,7 @@ export default function AdminClient() {
   }
 
   async function openOnlinesDashboard() {
-    const data = await run(async () => {
-      const response = await fetch('/api/onlines/auth', {
-        method:'POST', headers:{'Content-Type':'application/json'}, cache:'no-store',
-        body:JSON.stringify({ action:'login',key:adminKey.trim() }),
-      });
-      const payload = await response.json().catch(()=>null);
-      if(!response.ok || !payload?.ok)throw new Error(payload?.error||'Online admin sessiyasi ochilmadi');
-      return payload;
-    });
-    if(data) window.location.assign('/onlines');
+    window.location.assign('/onlines');
   }
 
   async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false) {
@@ -1560,7 +1557,7 @@ export default function AdminClient() {
           ))}
         </nav>
 
-        {tab === 'giveaway' ? <GiveawayAdmin adminKey={adminKey} giftLibrary={giftLibrary} /> : null}
+        {tab === 'giveaway' ? <GiveawayAdmin giftLibrary={giftLibrary} /> : null}
 
         {tab === 'cases' ? (
           <section className="browser-admin-grid">

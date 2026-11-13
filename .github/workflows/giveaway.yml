@@ -20,7 +20,7 @@ permissions:
   contents: read
 jobs:
   giveaway:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -36,3 +36,10 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: npm run test:giveaway:browser
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: giveaway-smoke-screenshots
+          path: artifacts/giveaway/
+          if-no-files-found: ignore
+          retention-days: 5

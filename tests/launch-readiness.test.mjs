@@ -9,6 +9,12 @@ test('Production dependencies are pinned to resolved lockfile versions',()=>{
  for(const section of ['dependencies','devDependencies']){
   for(const [name,version] of Object.entries(packageJson[section])){
    assert.equal(lock.packages[''][section][name],version);
+   if (name === 'deepmerge') {
+     assert.equal(version, 'file:vendor/deepmerge');
+     assert.equal(lock.packages['node_modules/deepmerge'].resolved, 'vendor/deepmerge');
+     assert.equal(lock.packages['vendor/deepmerge'].version, '4.3.1-newpro.1');
+     continue;
+   }
    assert.equal(lock.packages['node_modules/'+name].version,version);
    assert.match(version,/^\d+\.\d+\.\d+/);
   }
@@ -30,8 +36,9 @@ test('Color Arena opens directly and exposes secondary PvP modes',()=>{
 test('Production browser admin pre-checks a credential before parsing payload',()=>{
  const route=read('app/api/browser-admin/route.js');
  const entry=route.slice(route.indexOf('export async function POST(request)'));
- assert.ok(entry.indexOf('assertAdmin(request, {adminKey:\'\'})')<entry.indexOf('request.formData()'));
- assert.ok(entry.indexOf('assertAdmin(request, {adminKey:\'\'})')<entry.indexOf('request.json()'));
+ assert.ok(entry.indexOf('await assertAdminSession(request)') >= 0);
+ assert.ok(entry.indexOf('await assertAdminSession(request)')<entry.indexOf('readForm(request)'));
+ assert.ok(entry.indexOf('await assertAdminSession(request)')<entry.indexOf('readJson(request)'));
 });
 test('Visual smoke runs on PR and main pushes',()=>{
  const workflow=read('.github/workflows/myst-visual-smoke.yml');

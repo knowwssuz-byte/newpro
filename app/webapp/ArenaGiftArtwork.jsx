@@ -48,7 +48,7 @@ export default function ArenaGiftArtwork({gift,selected=false}){
   useEffect(()=>{
     if(!visible||!tgs||!canvas.current)return;
     let cancelled=false;let instance;
-    Promise.all([import('lottie-web'),cachedAnimation(animationUrl)])
+    Promise.all([import('lottie-web/build/player/lottie_light'),cachedAnimation(animationUrl)])
       .then(([mod,data])=>{
         if(cancelled||!canvas.current)return;
         // Lottie modifies some data as it renders; do not share mutable data.

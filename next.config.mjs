@@ -7,6 +7,8 @@ const securityHeaders=[
  {key:'Content-Security-Policy',value:"object-src 'none'; base-uri 'self'; frame-ancestors 'self' https://web.telegram.org https://*.telegram.org; form-action 'self'; upgrade-insecure-requests"}
 ];
 const nextConfig={
+ poweredByHeader:false,
+ productionBrowserSourceMaps:false,
  images:{
   remotePatterns:[
    {protocol:'https',hostname:'ylcipsfuojjvsqowbpol.supabase.co',pathname:'/storage/v1/object/public/**'},

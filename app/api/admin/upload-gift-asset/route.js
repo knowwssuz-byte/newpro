@@ -1,3 +1,6 @@
+import { guardRequest } from '@/lib/security/rateLimit';
+import { HttpError, readForm, securityError } from '@/lib/security/http.mjs';
+import { validateImage, validateVideo } from '@/lib/security/assets.mjs';
 import crypto from 'crypto';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { isAdminUser, jsonError } from '@/lib/telegramAuth';
@@ -29,7 +32,8 @@ function extensionFromFile(file) {
 
 export async function POST(request) {
   try {
-    const formData = await request.formData();
+    await guardRequest(request, { limit: 30, scope: 'uploads' });
+    const formData = await readForm(request);
     const initData = String(formData.get('initData') || '');
     const file = formData.get('file');
     const kind = String(formData.get('kind') || 'image');
@@ -71,15 +75,19 @@ export async function POST(request) {
 
     const supabase = getSupabaseAdmin();
     const bucket = process.env.SUPABASE_GIFT_ASSETS_BUCKET || 'gift-assets';
-    const ext = extensionFromFile(file);
+    const source = Buffer.from(await file.arrayBuffer());
+    const checked = file.type.startsWith('image/')
+      ? await validateImage(source, { maxBytes: MAX_FILE_SIZE })
+      : { buffer: source, contentType: file.type, ext: validateVideo(source, file.type) };
+    const ext = checked.ext;
     const folder = kind === 'animation' ? 'animations' : 'images';
     const filePath = `${folder}/${Date.now()}-${crypto.randomUUID()}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = checked.buffer;
 
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(filePath, buffer, {
-        contentType: file.type,
+        contentType: checked.contentType,
         cacheControl: '3600',
         upsert: false,
       });
@@ -97,6 +105,7 @@ export async function POST(request) {
       publicUrl: data.publicUrl,
     });
   } catch (error) {
+    if (error instanceof HttpError) return securityError(error);
     return jsonError(error.message || 'Gift asset yuklashda server xatosi', 500);
   }
 }

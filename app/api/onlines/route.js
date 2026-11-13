@@ -1,5 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
-import { ONLINE_ADMIN_COOKIE, isOnlineAdmin } from '@/lib/onlinesAuth';
+import { cookieToken, validSession } from '@/lib/security/adminSession';
+import { guardRequest } from '@/lib/security/rateLimit';
+import { securityError } from '@/lib/security/http.mjs';
 
 export const runtime='nodejs';
 export const dynamic='force-dynamic';
@@ -66,9 +68,12 @@ async function activityForUser(db,id) {
     recentWithdrawals:parts.withdrawals.slice(0,25)};
 }
 export async function GET(request) {
-  if (!isOnlineAdmin(request.cookies.get(ONLINE_ADMIN_COOKIE)?.value)) {
-    return json({ok:false,error:'Admin sessiyasi talab qilinadi.'},401);
-  }
+  try {
+    await guardRequest(request);
+    if (!await validSession(cookieToken(request))) {
+      return json({ok:false,error:'Admin sessiyasi talab qilinadi.'},401);
+    }
+  } catch (error) { return securityError(error); }
   const params=new URL(request.url).searchParams;
   const db=getSupabaseAdmin();
   try {

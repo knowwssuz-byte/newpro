@@ -37,7 +37,7 @@ export function getGiftPreview(item) {
   if (!cache.has(animation)) {
     cache.set(animation, queuePreview(async () => {
       const [{ default: lottie }, response] = await Promise.all([
-        import('lottie-web'),
+        import('lottie-web/build/player/lottie_light'),
         fetch('/api/gift-animation?url=' + encodeURIComponent(animation), { cache: 'force-cache' }),
       ]);
       const payload = await response.json();

@@ -32,7 +32,7 @@ test('Real collectible artwork decodes Telegram TGS rather than showing an emoji
  const ui=read('app/webapp/ColorArena.jsx');
  const css=read('app/webapp/ColorArena.module.css');
  assert.match(art,/cachedAnimation\(animationUrl\)/);
- assert.match(art,/import\('lottie-web'\)/);
+ assert.match(art,/import\('lottie-web\/build\/player\/lottie_light'\)/);
  assert.match(art,/\/api\/gift-animation\?url=/);
  assert.match(art,/instance\.goToAndStop\(0,true\)/);
  assert.match(art,/instance\.loop=true;instance\.play\(\)/);

@@ -13,8 +13,8 @@ test('Home Arena and Upgrade are distinct working PVP and Upgrade navigation ent
   assert.match(home,/data-quick-action="upgrade"/);
   assert.match(home,/onClick=\{onGoUpgrade\}/);
   assert.match(home,/<strong>Upgrade<\/strong>/);
-  assert.match(app,/onOpenPvp=\{\(\) => openPvpHub\('home'\)\}/);
-  assert.match(app,/tab === 'pvp' \? <PvpHub initialGame="color"/);
+  assert.match(app,/onOpenPvp=\{\(\) => openPvpHub\('home', 'list'\)\}/);
+  assert.match(app,/tab === 'pvp' \? <PvpHub initialGame=\{pvpInitialGame\}/);
   assert.match(pvpCode(),/initialGame==='color'\?'color':'list'/);
   assert.match(pvpCode(),/initialGame==='color'\?onBack:/);
   assert.match(app,/tab === 'upgrade' \?/);
