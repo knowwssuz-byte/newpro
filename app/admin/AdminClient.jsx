@@ -447,9 +447,9 @@ function WithdrawalReviewCard({ request, user, busy, onDecision }) {
           </label>
           <div className="admin-withdraw-review-actions">
             <button type="button" className="admin-withdraw-approve" disabled={busy || !validNote || !delivered || !destination}
-              onClick={() => onDecision(request.id, 'approved', adminNote.trim(), true, destination)}>Yuborildi — tasdiqlash</button>
+              onClick={() => onDecision(request.id, 'approved', adminNote.trim(), true, destination, request.request_version || 1)}>Yuborildi — tasdiqlash</button>
             <button type="button" className="admin-withdraw-reject" disabled={busy || !validNote}
-              onClick={() => onDecision(request.id, 'rejected', adminNote.trim(), false)}>Sabab bilan rad etish</button>
+              onClick={() => onDecision(request.id, 'rejected', adminNote.trim(), false, '', request.request_version || 1)}>Sabab bilan rad etish</button>
           </div>
           <small>Bu tasdiq giftni avtomatik jo‘natmaydi. Avval Telegramda yuboring, so‘ng dalilni yozing.</small>
         </div>
@@ -1281,10 +1281,10 @@ export default function AdminClient() {
     window.location.assign('/onlines');
   }
 
-  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false, recipientUsername = '') {
+  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false, recipientUsername = '', requestVersion = 1) {
     if (status === 'approved' && !window.confirm('Telegram gift HAQIQATAN foydalanuvchiga yuborildimi? Bu amal qaytarilmaydi.')) return;
     const result = await run(
-      () => callAdmin('withdraw_update', { requestId, status, adminNote, deliveryConfirmed, recipientUsername }),
+      () => callAdmin('withdraw_update', { requestId, status, adminNote, deliveryConfirmed, recipientUsername, requestVersion }),
       status === 'approved' ? 'Yuborilgan gift tasdiqlandi ✅' : 'So‘rov sabab bilan rad etildi'
     );
     if (result) await bootstrap();
