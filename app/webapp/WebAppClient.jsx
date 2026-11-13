@@ -24,6 +24,7 @@ import { getInventoryRows } from '@/lib/inventory.mjs';
 import { nextFreeCaseAt, freeCaseSecondsLeft, formatFreeCaseCountdown } from '@/lib/freeCaseCooldown.mjs';
 import useFreeCaseCountdown from './useFreeCaseCountdown';
 import GiftHistory from './GiftHistory';
+import GiftShop from './GiftShop';
 
 
 const DiceGame = dynamic(() => import('./DiceGame'), {
@@ -1207,6 +1208,12 @@ export default function WebAppClient() {
     return result;
   }
 
+  async function handleShopBought(purchase) {
+    setProfile((current) => current ? { ...current, balance: Number(purchase.balance) } : current);
+    showToast('Gift sotib olindi va Inventoryga qo‘shildi ✅');
+    await loadApp({ silent: true });
+  }
+
   async function sellOpeningReward(openingPayload) {
     if (!openingPayload?.gift || isBalanceReward(openingPayload.gift)) {
       showToast('Bu reward balansga avtomatik qo‘shiladi');
@@ -1779,6 +1786,9 @@ export default function WebAppClient() {
                   busy={busy}
                   onSell={sellInventoryReward}
                   onWithdraw={createWithdraw}
+                  apiPost={apiPost}
+                  balance={profile?.balance ?? 0}
+                  onBought={handleShopBought}
                   onPending={() => {
                     historyReturnTabRef.current = 'inventory';
                     setTab('history');
@@ -2652,7 +2662,8 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   );
 }
 
-function InventoryView({ active = true, replayToken = 0, history, escrowedGiftIds = [], gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending }) {
+function InventoryView({ active = true, replayToken = 0, history, escrowedGiftIds = [], gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending, apiPost, balance, onBought }) {
+  const [shopOpen, setShopOpen] = useState(false);
   const [dialog, setDialog] = useState(null);
   const [visibleCount, setVisibleCount] = useState(24);
   useEffect(() => { if (!active) setDialog(null); }, [active]);
@@ -2682,7 +2693,9 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
     if (result) setDialog(null);
   }
 
-  return (
+  return shopOpen ? (
+    <GiftShop apiPost={apiPost} balance={balance} onBack={() => setShopOpen(false)} onBought={onBought}/>
+  ) : (
     <section className={'screen-stack inventory-view ' + inventoryStyles.section}>
       <div className={inventoryStyles.heading}>
         <div className={inventoryStyles.headingText}>
@@ -2700,6 +2713,13 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
           </span>
         </div>
       </div>
+
+      <button type="button" className={inventoryStyles.shopEntry} onClick={() => setShopOpen(true)}>
+        <span className={inventoryStyles.shopVisual}><AppIcon name="gift" /></span>
+        <span className={inventoryStyles.shopCopy}><span className={inventoryStyles.shopBadge}>NEW</span>
+          <strong>Gift Shop</strong><small>Stars bilan gift sotib oling</small></span>
+        <span className={inventoryStyles.shopArrow} aria-hidden="true">›</span>
+      </button>
 
       {rows.length === 0 ? (
         <div className={inventoryStyles.empty}>
