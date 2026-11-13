@@ -10,7 +10,7 @@ export async function POST(request) {
     if (!auth.isAdmin) return jsonError('Admin ruxsati yo‘q', 403);
 
     const supabase = getSupabaseAdmin();
-    const { action, requestId, status, admin_note, deliveryConfirmed, recipientUsername } = auth.body || {};
+    const { action, requestId, status, admin_note, deliveryConfirmed, recipientUsername, requestVersion } = auth.body || {};
 
     if (action === 'list') {
       const { data: requests, error } = await supabase
@@ -55,8 +55,12 @@ export async function POST(request) {
       if (note.length < 8) return jsonError('Yetkazish dalili yoki rad etish sababi kamida 8 belgi bo‘lsin');
       if (status === 'approved' && deliveryConfirmed !== true) return jsonError('Gift Telegramda yuborilganini tasdiqlang');
       const { data: pending, error: findError } = await supabase.from('withdraw_requests')
-        .select('id,user_id,gift_id,history_id,status,recipient_username').eq('id', requestId).maybeSingle();
+        .select('id,user_id,gift_id,history_id,status,recipient_username,request_version').eq('id', requestId).maybeSingle();
       if (findError) throw findError;
+      const version = Number(requestVersion);
+      if (!Number.isSafeInteger(version) || version < 1 || pending?.request_version !== version) {
+        return jsonError('So‘rov yangilangan. Admin ro‘yxatini yangilab, qayta tekshiring.', 409);
+      }
       if (!pending || pending.status !== 'pending') return jsonError('So‘rov ko‘rib chiqilgan yoki topilmadi', 409);
       if (status === 'approved' && pending.history_id) {
         const { data: history, error: historyError } = await supabase.from('open_history')
@@ -80,6 +84,7 @@ export async function POST(request) {
         .update(changes)
         .eq('id', requestId)
         .eq('status', 'pending')
+        .eq('request_version', version)
         .select('*')
         .maybeSingle();
 
