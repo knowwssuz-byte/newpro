@@ -6,6 +6,7 @@ import GiveawayAdmin from './GiveawayAdmin';
 import { prepareCaseArtwork } from '@/lib/caseImageAutoFitBrowser.mjs';
 import { caseImageValues,caseImageStyle } from '@/lib/caseImageLayout.mjs';
 import './admin-catalog.css';
+import GiftShopAdmin from './GiftShopAdmin';
 
 const emptyCaseForm = {
   title: '',
@@ -1537,6 +1538,7 @@ export default function AdminClient() {
             ['library', 'Gift baza'],
             ['giveaway', '🎁 Giveaways'],
             ['gifts', 'Casega gift'],
+            ['gift-shop', '🛍️ Gift Shop'],
             ['upgrade-gifts', 'Upgrade giftlari'],
             ['features', 'PVP / Rocket'],
             ['rocket', 'Rocket control'],
@@ -1558,6 +1560,7 @@ export default function AdminClient() {
         </nav>
 
         {tab === 'giveaway' ? <GiveawayAdmin giftLibrary={giftLibrary} /> : null}
+        {tab === 'gift-shop' ? <GiftShopAdmin /> : null}
 
         {tab === 'cases' ? (
           <section className="browser-admin-grid">
