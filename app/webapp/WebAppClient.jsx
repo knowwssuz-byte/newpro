@@ -24,6 +24,8 @@ import { getInventoryRows } from '@/lib/inventory.mjs';
 import { nextFreeCaseAt, freeCaseSecondsLeft, formatFreeCaseCountdown } from '@/lib/freeCaseCooldown.mjs';
 import useFreeCaseCountdown from './useFreeCaseCountdown';
 import GiftHistory from './GiftHistory';
+import WithdrawalRecipientFields from './WithdrawalRecipientFields';
+import { validateWithdrawalRecipient } from '@/lib/withdrawRecipient.mjs';
 import GiftShop from './GiftShop';
 
 
@@ -1179,9 +1181,9 @@ export default function WebAppClient() {
     }
   }
 
-  async function createWithdraw(historyId) {
+  async function createWithdraw(historyId, recipient) {
     const result = await runAction(
-      () => apiPost('/api/withdraw', { historyId }),
+      () => apiPost('/api/withdraw', { historyId, recipientMode: recipient.mode, recipientUsername: recipient.username }),
       'Yechish so‘rovi adminga yuborildi. Pending’da kuzatishingiz mumkin ✅'
     );
     if (!result) return null;
@@ -1786,6 +1788,7 @@ export default function WebAppClient() {
                   busy={busy}
                   onSell={sellInventoryReward}
                   onWithdraw={createWithdraw}
+                  telegramUsername={telegramUser?.username || ''}
                   apiPost={apiPost}
                   balance={profile?.balance ?? 0}
                   onBought={handleShopBought}
@@ -2662,9 +2665,10 @@ function GiftMedia({ gift, compact = false, preferStatic = false, animate = fals
   );
 }
 
-function InventoryView({ active = true, replayToken = 0, history, escrowedGiftIds = [], gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending, apiPost, balance, onBought }) {
+function InventoryView({ active = true, replayToken = 0, history, escrowedGiftIds = [], gifts, cases, withdrawals, busy, onSell, onWithdraw, onPending, apiPost, balance, onBought, telegramUsername = '' }) {
   const [shopOpen, setShopOpen] = useState(false);
   const [dialog, setDialog] = useState(null);
+  const [recipient, setRecipient] = useState({ mode: 'self', username: '' });
   const [visibleCount, setVisibleCount] = useState(24);
   useEffect(() => { if (!active) setDialog(null); }, [active]);
   const rows = useMemo(
@@ -2685,11 +2689,15 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [dialog, busy]);
 
+  const recipientIsValid = validateWithdrawalRecipient({
+    mode: recipient.mode, username: recipient.username, verifiedUsername: telegramUsername,
+  }).ok;
+
   async function confirmAction() {
-    if (!dialog || busy) return;
+    if (!dialog || busy || (dialog.kind === 'withdraw' && !recipientIsValid)) return;
     const result = dialog.kind === 'sell'
       ? await onSell(dialog.item.id)
-      : await onWithdraw(dialog.item.id);
+      : await onWithdraw(dialog.item.id, recipient);
     if (result) setDialog(null);
   }
 
@@ -2765,7 +2773,7 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
                     className={inventoryStyles.action + ' ' + inventoryStyles.transfer}
                     disabled={busy || requested}
                     title={requested ? 'Yechish so‘rovi ko‘rib chiqilmoqda' : 'Giftni admin orqali yechish'}
-                    onClick={() => setDialog({ kind: 'withdraw', item, gift, price })}
+                    onClick={() => { setRecipient({ mode: 'self', username: '' }); setDialog({ kind: 'withdraw', item, gift, price }); }}
                   >
                     <AppIcon name="withdraw" /> {requested ? 'Pending' : 'Yechish'}
                   </button>
@@ -2801,6 +2809,13 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
                 ? ' sotiladi va tasdiqlangach inventardan olib tashlanadi. Stars balansingizga qo‘shiladi.'
                 : ' uchun yechish so‘rovi admin paneliga yuboriladi. Sovg‘a Inventory’dan olinib, Pending bo‘limida ko‘rinadi.'}
             </p>
+            {dialog.kind === 'withdraw' ? (
+              <WithdrawalRecipientFields mode={recipient.mode}
+                onMode={(mode) => setRecipient((current) => ({ ...current, mode }))}
+                username={recipient.username}
+                onUsername={(username) => setRecipient((current) => ({ ...current, username }))}
+                telegramUsername={telegramUsername} apiPost={apiPost} busy={busy}/>
+            ) : null}
             {dialog.kind === 'sell' ? (
               <div className={inventoryStyles.dialogAmount}>
                 <StarIcon variant="royal" size={22} />
@@ -2810,11 +2825,11 @@ function InventoryView({ active = true, replayToken = 0, history, escrowedGiftId
             <small className={inventoryStyles.dialogNote}>
               {dialog.kind === 'sell'
                 ? 'Yakuniy sotish narxini server tekshiradi. Sotish amalga oshgach uni qaytarib bo‘lmaydi.'
-                : 'Bu Telegram’ga avtomatik sovg‘a yuborish emas. Admin tekshiradi va tasdiqlaydi yoki rad etadi. Rad etilsa sovg‘a Inventory’ga qaytadi.'}
+                : 'Qabul qiluvchini diqqat bilan tekshiring. Gift avtomatik jo‘natilmaydi: admin tanlangan @username ga yuboradi va dalil bilan tasdiqlaydi. Rad etilsa gift Inventory’ga qaytadi.'}
             </small>
             <div className={inventoryStyles.dialogActions}>
               <button type="button" className={inventoryStyles.cancel} disabled={busy} onClick={() => setDialog(null)}>Bekor qilish</button>
-              <button type="button" className={inventoryStyles.confirm} disabled={busy} onClick={confirmAction}>
+              <button type="button" className={inventoryStyles.confirm} disabled={busy || (dialog.kind === 'withdraw' && !recipientIsValid)} onClick={confirmAction}>
                 {busy ? 'Bajarilmoqda...' : dialog.kind === 'sell' ? 'Ha, sotish' : 'Ha, yechish'}
               </button>
             </div>
