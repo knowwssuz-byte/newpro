@@ -10,6 +10,7 @@ import { gzipSync } from 'zlib';
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { normalizeTelegramUsername } from '@/lib/withdrawRecipient.mjs';
+import { notifyWithdrawalDecision } from '@/lib/withdrawNotice';
 import { fetchUniqueTelegramGift } from '@/lib/telegramGiftsImporter';
 import {
   depositSettingsForClient,
@@ -1527,6 +1528,7 @@ export async function POST(request) {
         .maybeSingle();
       if (error) throw error;
       if (!data) return json({ ok: false, error: 'So‘rov allaqachon ko‘rib chiqilgan.' }, 409);
+      await notifyWithdrawalDecision(data);
       return json({ ok: true, withdrawal: data });
     }
 
