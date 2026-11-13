@@ -298,3 +298,13 @@
 .admin-withdraw-completed p{font-size:13px;color:#f2ecfb;white-space:pre-wrap;overflow-wrap:anywhere;margin:7px 0 0}
 .admin-withdraw-empty{text-align:center;padding:38px;border:1px dashed #645377;border-radius:14px;color:#aea5be}
 @media(max-width:700px){.admin-withdraw-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-withdraw-filters>input{max-width:none;width:100%}.admin-withdraw-main{align-items:flex-start}.admin-withdraw-art{width:78px;height:78px}.admin-withdraw-review-actions button{flex:1}.admin-withdraw-filter-tabs{width:100%;justify-content:space-between}.admin-withdraw-filter-tabs button{padding:8px;font-size:11px}}
+
+/* Withdrawal routes: show sender and destination as two separate identities. */
+.admin-withdraw-destination{display:grid;gap:8px;padding:14px 15px;background:linear-gradient(115deg,#382a53,#242035);border:1px solid #8064a6;border-radius:14px}
+.admin-withdraw-destination-icon{font-size:10px;font-weight:850;letter-spacing:.12em;color:#cfb7fc}
+.admin-withdraw-destination>strong{font-size:16px;color:#fff;overflow-wrap:anywhere;line-height:1.4}
+.admin-withdraw-destination>small{font-size:11px;line-height:1.5;color:#f1cfa5}
+.admin-withdraw-legacy-label{display:grid;gap:7px;font-size:12px;color:#e7d6fa}
+.admin-withdraw-legacy-label input{width:100%;max-width:350px;padding:11px 13px;border-radius:9px;border:1px solid #9479b0;background:#151223;color:#fff;font-size:13px}
+.admin-withdraw-legacy-label input:focus{outline:2px solid #c2a2ff;outline-offset:2px}
+@media(max-width:700px){.admin-withdraw-destination{padding:12px}.admin-withdraw-destination>strong{font-size:14px}}
