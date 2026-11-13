@@ -4,7 +4,8 @@ alter table public.withdraw_requests
   add column if not exists recipient_mode text,
   add column if not exists recipient_username text,
   add column if not exists recipient_source text,
-  add column if not exists requester_username text;
+  add column if not exists requester_username text,
+  add column if not exists request_version integer not null default 1;
 
 alter table public.withdraw_requests
   drop constraint if exists withdraw_recipient_mode_check;
@@ -27,6 +28,7 @@ create table if not exists public.withdraw_request_attempts (
   previous_recipient_mode text,
   previous_recipient_username text,
   previous_created_at timestamptz,
+  previous_version integer,
   reopened_at timestamptz not null default now()
 );
 create index if not exists withdraw_request_attempts_request_idx
@@ -136,10 +138,11 @@ begin
     -- History remains immutable for audit even when user retries a rejected gift.
     insert into public.withdraw_request_attempts (
       request_id, previous_status, previous_note, previous_recipient_mode,
-      previous_recipient_username, previous_created_at
+      previous_recipient_username, previous_created_at, previous_version
     ) values (
       v_request.id, v_request.status, v_request.admin_note,
-      v_request.recipient_mode, v_request.recipient_username, v_request.created_at
+      v_request.recipient_mode, v_request.recipient_username, v_request.created_at,
+      v_request.request_version
     );
 
     update public.withdraw_requests
@@ -148,7 +151,7 @@ begin
           recipient_username = v_recipient,
           recipient_source = v_source,
           requester_username = nullif(v_verified,''),
-          created_at = now(), updated_at = now()
+          created_at = now(), updated_at = now(), request_version = request_version + 1
       where id = v_request.id
       returning * into v_request;
   else
