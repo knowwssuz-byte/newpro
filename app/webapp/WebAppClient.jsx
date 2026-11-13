@@ -1460,7 +1460,7 @@ export default function WebAppClient() {
     }
   }
 
-  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false) {
+  async function updateWithdrawal(requestId, status, adminNote, deliveryConfirmed = false, recipientUsername = '') {
     if (status === 'approved' && !window.confirm('Giftni Telegram orqali haqiqatan yubordingizmi? Tasdiqlashdan oldin tekshiring.')) return;
     const result = await runAction(
       () => apiPost('/api/admin/withdrawals', {
@@ -1469,6 +1469,7 @@ export default function WebAppClient() {
         status,
         admin_note: adminNote,
         deliveryConfirmed,
+        recipientUsername,
       }),
       status === 'approved' ? 'Yuborilgan gift tasdiqlandi ✅' : 'So‘rov rad etildi'
     );
@@ -3616,6 +3617,7 @@ function AdminPanel({
   busy,
 }) {
   const [withdrawalNotes, setWithdrawalNotes] = useState({});
+  const [withdrawalRecipientDrafts, setWithdrawalRecipientDrafts] = useState({});
   const [withdrawalConfirmed, setWithdrawalConfirmed] = useState({});
   return (
     <div className="admin-panel premium-card">
@@ -3788,7 +3790,9 @@ function AdminPanel({
               const note = withdrawalNotes[request.id] || '';
               const isPending = request.status === 'pending';
               const canReview = isPending && note.trim().length >= 8 && !busy;
-              const username = /^[a-zA-Z0-9_]{5,32}$/.test(request.users?.username || '') ? request.users.username : '';
+              const username = normalizeTelegramUsername(request.requester_username || request.users?.username);
+              const destination = normalizeTelegramUsername(request.recipient_username || withdrawalRecipientDrafts[request.id]);
+              const isLegacy = !normalizeTelegramUsername(request.recipient_username);
               return (
                 <article className="admin-item" key={request.id} style={{display:'grid',gap:12,padding:14}}>
                   <div style={{display:'flex',alignItems:'center',gap:12,minWidth:0}}>
@@ -3801,7 +3805,16 @@ function AdminPanel({
                     </div>
                   </div>
                   <small style={{overflowWrap:'anywhere'}}>So‘rov: {request.id} · Gift history: {request.history_id || '—'}</small>
-                  {username ? <a href={`https://t.me/${username}`} target="_blank" rel="noopener noreferrer">Telegram foydalanuvchisini ochish</a> : null}
+                  {username ? <a href={`https://t.me/${username}`} target="_blank" rel="noopener noreferrer">So‘rov yuboruvchi profili</a> : null}
+                  <div style={{border:'1px solid #765695',background:'#322443',borderRadius:12,padding:12,display:'grid',gap:7}}>
+                    <small>{request.recipient_mode === 'other' ? 'BOSHQA AKKAUNTGA' : request.recipient_mode === 'self' ? 'O‘ZIGA' : 'ESKI SO‘ROV'}</small>
+                    <strong>Qabul qiluvchi: {destination ? '@' + destination : 'Ko‘rsatilmagan'}</strong>
+                    {destination ? <a href={`https://t.me/${destination}`} target="_blank" rel="noopener noreferrer">Qabul qiluvchini Telegramda ochish</a> : null}
+                    {isLegacy && isPending ? <label style={{display:'grid',gap:5}}>Eski so‘rov uchun @username
+                      <input type="text" maxLength={33} placeholder="@username" value={withdrawalRecipientDrafts[request.id] || ''}
+                        onChange={(event)=>setWithdrawalRecipientDrafts((current)=>({...current,[request.id]:event.target.value}))}/>
+                    </label> : null}
+                  </div>
                   {isPending ? (
                     <div style={{display:'grid',gap:9}}>
                       <label htmlFor={`mini-withdraw-note-${request.id}`}>Gift yuborilgan dalili yoki rad etish sababi</label>
@@ -3815,8 +3828,8 @@ function AdminPanel({
                         <span>Giftni Telegram orqali yubordim</span>
                       </label>
                       <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                        <button type="button" disabled={!canReview || withdrawalConfirmed[request.id] !== true}
-                          onClick={() => updateWithdrawal(request.id, 'approved', note.trim(), true)}>Yuborildi — tasdiqlash</button>
+                        <button type="button" disabled={!canReview || !destination || withdrawalConfirmed[request.id] !== true}
+                          onClick={() => updateWithdrawal(request.id, 'approved', note.trim(), true, destination)}>Yuborildi — tasdiqlash</button>
                         <button type="button" disabled={!canReview} className="danger-btn"
                           onClick={() => updateWithdrawal(request.id, 'rejected', note.trim(), false)}>Rad etish</button>
                       </div>
