@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { jsonError, readTelegramRequest } from '@/lib/telegramAuth';
 import { normalizeTelegramUsername } from '@/lib/withdrawRecipient.mjs';
+import { notifyWithdrawalDecision } from '@/lib/withdrawNotice';
 
 export async function POST(request) {
   try {
@@ -90,6 +91,7 @@ export async function POST(request) {
 
       if (error) throw new Error(error.message);
       if (!data) return jsonError('So‘rov allaqachon ko‘rib chiqilgan yoki topilmadi.', 409);
+      await notifyWithdrawalDecision(data);
       return Response.json({ ok: true, request: data });
     }
 
