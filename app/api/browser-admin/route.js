@@ -1,3 +1,7 @@
+import { validateImage } from '@/lib/security/assets.mjs';
+import { assertAdminSession } from '@/lib/security/adminSession';
+import { guardRequest } from '@/lib/security/rateLimit';
+import { HttpError, readJson, readForm, securityError } from '@/lib/security/http.mjs';
 import crypto from 'crypto';
 import {getSharedStarsArtworkUrl,setSharedStarsArtworkUrl} from '@/lib/caseStarsArtwork.mjs';
 import { syncOwnedTelegramGifts, syncAvailableTelegramGifts } from '@/lib/telegramGiftSync';
@@ -64,34 +68,6 @@ async function uploadLottie(supabase, lottie, slug, kind) {
     folder: `telegram-nft/${slug}`, ext: 'tgs', prefix: kind,
   });
   return asset?.publicUrl || '';
-}
-
-function getBearer(request) {
-  const value = request.headers.get('authorization') || '';
-
-  if (!value.toLowerCase().startsWith('bearer ')) return '';
-
-  return value.slice(7).trim();
-}
-
-function sameAdminSecret(given,expected){
- if(!given || !expected)return false;
- const a=crypto.createHash('sha256').update(String(given)).digest();
- const b=crypto.createHash('sha256').update(String(expected)).digest();
- return crypto.timingSafeEqual(a,b);
-}
-function assertAdmin(request, body) {
-  const expected = process.env.ADMIN_PANEL_KEY?.trim();
-
-  if (!expected) {
-    throw new Error('ADMIN_PANEL_KEY Vercel ENV ichida qo‘yilmagan.');
-  }
-
-  const provided = getBearer(request) || body.get?.('adminKey') || body.adminKey || '';
-
-  if (!sameAdminSecret(provided,expected)) {
-    throw new Error('Admin kalit noto‘g‘ri.');
-  }
 }
 
 function tableMissingError(error, tableName) {
@@ -361,13 +337,6 @@ function extensionFromFile(file) {
   return '';
 }
 
-function contentTypeFromExt(ext) {
-  if (ext === 'svg') return 'image/svg+xml';
-  if (ext === 'png') return 'image/png';
-  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
-  return 'application/octet-stream';
-}
-
 async function uploadGiftImage(supabase, file, title = '') {
   if (!file || typeof file.arrayBuffer !== 'function' || file.size <= 0) {
     throw new Error('PNG, JPG yoki SVG rasm fayl tanlanmagan.');
@@ -379,7 +348,8 @@ async function uploadGiftImage(supabase, file, title = '') {
     throw new Error('Faqat PNG, JPG yoki SVG rasm yuklang.');
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const checked = await validateImage(Buffer.from(await file.arrayBuffer()), { allowSvg: true });
+  const buffer = checked.buffer;
   const prefix = clean(title)
     .toLowerCase()
     .replace(/[^a-z0-9а-яё]+/gi, '-')
@@ -388,15 +358,15 @@ async function uploadGiftImage(supabase, file, title = '') {
 
   const uploaded = await uploadPublicAsset(supabase, {
     buffer,
-    contentType: contentTypeFromExt(ext),
+    contentType: checked.contentType,
     folder: 'manual-gifts/images',
-    ext,
+    ext: checked.ext,
     prefix,
   });
 
   return {
     imageUrl: uploaded.publicUrl,
-    imageType: ext,
+    imageType: checked.ext,
   };
 }
 
@@ -413,11 +383,10 @@ async function uploadCaseImage(supabase, file, title = '') {
     throw new Error('Case rasmi 12 MB dan oshmasligi kerak.');
   }
 
-  // Native image processing is intentionally not used in this API:
-  // sharp/libvips cannot always load in the Vercel Node runtime.
-  // Browser uploads are normalized beforehand; original assets still render
-  // safely with CSS object-fit:contain if the client conversion is unavailable.
-  const buffer = Buffer.from(await file.arrayBuffer());
+  // Browser normalization preserves the existing crop and placement. The
+  // server verifies actual file content and rasterizes SVG before public storage.
+  const checked = await validateImage(Buffer.from(await file.arrayBuffer()), { allowSvg: true });
+  const buffer = checked.buffer;
 
   const prefix = clean(title)
     .toLowerCase()
@@ -427,13 +396,13 @@ async function uploadCaseImage(supabase, file, title = '') {
 
   const uploaded = await uploadPublicAsset(supabase, {
     buffer,
-    contentType: contentTypeFromExt(ext),
+    contentType: checked.contentType,
     folder: 'manual-cases/images',
-    ext,
+    ext: checked.ext,
     prefix,
   });
 
-  return { imageUrl: uploaded.publicUrl, imageType: ext };
+  return { imageUrl: uploaded.publicUrl, imageType: checked.ext };
 }
 
 async function insertGiftWithOptionalColumns(supabase, row, optionalRow) {
@@ -682,7 +651,8 @@ async function handleFormAction(request, formData, supabase) {
 export async function POST(request) {
   try {
     // Reject malformed/unauthorized requests before allocating a parsed upload.
-    assertAdmin(request, {adminKey:''});
+    await guardRequest(request, { sameOrigin: true });
+    await assertAdminSession(request);
     const contentLength=Number(request.headers.get('content-length')||0);
     if(Number.isFinite(contentLength)&&contentLength>12*1024*1024)
       return json({ok:false,error:'Upload hajmi 12 MB dan oshmasin'},413);
@@ -690,14 +660,14 @@ export async function POST(request) {
     const contentType = request.headers.get('content-type') || '';
 
     if (contentType.includes('multipart/form-data')) {
-      const formData = await request.formData();
-      assertAdmin(request, formData);
+      const formData = await readForm(request);
+
 
       return handleFormAction(request, formData, supabase);
     }
 
-    const body = await request.json().catch(() => ({}));
-    assertAdmin(request, body);
+    const body = await readJson(request);
+
 
     const action = body.action;
 
@@ -1542,8 +1512,9 @@ export async function POST(request) {
 
     return json({ ok: false, error: 'Noma’lum action.' }, 400);
   } catch (error) {
-    console.error('[browser-admin]', error);
+    if (error instanceof HttpError) return securityError(error);
+    console.error('[browser-admin]', error?.code || 'operation_failed');
 
-    return json({ ok: false, error: error.message || 'Server xatosi' }, 401);
+    return json({ ok: false, error: 'Amal bajarilmadi. Ma’lumotlarni tekshirib, qayta urining.' }, 500);
   }
 }

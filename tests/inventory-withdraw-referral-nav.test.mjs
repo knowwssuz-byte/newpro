@@ -36,8 +36,9 @@ test('real withdrawal API uses authenticated atomic server request',()=>{
  assert.match(route,/p_history_id: historyId/);
  const admin=read('app/admin/AdminClient.jsx');
  assert.match(admin,/tab === 'withdrawals'/);
- assert.match(admin,/updateWithdrawal\(request\.id, 'approved'\)/);
- assert.match(admin,/updateWithdrawal\(request\.id, 'rejected'\)/);
+ assert.match(admin,/onDecision=\{updateWithdrawal\}/);
+ assert.match(admin,/deliveryConfirmed = false/);
+ assert.match(admin,/callAdmin\('withdraw_update', \{ requestId, status, adminNote, deliveryConfirmed \}\)/);
 });
 test('Referral NEW badge stays visible permanently, including after a visit',()=>{
  const view=read('app/webapp/WebAppClient.jsx');

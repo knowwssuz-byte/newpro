@@ -1,3 +1,4 @@
+import { HttpError, readJson, readForm, securityError } from '../../lib/security/http.mjs';
 import { readFile } from "node:fs/promises";
 import crypto from "node:crypto";
 import { joinedBalance, publicBoard } from "../../lib/giveawayServer.mjs";
@@ -109,7 +110,11 @@ export async function giveawayHandlers(db, options = {}) {
   });
   process.env.ADMIN_PANEL_KEY = "isolated-qa-admin";
   const adminPost = await routeFactory("app/api/browser-admin/route.js", {
-    crypto,
+    crypto, HttpError, readJson, readForm, securityError,
+    guardRequest: async () => {},
+    assertAdminSession: async (request) => {
+      if (!request.headers.get('cookie')?.includes('newpro_admin=isolated-qa-session')) throw new HttpError(401, 'Unauthorized test session');
+    },
     NextResponse: Response,
     getSupabaseAdmin: () => adapter,
   });

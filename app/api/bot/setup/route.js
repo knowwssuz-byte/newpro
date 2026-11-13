@@ -1,3 +1,5 @@
+import { guardRequest } from '@/lib/security/rateLimit';
+import { securityError } from '@/lib/security/http.mjs';
 import crypto from 'node:crypto';
 import {setupTelegramBot} from '@/lib/telegramBot';
 export const runtime='nodejs';export const dynamic='force-dynamic';
@@ -10,6 +12,7 @@ function sameToken(a,b) {
 // Never take setup secrets in a URL, where proxies, browser history and logs capture them.
 export async function GET(){return json({ok:false,error:'Setup POST orqali bajariladi'},405)}
 export async function POST(request){
+ try { await guardRequest(request, { scope: 'bot-setup', limit: 5, windowSeconds: 900 }); } catch(error) { return securityError(error); }
  const expected=String(process.env.BOT_SETUP_SECRET||'').trim();
  if(!expected)return json({ok:false,error:'Bot setup secret sozlanmagan'},503);
  const auth=String(request.headers.get('authorization')||'');

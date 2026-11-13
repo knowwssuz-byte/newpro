@@ -7,6 +7,7 @@ import './webapp/compact-shell.css';
 import './typography.css';
 import { Manrope, Outfit } from 'next/font/google';
 import Script from 'next/script';
+import { headers } from 'next/headers';
 import TelegramInteractionGuard from './webapp/TelegramInteractionGuard';
 
 // Variable families are downloaded during build and served from the NewPro domain.
@@ -18,12 +19,13 @@ export const metadata = {
   description: 'Premium Telegram WebApp case opening',
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const nonce = (await headers()).get('x-nonce') || undefined;
   return (
     <html lang="uz" className={`${manrope.variable} ${outfit.variable}`}>
       <body>
-        <Script src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
-        <Script id="myst-version-recovery" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: `
+        <Script nonce={nonce} src="https://telegram.org/js/telegram-web-app.js" strategy="beforeInteractive" />
+        <Script nonce={nonce} id="myst-version-recovery" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: `
 (function(){
   if (!/^\\/webapp(?:\\/|$)/.test(location.pathname)) return;
   function recover(event) {

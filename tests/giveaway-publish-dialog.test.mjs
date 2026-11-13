@@ -57,7 +57,7 @@ test("giveaway flows contain no native confirmation calls and keep server authen
   for (const path of paths)
     assert.doesNotMatch(read(path), /window\.(confirm|alert|prompt)\s*\(/);
   const api = read("app/api/browser-admin/route.js");
-  assert.match(api, /assertAdmin\(request, body\)/);
+  assert.match(api, /await assertAdminSession\(request\)/);
   assert.match(api, /newpro_giveaway_publish/);
   assert.match(api, /p_expected_updated_at:body.updatedAt/);
   assert.match(

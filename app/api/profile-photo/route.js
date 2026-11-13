@@ -1,3 +1,4 @@
+import { readLimitedBytes } from '@/lib/security/http.mjs';
 import { readTelegramRequest, jsonError } from '@/lib/telegramAuth';
 
 export const runtime = 'nodejs';
@@ -24,7 +25,7 @@ async function telegramApi(method, payload = {}) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-    cache: 'no-store',
+    cache: 'no-store', signal: AbortSignal.timeout(8000), redirect: 'error',
   });
 
   const data = await response.json().catch(() => null);
@@ -81,7 +82,7 @@ export async function POST(request) {
 
     const token = getBotToken();
     const fileResponse = await fetch(`https://api.telegram.org/file/bot${token}/${file.file_path}`, {
-      cache: 'no-store',
+      cache: 'no-store', signal: AbortSignal.timeout(8000), redirect: 'error',
     });
 
     if (!fileResponse.ok) {
@@ -89,7 +90,7 @@ export async function POST(request) {
     }
 
     const contentType = fileResponse.headers.get('content-type') || 'image/jpeg';
-    const arrayBuffer = await fileResponse.arrayBuffer();
+    const arrayBuffer = await readLimitedBytes(fileResponse, 4 * 1024 * 1024);
     const base64 = Buffer.from(arrayBuffer).toString('base64');
 
     return Response.json({
@@ -97,12 +98,12 @@ export async function POST(request) {
       photoUrl: `data:${contentType};base64,${base64}`,
     });
   } catch (error) {
-    console.error('[profile-photo]', error);
+    console.error('[profile-photo]', error?.code || 'photo_unavailable');
 
     return Response.json({
       ok: true,
       photoUrl: '',
-      warning: error?.message || 'Profile photo olinmadi',
+      warning: 'Profile photo olinmadi',
     });
   }
 }

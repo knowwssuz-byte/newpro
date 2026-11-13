@@ -38,7 +38,6 @@ test('server is still the only authority',()=>{
  assert.doesNotMatch(detail,/0% · PREVIEW/);
  assert.doesNotMatch(detail,/Yutish foizlari pastda/);
  assert.doesNotMatch(detail,/detailPrizePreviewBadge/);
- assert.match(detail,/Yutish ehtimollarini ko‘rish/);
- assert.match(detail,/<strong>\{visibleChance\(gift\)\}%<\/strong>/);
- assert.match(detail,/<details className=\{caseOpeningStyles\.detailOdds\}>/);
+ assert.match(detail,/opening\?\.stage === 'result'/);
+ assert.match(detail,/onRollComplete/);
 });

@@ -1,0 +1,7 @@
+{
+  "name": "@newpro/deepmerge-hardened",
+  "version": "4.3.1-newpro.1",
+  "private": true,
+  "main": "index.cjs",
+  "license": "MIT"
+}

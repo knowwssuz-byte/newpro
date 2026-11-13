@@ -1,3 +1,4 @@
+import { readJson } from '@/lib/security/http.mjs';
 import { handleTelegramUpdate } from '@/lib/telegramBot';
 import crypto from 'node:crypto';
 
@@ -35,12 +36,12 @@ export async function POST(request) {
   let update = null;
 
   try {
-    update = await request.json();
+    update = await readJson(request, 1024 * 1024);
     await handleTelegramUpdate(update);
 
     return json({ ok: true });
   } catch (error) {
-    console.error('[bot:webhook]', error);
+    console.error('[bot:webhook]', error?.code || 'update_failed');
 
     const criticalPaymentUpdate = Boolean(
       update?.pre_checkout_query ||
@@ -56,7 +57,7 @@ export async function POST(request) {
     return json({
       ok: !criticalPaymentUpdate,
       handled: false,
-      error: error?.message || 'Bot webhook xatosi',
+      error: 'Bot webhook xatosi',
     }, criticalPaymentUpdate ? 500 : 200);
   }
 }

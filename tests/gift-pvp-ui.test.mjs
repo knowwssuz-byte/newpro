@@ -31,7 +31,7 @@ test('TGS gifts autoplay exactly once and user can switch animations off', () =>
 test('PvP opens a real local 1v1 hub instead of the old placeholder toast', () => {
   const src=read('app/webapp/WebAppClient.jsx');
   const pvp=read('app/webapp/PvpHub.jsx');
-  assert.match(src,/onOpenPvp=\{\(\) => openPvpHub\('home'\)\}/);
+  assert.match(src,/onOpenPvp=\{\(\) => openPvpHub\('home', 'list'\)\}/);
   assert.match(src,/tab === 'pvp' \? <PvpHub/);
   assert.match(pvp,/TicTacToe/);
   assert.doesNotMatch(pvp,/Play\\. Compete\\./);

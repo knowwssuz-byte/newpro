@@ -30,8 +30,9 @@ test('Color Arena opens directly and exposes secondary PvP modes',()=>{
 test('Production browser admin pre-checks a credential before parsing payload',()=>{
  const route=read('app/api/browser-admin/route.js');
  const entry=route.slice(route.indexOf('export async function POST(request)'));
- assert.ok(entry.indexOf('assertAdmin(request, {adminKey:\'\'})')<entry.indexOf('request.formData()'));
- assert.ok(entry.indexOf('assertAdmin(request, {adminKey:\'\'})')<entry.indexOf('request.json()'));
+ assert.ok(entry.indexOf('await assertAdminSession(request)') >= 0);
+ assert.ok(entry.indexOf('await assertAdminSession(request)')<entry.indexOf('readForm(request)'));
+ assert.ok(entry.indexOf('await assertAdminSession(request)')<entry.indexOf('readJson(request)'));
 });
 test('Visual smoke runs on PR and main pushes',()=>{
  const workflow=read('.github/workflows/myst-visual-smoke.yml');

@@ -140,9 +140,7 @@ try {
       isMobile: width < 600,
       hasTouch: width < 600,
     });
-    await context.addInitScript(() => {
-      sessionStorage.setItem("gift_myst_admin_key", "isolated-qa-admin");
-    });
+    await context.addCookies([{name:'newpro_admin',value:'isolated-qa-session',url:base,httpOnly:true,sameSite:'Strict'}]);
     const telegram = `window.Telegram={WebApp:{initData:'isolated-qa-session',initDataUnsafe:{user:{id:1,first_name:'Test'}},ready(){},expand(){},MainButton:{hide(){}},BackButton:{hide(){},show(){},onClick(){},offClick(){}},HapticFeedback:{notificationOccurred(){},impactOccurred(){}},platform:'android',version:'8.0'}};`;
     await context.route(
       "https://telegram.org/js/telegram-web-app.js",
@@ -164,6 +162,7 @@ try {
       const req = route.request(),
         path = new URL(req.url()).pathname,
         body = req.postDataJSON() || {};
+      if (path === "/api/admin/session") return route.fulfill({json:{ok:true,authenticated:true}});
       if (path === "/api/gift-animation")
         return route.fulfill({
           status: animationFails ? 502 : 200,
@@ -214,6 +213,12 @@ try {
           upgradeRounds: [],
           featureSettings: {},
         },
+      });
+    });
+    await context.addInitScript(() => {
+      window.__cspViolations = [];
+      document.addEventListener('securitypolicyviolation', event => {
+        window.__cspViolations.push({ directive: event.effectiveDirective, blocked: event.blockedURI });
       });
     });
     const page = await context.newPage();
@@ -703,6 +708,14 @@ try {
     }
     assert.deepEqual(nativeDialogs, []);
     assert.deepEqual(pageErrors, []);
+    assert.deepEqual(await page.evaluate(() => window.__cspViolations || []), []);
+    const policy = await page.evaluate(() => {
+      const script = document.createElement('script');
+      script.textContent = 'window.__untrustedScriptRan = true';
+      document.body.appendChild(script);
+      return window.__untrustedScriptRan;
+    });
+    assert.equal(policy, undefined, 'CSP blocks injected script without a nonce');
     results.push(
       `${width}px user, compact list, admin list and editor: no giveaway overflow or runtime errors`,
     );

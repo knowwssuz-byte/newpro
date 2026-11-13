@@ -14,7 +14,7 @@ test("real API handlers round-trip through isolated PostgreSQL and preserve auth
         method: "POST",
         headers: {
           "content-type": "application/json",
-          ...(admin ? { authorization: "Bearer isolated-qa-admin" } : {}),
+          ...(admin ? { cookie: "newpro_admin=isolated-qa-session" } : {}),
         },
         body: JSON.stringify(body),
       }),
